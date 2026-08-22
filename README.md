@@ -40,13 +40,16 @@ git clone https://github.com/birabittoh/KameoRePowered.git
 cd KameoRePowered
 ```
 
-### 2. Download the ReXGlue SDK
+### 2. Get the ReXGlue SDK
 
-```bash
-python scripts/download-sdk.py
-```
+Download the `v0.9.0` release archive for your platform from the
+[SDK releases page](https://github.com/rexglue/rexglue-sdk/releases/tag/v0.9.0)
+and unpack it anywhere. Everything below refers to that directory as
+`$SDK` — it is the one containing `bin/rexglue`, `include/`, and `lib/cmake/`.
 
-This downloads the latest nightly and installs it into `sdk/<platform>/`.
+> The SDK is published as a **RelWithDebInfo** build and its CMake package only
+> exports `*-relwithdebinfo` targets, so the project must be configured with a
+> matching preset. Using a `release` preset will fail to link.
 
 ### 3. Provide your game
 
@@ -58,15 +61,116 @@ extract-xiso -d assets "Kameo - Elements of Power (USA).iso"
 
 ### 4. Build
 
-Use this script:
+Two steps: recompile the guest code, then build the host. The preset is
+`win-amd64-relwithdebinfo` on Windows, `linux-amd64-relwithdebinfo` on Linux.
+
+The two variants are fully independent — separate manifests, separate generated
+trees, separate build directories — so you can keep both built and switch
+between them without re-running the other's codegen.
+
+> **`assets/default.xexp` is the one piece they cannot share.** The loader
+> applies it to the base image on every launch, and the recompiled TU code
+> assumes the patched layout. So it must be **present** for TU codegen *and*
+> TU runs, and **absent** for vanilla codegen *and* vanilla runs — a vanilla
+> binary launched with the patch staged will load a patched image its
+> recompiled code does not match. Only one variant is runnable at a time out of
+> a given `assets/` directory; move the file in and out to switch.
+
+| | Vanilla | Title Update |
+|---|---|---|
+| Manifest | `kameorepowered_manifest.toml` | `kameorepowered_tu_manifest.toml` |
+| Codegen hints | `kameorepowered_config.toml` | `kameorepowered_tu_config.toml` |
+| Generated tree | `generated/default/` | `generated/tu/` |
+| CMake flag | `-DKAMEO_TU=OFF` | `-DKAMEO_TU=ON` |
+
+#### Vanilla
 
 ```bash
-# Vanilla
-python scripts/build.py
+# The loader auto-applies assets/default.xexp when it exists, so it must be
+# absent here or codegen would silently recompile the patched image instead.
+rm -f assets/default.xexp
 
-# Title Update
-python scripts/build.py --tu /path/to/TU_*
+"$SDK/bin/rexglue" codegen kameorepowered_manifest.toml
+
+cmake --preset win-amd64-relwithdebinfo -DCMAKE_PREFIX_PATH="$SDK" -DKAMEO_TU=OFF
+cmake --build --preset win-amd64-relwithdebinfo --parallel
 ```
+
+#### Title Update
+
+Stage the update once, from your own TU package. This picks the variant matching
+your base XEX by digest, writes the delta patch to the sibling path the loader
+looks for, and extracts the per-language `.str` tables:
+
+```bash
+python scripts/extract_tu.py /path/to/TU_* \
+  --base assets/default.xex \
+  --output assets/default.xexp \
+  --update-dir assets/TU
+```
+
+Then build against the TU manifest. `assets/default.xexp` must be in place for
+this codegen run — that is what bakes the update in:
+
+```bash
+"$SDK/bin/rexglue" codegen kameorepowered_tu_manifest.toml
+
+cmake --preset win-amd64-relwithdebinfo -DCMAKE_PREFIX_PATH="$SDK" -DKAMEO_TU=ON
+cmake --build --preset win-amd64-relwithdebinfo --parallel
+```
+
+`-DKAMEO_TU=ON` selects `generated/tu/` and compiles out the hand-written hooks
+that call game functions by hardcoded vanilla addresses the update relocates.
+Always pass the flag explicitly — it is cached, so reconfiguring without it
+reuses the previous value.
+
+A correct TU codegen reports the patch being applied:
+
+```
+XEX patch applied successfully: base version: 0.0.0.0, new version: 0.0.2.1
+```
+
+#### Building from an IDE
+
+`CMakePresets.json` is deliberately machine-independent, so the SDK path is not
+in it. For Visual Studio / VS Code, drop a `CMakeUserPresets.json` next to it
+(gitignored) so both variants show up in the preset dropdown:
+
+```json
+{
+    "version": 6,
+    "configurePresets": [
+        {
+            "name": "kameo-vanilla",
+            "inherits": "win-amd64-relwithdebinfo",
+            "binaryDir": "${sourceDir}/out/build/vanilla",
+            "cacheVariables": {
+                "CMAKE_PREFIX_PATH": "C:/path/to/rexglue-sdk",
+                "KAMEO_TU": "OFF"
+            }
+        },
+        {
+            "name": "kameo-tu",
+            "inherits": "win-amd64-relwithdebinfo",
+            "binaryDir": "${sourceDir}/out/build/tu",
+            "cacheVariables": {
+                "CMAKE_PREFIX_PATH": "C:/path/to/rexglue-sdk",
+                "KAMEO_TU": "ON"
+            }
+        }
+    ],
+    "buildPresets": [
+        { "name": "kameo-vanilla", "configurePreset": "kameo-vanilla" },
+        { "name": "kameo-tu", "configurePreset": "kameo-tu" }
+    ]
+}
+```
+
+Give each variant its own `binaryDir`. Sharing one between an IDE and a terminal
+build is what produces `ninja: error: failed recompaction: Permission denied` —
+the IDE holds a handle on the build directory, ninja's rename over `.ninja_log`
+fails, and the leftover `.ninja_log.recompact` / `.ninja_log.restat` files make
+every later build fail the same way until they are deleted.
 
 ### 5. DLC (optional)
 
@@ -89,11 +193,24 @@ This replaces each raw STFS package with a directory of extracted files and gene
 
 ### 6. Run
 
+Run the executable out of its build directory (the SDK runtime and the
+`rexgpu-xenos` plugin are staged there by the build):
+
 ```bash
-python scripts/run.py
+# Vanilla — assets/default.xexp must be absent
+./out/build/vanilla/kameorepowered --game_data_root assets --gpu_plugin xenos
+
+# Title Update — assets/default.xexp must be present, and the update partition
+# holding the per-language .str tables mounted
+./out/build/tu/kameorepowered --game_data_root assets --gpu_plugin xenos \
+  --update_data_root assets/TU
 ```
 
-The run script sets up the library path, GPU offload variables, and passes `--game_data_root` and `--update_data_root` (if a TU build extracted update data) automatically.
+On Linux with hybrid graphics, prefix with
+`__NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only`.
+
+Any flag can be persisted in `kameorepowered.toml` next to the executable
+instead of being passed each time — see [Options](#options).
 
 ## Options
 

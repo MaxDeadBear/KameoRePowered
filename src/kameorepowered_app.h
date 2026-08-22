@@ -13,6 +13,7 @@
 #include <string>
 #include <system_error>
 
+#include <rex/filesystem.h>
 #include <rex/platform/fpscr.h>
 #include <rex/rex_app.h>
 #include <rex/system/flags.h>
@@ -20,6 +21,10 @@
 #include "kameorepowered_dialogs.h"
 #include "kameorepowered_dlc_models.h"
 #include "kameorepowered_fp_guard.h"
+
+#ifdef KAMEO_NATIVE_RENDERER
+#include "gfx/kameo_graphics_system.h"
+#endif
 
 class KameorepoweredApp : public rex::ReXApp {
  public:
@@ -43,6 +48,23 @@ class KameorepoweredApp : public rex::ReXApp {
     BuildMergedLanguageDir();
 #ifdef _WIN32
     veh_handle_ = InstallGuestFpExceptionHandlerWin();
+#endif
+
+#ifdef KAMEO_NATIVE_RENDERER
+    // Injecting an IGraphicsSystem here is a first-class runtime feature:
+    // RuntimeConfig::gpu_plugin is only consulted when `graphics` is empty, so
+    // this replaces the xenos plugin outright without any SDK change.
+    //
+    // The window does not exist yet -- it is created during SetupPresentation,
+    // which the runtime calls on the system we are handing it -- so the handle
+    // is fetched through a callback rather than captured now.
+    if (kameo::gfx::NativeRendererEnabled()) {
+      config.graphics = std::make_unique<kameo::gfx::KameoGraphicsSystem>([this]() -> void* {
+        return window() ? window()->GetNativeWindowHandle() : nullptr;
+      });
+      config.gpu_plugin.clear();
+      REXLOG_WARN("[kameo-gfx] native renderer enabled; the game will not be visible yet");
+    }
 #endif
   }
 
@@ -123,9 +145,45 @@ class KameorepoweredApp : public rex::ReXApp {
     kameo_model_dialog_ = std::make_unique<KameoModelDialog>(drawer);
     kameo_audio_dialog_ = std::make_unique<KameoAudioDialog>(drawer);
   }
-  // void OnConfigurePaths(rex::PathConfig& paths) override {}
+  // Locate the game data next to (or above) the executable so the build can be
+  // run straight out of its build directory without --game_data_root. Only
+  // fills in when the computed default does not actually contain the game, so
+  // an explicit --game_data_root / cvar always wins.
+  //
+  // update_data_root is set only when the TU patch is staged: the loader
+  // applies assets/default.xexp on every launch, so its presence is what
+  // distinguishes a TU install from a vanilla one.
+  void OnConfigurePaths(rex::PathConfig& paths) override {
+    namespace fs = std::filesystem;
+    std::error_code ec;
+    if (fs::exists(paths.game_data_root / kEntryXexName, ec)) {
+      return;  // caller gave us a usable root
+    }
+    for (auto dir = rex::filesystem::GetExecutableFolder(); !dir.empty();
+         dir = dir.parent_path()) {
+      auto assets = dir / "assets";
+      if (!fs::exists(assets / kEntryXexName, ec)) {
+        if (!dir.has_relative_path()) {
+          break;  // hit the filesystem root
+        }
+        continue;
+      }
+      paths.game_data_root = assets;
+      // Sibling '<xex>p' -- the patch the loader re-applies to the base image.
+      if (fs::exists(assets / (std::string(kEntryXexName) + "p"), ec) &&
+          fs::is_directory(assets / kUpdateDirName, ec)) {
+        paths.update_data_root = assets / kUpdateDirName;
+      }
+      break;
+    }
+  }
 
  private:
+  static constexpr const char* kEntryXexName = "default.xex";
+  // Update partition holding the TU's per-language .str string tables,
+  // extracted by scripts/extract_tu.py --update-dir.
+  static constexpr const char* kUpdateDirName = "TU";
+
   // Per-language data folders shipped in the game data; index == XLanguage id.
   // The game hardcodes "D:\english" regardless of the selected language.
   static constexpr const char* kLangFolders[] = {

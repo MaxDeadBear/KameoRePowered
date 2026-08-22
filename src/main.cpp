@@ -1,9 +1,9 @@
 
 // kameorepowered - ReXGlue Recompiled Project
-//
-// This file is yours to edit. 'rexglue migrate' will NOT overwrite it.
 
-#include "generated/kameorepowered_init.h"
+// Resolved out of the generated tree selected by CMakeLists.txt
+// (generated/default for vanilla, generated/tu for -DKAMEO_TU=ON).
+#include "kameorepowered_init.h"
 
 #include "kameorepowered_app.h"
 

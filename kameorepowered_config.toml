@@ -181,6 +181,73 @@ address = 0x820B5228
 name = "KameoOverrideAudioLanguage"
 registers = ["r3"]
 
+# Entry of mainSetupMainRenderInfo. Read-only: services teleport requests and
+# debug logging. See src/kameorepowered_hooks_splitscreen.cpp.
+[[midasm_hook]]
+address = 0x820B6CC0
+name = "KameoForceStorySplitScreen"
+
+# saveGameFileOpenedForWriting: `lwz r11, isSplitScreenMode` whose `bne` skips
+# the campaign-progress block. Forced to 0 so progress is always written.
+[[midasm_hook]]
+address = 0x820BC128
+name = "KameoSaveGameSplitGate"
+registers = ["r11"]
+after_instruction = true
+
+# storybookCurrentGameDisplayCorrupt: same flag decides "profile corrupt".
+[[midasm_hook]]
+address = 0x823C1A58
+name = "KameoStorybookSplitGate"
+registers = ["r11"]
+after_instruction = true
+
+# PlayerReady: `addi r4, r10, aKai@l` immediately before
+# `bl levelCreatePlayerSetup`. Swaps player 2's object type so he can be spawned
+# as player 1's character (and thus get the warrior wheel).
+[[midasm_hook]]
+address = 0x8226CEE8
+name = "KameoOverridePlayer2Type"
+registers = ["r4"]
+after_instruction = true
+
+# Entry of kaiAsk. Reports the receiver of the morph message so we can see which
+# object the game actually uses, instead of inferring it.
+[[midasm_hook]]
+address = 0x821B7D98
+name = "KameoProbeKaiAsk"
+registers = ["r3", "r5", "r6"]
+
+# Entry of MorphValid: receives the object with a valid [2680] and the slot being
+# checked. Shows why a morph is refused (warriorIdx == FFFF means unassigned).
+[[midasm_hook]]
+address = 0x821A88C0
+name = "KameoProbeMorphValid"
+registers = ["r3", "r4"]
+
+# Entry of kaiSackPopulate: add every warrior before the eventDone-gated adds.
+[[midasm_hook]]
+address = 0x8217CD20
+name = "KameoUnlockAllWarriors"
+registers = ["r3"]
+
+# Between `lwz r11, isSplitScreenMode` and the store of the viewport count.
+# Collapses the split while player 2 is parked WITHOUT dropping numWantedPlayers,
+# which would unbind his controller.
+[[midasm_hook]]
+address = 0x820B6D60
+name = "KameoViewportGate"
+registers = ["r10", "r11"]
+after_instruction = true
+
+# depthEffects_render's table dispatch: validate the computed function pointer
+# before `mtctr r8 ; bctrl`, diverting garbage to a no-op instead of trapping.
+[[midasm_hook]]
+address = 0x8227CB40
+name = "KameoGuardEffectsDispatch"
+registers = ["r8"]
+after_instruction = true
+
 [rexcrt]
 memcpy      = 0x82527D00
 memmove     = 0x825266A0

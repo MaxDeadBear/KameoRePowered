@@ -112,6 +112,38 @@ address = 0x820B5F10
 name = "KameoOverrideAudioLanguage"
 registers = ["r3"]
 
+# mainSetupMainRenderInfo, relocated by the update (vanilla 0x820B6CC0).
+[[midasm_hook]]
+address = 0x820B7D58
+name = "KameoForceStorySplitScreen"
+
+# saveGameFileOpenedForWriting, verified: lwz r11,-4340(r31) / cmpwi / bne.
+# (storybookCurrentGameDisplayCorrupt has no verified TU mapping, so that gate
+# is vanilla-only for now.)
+[[midasm_hook]]
+address = 0x820BD8BC
+name = "KameoSaveGameSplitGate"
+registers = ["r11"]
+after_instruction = true
+
+# PlayerReady: `addi r4, r10, aKai@l` immediately before
+# `bl levelCreatePlayerSetup`. Swaps player 2's object type so he can be spawned
+# as player 1's character (and thus get the warrior wheel).
+[[midasm_hook]]
+address = 0x8227C81C
+name = "KameoOverridePlayer2Type"
+registers = ["r4"]
+after_instruction = true
+
+# Between `lwz r11, isSplitScreenMode` and the store of the viewport count.
+# Collapses the split while player 2 is parked WITHOUT dropping numWantedPlayers,
+# which would unbind his controller.
+[[midasm_hook]]
+address = 0x820B7DF8
+name = "KameoViewportGate"
+registers = ["r10", "r11"]
+after_instruction = true
+
 [rexcrt]
 memcpy      = 0x82527D00
 memmove     = 0x825266A0

@@ -23,6 +23,11 @@ env:
   ASSET_PATH: default.xex
   ASSET_CACHE_KEY: codegen-assets-v1
   TU_ASSET_CACHE_KEY: tu-assets-v1
+  # ReXGlue SDK release to build against. Bump this to migrate.
+  SDK_VERSION: v0.9.0
+  # The SDK is distributed as a RelWithDebInfo build, so the project must use
+  # a matching config -- the CMake package only exports *-relwithdebinfo targets.
+  BUILD_PRESET: relwithdebinfo
 
 jobs:
   build:
@@ -70,7 +75,16 @@ jobs:
 
       - name: Download ReXGlue SDK
         shell: bash
-        run: python scripts/download-sdk.py sdk/${{ matrix.sdk_dir }} --pinned
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download "${SDK_VERSION}" --repo rexglue/rexglue-sdk \
+            --pattern "*-${{ matrix.sdk_dir }}.zip" --output sdk.zip --clobber
+          unzip -q sdk.zip -d sdk_unpacked
+          # The archive holds a single versioned top-level directory.
+          mv sdk_unpacked/* sdk
+          chmod +x sdk/bin/rexglue || true
+          echo "SDK_ROOT=$PWD/sdk" >> "$GITHUB_ENV"
 
       - name: Cache XEX asset for codegen
         id: asset-cache
@@ -117,14 +131,39 @@ jobs:
             echo "Fetched ${f} ($(wc -c < "tu_packages/${f}") bytes)"
           done
 
-      - name: Build
+      - name: Stage title update
+        if: matrix.variant == 'tu'
+        shell: bash
+        run: |
+          # Selects the TU variant matching our base XEX by digest, writes the
+          # delta patch to the sibling path the loader looks for, and extracts
+          # the per-language .str tables mounted as the update: device.
+          python scripts/extract_tu.py tu_packages/TU_* \
+            --base assets/default.xex \
+            --output assets/default.xexp \
+            --update-dir assets/TU
+
+      - name: Codegen
         shell: bash
         run: |
           if [ "${{ matrix.variant }}" = "tu" ]; then
-            python scripts/build.py --sdk-dir sdk/${{ matrix.sdk_dir }} --tu tu_packages/
+            manifest=kameorepowered_tu_manifest.toml
           else
-            python scripts/build.py --sdk-dir sdk/${{ matrix.sdk_dir }}
+            manifest=kameorepowered_manifest.toml
           fi
+          "${SDK_ROOT}/bin/rexglue" codegen "${manifest}"
+
+      - name: Build
+        shell: bash
+        run: |
+          preset="${{ matrix.sdk_dir }}-${BUILD_PRESET}"
+          if [ "${{ matrix.variant }}" = "tu" ]; then kameo_tu=ON; else kameo_tu=OFF; fi
+          cmake --preset "${preset}" \
+            -DCMAKE_PREFIX_PATH="${SDK_ROOT}" \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=sccache \
+            -DKAMEO_TU="${kameo_tu}"
+          cmake --build --preset "${preset}" --parallel
+          echo "BUILD_DIR=out/build/${preset}" >> "$GITHUB_ENV"
 
       - name: sccache stats
         if: always()
@@ -143,7 +182,24 @@ jobs:
           else
             out="kameorepowered${variant_tag}-${{ inputs.tag }}-${{ matrix.artifact_suffix }}"
           fi
-          python scripts/build.py --package "${out}"
+
+          # rexglue_configure_target already staged the runtime + GPU plugin
+          # libraries next to the executable, so the build dir is the payload.
+          mkdir -p pkg
+          cp "${BUILD_DIR}"/kameorepowered* pkg/ 2>/dev/null || true
+          cp "${BUILD_DIR}"/*.dll pkg/ 2>/dev/null || true
+          cp "${BUILD_DIR}"/*.so* pkg/ 2>/dev/null || true
+          rm -f pkg/*.pdb pkg/*.ilk
+
+          if [ "${{ matrix.platform }}" = "windows" ]; then
+            archive="${out}.zip"
+            (cd pkg && 7z a -tzip "../${archive}" .)
+          else
+            archive="${out}.tar.gz"
+            tar -czf "${archive}" -C pkg .
+          fi
+          echo "ARTIFACT_PATH=${archive}" >> "$GITHUB_ENV"
+          echo "ARTIFACT_NAME=${out}" >> "$GITHUB_ENV"
 
       - name: Upload CI artifact
         if: inputs.publish_mode == 'artifact'

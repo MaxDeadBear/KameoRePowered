@@ -1,14 +1,14 @@
 [project]
-sdk_version = "0.8.1"
 name = "kameorepowered"
+sdk_version = "0.9.0"
+game_root = "assets"
 
 [entrypoint]
 file_path = "assets/default.xex"
-out_directory_path = "generated"
+out_directory_path = "generated/default"
 includes = [
   "kameorepowered_config.toml",
 ]
 
 setjmp_address  = 0x826CC0E0
 longjmp_address = 0x826CBFC0
-
