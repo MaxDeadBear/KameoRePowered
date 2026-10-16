@@ -14,6 +14,7 @@ The game's PowerPC `default.xex` is translated into native x86-64 code at build 
 - **Story split-screen co-op** for a second player.
 - **Downloadable content**, including the title-update packs the original game could not read.
 - **Texture and movie replacement packs**.
+- **Missed collectibles** left behind by a sequence break are sold back in the tribe shops for score.
 
 ## Getting a build
 
@@ -66,6 +67,19 @@ The game defaults to English. Pick another language in **Options > Gameplay**, o
 ### Downloadable content
 
 Copy your content packages into the save-data folder's `00000002` directory and run `python tools/extract_dlc.py`, which unpacks each one in place.
+
+### Codes
+
+Enter a code on any page of the pause menu (Back) to reveal a feature for good. On the keyboard X, Y, LB and RB are `1`, `2`, Q and E.
+
+| Code | Reveals |
+| ---- | ------- |
+| LB RB LB RB X Y X Y | Level Select, in Options > Gameplay |
+| X X Y Y LB LB RB RB | Unlock All Extras: the game's cheats, costumes, concept art and movies |
+| Y X Y X RB LB RB LB | All Warriors & Upgrades (Battle Points stop while it is on, as with the game's own cheats) |
+| X Y LB RB X Y LB RB | Collectibles: what this area still holds and how many are missed |
+
+A fruit, elixir, Crystal Eye or costume left in a level the story has moved past appears after a tribe shop's own items, priced at the score its pickup awards.
 
 ### Logs and overlay keys
 
