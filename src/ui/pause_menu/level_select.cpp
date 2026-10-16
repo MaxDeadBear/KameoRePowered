@@ -1,7 +1,9 @@
 // Level Select: the story's tasks grouped by region, and starting one the way the storybook's task jump does.
 
 #include <string>
+#include <vector>
 
+#include "engine/kept_progress.h"
 #include "ui/pause_menu/pause_menu_internal.h"
 
 namespace kameo::ui {
@@ -65,7 +67,7 @@ bool AddLevelSelectRows(PPCContext& ctx, uint8_t* base, uint32_t window, Page pa
     return true;
   }
   if (page == Page::ConfirmJump) {
-    AddPageTitle(ctx, base, window, u"Start from \"" + TaskName(ctx, base, g_levelPickedTask) + u"\"? The story is set to this point, replacing your progress.");
+    AddPageTitle(ctx, base, window, u"Start from \"" + TaskName(ctx, base, g_levelPickedTask) + u"\"? The story is set to this point; collectibles are kept.");
     AddCategoryLine(ctx, base, window, kItemJumpStart, u"Start");
     AddCategoryLine(ctx, base, window, kItemJumpCancel, u"Cancel");
     return true;
@@ -135,7 +137,10 @@ void StartPendingLevelJump(PPCContext& ctx, uint8_t* base) {
                                         0x82884F10, 0x8289AED2, 0x8289BA66, 0x82884F12, 0x8289BA68, 0x8289AED4, 0x82885144, 0x82884F14, 0x8289BA6A, 0x8289AED6, 0x82885146, 0x82884F16};
   for (uint32_t address : kClearedWords) REX_STORE_U16(address, 0);
   for (uint32_t address : {0x82885498u, 0x8288549Cu, 0x828854A0u, 0x828854A4u}) REX_STORE_U32(address, 1);
+  // The wipe would also clear collected fruit, upgrades and unlocks, so they are set back before the level loads and hides what was already picked up.
+  const std::vector<uint32_t> kept = engine::DoneProgressEvents(ctx, base);
   CallGuest(ctx, base, sub_822CEA38, uint32_t(task), 1);
+  engine::RestoreProgressEvents(ctx, base, kept);
   CallGuest(ctx, base, sub_822CCD98, uint32_t(task));
   REX_STORE_U32(0x8289B548, 0);
   REX_STORE_U32(0x8289B54C, 0);
