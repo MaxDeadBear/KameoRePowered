@@ -35,5 +35,12 @@ bool CollectibleFound(PPCContext& ctx, uint8_t* base, const Collectible& item);
 bool CollectibleMissed(PPCContext& ctx, uint8_t* base, const Collectible& item);
 // Sets the item's event the way picking it up does, without the score a pickup awards, and saves.
 void GrantCollectible(PPCContext& ctx, uint8_t* base, const Collectible& item);
+// The score picking the item up awards, which is what buying it back costs.
+uint32_t CollectiblePrice(uint8_t* base, const Collectible& item);
+
+// The score banked across the game's twelve score levels, which is the total the game shows.
+uint64_t BankedScore(uint8_t* base);
+// Takes from the largest banked levels first, never leaving one below zero.
+void SpendBankedScore(uint8_t* base, uint64_t amount);
 
 }  // namespace kameo::engine

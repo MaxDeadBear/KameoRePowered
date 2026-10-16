@@ -1,5 +1,6 @@
 #include "engine/collectibles.h"
 
+#include <algorithm>
 #include <string>
 
 #include "engine/current_level.h"
@@ -7,6 +8,16 @@
 
 namespace kameo::engine {
 namespace {
+
+// eventSetEx's table of {event, score} pairs.
+constexpr uint32_t kEventScoreTable = 0x827324F0;
+constexpr uint32_t kEventScoreCount = 135;
+constexpr uint32_t kFallbackPrice = 50000;
+// {u64 score, float time, name, xuid} per score level.
+constexpr uint32_t kScoreBank = 0x8289B458;
+constexpr uint32_t kScoreBankStride = 40;
+constexpr uint32_t kScoreLevelCount = 12;
+constexpr uint64_t kScoreCap = 0x174876E7FFull;
 
 bool OriginalEventDone(PPCContext& ctx, uint8_t* base, uint32_t event) {
   PPCContext call = ctx;
@@ -48,6 +59,33 @@ void GrantCollectible(PPCContext& ctx, uint8_t* base, const Collectible& item) {
   call.r5.u64 = 1;
   sub_822CC508(call, base);
   REX_STORE_U32(kDoingTaskStart, doing_task_start);
+}
+
+uint32_t CollectiblePrice(uint8_t* base, const Collectible& item) {
+  for (uint32_t i = 0; i < kEventScoreCount; ++i) {
+    if (REX_LOAD_U32(kEventScoreTable + 8 * i) == item.event) return REX_LOAD_U32(kEventScoreTable + 8 * i + 4);
+  }
+  return kFallbackPrice;
+}
+
+uint64_t BankedScore(uint8_t* base) {
+  uint64_t total = 0;
+  for (uint32_t i = 0; i < kScoreLevelCount; ++i) total += std::min(REX_LOAD_U64(kScoreBank + kScoreBankStride * i), kScoreCap);
+  return std::min(total, kScoreCap);
+}
+
+void SpendBankedScore(uint8_t* base, uint64_t amount) {
+  while (amount > 0) {
+    uint32_t largest = 0;
+    for (uint32_t i = 1; i < kScoreLevelCount; ++i) {
+      if (REX_LOAD_U64(kScoreBank + kScoreBankStride * i) > REX_LOAD_U64(kScoreBank + kScoreBankStride * largest)) largest = i;
+    }
+    const uint64_t banked = REX_LOAD_U64(kScoreBank + kScoreBankStride * largest);
+    if (banked == 0) return;
+    const uint64_t taken = std::min(banked, amount);
+    REX_STORE_U64(kScoreBank + kScoreBankStride * largest, banked - taken);
+    amount -= taken;
+  }
 }
 
 }  // namespace kameo::engine
