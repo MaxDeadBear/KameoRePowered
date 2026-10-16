@@ -58,6 +58,8 @@ inline constexpr KameoSettingSpec kKameoSettings[] = {
     {nullptr, "kameo_movie_replacements", "Play movies/<name>.mp4 in place of fmv/<name>.bik. With a soundtrack it plays its own sound for its own length; without one only the picture is replaced.", KameoSettingType::Bool, "true"},
     {nullptr, "kameo_story_splitscreen", nullptr, KameoSettingType::Bool, "false"},
     {nullptr, "kameo_unlock_all_extras", nullptr, KameoSettingType::Bool, "false"},
+    {nullptr, "kameo_unlock_all_warriors", nullptr, KameoSettingType::Bool, "false"},
+    {nullptr, "kameo_unlocked_codes", "Features unlocked by pause-menu cheat codes, one bit each.", KameoSettingType::Int, "0"},
     {nullptr, "kameo_skip_cutscenes", "Start skips in-engine cutscenes and every FMV.", KameoSettingType::Bool, "true"},
     {"Controls", "kameo_input_mode", "Player one: 0 = keyboard and mouse, 1 = first available gamepad.", KameoSettingType::Int, "0"},
     {nullptr, "kameo_p2_input_mode", "0 = Co-op gamepad, 1 = Co-op keyboard and mouse (a second physical keyboard is needed when player one also uses one).", KameoSettingType::Int, "0"},

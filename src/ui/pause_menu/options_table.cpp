@@ -7,6 +7,7 @@
 
 #include "app/window_mode.h"
 #include "core/settings.h"
+#include "core/unlock_codes.h"
 #include "engine/audio.h"
 #include "gpu/config.h"
 #include "gpu/movie/movie_replace.h"
@@ -18,6 +19,7 @@
 
 REXCVAR_DECLARE(bool, kameo_story_splitscreen);
 REXCVAR_DECLARE(bool, kameo_unlock_all_extras);
+REXCVAR_DECLARE(bool, kameo_unlock_all_warriors);
 REXCVAR_DECLARE(bool, kameo_skip_cutscenes);
 REXCVAR_DECLARE(int32_t, kameo_language);
 REXCVAR_DECLARE(int32_t, kameo_input_mode);
@@ -41,6 +43,9 @@ using kameo::input::kPlayerControlSettings;
 #define KAMEO_GAME_OPTION(id, page, label, game_value, step, shown) {id, page, label, nullptr, step, game_value, shown}
 
 #define KAMEO_BOOL_OPTION(id, page, label, name) {id, page, label, [] { return OnOff(REXCVAR_GET(name)); }, [](int, bool) { REXCVAR_SET(name, !REXCVAR_GET(name)); }}
+
+// A setting that only shows once its cheat code has been entered.
+#define KAMEO_HIDDEN_BOOL_OPTION(id, page, label, name, code) {id, page, label, [] { return OnOff(REXCVAR_GET(name)); }, [](int, bool) { REXCVAR_SET(name, !REXCVAR_GET(name)); }, nullptr, [] { return KameoCodeUnlocked(code); }}
 
 #define KAMEO_BIND_OPTION(id, label, cvar) {id, Page::Bindings, label, [] { return BindingValue(cvar); }, [](int, bool) { KameoStartKeyCapture(cvar); }}
 #define KAMEO_PAD_OPTION(id, label, cvar) {id, Page::PadBindings, label, [] { return KameoPadBindingLabel(cvar); }, [](int, bool) { KameoStartPadCapture(cvar); }}
@@ -104,7 +109,8 @@ const Option kOptions[] = {
     KAMEO_BOOL_OPTION(0x7A5E0205, Page::Gameplay, u"Skippable Cutscenes", kameo_skip_cutscenes),
     KAMEO_GAME_OPTION(kItemHints, Page::Gameplay, u"Hints", [] { const uint32_t hints = GameSetting(kOrthoHints); return hints == 0 ? 4442 : hints == 1 ? 4443 : 4444; }, [](int direction, bool) { SetGameSetting(kOrthoHints, Cycle3(GameSetting(kOrthoHints), direction)); }, nullptr),
     {0x7A5E0107, Page::Gameplay, u"Language", [] { const int32_t language = ChosenLanguage(); return LanguageName(language) + (uint32_t(language) != KameoRunningLanguage() ? u" (restart)" : u""); }, [](int direction, bool wrap) { REXCVAR_SET(kameo_language, Step(ChosenLanguage(), {1, 2, 3, 4, 5, 6, 7, 8}, direction, wrap)); }},
-    KAMEO_BOOL_OPTION(0x7A5E0204, Page::Gameplay, u"Unlock All Extras", kameo_unlock_all_extras),
+    KAMEO_HIDDEN_BOOL_OPTION(0x7A5E0204, Page::Gameplay, u"Unlock All Extras", kameo_unlock_all_extras, KameoUnlockCode::GameCheats),
+    KAMEO_HIDDEN_BOOL_OPTION(0x7A5E0207, Page::Gameplay, u"All Warriors & Upgrades", kameo_unlock_all_warriors, KameoUnlockCode::Warriors),
     {0x7A5E0201, Page::Mods, u"Texture Replacements", [] { return OnOff(REXCVAR_GET(kameo_gfx_texture_replacements)); }, [](int, bool) { REXCVAR_SET(kameo_gfx_texture_replacements, !REXCVAR_GET(kameo_gfx_texture_replacements)); kameo::gpu::RefreshAllTextureReplacements(); }},
     {0x7A5E0202, Page::Mods, u"Texture Dumping", [] { return OnOff(REXCVAR_GET(kameo_gfx_dump_textures)); }, [](int, bool) { REXCVAR_SET(kameo_gfx_dump_textures, !REXCVAR_GET(kameo_gfx_dump_textures)); if (REXCVAR_GET(kameo_gfx_dump_textures)) kameo::gpu::RequestDumpOfLoadedTextures(); }},
     KAMEO_BOOL_OPTION(0x7A5E0206, Page::Mods, u"Movie Replacements", kameo_movie_replacements),

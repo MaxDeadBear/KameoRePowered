@@ -5,6 +5,7 @@
 #include "engine/dlc/dlc.h"
 #include "engine/guest_addresses.h"
 #include "engine/super_jump.h"
+#include "engine/unlocks.h"
 #include "input/input.h"
 #include "ui/hud/fps_counter.h"
 
@@ -23,6 +24,7 @@ void KameoGameTick() {
   KameoReloadLanguageStringTable(*ctx_ptr, base);
   KameoReplayCachedVolumes(*ctx_ptr, base);
   kameo::engine::ProcessPendingDlcSwap(*ctx_ptr, base);
+  kameo::engine::TickWarriorUnlock(*ctx_ptr, base);
   KameoUpdateSuperJumpFloat(*ctx_ptr, base);
   KameoTickInput();
   KameoTickFpsCounter(*ctx_ptr, base);

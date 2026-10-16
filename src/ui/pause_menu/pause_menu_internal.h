@@ -60,12 +60,15 @@ constexpr uint32_t kItemPlayCredits = 0x7A5E0609;
 constexpr uint32_t kItemLevelSelectPage = 0x7A5E0700;
 constexpr uint32_t kItemLevelChapter = 0x7A5E0710;
 constexpr uint32_t kItemLevelTask = 0x7A5E0800;
+constexpr uint32_t kItemCollectiblesPage = 0x7A5E0900;
+// The tracker's rows, which do nothing when pressed.
+constexpr uint32_t kItemCollectibleRow = 0x7A5E0910;
 
 // The display gamma is shown as a second copy of the game's 28-segment brightness bar, spanning 0.5 to 2.0.
 constexpr int32_t kGammaBarSegments = 28;
 
 // Options is the main menu's list of categories, and ConfirmReset asks before a Restore Defaults.
-enum class Page { None, Video, Audio, Controls, Coop, Gameplay, Mods, Hud, Graphics, Effects, Materials, Camera, Bindings, PadBindings, GameBrightness, Options, ConfirmReset, LevelSelect, LevelChapter, ConfirmJump };
+enum class Page { None, Video, Audio, Controls, Coop, Gameplay, Mods, Hud, Graphics, Effects, Materials, Camera, Bindings, PadBindings, GameBrightness, Options, ConfirmReset, LevelSelect, LevelChapter, ConfirmJump, Collectibles };
 
 struct Option {
   uint32_t id;
@@ -135,6 +138,15 @@ bool PressLevelSelectItem(PPCContext& ctx, uint8_t* base, uint32_t pause, uint32
 bool BackFromLevelSelect(PPCContext& ctx, uint8_t* base, uint32_t pause, uint32_t window, Page page);
 // Starts the task Level Select picked, once the pause menu has closed.
 void StartPendingLevelJump(PPCContext& ctx, uint8_t* base);
+
+// A label and its value on one row, like a setting's.
+void AddToggleRow(PPCContext& ctx, uint8_t* base, uint32_t window, uint32_t id, const std::u16string& label, uint32_t value_text);
+// The collectible tracker page, behind its cheat code; each returns false for anything not its own.
+bool AddCollectibleRows(PPCContext& ctx, uint8_t* base, uint32_t window, Page page);
+bool PressCollectibleItem(PPCContext& ctx, uint8_t* base, uint32_t pause, uint32_t window, uint32_t id);
+bool BackFromCollectibles(PPCContext& ctx, uint8_t* base, uint32_t pause, uint32_t window, Page page);
+// Watches the pause owner's X, Y and bumper presses for a cheat code, and rebuilds the page when one unlocks something.
+void TickCheatCodes(PPCContext& ctx, uint8_t* base, uint32_t pause, uint32_t window, uint32_t pressed);
 
 int32_t GammaBarStep();
 void SetGammaBarStep(int32_t step);

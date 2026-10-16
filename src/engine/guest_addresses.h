@@ -22,6 +22,8 @@ inline constexpr uint32_t kSticks = 0x8276706C;
 inline constexpr uint32_t kCommitTestButtonMask = 0x82731F54;
 // The XLanguage id the string table and Bink language track are chosen from.
 inline constexpr uint32_t kLangCodeGlobal = 0x827556B4;
+// eventSetEx awards an event's score only while this is clear.
+inline constexpr uint32_t kDoingTaskStart = 0x82B71CD8;
 
 inline constexpr auto& ObjectAskObject = __imp__sub_82251DF8;
 inline constexpr auto& ObjectWarpObjectPosAngle = __imp__sub_82252BE0;

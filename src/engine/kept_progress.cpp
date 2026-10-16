@@ -19,8 +19,6 @@ constexpr EventTable kRememberedTables[] = {
     {0x82731F58, 8, 8},     // eventCollectableArray
     {0x82749CB8, 12, 8},    // healthUpgradeEvents
 };
-// eventSetEx awards an event's score only while this is clear.
-constexpr uint32_t kDoingTaskStart = 0x82B71CD8;
 
 }  // namespace
 

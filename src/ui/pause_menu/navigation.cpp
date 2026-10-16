@@ -21,6 +21,7 @@ extern "C" REX_FUNC(sub_823F1028) {
     return;
   }
   if (BackFromLevelSelect(ctx, base, pause, window, g_currentPage)) return;
+  if (BackFromCollectibles(ctx, base, pause, window, g_currentPage)) return;
   const PageInfo* info = FindPage(g_currentPage);
   if (info && info->parent != Page::None) {
     const Page returning_from = info->page;
@@ -86,6 +87,7 @@ extern "C" REX_FUNC(sub_823F1078) {
     return;
   }
   if (PressLevelSelectItem(ctx, base, pause, window, id)) return;
+  if (PressCollectibleItem(ctx, base, pause, window, id)) return;
   if (id == kItemPlayCredits) {
     g_playCreditsRequested = true;
     g_resumeRequested = true;

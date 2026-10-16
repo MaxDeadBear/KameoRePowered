@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include "core/settings.h"
+#include "core/unlock_codes.h"
 #include "ui/pause_menu/option_values.h"
 #include "ui/pause_menu/pause_menu_internal.h"
 
@@ -37,16 +38,9 @@ const PageInfo kPages[] = {
 // The Options page, the pause menu's and the main menu's alike: these categories, the game's own settings page when it has co-op settings to show, and Restore All Defaults.
 constexpr Page kOptionsCategories[] = {Page::Video, Page::Graphics, Page::Audio, Page::Controls, Page::Coop, Page::Gameplay, Page::Mods};
 
-void AddToggleRow(PPCContext& ctx, uint8_t* base, uint32_t window, uint32_t id, const std::u16string& label, uint32_t value_text) {
-  const uint32_t label_text = GuestWideString(label);
-  if (!label_text || !value_text) return;
-  AddTextItem(ctx, base, window, 0, LocalisedString(ctx, base, kLabelFormatString), label_text, 0, false);
-  REX_STORE_U8(kNextTextItemWriteOverPreviousLine, 1);
-  AddTextItem(ctx, base, window, id, LocalisedString(ctx, base, kValueFormatString), value_text, kPauseMenuPressACallback, true);
-}
-
 void AddPageRows(PPCContext& ctx, uint8_t* base, uint32_t window, Page page) {
   if (AddLevelSelectRows(ctx, base, window, page)) return;
+  if (AddCollectibleRows(ctx, base, window, page)) return;
   if (page == Page::Options) {
     AddPageTitle(ctx, base, window, u"Options");
     for (const Page category : kOptionsCategories) AddCategoryLine(ctx, base, window, FindPage(category)->item, FindPage(category)->title);
@@ -72,7 +66,8 @@ void AddPageRows(PPCContext& ctx, uint8_t* base, uint32_t window, Page page) {
     else AddCategoryLine(ctx, base, window, id, label);
   };
   if (page == Page::Video) add_link(kItemBrightness, u"Brightness & Gamma");
-  if (page == Page::Gameplay && g_levelSelectAvailable) add_link(kItemLevelSelectPage, u"Level Select");
+  if (page == Page::Gameplay && g_levelSelectAvailable && KameoCodeUnlocked(KameoUnlockCode::LevelSelect)) add_link(kItemLevelSelectPage, u"Level Select");
+  if (page == Page::Gameplay && g_levelSelectAvailable && KameoCodeUnlocked(KameoUnlockCode::CollectibleTracker)) add_link(kItemCollectiblesPage, u"Collectibles");
   for (const PageInfo& child : kPages) {
     if (child.parent == page) add_link(child.item, child.title);
   }
@@ -80,6 +75,14 @@ void AddPageRows(PPCContext& ctx, uint8_t* base, uint32_t window, Page page) {
 }
 
 }  // namespace
+
+void AddToggleRow(PPCContext& ctx, uint8_t* base, uint32_t window, uint32_t id, const std::u16string& label, uint32_t value_text) {
+  const uint32_t label_text = GuestWideString(label);
+  if (!label_text || !value_text) return;
+  AddTextItem(ctx, base, window, 0, LocalisedString(ctx, base, kLabelFormatString), label_text, 0, false);
+  REX_STORE_U8(kNextTextItemWriteOverPreviousLine, 1);
+  AddTextItem(ctx, base, window, id, LocalisedString(ctx, base, kValueFormatString), value_text, kPauseMenuPressACallback, true);
+}
 
 const PageInfo* FindPage(Page page) {
   for (const PageInfo& info : kPages) {

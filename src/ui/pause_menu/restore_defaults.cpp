@@ -27,7 +27,7 @@ const DefaultSetting kDefaultSettings[] = {
     {Page::Audio, "kameo_volume_master"}, {Page::Audio, "kameo_volume_music"}, {Page::Audio, "kameo_volume_sfx"}, {Page::Audio, "kameo_volume_ambience"}, {Page::Audio, "kameo_volume_speech"}, {Page::Audio, "kameo_volume_cutscenes"},
     {Page::Gameplay, "kameo_language"},
     {Page::Mods, "kameo_gfx_texture_replacements"}, {Page::Mods, "kameo_gfx_dump_textures"}, {Page::Mods, "kameo_movie_replacements"},
-    {Page::Coop, "kameo_story_splitscreen"}, {Page::Gameplay, "kameo_unlock_all_extras"}, {Page::Gameplay, "kameo_skip_cutscenes"},
+    {Page::Coop, "kameo_story_splitscreen"}, {Page::Gameplay, "kameo_unlock_all_extras"}, {Page::Gameplay, "kameo_unlock_all_warriors"}, {Page::Gameplay, "kameo_skip_cutscenes"},
     {Page::Controls, "kameo_input_mode"}, {Page::Coop, "kameo_p2_input_mode"}, {Page::Controls, "kameo_p1_keyboard_device"}, {Page::Coop, "kameo_p2_keyboard_device"}, {Page::Controls, "kameo_p1_mouse_device"}, {Page::Coop, "kameo_p2_mouse_device"}, {Page::Controls, "mnk_mouse"}, {Page::Controls, "mnk_sensitivity"},
     {Page::PadBindings, "padbind_a"}, {Page::PadBindings, "padbind_b"}, {Page::PadBindings, "padbind_x"}, {Page::PadBindings, "padbind_y"},
     {Page::PadBindings, "padbind_left_shoulder"}, {Page::PadBindings, "padbind_right_shoulder"}, {Page::PadBindings, "padbind_left_trigger"}, {Page::PadBindings, "padbind_right_trigger"},
