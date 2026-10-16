@@ -1,0 +1,5 @@
+# Per-frame pump on the game thread: language reload, volume replay, DLC swap, super jump, input and the FPS counter (src/engine/game_tick.cpp).
+
+[[midasm_hook]]
+address = 0x8224F700
+name = "KameoGameTick"

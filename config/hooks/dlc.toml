@@ -1,0 +1,17 @@
+# DLC unlocks and the Kameo skin hot-swap (src/engine/dlc/dlc.cpp).
+
+[[midasm_hook]]
+address = 0x8224F458
+name = "KameoUnlockDlc"
+registers = ["r3"]
+return = true
+
+[[midasm_hook]]
+address = 0x822502A0
+name = "KameoOverrideDlcSelectorMid"
+registers = ["r3", "r4", "r1"]
+
+[[midasm_hook]]
+address = 0x82250540
+name = "KameoShouldSkipNextDlcModelLoad"
+jump_address_on_true = 0x82250544

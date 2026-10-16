@@ -1,0 +1,2 @@
+// llvm-rc compiles a preprocessed copy in the build tree, so the icon is named relative to the source root.
+MAINICON ICON "res/windows/kameo.ico"

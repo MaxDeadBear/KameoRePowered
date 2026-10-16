@@ -1,0 +1,81 @@
+# Infinite energy and health, score bonus, one-shot damage and the warrior unlock (src/engine/cheats.cpp, src/engine/unlocks.cpp).
+
+[[midasm_hook]]
+address = 0x8217F250
+name = "KameoInfiniteEnergy"
+registers = ["r3"]
+
+[[midasm_hook]]
+address = 0x8217F1C0
+name = "KameoInfiniteEnergyCurrent"
+registers = ["r3"]
+return = true
+
+[[midasm_hook]]
+address = 0x8217F330
+name = "KameoInfiniteEnergyMax"
+registers = ["r3"]
+return = true
+
+[[midasm_hook]]
+address = 0x8217F170
+name = "KameoRefillMeterFloat"
+registers = ["r31", "r27"]
+after_instruction = true
+
+[[midasm_hook]]
+address = 0x8217F1AC
+name = "KameoRefillMeterFloat"
+registers = ["r31", "r27"]
+after_instruction = true
+
+[[midasm_hook]]
+address = 0x8217EDC0
+name = "KameoRefillMeterFloatPlus4"
+registers = ["r31", "r27"]
+after_instruction = true
+
+[[midasm_hook]]
+address = 0x8217EDDC
+name = "KameoRefillMeterFloatPlus4"
+registers = ["r31", "r27"]
+after_instruction = true
+
+[[midasm_hook]]
+address = 0x8217EB4C
+name = "KameoRefillHealth"
+registers = ["r29"]
+after_instruction = true
+
+[[midasm_hook]]
+address = 0x8217EB58
+name = "KameoRefillHealth"
+registers = ["r29"]
+after_instruction = true
+
+[[midasm_hook]]
+address = 0x8217EB78
+name = "KameoRefillHealth"
+registers = ["r29"]
+after_instruction = true
+
+# ObjPlayUpdateScore: `add r11, r11, r10` that sums the delta with the current
+# score total. Fires after the add so r11 holds the new total; the hook injects
+# any pending bonus before the `std r11, 0x80(r31)` store.
+[[midasm_hook]]
+address = 0x8217DBB0
+name = "KameoAddScore"
+registers = ["r11"]
+after_instruction = true
+
+# PlayerHitsCalcDamageFocus exit: overrides damage in f31 if the attacker is base Kameo.
+[[midasm_hook]]
+address = 0x821CAA28
+name = "KameoOneShotDamage"
+registers = ["r27", "f31"]
+
+# Entry of kaiSackPopulate: add every warrior before the eventDone-gated adds.
+[[midasm_hook]]
+address = 0x8217CD20
+name = "KameoUnlockAllWarriors"
+registers = ["r3"]

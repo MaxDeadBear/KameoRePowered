@@ -4,9 +4,14 @@ on:
   workflow_call:
     inputs:
       publish_mode:
-        description: "'artifact' for CI workflow-artifact, 'release' for GitHub release"
+        description: "'artifact' for a CI workflow artifact, 'release' for a GitHub release"
         required: true
         type: string
+      build_preset:
+        description: "CMake preset: relwithdebinfo or release"
+        required: false
+        type: string
+        default: relwithdebinfo
       artifact_name:
         description: "Artifact name prefix when publish_mode is 'artifact'"
         required: false
@@ -22,41 +27,54 @@ env:
   ASSETS_REPO: ${{ vars.ASSETS_REPO }}
   ASSET_PATH: default.xex
   ASSET_CACHE_KEY: codegen-assets-v1
-  TU_ASSET_CACHE_KEY: tu-assets-v1
+  # Keep in step with sdk_version in kameorepowered_manifest.toml.
+  SDK_VERSION: v0.10.0
 
 jobs:
   build:
-    name: Build (${{ matrix.variant }}, ${{ matrix.platform }})
+    name: Build (${{ matrix.platform }}, ${{ inputs.build_preset }})
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
-        platform:
-          - windows
-          - linux
-        variant:
-          - vanilla
-          - tu
         include:
           - platform: windows
             runner: windows-latest
             sdk_dir: win-amd64
             artifact_suffix: windows-x64
-
+            compilers: ""
           - platform: linux
             runner: ubuntu-latest
             sdk_dir: linux-amd64
             artifact_suffix: linux-x64
+            compilers: -DCMAKE_C_COMPILER=clang-20 -DCMAKE_CXX_COMPILER=clang++-20
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      # The shader cache is a 225 MB LFS object, so it is restored from the Actions cache rather than re-downloaded every run.
+      - name: List LFS objects
+        shell: bash
+        run: git lfs ls-files --long | cut -d ' ' -f1 | sort > .lfs-assets-id
+
+      - name: Cache LFS objects
+        uses: actions/cache@v5
+        with:
+          path: .git/lfs
+          key: lfs-${{ hashFiles('.lfs-assets-id') }}
+
+      - name: Pull LFS objects
+        shell: bash
+        run: git lfs pull
 
       - name: Install dependencies (Linux)
         if: matrix.platform == 'linux'
         run: |
           wget -qO- https://apt.llvm.org/llvm.sh | sudo bash -s -- 20
-          sudo apt-get install -y ninja-build libgtk-3-dev libx11-xcb-dev
+          sudo apt-get install -y ninja-build libgtk-3-dev libx11-dev libx11-xcb-dev
 
       - name: Install LLVM, CMake, Ninja (Windows)
         if: matrix.platform == 'windows'
@@ -66,11 +84,19 @@ jobs:
         uses: hendrikmuhs/ccache-action@v1.2.22
         with:
           variant: sccache
-          key: ${{ matrix.platform }}-${{ matrix.variant }}-amd64
+          key: ${{ matrix.platform }}-${{ inputs.build_preset }}-amd64
 
       - name: Download ReXGlue SDK
         shell: bash
-        run: python scripts/download-sdk.py sdk/${{ matrix.sdk_dir }} --pinned
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download "${SDK_VERSION}" --repo rexglue/rexglue-sdk \
+            --pattern "*-${{ matrix.sdk_dir }}.zip" --output sdk.zip --clobber
+          unzip -q sdk.zip -d sdk_unpacked
+          mv sdk_unpacked/* sdk
+          chmod +x sdk/bin/rexglue || true
+          echo "REXGLUE_SDK=$PWD/sdk" >> "$GITHUB_ENV"
 
       - name: Cache XEX asset for codegen
         id: asset-cache
@@ -85,46 +111,25 @@ jobs:
           GH_TOKEN: ${{ secrets.ASSETS_TOKEN }}
         shell: bash
         run: |
-          mkdir -p assets
           gh api -H "Accept: application/vnd.github.raw" \
             "repos/${{ env.ASSETS_REPO }}/contents/${{ env.ASSET_PATH }}" \
             > "assets/${{ env.ASSET_PATH }}"
           size=$(wc -c < "assets/${{ env.ASSET_PATH }}")
           echo "Fetched ${{ env.ASSET_PATH }} ($size bytes)"
-          [ "$size" -ge 1048576 ] || { echo "Asset too small — fetch likely failed"; exit 1; }
+          [ "$size" -ge 1048576 ] || { echo "Asset too small, the fetch likely failed"; exit 1; }
 
-      - name: Cache TU packages
-        if: matrix.variant == 'tu'
-        id: tu-cache
-        uses: actions/cache@v5
-        with:
-          path: tu_packages/
-          key: ${{ env.TU_ASSET_CACHE_KEY }}
-
-      - name: Fetch TU packages
-        if: matrix.variant == 'tu' && steps.tu-cache.outputs.cache-hit != 'true'
-        env:
-          GH_TOKEN: ${{ secrets.ASSETS_TOKEN }}
+      - name: Codegen
         shell: bash
-        run: |
-          mkdir -p tu_packages
-          files=$(gh api "repos/${{ env.ASSETS_REPO }}/contents" \
-            --jq '.[] | select(.name | startswith("TU_")) | .name')
-          for f in $files; do
-            gh api -H "Accept: application/vnd.github.raw" \
-              "repos/${{ env.ASSETS_REPO }}/contents/${f}" \
-              > "tu_packages/${f}"
-            echo "Fetched ${f} ($(wc -c < "tu_packages/${f}") bytes)"
-          done
+        run: '"${REXGLUE_SDK}/bin/rexglue" codegen kameorepowered_manifest.toml'
 
       - name: Build
         shell: bash
         run: |
-          if [ "${{ matrix.variant }}" = "tu" ]; then
-            python scripts/build.py --sdk-dir sdk/${{ matrix.sdk_dir }} --tu tu_packages/
-          else
-            python scripts/build.py --sdk-dir sdk/${{ matrix.sdk_dir }}
-          fi
+          preset="${{ inputs.build_preset }}"
+          # The published SDK ships RelWithDebInfo only; the release preset maps onto it.
+          cmake --preset "${preset}" ${{ matrix.compilers }} -DCMAKE_CXX_COMPILER_LAUNCHER=sccache
+          cmake --build --preset "${preset}" --parallel
+          echo "BUILD_DIR=out/build/${preset}" >> "$GITHUB_ENV"
 
       - name: sccache stats
         if: always()
@@ -134,16 +139,28 @@ jobs:
       - name: Package
         shell: bash
         run: |
-          variant_tag=""
-          if [ "${{ matrix.variant }}" = "tu" ]; then
-            variant_tag="-tu"
-          fi
           if [ "${{ inputs.publish_mode }}" = "artifact" ]; then
-            out="${{ inputs.artifact_name }}${variant_tag}-${{ matrix.artifact_suffix }}"
+            out="${{ inputs.artifact_name }}-${{ matrix.artifact_suffix }}"
           else
-            out="kameorepowered${variant_tag}-${{ inputs.tag }}-${{ matrix.artifact_suffix }}"
+            out="kameorepowered-${{ inputs.tag }}-${{ matrix.artifact_suffix }}"
           fi
-          python scripts/build.py --package "${out}"
+
+          # rexglue_setup_target staged the runtime and GPU plugin libraries next to the executable.
+          mkdir -p pkg
+          cp "${BUILD_DIR}"/kameorepowered* pkg/ 2>/dev/null || true
+          cp "${BUILD_DIR}"/*.dll pkg/ 2>/dev/null || true
+          cp "${BUILD_DIR}"/*.so* pkg/ 2>/dev/null || true
+          rm -f pkg/*.pdb pkg/*.ilk
+
+          if [ "${{ matrix.platform }}" = "windows" ]; then
+            archive="${out}.zip"
+            (cd pkg && 7z a -tzip "../${archive}" .)
+          else
+            archive="${out}.tar.gz"
+            tar -czf "${archive}" -C pkg .
+          fi
+          echo "ARTIFACT_PATH=${archive}" >> "$GITHUB_ENV"
+          echo "ARTIFACT_NAME=${out}" >> "$GITHUB_ENV"
 
       - name: Upload CI artifact
         if: inputs.publish_mode == 'artifact'
@@ -157,6 +174,6 @@ jobs:
         if: inputs.publish_mode == 'release'
         uses: actions/upload-artifact@v4
         with:
-          name: release-${{ matrix.variant }}-${{ matrix.platform }}
+          name: release-${{ matrix.platform }}
           path: ${{ env.ARTIFACT_PATH }}
           if-no-files-found: error

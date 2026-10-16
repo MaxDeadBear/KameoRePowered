@@ -1,0 +1,21 @@
+# Per-category volumes, Bink volume and the audio language (src/engine/audio.cpp, src/engine/audio_language.cpp).
+
+[[midasm_hook]]
+address = 0x8230C050
+name = "KameoOverrideVolume"
+registers = ["r3", "f1"]
+
+[[midasm_hook]]
+address = 0x826D21B0
+name = "KameoOverrideBinkVolume"
+registers = ["r5"]
+
+[[midasm_hook]]
+address = 0x822646F0
+name = "KameoSetBinkLanguageTrackVolume"
+registers = ["r27", "r29"]
+
+[[midasm_hook]]
+address = 0x820B5228
+name = "KameoOverrideAudioLanguage"
+registers = ["r3"]

@@ -1,0 +1,47 @@
+# Story split-screen co-op (src/engine/splitscreen.cpp, warrior_sharing.cpp).
+
+# Entry of mainSetupMainRenderInfo: the per-frame player 2 lifecycle, teleports
+# and the triple-tap toggle.
+[[midasm_hook]]
+address = 0x820B6CC0
+name = "KameoSplitScreenTick"
+
+# saveGameFileOpenedForWriting: `lwz r11, isSplitScreenMode` whose `bne` skips
+# the campaign-progress block. Forced to 0 so progress is always written.
+[[midasm_hook]]
+address = 0x820BC128
+name = "KameoSaveGameSplitGate"
+registers = ["r11"]
+after_instruction = true
+
+# storybookCurrentGameDisplayCorrupt: same flag decides "profile corrupt".
+[[midasm_hook]]
+address = 0x823C1A58
+name = "KameoStorybookSplitGate"
+registers = ["r11"]
+after_instruction = true
+
+# PlayerReady: `addi r4, r10, aKai@l` immediately before
+# `bl levelCreatePlayerSetup`. Swaps player 2's object type so he can be spawned
+# as player 1's character (and thus get the warrior wheel).
+[[midasm_hook]]
+address = 0x8226CEE8
+name = "KameoOverridePlayer2Type"
+registers = ["r4"]
+after_instruction = true
+
+# Entry of MorphValid: receives the object with a valid [2680]; captures each
+# player's warrior sack.
+[[midasm_hook]]
+address = 0x821A88C0
+name = "KameoCaptureWarriorSack"
+registers = ["r3"]
+
+# Between `lwz r11, isSplitScreenMode` and the store of the viewport count.
+# Collapses the split while player 2 is parked WITHOUT dropping numWantedPlayers,
+# which would unbind his controller.
+[[midasm_hook]]
+address = 0x820B6D60
+name = "KameoViewportGate"
+registers = ["r10", "r11"]
+after_instruction = true

@@ -1,0 +1,9 @@
+# Crash guards in the game's own render code (src/engine/render_guards.cpp).
+
+# depthEffects_render's table dispatch: validate the computed function pointer
+# before `mtctr r8 ; bctrl`, diverting garbage to a no-op instead of trapping.
+[[midasm_hook]]
+address = 0x8227CB40
+name = "KameoGuardEffectsDispatch"
+registers = ["r8"]
+after_instruction = true

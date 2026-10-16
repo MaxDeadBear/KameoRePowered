@@ -1,0 +1,1108 @@
+diff --git a/XenosRecomp/main.cpp b/XenosRecomp/main.cpp
+index d015145..751a4ba 100644
+--- a/XenosRecomp/main.cpp
++++ b/XenosRecomp/main.cpp
+@@ -88,10 +88,15 @@ int main(int argc, char** argv)
+                 auto shaderContainer = reinterpret_cast<const ShaderContainer*>(fileData.get() + i);
+                 size_t dataSize = shaderContainer->virtualSize + shaderContainer->physicalSize;
+ 
+-                if ((shaderContainer->flags & 0xFFFFFF00) == 0x102A1100 &&
++                // Kameo uses container version 0x0E (Unleashed is 0x11), and the
++                // old field1C/field20 == 0 test is meaningless here: those dwords
++                // fall inside the Shader struct in this layout. Validate with the
++                // fields we actually verified instead. See src/gfx/SHADERS.md.
++                if ((shaderContainer->flags & 0xFFFFFF00) == 0x102A0E00 &&
+                     dataSize <= (fileSize - i) &&
+-                    shaderContainer->field1C == 0 &&
+-                    shaderContainer->field20 == 0)
++                    shaderContainer->shaderOffset != 0 &&
++                    shaderContainer->shaderOffset < shaderContainer->virtualSize &&
++                    (shaderContainer->shaderOffset & 3) == 0)
+                 {
+                     XXH64_hash_t hash = XXH3_64bits(shaderContainer, dataSize);
+                     auto shader = shaders.try_emplace(hash);
+@@ -114,8 +119,20 @@ int main(int argc, char** argv)
+         }
+ 
+         std::atomic<uint32_t> progress = 0;
+-
+-        std::for_each(std::execution::par_unseq, shaders.begin(), shaders.end(), [&](auto& hashShaderPair)
++        std::atomic<uint32_t> skippedNoConstantTable = 0;
++        std::atomic<uint32_t> failedDxil = 0;
++        std::atomic<uint32_t> failedSpirv = 0;
++
++        fmt::print(stderr, "Discovered {} shader containers.\n", shaders.size());
++        fflush(stderr);
++
++        // Sequential, not par_unseq. Parallel runs abort once the batch grows
++        // past ~20 shaders (5 works, 20 does not) with zero DXC errors
++        // reported, which points at the per-thread DxcCompiler instances rather
++        // than at any shader's content -- every shader compiles cleanly when
++        // run on its own. Kameo only has ~134 shaders, so serialising costs
++        // seconds and buys determinism.
++        std::for_each(std::execution::seq, shaders.begin(), shaders.end(), [&](auto& hashShaderPair)
+             {
+                 auto& shader = hashShaderPair.second;
+ 
+@@ -128,13 +145,26 @@ int main(int argc, char** argv)
+                 thread_local DxcCompiler dxcCompiler;
+ 
+ #ifdef XENOS_RECOMP_DXIL
+-                shader.dxil = dxcCompiler.compile(recompiler.out, recompiler.isPixelShader, recompiler.specConstantsMask != 0, false);
+-                assert(shader.dxil != nullptr);
++                // KAMEO: never compile a library. shader_common.h defines g_SpecConstants()
++                // outright, so a spec-constant mask no longer implies lib_6_3 -- see the
++                // comment there for why a library blob cannot reach a graphics PSO.
++                shader.dxil = dxcCompiler.compile(recompiler.out, recompiler.isPixelShader, false, false);
++                // In Release the asserts below vanish, so a failed compile used
++                // to null-deref. Report and skip instead.
++                if (shader.dxil == nullptr)
++                {
++                    ++failedDxil;
++                    return;
++                }
+                 assert(*(reinterpret_cast<uint32_t *>(shader.dxil->GetBufferPointer()) + 1) != 0 && "DXIL was not signed properly!");
+ #endif
+ 
+                 IDxcBlob* spirv = dxcCompiler.compile(recompiler.out, recompiler.isPixelShader, false, true);
+-                assert(spirv != nullptr);
++                if (spirv == nullptr)
++                {
++                    ++failedSpirv;
++                    return;
++                }
+ 
+                 bool result = smolv::Encode(spirv->GetBufferPointer(), spirv->GetBufferSize(), shader.spirv, smolv::kEncodeFlagStripDebugInfo);
+                 assert(result);
+@@ -146,6 +176,12 @@ int main(int argc, char** argv)
+                     fmt::println("Recompiling shaders... {}%", currentProgress / float(shaders.size()) * 100.0f);
+             });
+ 
++        fmt::print(stderr,
++            "discovered={} noReflection={} dxilFailed={} spirvFailed={} succeeded={}\n",
++            shaders.size(), skippedNoConstantTable.load(), failedDxil.load(), failedSpirv.load(),
++            shaders.size() - skippedNoConstantTable - failedDxil - failedSpirv);
++        fflush(stderr);
++
+         fmt::println("Creating shader cache...");
+ 
+         StringBuffer f;
+@@ -211,8 +247,65 @@ int main(int argc, char** argv)
+     {
+         ShaderRecompiler recompiler;
+         size_t fileSize;
+-        recompiler.recompile(readAllBytes(input, fileSize).get(), include);
+-        writeAllBytes(output, recompiler.out.data(), recompiler.out.size());
++        auto fileData = readAllBytes(input, fileSize);
++        recompiler.recompile(fileData.get(), include);
++
++        // Blob mode: compile this one container and write its artefacts next to
++        // `output`, so a caller can drive one PROCESS PER SHADER and merge the
++        // results afterwards.
++        //
++        // This exists because the directory batch mode corrupts the heap once
++        // it has driven DXC a few hundred times in a single process: it is
++        // nondeterministic, gets worse with volume, and survives both
++        // serialisation and per-shader DxcCompiler construction. Every shader
++        // compiles cleanly in a process of its own, so isolate instead of
++        // chasing it. See src/gfx/SHADERS.md.
++        const bool blobMode = (argc >= 5) && (strcmp(argv[4], "--blobs") == 0);
++        if (!blobMode)
++        {
++            writeAllBytes(output, recompiler.out.data(), recompiler.out.size());
++            return 0;
++        }
++
++        const auto container = reinterpret_cast<const ShaderContainer*>(fileData.get());
++        const size_t dataSize = container->virtualSize + container->physicalSize;
++        const XXH64_hash_t hash = XXH3_64bits(container, dataSize);
++
++        DxcCompiler dxcCompiler;
++        std::string base(output);
++
++        size_t dxilSize = 0;
++#ifdef XENOS_RECOMP_DXIL
++        IDxcBlob* dxil = dxcCompiler.compile(recompiler.out, recompiler.isPixelShader, false, false);  // KAMEO: never a library
++        if (dxil == nullptr)
++        {
++            fmt::print(stderr, "FAILED dxil {}\n", input);
++            return 1;
++        }
++        dxilSize = dxil->GetBufferSize();
++        writeAllBytes((base + ".dxil").c_str(), dxil->GetBufferPointer(), dxilSize);
++#endif
++
++        IDxcBlob* spirvBlob = dxcCompiler.compile(recompiler.out, recompiler.isPixelShader, false, true);
++        if (spirvBlob == nullptr)
++        {
++            fmt::print(stderr, "FAILED spirv {}\n", input);
++            return 1;
++        }
++
++        std::vector<uint8_t> spirv;
++        if (!smolv::Encode(spirvBlob->GetBufferPointer(), spirvBlob->GetBufferSize(), spirv, smolv::kEncodeFlagStripDebugInfo))
++        {
++            fmt::print(stderr, "FAILED smolv {}\n", input);
++            return 1;
++        }
++        spirvBlob->Release();
++
++        writeAllBytes((base + ".spirv").c_str(), spirv.data(), spirv.size());
++
++        // hash, dxilSize, spirvSize, specConstantsMask, textureDimensionMask
++        std::string meta = fmt::format("{:X} {} {} {} {}\n", hash, dxilSize, spirv.size(), recompiler.specConstantsMask, recompiler.textureDimensionMask);
++        writeAllBytes((base + ".meta").c_str(), meta.data(), meta.size());
+     }
+ 
+     return 0;
+diff --git a/XenosRecomp/pch.h b/XenosRecomp/pch.h
+index e59682c..8c3540c 100644
+--- a/XenosRecomp/pch.h
++++ b/XenosRecomp/pch.h
+@@ -16,20 +16,33 @@
+ #include <fmt/core.h>
+ #include <string>
+ #include <unordered_map>
++#include <unordered_set>
+ #include <xxhash.h>
+ #include <zstd.h>
+ 
++// MSVC has no __builtin_bswap*; upstream only ever builds this with Clang.
++#if defined(_MSC_VER) && !defined(__clang__)
++#include <cstdlib>
++#define XENOS_BSWAP16(x) _byteswap_ushort(x)
++#define XENOS_BSWAP32(x) _byteswap_ulong(x)
++#define XENOS_BSWAP64(x) _byteswap_uint64(x)
++#else
++#define XENOS_BSWAP16(x) __builtin_bswap16(x)
++#define XENOS_BSWAP32(x) __builtin_bswap32(x)
++#define XENOS_BSWAP64(x) __builtin_bswap64(x)
++#endif
++
+ template<typename T>
+ static T byteSwap(T value)
+ {
+     if constexpr (sizeof(T) == 1)
+         return value;
+     else if constexpr (sizeof(T) == 2)
+-        return static_cast<T>(__builtin_bswap16(static_cast<uint16_t>(value)));
++        return static_cast<T>(XENOS_BSWAP16(static_cast<uint16_t>(value)));
+     else if constexpr (sizeof(T) == 4)
+-        return static_cast<T>(__builtin_bswap32(static_cast<uint32_t>(value)));
+-    else if constexpr (sizeof(T) == 8) 
+-        return static_cast<T>(__builtin_bswap64(static_cast<uint64_t>(value)));
++        return static_cast<T>(XENOS_BSWAP32(static_cast<uint32_t>(value)));
++    else if constexpr (sizeof(T) == 8)
++        return static_cast<T>(XENOS_BSWAP64(static_cast<uint64_t>(value)));
+ 
+     assert(false && "Unexpected byte size.");
+     return value;
+diff --git a/XenosRecomp/shader.h b/XenosRecomp/shader.h
+index 67968f6..7715e46 100644
+--- a/XenosRecomp/shader.h
++++ b/XenosRecomp/shader.h
+@@ -26,14 +26,36 @@ struct DefinitionTable
+     be<uint32_t> definitions[]; // float4, int4 and bool separated by null terminators
+ };
+ 
++// Kameo (v0x0E). s[0] and s[1] are NOT physicalOffset/size -- they are the two
++// shader control registers. D3D::LazyWriteShaders ORs the vertex and pixel s[0]
++// together into device+11616 and their s[1] into device+11620 before emitting
++// them, and D3D::IncrementalShaderPatchAndLoad types the argument
++// `union GPU_PROGRAMCONTROL *`.
++//
++// There is no physicalOffset in this version: LazyWriteShaders programs the GPU
++// with the physical part pointer directly and the length from the container's
++// physicalSize, adding nothing. Use:
++//     ucode      = container + virtualSize
++//     ucodeBytes = physicalSize
++//
++// interpolatorInfo is at s[4] in v0x0E, one slot earlier than v0x11. Evidence
++// is semantic rather than statistical: a matching vertex/pixel shader PAIR
++// always carries the same s[4] (effectsScreenDropletVSH/PSH both 0x2C84,
++// unk_8203E368/unk_8203E600 both 0x3C84), which is exactly the constraint an
++// interpolator count must satisfy since VS outputs must match PS inputs.
++// (interpolatorInfo >> 5) & 0x1F then yields 1..5 across the corpus. s[5] is
++// zero in every one of the 145 shaders.
++//
++// fieldC (svPos) is still the v0x11 shape and is NOT verified; s[3] is zero in
++// every sampled shader, so it may well live elsewhere in this version.
+ struct Shader
+ {
+-    be<uint32_t> physicalOffset;
+-    be<uint32_t> size;
++    be<uint32_t> programControl;   // s[0] GPU_PROGRAMCONTROL (SQ_PROGRAM_CNTL)
++    be<uint32_t> shaderControl;    // s[1] second control register
+     be<uint32_t> field8;
+-    be<uint32_t> fieldC; // svPos register: (fieldC >> 8) & 0xFF
+-    be<uint32_t> field10;
+-    be<uint32_t> interpolatorInfo; // interpolator count: (interpolatorInfo >> 5) & 0x1F
++    be<uint32_t> fieldC; // svPos register: (fieldC >> 8) & 0xFF  [UNVERIFIED for v0x0E]
++    be<uint32_t> interpolatorInfo; // s[4]: (interpolatorInfo >> 5) & 0x1F
++    be<uint32_t> field14;          // s[5]: always zero in Kameo
+ };
+ 
+ enum class DeclUsage : uint32_t
+@@ -69,11 +91,19 @@ struct Interpolator
+     uint32_t : 20;
+ };
+ 
++// Kameo (v0x0E): the element array begins one dword later than in v0x11.
++// XGRegisterVertexShader walks it as `shader + 4*s[6] + 40`, i.e. dword 10,
++// looping s[7] times -- so field18 (s[6]) and vertexElementCount (s[7]) sit
++// exactly where v0x11 puts them, but the array start moved from 0x24 to 0x28.
++// Confirmed on data: BlendFlameVSHDX9VertexShader has field18=1,
++// vertexElementCount=4, and s[11..14] are sequential low-12-bit addresses,
++// which is what the `& 0xFFF` indexing in XGRegisterVertexShader expects.
+ struct VertexShader : Shader
+ {
+     be<uint32_t> field18;
+     be<uint32_t> vertexElementCount;
+     be<uint32_t> field20;
++    be<uint32_t> field24;                          // not present in v0x11
+     be<uint32_t> vertexElementsAndInterpolators[]; // field18 + vertex elements + interpolators
+ };
+ 
+@@ -93,15 +123,32 @@ struct PixelShader : Shader
+     be<uint32_t> interpolators[];
+ };
+ 
++// Kameo (container version 0x0E) rather than Sonic Unleashed (0x11).
++//
++// v0x0E is v0x11 with the `fieldC` dword absent -- every field after it moves
++// one slot earlier, giving a 0x18-byte header instead of 0x24. Verified against
++// all 145 containers in Kameo's default.xex: shaderOffset is always non-zero,
++// 4-aligned and < virtualSize; constantTableOffset (56 non-zero) and
++// definitionTableOffset (20 non-zero) are always in range. Zero violations.
++//
++// The first three fields are confirmed directly from the guest runtime:
++// D3DDevice_CreatePixelShader reads pFunction[1] as virtualSize and
++// pFunction[2] as physicalSize, and takes the microcode from
++// (container + virtualSize) for physicalSize bytes.
++//
++// See src/gfx/SHADERS.md.
++// NOTE the table order is SWAPPED relative to v0x11: definitions come first.
++// Established from data, not analogy -- for unk_8205AFB8, dw4 parses cleanly as
++// a ConstantTableContainer (creator "Microsoft (R) Xbox 360 Shader Compiler
++// 2.0.2099.", target "ps_3_0", version 0xFFFF0300, constants c_0/c_1/c_2/s_0),
++// while dw3 holds {u16 dstOffset, u16 count} records with literal floats
++// (0.5f, -4.0f) that D3DDevice_SetPixelShader replays into device+0x480.
+ struct ShaderContainer
+ {
+-    be<uint32_t> flags;
++    be<uint32_t> flags;                  // 0x102A0Exx; low byte 0 = pixel, 1 = vertex
+     be<uint32_t> virtualSize;
+     be<uint32_t> physicalSize;
+-    be<uint32_t> fieldC;
+-    be<uint32_t> constantTableOffset;
+-    be<uint32_t> definitionTableOffset;
++    be<uint32_t> definitionTableOffset;  // dw3: non-zero in 56 of 145
++    be<uint32_t> constantTableOffset;    // dw4: non-zero in only 20 of 145
+     be<uint32_t> shaderOffset;
+-    be<uint32_t> field1C;
+-    be<uint32_t> field20;
+ };
+\ No newline at end of file
+diff --git a/XenosRecomp/shader_common.h b/XenosRecomp/shader_common.h
+index 1c74034..d555f76 100644
+--- a/XenosRecomp/shader_common.h
++++ b/XenosRecomp/shader_common.h
+@@ -3,6 +3,8 @@
+ 
+ #define SPEC_CONSTANT_R11G11B10_NORMAL  (1 << 0)
+ #define SPEC_CONSTANT_ALPHA_TEST        (1 << 1)
++// Kameo packs NORMAL/TANGENT/BINORMAL as DEC3N, not as Unleashed's 11:11:10.
++#define SPEC_CONSTANT_DEC3N_NORMAL      (1 << 5)
+ 
+ #ifdef UNLEASHED_RECOMP
+     #define SPEC_CONSTANT_BICUBIC_GI_FILTER (1 << 2)
+@@ -43,7 +45,29 @@ struct PushConstants
+     float2 g_HalfPixelOffset : packoffset(c16.z); \
+     float g_AlphaThreshold : packoffset(c17.x);
+ 
+-uint g_SpecConstants();
++// KAMEO: a DEFINITION, not a declaration.
++//
++// Upstream leaves this unresolved and compiles the shader as `lib_6_3` whenever
++// specConstantsMask != 0, so the host can supply the value when it links the
++// library into a state object. A `lib_6_3` blob cannot be put in a normal
++// graphics PSO -- D3D12 rejects it with "Shader version provided: UNRECOGNIZED"
++// and "Input Signature in bytecode could not be parsed" -- and plume ignores
++// the HRESULT, so the failure only surfaces as a crash in SetPipelineState.
++//
++// Only two spec constants exist outside UNLEASHED_RECOMP, and both can be fixed
++// at compile time for this title:
++//
++//   R11G11B10_NORMAL  gates decoding NORMAL/TANGENT/BINORMAL as packed signed
++//                     fields versus asfloat() on the raw bits. Kameo's are
++//                     packed (DEC3N), so the decode is the meaningful branch.
++//   ALPHA_TEST        gates `clip(oC0.w - g_AlphaThreshold)`. Leaving it always
++//                     on is exact as long as the renderer writes a threshold of
++//                     0 when the guest has alpha testing disabled: clip() only
++//                     discards on a negative argument, and alpha is never < 0.
++//
++// Baking them makes every shader a plain vs_6_0 / ps_6_0 and removes the whole
++// library-linking problem. Both branches are folded away by DXC.
++uint g_SpecConstants() { return SPEC_CONSTANT_DEC3N_NORMAL | SPEC_CONSTANT_ALPHA_TEST; }
+ 
+ #endif
+ 
+@@ -65,6 +89,13 @@ float4 tfetch2D(uint resourceDescriptorIndex, uint samplerDescriptorIndex, float
+     return texture.Sample(g_SamplerDescriptorHeap[samplerDescriptorIndex], texCoord + offset / getTexture2DDimensions(texture));
+ }
+ 
++// tfetch with UnnormalizedTextureCoords: the guest passes texel coordinates, not 0..1.
++float4 tfetch2DUnnorm(uint resourceDescriptorIndex, uint samplerDescriptorIndex, float2 texCoord, float2 offset)
++{
++    Texture2D<float4> texture = g_Texture2DDescriptorHeap[resourceDescriptorIndex];
++    return texture.Sample(g_SamplerDescriptorHeap[samplerDescriptorIndex], (texCoord + offset) / getTexture2DDimensions(texture));
++}
++
+ float2 getWeights2D(uint resourceDescriptorIndex, uint samplerDescriptorIndex, float2 texCoord, float2 offset)
+ {
+     Texture2D<float4> texture = g_Texture2DDescriptorHeap[resourceDescriptorIndex];
+@@ -161,8 +192,18 @@ float4 tfetchCube(uint resourceDescriptorIndex, uint samplerDescriptorIndex, flo
+ 
+ float4 tfetchR11G11B10(uint4 value)
+ {
+-    if (g_SpecConstants() & SPEC_CONSTANT_R11G11B10_NORMAL)
++    if (g_SpecConstants() & SPEC_CONSTANT_DEC3N_NORMAL)
++    {
++        // DEC3N: three SIGNED 10-bit fields at bits 0..9, 10..19, 20..29,
++        // normalised by 511. Shifting left by 22 and back right by 22 on a
++        // SIGNED int both masks to 10 bits and sign-extends in one step, since
++        // HLSL's >> on int is arithmetic.
++        int3 f = int3(value.x << 22, value.x << 12, value.x << 2) >> 22;
++        return float4(float3(f) / 511.0, 1.0);
++    }
++    else if (g_SpecConstants() & SPEC_CONSTANT_R11G11B10_NORMAL)
+     {
++        // Unleashed's layout: 10+sign, 10+sign, 9+sign.
+         return float4(
+             (value.x & 0x00000400 ? -1.0 : 0.0) + ((value.x & 0x3FF) / 1024.0),
+             (value.x & 0x00200000 ? -1.0 : 0.0) + (((value.x >> 11) & 0x3FF) / 1024.0),
+diff --git a/XenosRecomp/shader_recompiler.cpp b/XenosRecomp/shader_recompiler.cpp
+index 698a418..d86788f 100644
+--- a/XenosRecomp/shader_recompiler.cpp
++++ b/XenosRecomp/shader_recompiler.cpp
+@@ -94,6 +94,12 @@ static constexpr DeclUsageLocation USAGE_LOCATIONS[] =
+     { DeclUsage::TexCoord, 6, 14 },
+     { DeclUsage::TexCoord, 7, 15 },
+     { DeclUsage::Position, 1, 15 },
++    // KAMEO: 19 shaders take a TEXCOORD8 vertex input. Without an entry here
++    // they get no [[vk::location]] while every sibling gets one, and DXC
++    // rejects the whole shader -- "partial explicit stage input location
++    // assignment via vk::location(X) unsupported" -- so those 19 reached the
++    // cache with DXIL only and drew nothing at all on Vulkan.
++    { DeclUsage::TexCoord, 8, 16 },
+ };
+ 
+ static constexpr std::pair<DeclUsage, size_t> INTERPOLATORS[] =
+@@ -307,7 +313,7 @@ void ShaderRecompiler::recompile(const TextureFetchInstruction& instr, bool bicu
+     switch (instr.dimension)
+     {
+     case TextureDimension::Texture1D:
+-        dimension = "1D";
++        dimension = "2D";
+         componentCount = 1;
+         break;
+     case TextureDimension::Texture2D:
+@@ -326,16 +332,41 @@ void ShaderRecompiler::recompile(const TextureFetchInstruction& instr, bool bicu
+ 
+     out += dimension;
+ 
++    if (instr.opcode == FetchOpcode::TextureFetch && instr.constIndex < 16)
++    {
++        uint32_t dimensionCode = 0;
++        if (instr.dimension == TextureDimension::Texture3D)
++            dimensionCode = 1;
++        else if (instr.dimension == TextureDimension::TextureCube)
++            dimensionCode = 2;
++        textureDimensionMask |= dimensionCode << (instr.constIndex * 2);
++    }
++
++    // texCoordDenorm was parsed and dropped, so unnormalized fetches sampled far outside the
++    // texture and clamped to a corner texel.
++    if (instr.opcode == FetchOpcode::TextureFetch && instr.texCoordDenorm &&
++        instr.dimension == TextureDimension::Texture2D)
++    {
++        out += "Unnorm";
++    }
++
+ #ifdef UNLEASHED_RECOMP
+     if (bicubic)
+         out += "Bicubic";
+ #endif
+ 
+     print("({0}_Texture{1}DescriptorIndex, {0}_SamplerDescriptorIndex, ", constNamePtr, dimension);
++
++    if (instr.dimension == TextureDimension::Texture1D)
++        out += "float2(";
++
+     printSrcRegister(componentCount);
+ 
+     switch (instr.dimension)
+     {
++    case TextureDimension::Texture1D:
++        print(", 0.0), float2({}, 0.0)", instr.offsetX * 0.5f);
++        break;
+     case TextureDimension::Texture2D:
+         print(", float2({}, {})", instr.offsetX * 0.5f, instr.offsetY * 0.5f);
+         break;
+@@ -455,6 +486,13 @@ void ShaderRecompiler::recompile(const AluInstruction& instr)
+             }
+             else
+             {
++                // KAMEO: constant operands take relative-addressing slots in src1, src2, src3 order, so a constant after an earlier constant source uses const1Relative (Xenia's ParseAluInstructionOperand).
++                bool constRelative = instr.const0Relative;
++                if (operand == VECTOR_1)
++                    constRelative = instr.src1Select ? instr.const0Relative : instr.const1Relative;
++                else if (operand == VECTOR_2 || operand == SCALAR_0 || operand == SCALAR_1)
++                    constRelative = (instr.src1Select && instr.src2Select) ? instr.const0Relative : instr.const1Relative;
++
+                 auto findResult = float4Constants.find(reg);
+                 if (findResult != float4Constants.end())
+                 {
+@@ -471,7 +509,7 @@ void ShaderRecompiler::recompile(const AluInstruction& instr)
+                     #endif
+                         {
+                             regFormatted = fmt::format("{}({}{})", constantName,
+-                                reg - findResult->second->registerIndex, instr.const0Relative ? (instr.constAddressRegisterRelative ? " + a0" : " + aL") : "");
++                                reg - findResult->second->registerIndex, constRelative ? (instr.constAddressRegisterRelative ? " + a0" : " + aL") : "");
+                         }
+                     }
+                     else
+@@ -480,9 +518,19 @@ void ShaderRecompiler::recompile(const AluInstruction& instr)
+                         regFormatted = constantName;
+                     }
+                 }
++                else if (constRelative && float4Constants.empty())
++                {
++                    // Relative constant addressing on a register the reflection
++                    // table does not name. This was an assert -- compiled out in
++                    // Release -- followed by emitting the BASE register, so the
++                    // index was silently discarded. Kameo's grass reads
++                    // c[a0 + 12], a four-entry corner-offset table, and without
++                    // the index every corner read c12 and the quad collapsed.
++                    regFormatted = fmt::format("cRel({}{})", reg,
++                        instr.constAddressRegisterRelative ? " + a0" : " + aL");
++                }
+                 else
+                 {
+-                    assert(!instr.const0Relative && !instr.const1Relative);
+                     regFormatted = fmt::format("c{}", reg);
+                 }
+             }
+@@ -663,154 +711,13 @@ void ShaderRecompiler::recompile(const AluInstruction& instr)
+         println("a0 = (int)clamp(floor(({}).w + 0.5), -256.0, 255.0);", op(VECTOR_0));
+     }
+ 
+-    uint32_t vectorWriteMask = instr.vectorWriteMask;
+-    if (instr.exportData)
+-        vectorWriteMask &= ~instr.scalarWriteMask;
+-
+-    if (vectorWriteMask != 0)
+-    {
+-        indent();
+-        if (!exportRegister.empty())
+-        {
+-            out += exportRegister;
+-            out += '.';
+-        }
+-        else
+-        {
+-            print("r{}.", instr.vectorDest);
+-        }
+-
+-        for (size_t i = 0; i < 4; i++)
+-        {
+-            if ((vectorWriteMask >> i) & 0x1)
+-                out += SWIZZLES[i];
+-        }
+-
+-        out += " = ";
+-
+-        if (instr.vectorSaturate)
+-            out += "saturate(";
+-
+-        switch (instr.vectorOpcode)
+-        {
+-        case AluVectorOpcode::Add:
+-            print("{} + {}", op(VECTOR_0), op(VECTOR_1));
+-            break;
+-
+-        case AluVectorOpcode::Mul:
+-            print("{} * {}", op(VECTOR_0), op(VECTOR_1));
+-            break;
+-
+-        case AluVectorOpcode::Max:
+-        case AluVectorOpcode::MaxA:
+-            print("max({}, {})", op(VECTOR_0), op(VECTOR_1));
+-            break;
+-
+-        case AluVectorOpcode::Min:
+-            print("min({}, {})", op(VECTOR_0), op(VECTOR_1));
+-            break;
+-
+-        case AluVectorOpcode::Seq:
+-            print("{} == {}", op(VECTOR_0), op(VECTOR_1));
+-            break;
+-
+-        case AluVectorOpcode::Sgt:
+-            print("{} > {}", op(VECTOR_0), op(VECTOR_1));
+-            break;
+-
+-        case AluVectorOpcode::Sge:
+-            print("{} >= {}", op(VECTOR_0), op(VECTOR_1));
+-            break;
+-
+-        case AluVectorOpcode::Sne:
+-            print("{} != {}", op(VECTOR_0), op(VECTOR_1));
+-            break;
+-
+-        case AluVectorOpcode::Frc:
+-            print("frac({})", op(VECTOR_0));
+-            break;
+-
+-        case AluVectorOpcode::Trunc:
+-            print("trunc({})", op(VECTOR_0));
+-            break;
+-
+-        case AluVectorOpcode::Floor:
+-            print("floor({})", op(VECTOR_0));
+-            break;
+-
+-        case AluVectorOpcode::Mad:
+-            print("{} * {} + {}", op(VECTOR_0), op(VECTOR_1), op(VECTOR_2));
+-            break;
+-
+-        case AluVectorOpcode::CndEq:
+-            print("select({} == 0.0, {}, {})", op(VECTOR_0), op(VECTOR_1), op(VECTOR_2));
+-            break;
+-
+-        case AluVectorOpcode::CndGe:
+-            print("select({} >= 0.0, {}, {})", op(VECTOR_0), op(VECTOR_1), op(VECTOR_2));
+-            break;
+-
+-        case AluVectorOpcode::CndGt:
+-            print("select({} > 0.0, {}, {})", op(VECTOR_0), op(VECTOR_1), op(VECTOR_2));
+-            break;
+-
+-        case AluVectorOpcode::Dp4:
+-        case AluVectorOpcode::Dp3:
+-            print("dot({}, {})", op(VECTOR_0), op(VECTOR_1));
+-            break;
+-
+-        case AluVectorOpcode::Dp2Add:
+-            print("dot({}, {}) + {}", op(VECTOR_0), op(VECTOR_1), op(VECTOR_2));
+-            break;
+-
+-        case AluVectorOpcode::Cube:
+-            print("cube(r{}, cubeMapData)", instr.src1Register);
+-            break;
+-
+-        case AluVectorOpcode::Max4:
+-            print("max4({})", op(VECTOR_0));
+-            break;
+-
+-        case AluVectorOpcode::SetpEqPush:
+-        case AluVectorOpcode::SetpNePush:
+-        case AluVectorOpcode::SetpGtPush:
+-        case AluVectorOpcode::SetpGePush:
+-            print("p0 ? 0.0 : {} + 1.0", op(VECTOR_0));
+-            break;
+-
+-        case AluVectorOpcode::KillEq:
+-            print("any({} == {})", op(VECTOR_0), op(VECTOR_1));
+-            break;
+-
+-        case AluVectorOpcode::KillGt:
+-            print("any({} > {})", op(VECTOR_0), op(VECTOR_1));
+-            break;
+-
+-        case AluVectorOpcode::KillGe:
+-            print("any({} >= {})", op(VECTOR_0), op(VECTOR_1));
+-            break;
+-
+-        case AluVectorOpcode::KillNe:
+-            print("any({} != {})", op(VECTOR_0), op(VECTOR_1));
+-            break;
+-
+-        case AluVectorOpcode::Dst:
+-            print("dst({}, {})", op(VECTOR_0), op(VECTOR_1));
+-            break;
+-        }
+-
+-        if (instr.vectorSaturate)
+-            out += ')';
+-
+-        out += ";\n";
+-    }
+-
++    // Xenos co-issues the vector and scalar halves, so both read the pre-instruction register file: evaluate the scalar half before the vector writeback.
+     if (instr.scalarOpcode != AluScalarOpcode::RetainPrev)
+     {
+         if (instr.scalarOpcode >= AluScalarOpcode::SetpEq && instr.scalarOpcode <= AluScalarOpcode::SetpRstr)
+         {
+             indent();
+-            out += "p0 = ";
++            out += "sp0 = ";
+ 
+             switch (instr.scalarOpcode)
+             {
+@@ -1017,15 +924,175 @@ void ShaderRecompiler::recompile(const AluInstruction& instr)
+ 
+         out += ";\n";
+ 
++        switch (instr.scalarOpcode)
++        {
++        case AluScalarOpcode::MaxAs:
++        case AluScalarOpcode::MaxAsf:
++            indent();
++            println("sa0 = {};", op(SCALAR_0));
++            break;
++        }
++    }
++
++    uint32_t vectorWriteMask = instr.vectorWriteMask;
++    if (instr.exportData)
++        vectorWriteMask &= ~instr.scalarWriteMask;
++
++    if (vectorWriteMask != 0)
++    {
++        indent();
++        if (!exportRegister.empty())
++        {
++            out += exportRegister;
++            out += '.';
++        }
++        else
++        {
++            print("r{}.", instr.vectorDest);
++        }
++
++        for (size_t i = 0; i < 4; i++)
++        {
++            if ((vectorWriteMask >> i) & 0x1)
++                out += SWIZZLES[i];
++        }
++
++        out += " = ";
++
++        if (instr.vectorSaturate)
++            out += "saturate(";
++
++        switch (instr.vectorOpcode)
++        {
++        case AluVectorOpcode::Add:
++            print("{} + {}", op(VECTOR_0), op(VECTOR_1));
++            break;
++
++        case AluVectorOpcode::Mul:
++            print("{} * {}", op(VECTOR_0), op(VECTOR_1));
++            break;
++
++        case AluVectorOpcode::Max:
++        case AluVectorOpcode::MaxA:
++            print("max({}, {})", op(VECTOR_0), op(VECTOR_1));
++            break;
++
++        case AluVectorOpcode::Min:
++            print("min({}, {})", op(VECTOR_0), op(VECTOR_1));
++            break;
++
++        case AluVectorOpcode::Seq:
++            print("{} == {}", op(VECTOR_0), op(VECTOR_1));
++            break;
++
++        case AluVectorOpcode::Sgt:
++            print("{} > {}", op(VECTOR_0), op(VECTOR_1));
++            break;
++
++        case AluVectorOpcode::Sge:
++            print("{} >= {}", op(VECTOR_0), op(VECTOR_1));
++            break;
++
++        case AluVectorOpcode::Sne:
++            print("{} != {}", op(VECTOR_0), op(VECTOR_1));
++            break;
++
++        case AluVectorOpcode::Frc:
++            print("frac({})", op(VECTOR_0));
++            break;
++
++        case AluVectorOpcode::Trunc:
++            print("trunc({})", op(VECTOR_0));
++            break;
++
++        case AluVectorOpcode::Floor:
++            print("floor({})", op(VECTOR_0));
++            break;
++
++        case AluVectorOpcode::Mad:
++            print("{} * {} + {}", op(VECTOR_0), op(VECTOR_1), op(VECTOR_2));
++            break;
++
++        case AluVectorOpcode::CndEq:
++            print("select({} == 0.0, {}, {})", op(VECTOR_0), op(VECTOR_1), op(VECTOR_2));
++            break;
++
++        case AluVectorOpcode::CndGe:
++            print("select({} >= 0.0, {}, {})", op(VECTOR_0), op(VECTOR_1), op(VECTOR_2));
++            break;
++
++        case AluVectorOpcode::CndGt:
++            print("select({} > 0.0, {}, {})", op(VECTOR_0), op(VECTOR_1), op(VECTOR_2));
++            break;
++
++        case AluVectorOpcode::Dp4:
++        case AluVectorOpcode::Dp3:
++            print("dot({}, {})", op(VECTOR_0), op(VECTOR_1));
++            break;
++
++        case AluVectorOpcode::Dp2Add:
++            print("dot({}, {}) + {}", op(VECTOR_0), op(VECTOR_1), op(VECTOR_2));
++            break;
++
++        case AluVectorOpcode::Cube:
++            print("cube(r{}, cubeMapData)", instr.src1Register);
++            break;
++
++        case AluVectorOpcode::Max4:
++            print("max4({})", op(VECTOR_0));
++            break;
++
++        case AluVectorOpcode::SetpEqPush:
++        case AluVectorOpcode::SetpNePush:
++        case AluVectorOpcode::SetpGtPush:
++        case AluVectorOpcode::SetpGePush:
++            print("p0 ? 0.0 : {} + 1.0", op(VECTOR_0));
++            break;
++
++        case AluVectorOpcode::KillEq:
++            print("any({} == {})", op(VECTOR_0), op(VECTOR_1));
++            break;
++
++        case AluVectorOpcode::KillGt:
++            print("any({} > {})", op(VECTOR_0), op(VECTOR_1));
++            break;
++
++        case AluVectorOpcode::KillGe:
++            print("any({} >= {})", op(VECTOR_0), op(VECTOR_1));
++            break;
++
++        case AluVectorOpcode::KillNe:
++            print("any({} != {})", op(VECTOR_0), op(VECTOR_1));
++            break;
++
++        case AluVectorOpcode::Dst:
++            print("dst({}, {})", op(VECTOR_0), op(VECTOR_1));
++            break;
++        }
++
++        if (instr.vectorSaturate)
++            out += ')';
++
++        out += ";\n";
++    }
++
++    if (instr.scalarOpcode != AluScalarOpcode::RetainPrev)
++    {
++        if (instr.scalarOpcode >= AluScalarOpcode::SetpEq && instr.scalarOpcode <= AluScalarOpcode::SetpRstr)
++        {
++            indent();
++            out += "p0 = sp0;\n";
++        }
++
+         switch (instr.scalarOpcode)
+         {
+         case AluScalarOpcode::MaxAs:
+             indent();
+-            println("a0 = (int)clamp(floor({} + 0.5), -256.0, 255.0);", op(SCALAR_0));
+-            break;     
++            out += "a0 = (int)clamp(floor(sa0 + 0.5), -256.0, 255.0);\n";
++            break;
+         case AluScalarOpcode::MaxAsf:
+             indent();
+-            println("a0 = (int)clamp(floor({}), -256.0, 255.0);", op(SCALAR_0));
++            out += "a0 = (int)clamp(floor(sa0), -256.0, 255.0);\n";
+             break;
+         }
+     }
+@@ -1102,16 +1169,27 @@ void ShaderRecompiler::recompile(const uint8_t* shaderData, const std::string_vi
+ {
+     const auto shaderContainer = reinterpret_cast<const ShaderContainer*>(shaderData);
+ 
+-    assert((shaderContainer->flags & 0xFFFFFF00) == 0x102A1100);
+-    assert(shaderContainer->constantTableOffset != NULL);
++    assert((shaderContainer->flags & 0xFFFFFF00) == 0x102A0E00);
+ 
+     out += include;
+     out += '\n';
+ 
+     isPixelShader = (shaderContainer->flags & 0x1) == 0;
+ 
+-    const auto constantTableContainer = reinterpret_cast<const ConstantTableContainer*>(shaderData + shaderContainer->constantTableOffset);
+-    constantTableData = reinterpret_cast<const uint8_t*>(&constantTableContainer->constantTable);
++    // 114 of Kameo's 133 shaders carry no reflection table, so the register file has to be declarable by number alone.
++    const ConstantTableContainer* constantTableContainer = nullptr;
++    uint32_t constantCount = 0;
++    if (shaderContainer->constantTableOffset != NULL)
++    {
++        constantTableContainer = reinterpret_cast<const ConstantTableContainer*>(shaderData + shaderContainer->constantTableOffset);
++        constantTableData = reinterpret_cast<const uint8_t*>(&constantTableContainer->constantTable);
++        constantCount = constantTableContainer->constantTable.constants;
++    }
++
++    // Kameo gives BOTH stages 256 float4 registers: the device stores pixel constants at 0x1780 and the bool constants at 0x2780, exactly 256 * 16 bytes apart.
++    const uint32_t float4RegisterCount = 256;
++    constexpr uint32_t kSamplerRegisterCount = 16;
++    constexpr uint32_t kBoolRegisterCount = 16;
+ 
+     out += "#ifdef __spirv__\n\n";
+ 
+@@ -1120,7 +1198,7 @@ void ShaderRecompiler::recompile(const uint8_t* shaderData, const std::string_vi
+     bool hasIndexCount = false;
+ #endif
+ 
+-    for (uint32_t i = 0; i < constantTableContainer->constantTable.constants; i++)
++    for (uint32_t i = 0; i < constantCount; i++)
+     {
+         const auto constantInfo = reinterpret_cast<const ConstantInfo*>(
+             constantTableData + constantTableContainer->constantTable.constantInfo + i * sizeof(ConstantInfo));
+@@ -1152,7 +1230,7 @@ void ShaderRecompiler::recompile(const uint8_t* shaderData, const std::string_vi
+ 
+             if (constantInfo->registerCount > 1)
+             {
+-                uint32_t tailCount = (isPixelShader ? 224 : 256) - constantInfo->registerIndex;
++                uint32_t tailCount = float4RegisterCount - constantInfo->registerIndex;
+ 
+                 println("#define {}(INDEX) select((INDEX) < {}, vk::RawBufferLoad<float4>(g_PushConstants.{}ShaderConstants + ({} + min(INDEX, {})) * 16, 0x10), 0.0)",
+                     constantName, tailCount, shaderName, constantInfo->registerIndex.get(), tailCount - 1);
+@@ -1187,33 +1265,75 @@ void ShaderRecompiler::recompile(const uint8_t* shaderData, const std::string_vi
+         }
+     }
+ 
++    // Declare every register the reflection table did NOT name. This must run unconditionally: a shader WITH a constant table can still reference registers outside it, because the definition table writes c255.
++    {
++        const char* shaderName = isPixelShader ? "Pixel" : "Vertex";
++
++        for (uint32_t i = 0; i < float4RegisterCount; i++)
++        {
++            if (float4Constants.find(i) == float4Constants.end())
++                println("#define c{} vk::RawBufferLoad<float4>(g_PushConstants.{}ShaderConstants + {}, 0x10)", i, shaderName, i * 16);
++        }
++
++        if (float4Constants.empty())
++            println("#define cRel(i) vk::RawBufferLoad<float4>(g_PushConstants.{}ShaderConstants + (i) * 16, 0x10)", shaderName);
++
++        for (uint32_t i = 0; i < kSamplerRegisterCount; i++)
++        {
++            if (samplers.find(i) != samplers.end())
++                continue;
++
++            for (size_t j = 0; j < std::size(TEXTURE_DIMENSIONS); j++)
++                println("#define s{}_Texture{}DescriptorIndex vk::RawBufferLoad<uint>(g_PushConstants.SharedConstants + {})", i, TEXTURE_DIMENSIONS[j], j * 64 + i * 4);
++
++            println("#define s{}_SamplerDescriptorIndex vk::RawBufferLoad<uint>(g_PushConstants.SharedConstants + {})", i, std::size(TEXTURE_DIMENSIONS) * 64 + i * 4);
++        }
++    }
++
+     out += "\n#else\n\n";
+ 
+     println("cbuffer {}ShaderConstants : register(b{}, space4)", isPixelShader ? "Pixel" : "Vertex", isPixelShader ? 1 : 0);
+     out += "{\n";
+ 
+-    for (uint32_t i = 0; i < constantTableContainer->constantTable.constants; i++)
+-    {
+-        const auto constantInfo = reinterpret_cast<const ConstantInfo*>(
+-            constantTableData + constantTableContainer->constantTable.constantInfo + i * sizeof(ConstantInfo));
++    // Individually named cbuffer members cannot be indexed dynamically, so a register file the reflection table never named is declared as an array instead.
++    const bool indexableRegisterFile = float4Constants.empty();
+ 
+-        if (constantInfo->registerSet == RegisterSet::Float4)
++    if (indexableRegisterFile)
++    {
++        println("\tfloat4 g_Constants[{}] : packoffset(c0);", float4RegisterCount);
++    }
++    else
++    {
++        for (uint32_t i = 0; i < constantCount; i++)
+         {
+-            const char* constantName = reinterpret_cast<const char*>(constantTableData + constantInfo->name);
++            const auto constantInfo = reinterpret_cast<const ConstantInfo*>(
++                constantTableData + constantTableContainer->constantTable.constantInfo + i * sizeof(ConstantInfo));
+ 
+-            print("\tfloat4 {}", constantName);
++            if (constantInfo->registerSet == RegisterSet::Float4)
++            {
++                const char* constantName = reinterpret_cast<const char*>(constantTableData + constantInfo->name);
+ 
+-            if (constantInfo->registerCount > 1)
+-                print("[{}]", constantInfo->registerCount.get());
++                print("\tfloat4 {}", constantName);
+ 
+-            println(" : packoffset(c{});", constantInfo->registerIndex.get());
++                if (constantInfo->registerCount > 1)
++                    print("[{}]", constantInfo->registerCount.get());
+ 
+-            if (constantInfo->registerCount > 1)
+-            {
+-                uint32_t tailCount = (isPixelShader ? 224 : 256) - constantInfo->registerIndex;
+-                println("#define {0}(INDEX) select((INDEX) < {1}, {0}[min(INDEX, {2})], 0.0)", constantName, tailCount, tailCount - 1);
++                println(" : packoffset(c{});", constantInfo->registerIndex.get());
++
++                if (constantInfo->registerCount > 1)
++                {
++                    uint32_t tailCount = float4RegisterCount - constantInfo->registerIndex;
++                    println("#define {0}(INDEX) select((INDEX) < {1}, {0}[min(INDEX, {2})], 0.0)", constantName, tailCount, tailCount - 1);
++                }
+             }
+         }
++
++        // Same register file for the DXIL path, as individually named cbuffer members so `c{reg}` from the expression emitters resolves directly.
++        for (uint32_t i = 0; i < float4RegisterCount; i++)
++        {
++            if (float4Constants.find(i) == float4Constants.end())
++                println("\tfloat4 c{0} : packoffset(c{0});", i);
++        }
+     }
+ 
+     out += "};\n\n";
+@@ -1221,7 +1341,7 @@ void ShaderRecompiler::recompile(const uint8_t* shaderData, const std::string_vi
+     out += "cbuffer SharedConstants : register(b2, space4)\n";
+     out += "{\n";
+ 
+-    for (uint32_t i = 0; i < constantTableContainer->constantTable.constants; i++)
++    for (uint32_t i = 0; i < constantCount; i++)
+     {
+         const auto constantInfo = reinterpret_cast<const ConstantInfo*>(
+             constantTableData + constantTableContainer->constantTable.constantInfo + i * sizeof(ConstantInfo));
+@@ -1241,12 +1361,32 @@ void ShaderRecompiler::recompile(const uint8_t* shaderData, const std::string_vi
+         }
+     }
+ 
++    for (uint32_t i = 0; i < kSamplerRegisterCount; i++)
++    {
++        if (samplers.find(i) != samplers.end())
++            continue;
++
++        for (size_t j = 0; j < std::size(TEXTURE_DIMENSIONS); j++)
++            println("\tuint s{}_Texture{}DescriptorIndex : packoffset(c{}.{});", i, TEXTURE_DIMENSIONS[j], j * 4 + i / 4, SWIZZLES[i % 4]);
++
++        println("\tuint s{}_SamplerDescriptorIndex : packoffset(c{}.{});", i, 4 * std::size(TEXTURE_DIMENSIONS) + i / 4, SWIZZLES[i % 4]);
++    }
++
+     out += "\tDEFINE_SHARED_CONSTANTS();\n";
+     out += "};\n\n";
+ 
++    // Placement is not cosmetic: `packoffset(cN)` uses cN as a register token, so these defines have to come after every cbuffer.
++    if (indexableRegisterFile)
++    {
++        for (uint32_t i = 0; i < float4RegisterCount; i++)
++            println("#define c{} g_Constants[{}]", i, i);
++
++        out += "#define cRel(i) g_Constants[i]\n";
++    }
++
+     out += "#endif\n";
+ 
+-    for (uint32_t i = 0; i < constantTableContainer->constantTable.constants; i++)
++    for (uint32_t i = 0; i < constantCount; i++)
+     {
+         const auto constantInfo = reinterpret_cast<const ConstantInfo*>(
+             constantTableData + constantTableContainer->constantTable.constantInfo + i * sizeof(ConstantInfo));
+@@ -1259,6 +1399,13 @@ void ShaderRecompiler::recompile(const uint8_t* shaderData, const std::string_vi
+         }
+     }
+ 
++    // Bool registers are packed into g_Booleans; the emitter falls back to `b{N}`, so define those to the matching bit test.
++    for (uint32_t i = 0; i < kBoolRegisterCount; i++)
++    {
++        if (boolConstants.find(i) == boolConstants.end())
++            println("\t#define b{} (g_Booleans & (1 << {}))", i, i + (isPixelShader ? 16 : 0));
++    }
++
+     out += '\n';
+ 
+     const auto shader = reinterpret_cast<const Shader*>(shaderData + shaderContainer->shaderOffset);
+@@ -1371,7 +1518,10 @@ void ShaderRecompiler::recompile(const uint8_t* shaderData, const std::string_vi
+     }
+ #endif
+ 
+-    if (shaderContainer->definitionTableOffset != NULL)
++    // D3DDevice_SetPixelShader replays exactly these records into the guest register shadow at bind time and the renderer uploads that shadow wholesale, so baking them into the shader is redundant.
++    constexpr bool kBakeDefinitionTable = false;
++
++    if (kBakeDefinitionTable && shaderContainer->definitionTableOffset != NULL)
+     {
+         auto definitionTable = reinterpret_cast<const DefinitionTable*>(shaderData + shaderContainer->definitionTableOffset);
+         auto definitions = definitionTable->definitions;
+@@ -1418,7 +1568,7 @@ void ShaderRecompiler::recompile(const uint8_t* shaderData, const std::string_vi
+         out += "\n";
+     }
+ 
+-    bool printedRegisters[32]{};
++    bool printedRegisters[64]{};
+ 
+     uint32_t interpolatorCount = (shader->interpolatorInfo >> 5) & 0x1F;
+ 
+@@ -1457,7 +1607,7 @@ void ShaderRecompiler::recompile(const uint8_t* shaderData, const std::string_vi
+         out += "\n";
+     }
+ 
+-    for (size_t i = 0; i < 32; i++)
++    for (size_t i = 0; i < 64; i++)
+     {
+         if (!printedRegisters[i])
+         {
+@@ -1483,6 +1633,8 @@ void ShaderRecompiler::recompile(const uint8_t* shaderData, const std::string_vi
+     out += "\tint aL = 0;\n";
+     out += "\tbool p0 = false;\n";
+     out += "\tfloat ps = 0.0;\n";
++    out += "\tbool sp0 = false;\n";
++    out += "\tfloat sa0 = 0.0;\n";
+     if (isPixelShader)
+     {
+ #ifdef UNLEASHED_RECOMP
+@@ -1491,7 +1643,7 @@ void ShaderRecompiler::recompile(const uint8_t* shaderData, const std::string_vi
+         out += "\tCubeMapData cubeMapData = (CubeMapData)0;\n";
+     }
+ 
+-    const be<uint32_t>* code = reinterpret_cast<const be<uint32_t>*>(shaderData + shaderContainer->virtualSize + shader->physicalOffset);
++    const be<uint32_t>* code = reinterpret_cast<const be<uint32_t>*>(shaderData + shaderContainer->virtualSize);
+ 
+     union
+     {
+@@ -1507,7 +1659,7 @@ void ShaderRecompiler::recompile(const uint8_t* shaderData, const std::string_vi
+ 
+     auto controlFlowCode = code;
+     uint32_t instrAddress = 0;
+-    uint32_t instrSize = shader->size;
++    uint32_t instrSize = shaderContainer->physicalSize;
+     bool simpleControlFlow = true;
+ 
+     while (instrAddress < instrSize)
+diff --git a/XenosRecomp/shader_recompiler.h b/XenosRecomp/shader_recompiler.h
+index b2e317d..6bd6ba4 100644
+--- a/XenosRecomp/shader_recompiler.h
++++ b/XenosRecomp/shader_recompiler.h
+@@ -25,6 +25,7 @@ struct ShaderRecompiler : StringBuffer
+ {
+     uint32_t indentation = 0;
+     bool isPixelShader = false;
++    bool noConstantTable = false; // set when the shader has no D3DX reflection table
+     const uint8_t* constantTableData = nullptr;
+     std::unordered_map<uint32_t, VertexElement> vertexElements;
+     std::unordered_map<uint32_t, std::string> interpolators;
+@@ -33,6 +34,10 @@ struct ShaderRecompiler : StringBuffer
+     std::unordered_map<uint32_t, const char*> samplers;
+     std::unordered_map<uint32_t, uint32_t> ifEndLabels;
+     uint32_t specConstantsMask = 0;
++    // 2 bits per sampler slot: 0 = Texture2D, 1 = Texture3D, 2 = TextureCube. The host cannot tell
++    // from the fetch constant alone which heap the shader will index, and a 2D resource read
++    // through a Texture3D view samples zero.
++    uint32_t textureDimensionMask = 0;
+ 
+ #ifdef UNLEASHED_RECOMP
+     bool hasMtxProjection = false;
