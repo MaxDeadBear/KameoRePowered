@@ -70,6 +70,7 @@ extern "C" REX_FUNC(sub_823EFB78) {
     }
     return;
   }
+  if (window && g_currentPage != Page::None) ScrollToWholeLine(base, window);
   if (window && pause) TickCheatCodes(ctx, base, pause, window, REX_LOAD_U32(PlayerStick(base, PausePlayer(base, pause)) + kStickPressed));
   const uint32_t page_id = record ? REX_LOAD_U32(record + 120) : 0;
   const Option* option = window && (page_id == 1 || page_id == 2) ? FindOption(SelectedItemId(base, window, SelectedIndex(base, window))) : nullptr;

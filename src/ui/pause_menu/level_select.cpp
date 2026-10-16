@@ -50,6 +50,13 @@ std::u16string TaskName(PPCContext& ctx, uint8_t* base, uint32_t task) {
   return name.empty() ? Number(int32_t(task), u"") : name;
 }
 
+// Most task names end in their area's name, which the chapter page already shows as its title.
+std::u16string WithoutChapter(const std::u16string& name, const std::u16string& chapter) {
+  const std::u16string suffix = u" - " + chapter;
+  if (name.size() > suffix.size() && name.compare(name.size() - suffix.size(), suffix.size(), suffix) == 0) return name.substr(0, name.size() - suffix.size());
+  return name;
+}
+
 uint32_t PickedTaskIndex() { return g_levelPickedTask - kLevelChapters[g_levelChapter].first_task; }
 
 }  // namespace
@@ -63,11 +70,12 @@ bool AddLevelSelectRows(PPCContext& ctx, uint8_t* base, uint32_t window, Page pa
   if (page == Page::LevelChapter) {
     const LevelChapter& chapter = kLevelChapters[g_levelChapter];
     AddPageTitle(ctx, base, window, chapter.title);
-    for (uint32_t task = chapter.first_task; task <= chapter.last_task; ++task) AddCategoryLine(ctx, base, window, kItemLevelTask + task, Number(int32_t(task - chapter.first_task + 1), u". ") + TaskName(ctx, base, task));
+    for (uint32_t task = chapter.first_task; task <= chapter.last_task; ++task) AddCategoryLine(ctx, base, window, kItemLevelTask + task, Number(int32_t(task - chapter.first_task + 1), u". ") + WithoutChapter(TaskName(ctx, base, task), chapter.title));
     return true;
   }
   if (page == Page::ConfirmJump) {
-    AddPageTitle(ctx, base, window, u"Start from \"" + TaskName(ctx, base, g_levelPickedTask) + u"\"? The story is set to this point; collectibles are kept.");
+    AddPageTitle(ctx, base, window, u"Start from \"" + TaskName(ctx, base, g_levelPickedTask) + u"\"?");
+    if (const uint32_t note = GuestWideString(u"The story is set to this point;\ncollectibles are kept.")) AddTextItem(ctx, base, window, 0, GuestWideString(u"{alignment='centre' size='21'}"), note, 0, false);
     AddCategoryLine(ctx, base, window, kItemJumpStart, u"Start");
     AddCategoryLine(ctx, base, window, kItemJumpCancel, u"Cancel");
     return true;

@@ -1,6 +1,7 @@
 // Where our lines go into the game's own pause pages as it builds them, and the scroll fix that keeps headings in view.
 
 #include <algorithm>
+#include <cmath>
 
 #include "ui/hud/key_labels.h"
 #include "ui/pause_menu/pause_menu_internal.h"
@@ -62,13 +63,10 @@ extern "C" REX_FUNC(sub_8210A4C8) {
   __imp__sub_8210A4C8(ctx, base);
 }
 
-// textWindowScrollToMenuItem(window, index, seconds) -- the game scrolls the selected line to the top, so a heading above the first line never scrolls back into view.
-extern "C" REX_FUNC(sub_8210ACA0) {
-  const uint32_t window = ctx.r3.u32;
-  const uint32_t index = ctx.r4.u32 & 0xFF;
-  const float seconds = float(ctx.f1.f64);
-  __imp__sub_8210ACA0(ctx, base);
-  if (!window) return;
+namespace {
+
+// The game scrolls the selected line to the top, so a heading above the first line never scrolls back into view.
+void KeepHeadingInView(uint8_t* base, uint32_t window, uint32_t index, float seconds) {
   const uint32_t text_object = TextObjectOf(base, window);
   const uint32_t menu = MenuOf(base, text_object);
   uint32_t heading = 0;
@@ -93,6 +91,46 @@ extern "C" REX_FUNC(sub_8210ACA0) {
     }
     return;
   }
+}
+
+// Lines draw their descenders below their own box, so a scroll stopping on a line boundary still shows the tails of the line above; a quarter of a line further on hides them and stays clear of the next line's glyphs.
+constexpr float kScrollPastBoundary = 0.25f;
+
+void SnapScrollToWholeLine(uint8_t* base, uint32_t window, float seconds) {
+  const uint32_t text_object = TextObjectOf(base, window);
+  const uint32_t menu = MenuOf(base, text_object);
+  if (!menu) return;
+  const float target = LoadFloat(base, menu + kMenuScrollTarget);
+  if (target <= 0.0f) return;
+  for (uint32_t item = REX_LOAD_U32(text_object + kTextFirstItem); item; item = REX_LOAD_U32(item + kItemNext)) {
+    const float top = LoadFloat(base, item + kItemTop);
+    const float height = LoadFloat(base, item + kItemHeight);
+    const float line_height = height / float(std::max<uint32_t>(1, REX_LOAD_U8(item + kItemLineCount)));
+    if (line_height <= 0.0f || target < top || target >= top + height) continue;
+    const float snapped = top + (std::ceil((target - top) / line_height - kScrollPastBoundary - 0.01f) + kScrollPastBoundary) * line_height;
+    if (std::abs(snapped - target) < 0.5f) return;
+    StoreFloat(base, menu + kMenuScrollTarget, snapped);
+    if (seconds == 0.0f) {
+      StoreFloat(base, menu + kMenuScrollStart, snapped);
+      StoreFloat(base, menu + kMenuScroll, snapped);
+    }
+    return;
+  }
+}
+
+}  // namespace
+
+void kameo::ui::ScrollToWholeLine(uint8_t* base, uint32_t window) { SnapScrollToWholeLine(base, window, 1.0f); }
+
+// textWindowScrollToMenuItem(window, index, seconds)
+extern "C" REX_FUNC(sub_8210ACA0) {
+  const uint32_t window = ctx.r3.u32;
+  const uint32_t index = ctx.r4.u32 & 0xFF;
+  const float seconds = float(ctx.f1.f64);
+  __imp__sub_8210ACA0(ctx, base);
+  if (!window) return;
+  KeepHeadingInView(base, window, index, seconds);
+  if (g_currentPage != Page::None) SnapScrollToWholeLine(base, window, seconds);
 }
 
 // xfixgem_pauseMenu_setupButtonPrompts(window) -- builds the main pause page.

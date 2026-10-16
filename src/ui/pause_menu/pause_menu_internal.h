@@ -147,6 +147,8 @@ bool PressCollectibleItem(PPCContext& ctx, uint8_t* base, uint32_t pause, uint32
 bool BackFromCollectibles(PPCContext& ctx, uint8_t* base, uint32_t pause, uint32_t window, Page page);
 // Watches the pause owner's X, Y and bumper presses for a cheat code, and rebuilds the page when one unlocks something.
 void TickCheatCodes(PPCContext& ctx, uint8_t* base, uint32_t pause, uint32_t window, uint32_t pressed);
+// Moves a scroll that stops part way through a line on to that line's end, so no cut-off half line shows at the top.
+void ScrollToWholeLine(uint8_t* base, uint32_t window);
 
 int32_t GammaBarStep();
 void SetGammaBarStep(int32_t step);
