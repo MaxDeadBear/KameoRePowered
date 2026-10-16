@@ -203,7 +203,6 @@ extern "C" REX_FUNC(sub_826BA2F0) {
       else keyboard.gamepad.right_trigger = 255;
     }
   }
-  if (user == 1) TraceP2KeyboardPoll(base, have_aggregate, have_device_keyboard, aggregate, device_keyboard, keyboard);
   SuppressPlayerOneActivation(user, &keyboard.gamepad);
   std::memcpy(base + state, &keyboard, sizeof(keyboard));
   ctx.r3.u64 = 0;

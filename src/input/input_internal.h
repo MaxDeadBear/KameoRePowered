@@ -115,9 +115,4 @@ void ApplyCursorVisibility(bool menu_open);
 void InstallKameoCursor(rex::ui::Window* window);
 #endif
 
-// input_trace.cpp
-void TraceMouseMove(rex::ui::MouseEvent& e);
-void TraceP2KeyboardPoll(uint8_t* base, bool have_aggregate, bool have_device_keyboard, const rex::input::X_INPUT_STATE& aggregate, const rex::input::X_INPUT_STATE& device_keyboard, const rex::input::X_INPUT_STATE& output);
-void TraceP2Controls(uint8_t* base, uint32_t player);
-
 }  // namespace kameo::input::detail

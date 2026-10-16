@@ -98,7 +98,6 @@ extern "C" REX_FUNC(sub_8222BF68) {
 extern "C" REX_FUNC(sub_8217BEC8) {
   const uint32_t player = ctx.r3.u32;
   __imp__sub_8217BEC8(ctx, base);
-  TraceP2Controls(base, player);
   if (!player || player != g_sprayObject) return;
   const uint32_t controls = REX_LOAD_U32(player + 2672);
   float dx = 0.0f;

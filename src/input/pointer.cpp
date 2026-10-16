@@ -52,7 +52,6 @@ void MouseListener::OnKeyDown(rex::ui::KeyEvent&) { g_keyboardMouseUsed.store(Ka
 
 void MouseListener::OnMouseMove(rex::ui::MouseEvent& e) {
   Record(e);
-  TraceMouseMove(e);
   std::lock_guard<std::mutex> lock(mutex);
   look_dx += e.dx();
   look_dy += e.dy();
