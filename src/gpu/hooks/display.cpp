@@ -102,3 +102,15 @@ extern "C" REX_FUNC(sub_8213CE80) {
     REX_STORE_U32(x, bits);
   }
 }
+
+// xfixgem_renderThread_initVideoModeParams() -- the game only takes its 1280x720 branch for a HiDef mode at least 720 tall, and a smaller window reports one that is not, which leaves the native renderer a 640x480 standard-definition frame it draws black.
+extern "C" REX_FUNC(sub_820BECA8) {
+  __imp__sub_820BECA8(ctx, base);
+  constexpr uint32_t kKamVideoParams = 0x8275D248;
+  REX_STORE_U16(kKamVideoParams + 0x00, 1280);
+  REX_STORE_U16(kKamVideoParams + 0x02, 720);
+  REX_STORE_U8(kKamVideoParams + 0x04, 1);
+  REX_STORE_U8(kKamVideoParams + 0x1F, 1);
+  REX_STORE_U32(kKamVideoParams + 0x24, 0);
+  REX_STORE_U32(0x82B70B34, 0);
+}
