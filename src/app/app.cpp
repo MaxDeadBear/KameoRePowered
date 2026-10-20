@@ -20,6 +20,7 @@
 
 #include "app/process.h"
 #include "app/window_mode.h"
+#include "core/crash_reporter.h"
 #include "core/fp_guard.h"
 #include "core/settings.h"
 #include "engine/audio.h"
@@ -168,6 +169,7 @@ void KameoApp::OnPostSetup() {
   if (lang > 1) {
     kameo::app::RegisterLanguageRedirects(*runtime()->file_system(), lang);
   }
+  CrashForTestIfAsked();
 #ifndef _WIN32
   // Installed after SDK setup so it overrides any SDK-installed SIGFPE handler.
   veh_handle_ = InstallGuestFpExceptionHandlerPosix();
@@ -184,6 +186,8 @@ void KameoApp::OnPostInitLogging() {
   // ReXApp keeps its capture sink private, so the console overlay is given one registered here.
   kameo_log_sink_ = std::make_shared<rex::LogCaptureSink>();
   rex::AddSink(kameo_log_sink_);
+  // As early as a crash can be logged: a report from another machine otherwise ends at the last ordinary line.
+  InstallCrashReporter();
   KameoWaitForReplacedProcess();
   KameoLoadSettings();
 }

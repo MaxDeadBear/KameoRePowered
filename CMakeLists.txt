@@ -51,10 +51,17 @@ target_include_directories(kameorepowered PRIVATE
 # plume is a static library, so its D3D12 imports are satisfied here; Vulkan is loaded through volk.
 target_link_libraries(kameorepowered PRIVATE plume)
 if(WIN32)
-    target_link_libraries(kameorepowered PRIVATE d3d12 mfplat mfreadwrite mfuuid ole32 xaudio2)
+    # dbghelp writes the crash reporter's minidump.
+    target_link_libraries(kameorepowered PRIVATE d3d12 dbghelp mfplat mfreadwrite mfuuid ole32 xaudio2)
 elseif(UNIX AND NOT APPLE)
     # plume only builds Xlib surfaces on Linux, and the guest memory-free wrappers find the runtime's exports through dlsym.
     target_link_libraries(kameorepowered PRIVATE X11 ${CMAKE_DL_LIBS})
+endif()
+
+# Release keeps a PDB too (published beside a release, never inside it), so the module+offset frames in a crash report resolve to functions. RelWithDebInfo has one from CMake's own defaults.
+if(WIN32 AND CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND NOT MSVC)
+    target_compile_options(kameorepowered PRIVATE $<$<CONFIG:Release>:-g -Xclang -gcodeview>)
+    target_link_options(kameorepowered PRIVATE $<$<CONFIG:Release>:-g>)
 endif()
 
 # The xenos plugin stays staged as the reference renderer behind --kameo_native_renderer=false.

@@ -155,6 +155,12 @@ jobs:
           if [ "${{ matrix.platform }}" = "windows" ]; then
             archive="${out}.zip"
             (cd pkg && 7z a -tzip "../${archive}" .)
+            # The PDB goes beside the build, never in it: a crash report's module+offset frames resolve against it.
+            if [ -f "${BUILD_DIR}/kameorepowered.pdb" ]; then
+              mkdir -p symbols && cp "${BUILD_DIR}/kameorepowered.pdb" symbols/
+              (cd symbols && 7z a -tzip "../${out}-symbols.zip" .)
+              echo "SYMBOLS_PATH=${out}-symbols.zip" >> "$GITHUB_ENV"
+            fi
           else
             archive="${out}.tar.gz"
             tar -czf "${archive}" -C pkg .
@@ -170,10 +176,19 @@ jobs:
           path: pkg/
           if-no-files-found: error
 
+      - name: Upload CI symbols
+        if: inputs.publish_mode == 'artifact' && env.SYMBOLS_PATH != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_NAME }}-symbols
+          path: ${{ env.SYMBOLS_PATH }}
+
       - name: Upload release artifact
         if: inputs.publish_mode == 'release'
         uses: actions/upload-artifact@v4
         with:
           name: release-${{ matrix.platform }}
-          path: ${{ env.ARTIFACT_PATH }}
+          path: |
+            ${{ env.ARTIFACT_PATH }}
+            ${{ env.SYMBOLS_PATH }}
           if-no-files-found: error
