@@ -15,6 +15,7 @@
 #include <rex/cvar.h>
 #include <rex/filesystem.h>
 #include <rex/logging.h>
+#include <rex/ppc/func.h>
 
 REXCVAR_DEFINE_BOOL(kameo_crash_test, false, "Kameo", "Crash on purpose once the game is set up, to check that the crash report is written.");
 
@@ -56,7 +57,21 @@ const char* ExceptionName(DWORD code) {
   }
 }
 
-// module+offset, which the matching PDB resolves to a function; the executable's offsets cover the recompiled guest code too.
+// A frame inside recompiled game code is named by its guest function, the same in every build and what the disassembly uses, so it needs no symbols at all. The function holding the address comes from the unwind tables, and it is guest code exactly when its start is a mapping entry; host code that follows the last recompiled function in memory is not mistaken for it.
+bool DescribeGuestFunction(uint64_t address, char* out, size_t out_size) {
+  DWORD64 image_base = 0;
+  const RUNTIME_FUNCTION* function = RtlLookupFunctionEntry(address, &image_base, nullptr);
+  if (function == nullptr) return false;
+  const uint64_t start = image_base + function->BeginAddress;
+  for (const PPCFuncMapping* mapping = PPCFuncMappings; mapping->host != nullptr; ++mapping) {
+    if (reinterpret_cast<uint64_t>(mapping->host) != start) continue;
+    snprintf(out, out_size, "sub_%08llX+0x%llX", static_cast<unsigned long long>(mapping->guest), static_cast<unsigned long long>(address - start));
+    return true;
+  }
+  return false;
+}
+
+// module+offset, which the matching PDB resolves to a function, plus the guest function for a frame in recompiled code.
 void DescribeAddress(uint64_t address, char* out, size_t out_size) {
   HMODULE module = nullptr;
   if (GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, reinterpret_cast<LPCWSTR>(address), &module) && module) {
@@ -64,7 +79,9 @@ void DescribeAddress(uint64_t address, char* out, size_t out_size) {
     GetModuleFileNameW(module, path, MAX_PATH);
     const wchar_t* name = wcsrchr(path, L'\\');
     name = name ? name + 1 : path;
-    snprintf(out, out_size, "%ls+0x%llX", name, static_cast<unsigned long long>(address - reinterpret_cast<uint64_t>(module)));
+    char guest[64];
+    const bool in_guest_code = module == GetModuleHandleW(nullptr) && DescribeGuestFunction(address, guest, sizeof(guest));
+    snprintf(out, out_size, "%ls+0x%llX%s%s", name, static_cast<unsigned long long>(address - reinterpret_cast<uint64_t>(module)), in_guest_code ? "  guest " : "", in_guest_code ? guest : "");
   } else {
     snprintf(out, out_size, "0x%016llX (no module)", static_cast<unsigned long long>(address));
   }
@@ -176,6 +193,10 @@ void InstallCrashReporter() {
 
 void CrashForTestIfAsked() {
   if (!REXCVAR_GET(kameo_crash_test)) return;
+  // The guest lookup is checked on a known entry, since the test crash itself is in host code.
+  char where[MAX_PATH + 96];
+  DescribeAddress(reinterpret_cast<uint64_t>(PPCFuncMappings[1].host) + 0x10, where, sizeof(where));
+  REXLOG_WARN("kameo_crash_test: guest lookup self-check (expect sub_{:08X}+0x10): {}", static_cast<unsigned long long>(PPCFuncMappings[1].guest), where);
   REXLOG_WARN("kameo_crash_test: crashing on purpose");
   volatile int* nowhere = nullptr;
   *nowhere = 1;
