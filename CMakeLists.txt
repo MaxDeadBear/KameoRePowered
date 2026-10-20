@@ -58,7 +58,7 @@ elseif(UNIX AND NOT APPLE)
     target_link_libraries(kameorepowered PRIVATE X11 ${CMAKE_DL_LIBS})
 endif()
 
-# Release keeps a PDB too (published beside a release, never inside it), so the module+offset frames in a crash report resolve to functions. RelWithDebInfo has one from CMake's own defaults.
+# Release keeps a PDB too, so the module+offset frames in a crash report resolve to functions. It stays with whoever built it: CI drops it from the archive and publishes no symbols. RelWithDebInfo has one from CMake's own defaults.
 if(WIN32 AND CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND NOT MSVC)
     target_compile_options(kameorepowered PRIVATE $<$<CONFIG:Release>:-g -Xclang -gcodeview>)
     target_link_options(kameorepowered PRIVATE $<$<CONFIG:Release>:-g>)
