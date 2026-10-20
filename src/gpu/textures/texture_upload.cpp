@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstring>
 #include <set>
+#include <unordered_set>
 #include <vector>
 
 #include <plume_render_interface.h>
@@ -31,6 +32,9 @@ uint32_t g_mipChainsTruncated = 0;
 namespace {
 
 std::vector<uint8_t> g_untileScratch;
+
+// Textures the device refused, by cache key: a refusal is deterministic, and retrying it on every draw that binds the texture (one creation per 4 ms on a GTX 1060) is what a 3 fps level looked like. The fallback stands in instead.
+std::unordered_set<uint64_t> g_refusedTextures;
 
 // One untiled mip level, staged for a placed-footprint copy.
 struct MipUpload {
@@ -175,6 +179,9 @@ uint32_t EnsureTexture(uint8_t* base, GraphicsSystem::DrawPathContext& ctx, plum
     }
     return found->second.heap_index;
   }
+  if (g_refusedTextures.count(key)) {
+    return 0;
+  }
 
   HostTextureFormat host = MapTextureFormat(format);
   if (host.format == plume::RenderFormat::UNKNOWN || width == 0 || height == 0) {
@@ -265,6 +272,17 @@ uint32_t EnsureTexture(uint8_t* base, GraphicsSystem::DrawPathContext& ctx, plum
     }
   }
 
+  // Xenos DXN orders the two BC4 halves of each block the other way round from BC5, which transposes X and Y of every normal; swap them on the untiled copy, before any branch below decodes the blocks.
+  if (format == kXenosFormat_DXN && REXCVAR_GET(kameo_gfx_dxn_swap)) {
+    uint8_t* blocks = g_untileScratch.data();
+    for (size_t off = 0; off + 16 <= linear_bytes; off += 16) {
+      uint8_t tmp[8];
+      std::memcpy(tmp, blocks + off, 8);
+      std::memcpy(blocks + off, blocks + off + 8, 8);
+      std::memcpy(blocks + off + 8, tmp, 8);
+    }
+  }
+
   std::vector<uint8_t> expanded;
   const uint8_t* pixels = g_untileScratch.data();
   uint32_t dst_row_bytes = src_row_bytes;
@@ -302,15 +320,23 @@ uint32_t EnsureTexture(uint8_t* base, GraphicsSystem::DrawPathContext& ctx, plum
     dst_row_bytes = width * 4;
     host.format = plume::RenderFormat::R8G8B8A8_UNORM;
     host.block_bytes = 4;
-  } else if (host.block == 4 && fetch.swizzle() != kSwizzleIdentity) {
+  } else if (host.block == 4 && (fetch.swizzle() != kSwizzleIdentity || width % 4 != 0 || height % 4 != 0)) {
     // A block-compressed view cannot carry a swizzle, so the constant selectors forcing a channel to 0 or 1 were dropped and every sample returned the stored alpha.
+    // A block-compressed texture whose top level is not a multiple of 4 (the game has 2x2 DXT1 textures, one block each) is refused outright by Windows 10's D3D12 runtime, while Windows 11's accepts it: a GTX 1060 lost every such texture and retried it every draw, at 3 fps.
+    const bool small_blocks = width % 4 != 0 || height % 4 != 0;
+    if (small_blocks) {
+      static uint32_t reported = 0;
+      if (reported++ < 4) KGFX_INFO("texture {:08X} {}x{} format {} is block-compressed below a 4x4 block; decoded to RGBA8", address, width, height, format);
+    }
     expanded.resize(size_t(width) * height * 4 * depth);
     for (uint32_t z = 0; z < depth; ++z) DecodeBcToRgba(g_untileScratch.data() + z * slice_bytes, src_row_bytes, expanded.data() + size_t(z) * width * height * 4, width * 4, width, height, format);
-    std::vector<uint8_t> swizzled(expanded.size());
-    for (uint32_t y = 0; y < height * depth; ++y) {
-      ApplySwizzleToRgba8(expanded.data() + size_t(y) * width * 4, swizzled.data() + size_t(y) * width * 4, width, 4, fetch.swizzle());
+    if (fetch.swizzle() != kSwizzleIdentity) {
+      std::vector<uint8_t> swizzled(expanded.size());
+      for (uint32_t y = 0; y < height * depth; ++y) {
+        ApplySwizzleToRgba8(expanded.data() + size_t(y) * width * 4, swizzled.data() + size_t(y) * width * 4, width, 4, fetch.swizzle());
+      }
+      expanded.swap(swizzled);
     }
-    expanded.swap(swizzled);
     pixels = expanded.data();
     dst_row_bytes = width * 4;
     host.format = plume::RenderFormat::R8G8B8A8_UNORM;
@@ -337,17 +363,6 @@ uint32_t EnsureTexture(uint8_t* base, GraphicsSystem::DrawPathContext& ctx, plum
     dst_row_bytes = width * 4;
     // block_bytes must follow the format, or the placed footprint claims twice the texels a row holds and D3D12 removes the device (the k_5_6_5 freeze).
     host.block_bytes = 4;
-  }
-
-  // Xenos DXN orders the two BC4 halves of each block the other way round from BC5, which transposes X and Y of every normal; swap them on the untiled copy.
-  if (format == kXenosFormat_DXN && REXCVAR_GET(kameo_gfx_dxn_swap)) {
-    uint8_t* blocks = g_untileScratch.data();
-    for (size_t off = 0; off + 16 <= linear_bytes; off += 16) {
-      uint8_t tmp[8];
-      std::memcpy(tmp, blocks + off, 8);
-      std::memcpy(blocks + off, blocks + off + 8, 8);
-      std::memcpy(blocks + off + 8, tmp, 8);
-    }
   }
 
   const bool dump_is_bc = host.format == plume::RenderFormat::BC1_UNORM || host.format == plume::RenderFormat::BC2_UNORM || host.format == plume::RenderFormat::BC3_UNORM || host.format == plume::RenderFormat::BC4_UNORM || host.format == plume::RenderFormat::BC5_UNORM;
@@ -388,6 +403,7 @@ uint32_t EnsureTexture(uint8_t* base, GraphicsSystem::DrawPathContext& ctx, plum
              : plume::RenderTextureDesc::Texture2D(width, height, uint32_t(1 + mips.size()), host.format),
       "asset texture");
   if (!entry.texture) {
+    g_refusedTextures.insert(key);
     return 0;
   }
   entry.view = entry.texture->createTextureView(
@@ -424,6 +440,7 @@ uint32_t EnsureTexture(uint8_t* base, GraphicsSystem::DrawPathContext& ctx, plum
   }
   entry.upload = CreateBufferChecked(ctx.device, plume::RenderBufferDesc::UploadBuffer(total_upload), "asset texture upload");
   if (!entry.upload) {
+    g_refusedTextures.insert(key);
     return 0;
   }
   if (auto* mapped = static_cast<uint8_t*>(entry.upload->map())) {
