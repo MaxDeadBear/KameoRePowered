@@ -12,6 +12,7 @@
 #include <rex/system/xtypes.h>
 #include <rex/ui/window.h>
 
+#include "gpu/d3d12_debug.h"
 #include "gpu/draw_path.h"
 #include "gpu/frame_pacing.h"
 #include "gpu/graphics_system_internal.h"
@@ -72,6 +73,7 @@ GraphicsSystem::~GraphicsSystem() { Shutdown(); }
 bool GraphicsSystem::CreateInterface() {
   auto try_d3d12 = [&]() -> bool {
 #ifdef _WIN32
+    detail::EnableD3D12Diagnostics();
     interface_ = plume::CreateD3D12Interface();
     if (interface_) {
       using_vulkan_ = false;
@@ -125,6 +127,7 @@ rex::X_STATUS GraphicsSystem::SetupPresentation(rex::ui::WindowedAppContext* app
 
   const plume::RenderDeviceDescription& desc = device_->getDescription();
   KGFX_INFO("backend={} device=\"{}\" vendor={} vram={} MiB", using_vulkan_ ? "vulkan" : "d3d12", desc.name, VendorName(desc.vendor), desc.dedicatedVideoMemory / (1024 * 1024));
+  if (!using_vulkan_) detail::AttachD3D12DebugMessages(device_.get());
 
   queue_ = device_->createCommandQueue(plume::RenderCommandListType::DIRECT);
   if (!queue_) {

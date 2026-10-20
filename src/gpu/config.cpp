@@ -71,6 +71,7 @@ REXCVAR_DEFINE_BOOL(kameo_gfx_constant_range, true, "Kameo", "Compare and copy o
 REXCVAR_DEFINE_BOOL(kameo_gfx_guest_draw_packets, false, "Kameo", "Let the guest's D3D draw, BeginVertices, Resolve and ClearF also build the Xenos command-buffer packets the native renderer never reads; off saves the guest thread that work.");
 REXCVAR_DEFINE_BOOL(kameo_gfx_pipeline_precache, true, "Kameo", "Prepare embedded pipeline recipes at startup to reduce first-use shader stalls.");
 REXCVAR_DEFINE_BOOL(kameo_gfx_render_thread, true, "Kameo", "Record and present each frame on a dedicated render thread while the game runs its next frame; off records inside the game's own present.");
+REXCVAR_DEFINE_BOOL(kameo_gfx_d3d12_debug, false, "Kameo", "Diagnose a D3D12 crash or device removal: logs the D3D12 debug layer's errors (needs Windows' optional Graphics Tools feature) and, when the device is lost, the last GPU operations DRED saw. Slows rendering; leave off unless asked for a log with it.");
 
 REXCVAR_DEFINE_DOUBLE(kameo_gfx_depth_bias_scale, 1.0, "Kameo",
                       "Multiplier on the guest's polygon offset. Nothing read the guest's depth "

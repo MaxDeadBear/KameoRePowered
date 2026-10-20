@@ -12,6 +12,7 @@
 #include <rex/logging.h>
 
 #include "gpu/config.h"
+#include "gpu/d3d12_debug.h"
 #include "gpu/draw_path.h"
 #include "gpu/graphics_system_internal.h"
 #include "gpu/log.h"
@@ -169,6 +170,8 @@ void GraphicsSystem::PresentClear() {
   ApplyGamma(list, texture, framebuffers_[index].get(), width, height);
   list->barriers(plume::RenderBarrierStage::NONE,
                           plume::RenderTextureBarrier(texture, plume::RenderTextureLayout::PRESENT));
+  // Before the close check, so the debug layer's account of a bad call lands in the log ahead of the close failure it causes.
+  detail::DrainD3D12DebugMessages();
   if (!CommandListClosesClean(list, using_vulkan_)) {
     // A list that failed to close cannot be reset, so the next frame needs a new one.
     frame.list = queue_->createCommandList();

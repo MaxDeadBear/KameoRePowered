@@ -7,6 +7,7 @@
 #include <plume_d3d12.h>
 #endif
 
+#include "gpu/d3d12_debug.h"
 #include "gpu/log.h"
 
 namespace kameo::gpu::detail {
@@ -24,6 +25,7 @@ bool CheckDeviceRemoved(plume::RenderDevice* device) {
   if (SUCCEEDED(reason)) return false;
   reported = true;
   KGFX_ERROR("D3D12 device removed, reason 0x{:08X}; scene replay stops", uint32_t(reason));
+  LogD3D12RemovalDetails(device);
   return true;
 #else
   (void)device;

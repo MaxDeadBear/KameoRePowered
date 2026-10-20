@@ -49,6 +49,7 @@ REXCVAR_DECLARE(int32_t, kameo_gfx_stale_offscreen_frames);
 REXCVAR_DECLARE(bool, kameo_gfx_native_resolve);
 REXCVAR_DECLARE(bool, kameo_gfx_pipeline_precache);
 REXCVAR_DECLARE(bool, kameo_gfx_render_thread);
+REXCVAR_DECLARE(bool, kameo_gfx_d3d12_debug);
 
 namespace kameo::gpu {
 
