@@ -14,6 +14,7 @@
 #include "gpu/log.h"
 #include "gpu/occlusion.h"
 #include "gpu/resolve.h"
+#include "gpu/resource_check.h"
 #include "gpu/surface_pool.h"
 #include "gpu/textures/texture_cache.h"
 #include "gpu/textures/texture_codec.h"
@@ -380,10 +381,12 @@ uint32_t EnsureTexture(uint8_t* base, GraphicsSystem::DrawPathContext& ctx, plum
   }
 
   CachedTexture entry;
-  entry.texture = ctx.device->createTexture(
+  // Checked: a refused texture once reached the copy below as a null resource and took the process down on a GTX 1060.
+  entry.texture = CreateTextureChecked(ctx.device,
       volume ? plume::RenderTextureDesc::Texture3D(width, height, depth, 1, host.format)
       : cube ? plume::RenderTextureDesc::Texture(plume::RenderTextureDimension::TEXTURE_2D, width, height, 1, 1, 6, host.format, plume::RenderTextureFlag::CUBE)
-             : plume::RenderTextureDesc::Texture2D(width, height, uint32_t(1 + mips.size()), host.format));
+             : plume::RenderTextureDesc::Texture2D(width, height, uint32_t(1 + mips.size()), host.format),
+      "asset texture");
   if (!entry.texture) {
     return 0;
   }
@@ -419,7 +422,7 @@ uint32_t EnsureTexture(uint8_t* base, GraphicsSystem::DrawPathContext& ctx, plum
     m.upload_offset = total_upload;
     total_upload = (total_upload + m.upload_pitch * m.blocks_y + 511u) & ~511u;
   }
-  entry.upload = ctx.device->createBuffer(plume::RenderBufferDesc::UploadBuffer(total_upload));
+  entry.upload = CreateBufferChecked(ctx.device, plume::RenderBufferDesc::UploadBuffer(total_upload), "asset texture upload");
   if (!entry.upload) {
     return 0;
   }

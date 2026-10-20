@@ -9,6 +9,7 @@
 
 #include "gpu/log.h"
 #include "gpu/occlusion.h"
+#include "gpu/resource_check.h"
 #include "gpu/textures/texture_codec.h"
 #include "gpu/textures/texture_heap.h"
 #include "gpu/textures/texture_pack.h"
@@ -28,7 +29,7 @@ bool UploadReplacementTexture(GraphicsSystem::DrawPathContext& ctx, plume::Rende
   const auto start = std::chrono::steady_clock::now();
   const plume::RenderFormat format = plume::RenderFormat::R8G8B8A8_UNORM;
   const ReplacementLevel& top = image.levels.front();
-  auto texture = ctx.device->createTexture(plume::RenderTextureDesc::Texture2D(top.width, top.height, uint32_t(image.levels.size()), format));
+  auto texture = CreateTextureChecked(ctx.device, plume::RenderTextureDesc::Texture2D(top.width, top.height, uint32_t(image.levels.size()), format), "replacement texture");
   if (!texture) return false;
   auto view = texture->createTextureView(plume::RenderTextureViewDesc::Texture2D(format));
   std::vector<uint32_t> offsets;
@@ -37,7 +38,7 @@ bool UploadReplacementTexture(GraphicsSystem::DrawPathContext& ctx, plume::Rende
     offsets.push_back(total);
     total = (total + AlignRow(level.width * 4) * level.height + 511u) & ~511u;
   }
-  auto upload = ctx.device->createBuffer(plume::RenderBufferDesc::UploadBuffer(total));
+  auto upload = CreateBufferChecked(ctx.device, plume::RenderBufferDesc::UploadBuffer(total), "replacement texture upload");
   auto* mapped = upload ? static_cast<uint8_t*>(upload->map()) : nullptr;
   if (!mapped) return false;
   for (size_t i = 0; i < image.levels.size(); ++i) {

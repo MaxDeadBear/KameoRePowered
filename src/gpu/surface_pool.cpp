@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include "gpu/log.h"
+#include "gpu/resource_check.h"
 
 namespace kameo::gpu::detail {
 
@@ -21,8 +22,8 @@ DepthOnlyTarget* EnsureDepthOnly(GraphicsSystem::DrawPathContext& ctx, uint32_t 
   DepthOnlyTarget target;
   target.width = w;
   target.height = h;
-  target.depth = ctx.device->createTexture(
-      plume::RenderTextureDesc::DepthTarget(w, h, plume::RenderFormat(ctx.depth_format)));
+  target.depth = CreateTextureChecked(ctx.device,
+      plume::RenderTextureDesc::DepthTarget(w, h, plume::RenderFormat(ctx.depth_format)), "depth-only target");
   if (!target.depth) {
     return nullptr;
   }
@@ -60,9 +61,9 @@ OffscreenTarget* EnsureOffscreen(GraphicsSystem::DrawPathContext& ctx, uint64_t 
   target.format = format;
   target.width = w;
   target.height = h;
-  target.color = ctx.device->createTexture(plume::RenderTextureDesc::ColorTarget(w, h, format));
-  target.depth = ctx.device->createTexture(
-      plume::RenderTextureDesc::DepthTarget(w, h, plume::RenderFormat(ctx.depth_format)));
+  target.color = CreateTextureChecked(ctx.device, plume::RenderTextureDesc::ColorTarget(w, h, format), "offscreen colour");
+  target.depth = CreateTextureChecked(ctx.device,
+      plume::RenderTextureDesc::DepthTarget(w, h, plume::RenderFormat(ctx.depth_format)), "offscreen depth");
   if (!target.color || !target.depth) {
     return nullptr;
   }

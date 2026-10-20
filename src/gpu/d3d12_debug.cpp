@@ -92,6 +92,10 @@ void AttachD3D12DebugMessages(plume::RenderDevice* device) {
     g_info_queue = nullptr;
     return;  // the layer did not load
   }
+  // The layer breaks on a CORRUPTION message by default, which with no debugger is an unexplained crash (exception 0x87D in D3D12SDKLayers): a reporter's game died at the first level's texture uploads with the message never written. Every severity is logged instead.
+  for (const D3D12_MESSAGE_SEVERITY severity : {D3D12_MESSAGE_SEVERITY_CORRUPTION, D3D12_MESSAGE_SEVERITY_ERROR, D3D12_MESSAGE_SEVERITY_WARNING}) {
+    g_info_queue->SetBreakOnSeverity(severity, FALSE);
+  }
   // Stored messages are drained each frame. Windows 11's RegisterMessageCallback registered fine and then delivered nothing at all, not even the clear-value warnings every frame raises, so it is not used.
   KGFX_INFO("d3d12 debug messages go to this log (collected each frame)");
 #else

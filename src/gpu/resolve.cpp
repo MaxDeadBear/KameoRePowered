@@ -10,6 +10,7 @@
 #include "gpu/log.h"
 #include "gpu/replay/screen_layout.h"
 #include "gpu/resolve_blit.h"
+#include "gpu/resource_check.h"
 #include "gpu/surface_pool.h"
 #include "gpu/textures/texture_heap.h"
 
@@ -82,13 +83,14 @@ void PerformResolve(GraphicsSystem::DrawPathContext& ctx, plume::RenderCommandLi
       const plume::RenderFormat depth_copy_format =
           depth_copy_needs_depth_dst ? plume::RenderFormat(ctx.depth_format)
                                      : plume::RenderFormat::R32_FLOAT;
-      entry.texture = ctx.device->createTexture(
+      entry.texture = CreateTextureChecked(ctx.device,
           depth_by_draw ? plume::RenderTextureDesc::ColorTarget(depth_dest_width, depth_dest_height, plume::RenderFormat::R32_FLOAT)
           : depth_copy_needs_depth_dst
               ? plume::RenderTextureDesc::DepthTarget(depth_dest_width, depth_dest_height,
                                                       depth_copy_format)
               : plume::RenderTextureDesc::Texture2D(depth_dest_width, depth_dest_height, 1,
-                                                    depth_copy_format));
+                                                    depth_copy_format),
+          "depth resolve target");
       if (!entry.texture) {
         return;
       }
@@ -213,7 +215,7 @@ void PerformResolve(GraphicsSystem::DrawPathContext& ctx, plume::RenderCommandLi
   if (found == g_resolveTargets.end()) {
     CachedTexture entry;
     // A render target matching the swap chain's format: a resolve out of a scaled scene has to be drawn, and B8G8R8A8 still samples red in .r.
-    entry.texture = ctx.device->createTexture(plume::RenderTextureDesc::ColorTarget(dest_width, dest_height, dest_format));
+    entry.texture = CreateTextureChecked(ctx.device, plume::RenderTextureDesc::ColorTarget(dest_width, dest_height, dest_format), "resolve target");
     if (!entry.texture) {
       return;
     }

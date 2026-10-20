@@ -2,6 +2,7 @@
 
 #include "app/app.h"
 
+#include <cstdio>
 #include <system_error>
 
 #include <toml++/toml.hpp>
@@ -188,6 +189,16 @@ void KameoApp::OnPostInitLogging() {
   rex::AddSink(kameo_log_sink_);
   // As early as a crash can be logged: a report from another machine otherwise ends at the last ordinary line.
   InstallCrashReporter();
+#ifdef _WIN32
+  // plume reports a refused resource creation on stderr only, which a windowed app has nowhere to show; it lands beside the log instead.
+  {
+    const std::filesystem::path path = rex::filesystem::GetExecutableFolder() / "logs" / "stderr.txt";
+    std::error_code ec;
+    std::filesystem::create_directories(path.parent_path(), ec);
+    FILE* redirected = nullptr;
+    if (freopen_s(&redirected, path.string().c_str(), "a", stderr) == 0 && redirected != nullptr) setvbuf(stderr, nullptr, _IONBF, 0);
+  }
+#endif
   KameoWaitForReplacedProcess();
   KameoLoadSettings();
 }

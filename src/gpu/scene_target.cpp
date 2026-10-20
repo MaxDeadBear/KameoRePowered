@@ -11,6 +11,7 @@
 #include "gpu/config.h"
 #include "gpu/graphics_system_internal.h"
 #include "gpu/log.h"
+#include "gpu/resource_check.h"
 #include "gpu/shaders/builtin_shaders.h"
 
 namespace kameo::gpu {
@@ -64,9 +65,9 @@ bool GraphicsSystem::EnsureSceneTarget(uint32_t width, uint32_t height, uint32_t
   scene_resolved_view_.reset();
   scene_resolved_.reset();
   const plume::RenderMultisampling multisampling(samples);
-  scene_color_ = device_->createTexture(plume::RenderTextureDesc::ColorTarget(width, height, kColorFormat, multisampling));
-  scene_depth_ = device_->createTexture(plume::RenderTextureDesc::DepthTarget(width, height, kDepthFormat, multisampling));
-  if (samples > 1) scene_resolved_ = device_->createTexture(plume::RenderTextureDesc::ColorTarget(width, height, kColorFormat));
+  scene_color_ = detail::CreateTextureChecked(device_.get(), plume::RenderTextureDesc::ColorTarget(width, height, kColorFormat, multisampling), "scene colour");
+  scene_depth_ = detail::CreateTextureChecked(device_.get(), plume::RenderTextureDesc::DepthTarget(width, height, kDepthFormat, multisampling), "scene depth");
+  if (samples > 1) scene_resolved_ = detail::CreateTextureChecked(device_.get(), plume::RenderTextureDesc::ColorTarget(width, height, kColorFormat), "scene resolve");
   if (!scene_color_ || !scene_depth_ || (samples > 1 && !scene_resolved_)) {
     KGFX_ERROR("scene target {}x{} at {} samples creation failed; rendering at the window's size", width, height, samples);
     scene_target_failed_ = true;
