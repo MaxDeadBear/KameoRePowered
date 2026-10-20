@@ -11,7 +11,7 @@ overlays, hooks) so the game runs natively and can be modded like a PC port.
 
 **You must own the game.** This project does **not** ship any Kameo code, data, or assets. You provide your own legally dumped `kameo.iso`.
 
-Everyone is welcome on the [Discord server](https://discord.gg/8jaZQUkxZZ): ask for help, report a bug, share a mod or just talk Kameo.
+Everyone is welcome on the [Discord server](https://discord.gg/8jaZQUkxZZ): or (https://discord.gg/VsN9B6) ask for help, report a bug, share a mod or just talk Kameo.
 
 ## Using a pre-built release
 
