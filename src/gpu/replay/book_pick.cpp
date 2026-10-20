@@ -152,7 +152,7 @@ void DrawBookPick(GraphicsSystem::DrawPathContext& ctx, plume::RenderCommandList
     g_bookPick.width = width;
     g_bookPick.height = height;
   }
-  if (!g_bookPick.readback[slot]) g_bookPick.readback[slot] = ctx.device->createBuffer(plume::RenderBufferDesc::ReadbackBuffer(64));
+  if (!g_bookPick.readback[slot]) g_bookPick.readback[slot] = ctx.device->createBuffer(plume::RenderBufferDesc::ReadbackBuffer(256));
   if (!g_bookPick.framebuffer || !g_bookPick.readback[slot]) {
     g_bookPick.failed = true;
     return;
@@ -207,7 +207,8 @@ void DrawBookPick(GraphicsSystem::DrawPathContext& ctx, plume::RenderCommandList
     destination.PlacedFootprint.Footprint.Width = 1;
     destination.PlacedFootprint.Footprint.Height = 1;
     destination.PlacedFootprint.Footprint.Depth = 1;
-    destination.PlacedFootprint.Footprint.RowPitch = 16;
+    // One texel still takes a 256-byte-aligned pitch; the GTX 1060's driver rejects a 16-byte one and every frame on the book screen failed to close.
+    destination.PlacedFootprint.Footprint.RowPitch = D3D12_TEXTURE_DATA_PITCH_ALIGNMENT;
     D3D12_TEXTURE_COPY_LOCATION source = {};
     source.pResource = static_cast<plume::D3D12Texture*>(g_bookPick.texture.get())->d3d;
     source.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;

@@ -27,6 +27,9 @@ std::unique_ptr<plume::RenderTexture> g_emptySlotTexture;
 std::unique_ptr<plume::RenderTextureView> g_emptySlotView;
 std::unique_ptr<plume::RenderBuffer> g_emptySlotUpload;
 
+// A buffer-to-texture copy's row pitch must be a multiple of 256 bytes even for one texel: 64 RGBA8 texels. NVIDIA's Pascal driver rejects a 4-byte pitch outright and the command list fails to close, where newer GPUs let it through.
+constexpr uint32_t kOneTexelRowWidth = 256 / 4;
+
 }  // namespace
 
 void EnsurePlaceholderTextures(GraphicsSystem::DrawPathContext& ctx, plume::RenderCommandList* list) {
@@ -56,7 +59,7 @@ void EnsurePlaceholderTextures(GraphicsSystem::DrawPathContext& ctx, plume::Rend
                  plume::RenderTextureBarrier(g_fallbackTexture.get(),
                                              plume::RenderTextureLayout::COPY_DEST));
   auto src = plume::RenderTextureCopyLocation::PlacedFootprint(
-      g_fallbackUpload.get(), plume::RenderFormat::R8G8B8A8_UNORM, 1, 1, 1, 1, 0);
+      g_fallbackUpload.get(), plume::RenderFormat::R8G8B8A8_UNORM, 1, 1, 1, kOneTexelRowWidth, 0);
   auto dst = plume::RenderTextureCopyLocation::Subresource(g_fallbackTexture.get(), 0, 0);
   list->copyTextureRegion(dst, src, 0, 0, 0, nullptr);
   list->barriers(plume::RenderBarrierStage::GRAPHICS,
@@ -77,7 +80,7 @@ void EnsurePlaceholderTextures(GraphicsSystem::DrawPathContext& ctx, plume::Rend
       g_flatNormalUpload->unmap();
     }
     list->barriers(plume::RenderBarrierStage::COPY, plume::RenderTextureBarrier(g_flatNormalTexture.get(), plume::RenderTextureLayout::COPY_DEST));
-    list->copyTextureRegion(plume::RenderTextureCopyLocation::Subresource(g_flatNormalTexture.get(), 0, 0), plume::RenderTextureCopyLocation::PlacedFootprint(g_flatNormalUpload.get(), plume::RenderFormat::R8G8B8A8_UNORM, 1, 1, 1, 1, 0), 0, 0, 0, nullptr);
+    list->copyTextureRegion(plume::RenderTextureCopyLocation::Subresource(g_flatNormalTexture.get(), 0, 0), plume::RenderTextureCopyLocation::PlacedFootprint(g_flatNormalUpload.get(), plume::RenderFormat::R8G8B8A8_UNORM, 1, 1, 1, kOneTexelRowWidth, 0), 0, 0, 0, nullptr);
     list->barriers(plume::RenderBarrierStage::GRAPHICS, plume::RenderTextureBarrier(g_flatNormalTexture.get(), plume::RenderTextureLayout::SHADER_READ));
     const uint32_t slot = g_textureSlots.allocate();
     if (slot != kNoSlot) {
@@ -94,7 +97,7 @@ void EnsurePlaceholderTextures(GraphicsSystem::DrawPathContext& ctx, plume::Rend
       g_emptySlotUpload->unmap();
     }
     list->barriers(plume::RenderBarrierStage::COPY, plume::RenderTextureBarrier(g_emptySlotTexture.get(), plume::RenderTextureLayout::COPY_DEST));
-    list->copyTextureRegion(plume::RenderTextureCopyLocation::Subresource(g_emptySlotTexture.get(), 0, 0), plume::RenderTextureCopyLocation::PlacedFootprint(g_emptySlotUpload.get(), plume::RenderFormat::R8G8B8A8_UNORM, 1, 1, 1, 1, 0), 0, 0, 0, nullptr);
+    list->copyTextureRegion(plume::RenderTextureCopyLocation::Subresource(g_emptySlotTexture.get(), 0, 0), plume::RenderTextureCopyLocation::PlacedFootprint(g_emptySlotUpload.get(), plume::RenderFormat::R8G8B8A8_UNORM, 1, 1, 1, kOneTexelRowWidth, 0), 0, 0, 0, nullptr);
     list->barriers(plume::RenderBarrierStage::GRAPHICS, plume::RenderTextureBarrier(g_emptySlotTexture.get(), plume::RenderTextureLayout::SHADER_READ));
     const uint32_t slot = g_textureSlots.allocate();
     if (slot != kNoSlot) {

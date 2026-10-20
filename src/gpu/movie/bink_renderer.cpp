@@ -129,7 +129,8 @@ bool GraphicsSystem::UploadBinkPlanes(const BinkFrame& frame) {
   for (int i = 0; i < 4; ++i) {
     if (!frame.planes[i] || widths[i] == 0 || heights[i] == 0) continue;
     offsets[i] = total;
-    total += AlignRow(widths[i]) * heights[i];
+    // A placed footprint has to start on a 512-byte boundary, coarser than the 256-byte rows.
+    total = (total + AlignRow(widths[i]) * heights[i] + 511u) & ~511u;
   }
   if (total == 0) return false;
 
