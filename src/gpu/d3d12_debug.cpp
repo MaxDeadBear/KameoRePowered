@@ -22,7 +22,6 @@ namespace {
 
 bool g_enabled = false;
 ID3D12InfoQueue* g_info_queue = nullptr;
-bool g_callback_registered = false;
 
 std::mutex g_message_mutex;
 std::unordered_map<int, uint32_t> g_message_counts;
@@ -43,10 +42,6 @@ void LogMessage(D3D12_MESSAGE_SEVERITY severity, D3D12_MESSAGE_ID id, const char
   } else {
     KGFX_ERROR("d3d12 debug layer {} #{}: {}{}", severity == D3D12_MESSAGE_SEVERITY_CORRUPTION ? "CORRUPTION" : "ERROR", int(id), text ? text : "", last);
   }
-}
-
-void CALLBACK OnMessage(D3D12_MESSAGE_CATEGORY, D3D12_MESSAGE_SEVERITY severity, D3D12_MESSAGE_ID id, LPCSTR text, void*) {
-  LogMessage(severity, id, text);
 }
 
 const char* BreadcrumbOpName(D3D12_AUTO_BREADCRUMB_OP op) {
@@ -97,18 +92,8 @@ void AttachD3D12DebugMessages(plume::RenderDevice* device) {
     g_info_queue = nullptr;
     return;  // the layer did not load
   }
-  // Windows 11's info queue calls back at the offending API call itself; Windows 10's only stores messages, which are drained each frame.
-  ID3D12InfoQueue1* queue1 = nullptr;
-  if (SUCCEEDED(g_info_queue->QueryInterface(IID_PPV_ARGS(&queue1))) && queue1) {
-    DWORD cookie = 0;
-    g_callback_registered = SUCCEEDED(queue1->RegisterMessageCallback(OnMessage, D3D12_MESSAGE_CALLBACK_FLAG_NONE, nullptr, &cookie));
-    queue1->Release();
-  }
-  if (g_callback_registered) {
-    // The callback has them all; storing them too would only grow the queue.
-    g_info_queue->SetMuteDebugOutput(TRUE);
-  }
-  KGFX_INFO("d3d12 debug messages go to this log ({})", g_callback_registered ? "as they happen" : "collected each frame");
+  // Stored messages are drained each frame. Windows 11's RegisterMessageCallback registered fine and then delivered nothing at all, not even the clear-value warnings every frame raises, so it is not used.
+  KGFX_INFO("d3d12 debug messages go to this log (collected each frame)");
 #else
   (void)device;
 #endif
@@ -116,7 +101,7 @@ void AttachD3D12DebugMessages(plume::RenderDevice* device) {
 
 void DrainD3D12DebugMessages() {
 #ifdef _WIN32
-  if (!g_info_queue || g_callback_registered) return;
+  if (!g_info_queue) return;
   const UINT64 count = g_info_queue->GetNumStoredMessages();
   for (UINT64 i = 0; i < count; ++i) {
     SIZE_T size = 0;
