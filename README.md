@@ -1,5 +1,7 @@
 # Kameo: RePowered
 
+[![Discord](https://img.shields.io/badge/Discord-join%20the%20server-5865F2?logo=discord&logoColor=white)](https://discord.gg/8jaZQUkxZZ)
+
 Static recompilation of **Kameo: Elements of Power** (Xbox 360) for Windows
 and Linux, built on the [ReXGlue SDK](https://github.com/rexglue/rexglue-sdk).
 
@@ -8,6 +10,8 @@ code at build time, then wraps it with a small host runtime (logging,
 overlays, hooks) so the game runs natively and can be modded like a PC port.
 
 **You must own the game.** This project does **not** ship any Kameo code, data, or assets. You provide your own legally dumped `kameo.iso`.
+
+Everyone is welcome on the [Discord server](https://discord.gg/8jaZQUkxZZ): ask for help, report a bug, share a mod or just talk Kameo.
 
 ## Using a pre-built release
 
