@@ -31,8 +31,6 @@ REXCVAR_DECLARE(std::string, cache_root);
 
 namespace {
 
-constexpr const char* kEntryXexName = "default.xex";
-
 std::string ConfiguredUserDataRoot(const std::filesystem::path& config_path) {
   try {
     const toml::table table = toml::parse_file(config_path.string());
@@ -190,9 +188,8 @@ void KameoApp::OnPostInitLogging() {
   KameoLoadSettings();
 }
 
-// Finds the game data next to or above the executable when the configured root does not contain it, so a build runs straight out of its build folder.
+// The game data is the assets folder next to the executable unless game_data_root names another; a wrong game_data_root fails with its path rather than being swapped for some other folder.
 void KameoApp::OnConfigurePaths(rex::PathConfig& paths) {
-  namespace fs = std::filesystem;
   kameo_config_path_ = paths.config_path;
   // The SDK resolves paths before it loads kameorepowered.toml, so a user_data_root set only there (as the launcher expects) is applied here.
   if (REXCVAR_GET(user_data_root).empty()) {
@@ -201,20 +198,7 @@ void KameoApp::OnConfigurePaths(rex::PathConfig& paths) {
       if (REXCVAR_GET(cache_root).empty()) paths.cache_root = paths.user_data_root / "cache";
     }
   }
-  std::error_code ec;
-  if (fs::exists(paths.game_data_root / kEntryXexName, ec)) {
-    return;  // caller gave us a usable root
-  }
-  for (auto dir = rex::filesystem::GetExecutableFolder(); !dir.empty();
-       dir = dir.parent_path()) {
-    auto assets = dir / "assets";
-    if (!fs::exists(assets / kEntryXexName, ec)) {
-      if (!dir.has_relative_path()) {
-        break;  // hit the filesystem root
-      }
-      continue;
-    }
-    paths.game_data_root = assets;
-    break;
+  if (paths.game_data_root.empty()) {
+    paths.game_data_root = rex::filesystem::GetExecutableFolder() / "assets";
   }
 }
