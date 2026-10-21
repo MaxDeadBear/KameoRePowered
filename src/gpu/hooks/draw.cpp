@@ -27,10 +27,16 @@ thread_local PendingIndexedRing t_pendingIndexedRing;
 
 }  // namespace
 
+#include "gpu/frame_profile.h"
+
+// The hooks' own time on the game thread, so the frame-time line can split the game's work from the capture's.
+#define KAMEO_TIME_CAPTURE() kameo::gpu::detail::ScopedAtomicNs kameo_capture_timed(&kameo::gpu::detail::g_frameProfile.ns_guest_capture)
+
 // D3DDevice_Resolve(pDevice, Flags, pSourceRect, pDestTexture, pDestPoint, ...)
 // Recorded in frame order, since the guest samples the destination texture later and without a resolve it stays black.
 extern "C" REX_FUNC(sub_820C3460) {
   if (Active() != nullptr) {
+    KAMEO_TIME_CAPTURE();
     kameo::gpu::CaptureResolve(base, ctx.r3.u32, ctx.r4.u32, ctx.r5.u32, ctx.r6.u32, ctx.r7.u32, ctx.r10.u32, float(ctx.f1.f64), uint32_t(ctx.lr));
     // The original only builds resolve packets and, for a resolve that also clears, a nested ClearF; CaptureResolve records that clear from the flags.
     if (!REXCVAR_GET(kameo_gfx_guest_draw_packets)) return;
@@ -42,6 +48,7 @@ extern "C" REX_FUNC(sub_820C3460) {
 extern "C" REX_FUNC(sub_820C4F20) {
   // The colour half is what fills the sky wherever the level draws nothing.
   if (Active() != nullptr) {
+    KAMEO_TIME_CAPTURE();
     if (ctx.r4.u32 & 0x1Fu) kameo::gpu::CaptureDepthClear(base, ctx.r3.u32, ctx.r4.u32, ctx.r5.u32, ctx.r6.u32, float(ctx.f1.f64), uint32_t(ctx.lr));
     if (!REXCVAR_GET(kameo_gfx_guest_draw_packets)) return;
   }
@@ -51,6 +58,7 @@ extern "C" REX_FUNC(sub_820C4F20) {
 // D3DDevice_DrawVertices(pDevice, PrimitiveType, StartVertex, VertexCount) -- non-indexed geometry, captured like any other draw.
 extern "C" REX_FUNC(sub_820CED48) {
   if (Active() != nullptr) {
+    KAMEO_TIME_CAPTURE();
     kameo::gpu::CaptureDraw(base, ctx.r3.u32, ctx.r4.u32, ctx.r5.u32, ctx.r6.u32);
     if (!REXCVAR_GET(kameo_gfx_guest_draw_packets)) return;
   }
@@ -60,6 +68,7 @@ extern "C" REX_FUNC(sub_820CED48) {
 // D3DDevice_DrawIndexedVertices(pDevice, PrimitiveType, BaseVertexIndex, StartIndex, VertexCount) -- the main draw path; it takes no buffers and reads everything from device state.
 extern "C" REX_FUNC(sub_820CEF88) {
   if (Active() != nullptr) {
+    KAMEO_TIME_CAPTURE();
     // VertexCount is the number of indices, as in the PM4 packet the original builds; BaseVertexIndex is added to every index by the GPU.
     kameo::gpu::CaptureIndexedDraw(base, ctx.r3.u32, ctx.r4.u32, int32_t(ctx.r5.u32), ctx.r6.u32,
                                    ctx.r7.u32, uint32_t(ctx.lr), ctx.r31.u32, ctx.r17.u32);
@@ -79,6 +88,7 @@ extern "C" REX_FUNC(sub_820CE9D8) {
     const uint32_t stride = ctx.r7.u32;
 
     // Same shaders, declaration and state as any other draw; only the vertex data arrives as a pointer.
+    KAMEO_TIME_CAPTURE();
     kameo::gpu::CaptureDrawUP(base, ctx.r3.u32, prim, count, data, stride);
   }
   // The original only copies the vertices into the ring through a nested BeginVertices, and CaptureDrawUP already has them.

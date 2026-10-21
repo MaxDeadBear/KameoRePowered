@@ -131,14 +131,18 @@ void HandOffFrame(uint8_t* base, kameo::gpu::GraphicsSystem* gfx) {
     kameo::gpu::detail::g_frameProfile.guest_frames.fetch_add(1, std::memory_order_relaxed);
   }
   last_handoff = now;
+  kameo::gpu::detail::g_captureDetailed = kameo::gpu::detail::FrameProfileDetailed();
   // The dialogs write guest state, so they run here on the guest thread rather than on the render thread.
   gfx->RunUiCallback();
 
   // Same handoff for the scene geometry captured since the last swap, once the render thread has taken the previous frame.
   gfx->WaitForRenderSlot();
   std::vector<uint32_t> guest_reads;
-  kameo::gpu::SubmitCapturedFrame(&guest_reads);
-  kameo::gpu::hooks::ResetVertexSink();
+  {
+    kameo::gpu::detail::ScopedAtomicNs timed(&kameo::gpu::detail::g_frameProfile.ns_guest_handoff);
+    kameo::gpu::SubmitCapturedFrame(&guest_reads);
+    kameo::gpu::hooks::ResetVertexSink();
+  }
   uint32_t fence = 0;
   uint32_t* readback_word = nullptr;
   if (const uint32_t device = REX_LOAD_U32(kameo::gpu::kD3DDevicePtr)) {

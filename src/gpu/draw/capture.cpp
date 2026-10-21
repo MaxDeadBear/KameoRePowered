@@ -5,6 +5,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <unordered_map>
 
 #include <fmt/format.h>
 
@@ -15,6 +16,7 @@
 #include "gpu/draw/render_state.h"
 #include "gpu/draw/vertex_capture.h"
 #include "gpu/draw_path.h"
+#include "gpu/frame_profile.h"
 #include "gpu/graphics_system.h"
 #include "gpu/guest_device.h"
 #include "gpu/guest_memory.h"
@@ -51,6 +53,41 @@ uint32_t g_lastPixelShaderObject = 0;
 const ShaderCacheEntry* g_lastPixelShader = nullptr;
 
 // Shared by the draw entry points: resolves the shaders, layout and index range, then records the draw.
+// A cached index list re-based to the start of a draw's vertex window. Level geometry asks for the same list and shift every frame, and rebuilding it per draw into the arena was the capture's largest cost (and a fresh upload per draw on the render thread); the shifted list is kept, shared between draws and frames, under g_captureMutex like the caches it derives from.
+struct ShiftedIndices {
+  std::shared_ptr<const std::vector<uint32_t>> source;  // held, so its address cannot come back as another list while this entry lives
+  std::shared_ptr<const std::vector<uint32_t>> shifted;
+  uint32_t shift = 0;
+  uint64_t last_frame = 0;
+};
+std::unordered_map<uint64_t, ShiftedIndices> g_shiftedIndices;
+
+std::shared_ptr<const std::vector<uint32_t>> ShiftedIndexList(const std::shared_ptr<const std::vector<uint32_t>>& source, uint32_t shift) {
+  const uint64_t key = (uint64_t(reinterpret_cast<uintptr_t>(source.get())) * 0x9E3779B97F4A7C15ull) ^ (uint64_t(shift) * 0xC2B2AE3D27D4EB4Full);
+  ShiftedIndices& entry = g_shiftedIndices[key];
+  if (entry.source != source || entry.shift != shift) {
+    auto shifted = std::make_shared<std::vector<uint32_t>>(source->size());
+    const uint32_t* in = source->data();
+    uint32_t* out = shifted->data();
+    for (size_t i = 0, n = source->size(); i < n; ++i) out[i] = in[i] + shift;
+    entry.source = source;
+    entry.shifted = std::move(shifted);
+    entry.shift = shift;
+  }
+  entry.last_frame = g_captureFrame;
+  return entry.shifted;
+}
+
+void EvictShiftedIndices(uint64_t frame) {
+  for (auto it = g_shiftedIndices.begin(); it != g_shiftedIndices.end();) {
+    if (frame - it->second.last_frame > 240) {
+      it = g_shiftedIndices.erase(it);
+    } else {
+      ++it;
+    }
+  }
+}
+
 void CaptureCommon(uint8_t* base, uint32_t device, uint32_t primitive, uint32_t first_vertex, uint32_t vertex_count, const uint32_t* indices, uint32_t index_count, const StreamOverride& override_stream = {}, uint32_t deferred_vertex_addr = 0, uint32_t deferred_vertex_stride = 0, const ExpandedIndices* pre_expanded = nullptr, uint32_t guest_caller = 0, uint32_t guest_command = 0, uint32_t guest_command_stream = 0, const uint32_t* texture_objects = nullptr) {
   // Casters skipped while GeneratingShadowMap is set leave the map at its cleared far depth.
   if (!REXCVAR_GET(kameo_gfx_shadows) && Load8(base, kGeneratingShadowMap) != 0) return;
@@ -59,6 +96,7 @@ void CaptureCommon(uint8_t* base, uint32_t device, uint32_t primitive, uint32_t 
   const ShaderCacheEntry* vs = nullptr;
   const ShaderCacheEntry* ps = nullptr;
   {
+    ScopedAtomicNs timed(g_captureDetailed ? &g_frameProfile.ns_cap_lookup : nullptr);
     vs = LookupShaderBinding(vs_object);
     ps = LookupShaderBinding(ps_object);
   }
@@ -89,6 +127,7 @@ void CaptureCommon(uint8_t* base, uint32_t device, uint32_t primitive, uint32_t 
   }
   const HostLayout* layout = nullptr;
   {
+    ScopedAtomicNs timed(g_captureDetailed ? &g_frameProfile.ns_cap_lookup : nullptr);
     layout = GetLayout(base, decl);
   }
   if (!layout) {
@@ -102,6 +141,7 @@ void CaptureCommon(uint8_t* base, uint32_t device, uint32_t primitive, uint32_t 
   // Either the caller already has this list from the index cache, or it is built here.
   const std::vector<uint32_t>* expanded_list = nullptr;
   {
+    ScopedAtomicNs timed(g_captureDetailed ? &g_frameProfile.ns_cap_lookup : nullptr);
     if (pre_expanded && pre_expanded->valid()) {
       expanded_list = pre_expanded->blob.get();
       min_vertex = pre_expanded->min_vertex;
@@ -170,30 +210,38 @@ void CaptureCommon(uint8_t* base, uint32_t device, uint32_t primitive, uint32_t 
   }
 
   uint32_t index_base = 0;
-  if (deferred_vertex_addr) {
-    // Everything except the vertices, which are read at frame end.
-    call.deferred_vertex_addr = deferred_vertex_addr;
-    call.deferred_vertex_stride = deferred_vertex_stride;
-    call.deferred_device = device;
-    call.deferred_vertex_count = vertex_count;
-    call.vertex_count = vertex_count;
-    call.vertex_bytes = vertex_count * layout->dst_stride;
-  } else if (!CaptureVertices(base, device, *layout, min_vertex, max_vertex, &frame,
-                              &call.vertex_data, &call.vertex_bytes, &index_base,
-                              &call.vertex_count, &call.vertex_blob, vertex_viewport,
-                              override_stream, &call.vertex_source)) {
-    frame.draws.pop_back();
-    return;
+  {
+    ScopedAtomicNs timed(g_captureDetailed ? &g_frameProfile.ns_cap_vertices : nullptr);
+    if (deferred_vertex_addr) {
+      // Everything except the vertices, which are read at frame end.
+      call.deferred_vertex_addr = deferred_vertex_addr;
+      call.deferred_vertex_stride = deferred_vertex_stride;
+      call.deferred_device = device;
+      call.deferred_vertex_count = vertex_count;
+      call.vertex_count = vertex_count;
+      call.vertex_bytes = vertex_count * layout->dst_stride;
+    } else if (!CaptureVertices(base, device, *layout, min_vertex, max_vertex, &frame,
+                                &call.vertex_data, &call.vertex_bytes, &index_base,
+                                &call.vertex_count, &call.vertex_blob, vertex_viewport,
+                                override_stream, &call.vertex_source)) {
+      frame.draws.pop_back();
+      return;
+    }
   }
 
 
   {
+    ScopedAtomicNs timed(g_captureDetailed ? &g_frameProfile.ns_cap_indices : nullptr);
     call.index_count = uint32_t(expanded_list->size());
     const uint32_t shift = first_vertex - index_base;
     if (pre_expanded && pre_expanded->valid() && shift == 0) {
       // A range beginning at vertex zero can use the cached indices directly.
       call.index_blob = pre_expanded->blob;
       call.index_data = kNoData;
+    } else if (pre_expanded && pre_expanded->valid()) {
+      call.index_blob = ShiftedIndexList(pre_expanded->blob, shift);
+      call.index_data = kNoData;
+      call.index_rebased = true;
     } else {
       call.index_data = frame.alloc(call.index_count * 4, 4);
       auto* dst = reinterpret_cast<uint32_t*>(frame.at(call.index_data));
@@ -204,24 +252,31 @@ void CaptureCommon(uint8_t* base, uint32_t device, uint32_t primitive, uint32_t 
     }
   }
 
-  call.vs_constants = CaptureConstants(base, device, &g_vsDedup, &frame, ShaderConstantRangeOf(vs), &call.vs_constant_bytes);
-  call.ps_constants = CaptureConstants(base, device, &g_psDedup, &frame, ShaderConstantRangeOf(ps), &call.ps_constant_bytes);
   {
+    ScopedAtomicNs timed(g_captureDetailed ? &g_frameProfile.ns_cap_constants : nullptr);
+    call.vs_constants = CaptureConstants(base, device, &g_vsDedup, &frame, ShaderConstantRangeOf(vs), &call.vs_constant_bytes);
+    call.ps_constants = CaptureConstants(base, device, &g_psDedup, &frame, ShaderConstantRangeOf(ps), &call.ps_constant_bytes);
+  }
+  {
+    ScopedAtomicNs timed(g_captureDetailed ? &g_frameProfile.ns_cap_state : nullptr);
     CaptureState(base, device, &call);
   }
-  if (texture_objects) std::memcpy(call.texture_objects, texture_objects, sizeof(call.texture_objects));
-  for (uint32_t s = 0; s < kSamplerCount; ++s) {
-    const uint32_t object = call.texture_objects[s];
-    call.texture_addresses[s] = object ? (Load32(base, object + 20) & 0xFFFFF000u) : 0;
-    if (!object || object == g_lastGuestReadObject || !call.textures[s].valid()) continue;
-    // Recording reads guest memory only for textures: the object header, the texels and the mip chain, as EnsureTexture and CollectGuestMips do.
-    g_lastGuestReadObject = object;
-    const uint32_t texels = call.texture_addresses[s];
-    g_frameGuestReads.push_back(CanonicalGuestAddress(object));
-    g_frameGuestReads.push_back(CanonicalGuestAddress(texels));
-    const uint32_t fetch_base = call.textures[s].address();
-    const uint32_t fetch_mip = call.textures[s].mip_address();
-    if (texels && fetch_mip > fetch_base) g_frameGuestReads.push_back(CanonicalGuestAddress(texels + (fetch_mip - fetch_base)));
+  {
+    ScopedAtomicNs timed(g_captureDetailed ? &g_frameProfile.ns_cap_textures : nullptr);
+    if (texture_objects) std::memcpy(call.texture_objects, texture_objects, sizeof(call.texture_objects));
+    for (uint32_t s = 0; s < kSamplerCount; ++s) {
+      const uint32_t object = call.texture_objects[s];
+      call.texture_addresses[s] = object ? (Load32(base, object + 20) & 0xFFFFF000u) : 0;
+      if (!object || object == g_lastGuestReadObject || !call.textures[s].valid()) continue;
+      // Recording reads guest memory only for textures: the object header, the texels and the mip chain, as EnsureTexture and CollectGuestMips do.
+      g_lastGuestReadObject = object;
+      const uint32_t texels = call.texture_addresses[s];
+      g_frameGuestReads.push_back(CanonicalGuestAddress(object));
+      g_frameGuestReads.push_back(CanonicalGuestAddress(texels));
+      const uint32_t fetch_base = call.textures[s].address();
+      const uint32_t fetch_mip = call.textures[s].mip_address();
+      if (texels && fetch_mip > fetch_base) g_frameGuestReads.push_back(CanonicalGuestAddress(texels + (fetch_mip - fetch_base)));
+    }
   }
   call.stencil_only = call.depth_only && call.rt_surface != 0 && (call.stencil_enable || g_openOcclusionQuery.load(std::memory_order_relaxed) != 0);
   if (call.stencil_only) call.depth_only = false;
@@ -253,6 +308,7 @@ void CaptureIndexedDraw(uint8_t* base, uint32_t device, uint32_t primitive, int3
   static thread_local std::vector<uint32_t> indices;
   ExpandedIndices pre;
   {
+    ScopedAtomicNs timed(g_captureDetailed ? &g_frameProfile.ns_cap_indices : nullptr);
     std::lock_guard<std::mutex> lock(g_captureMutex);
     ReadIndexedDraw(base, device, primitive, base_vertex, address, start_index, index_count, index32, &indices, &pre);
     if (TryMergeIndexedDraw(base, device, primitive, pre)) return;
@@ -323,6 +379,7 @@ uint32_t SubmitCapturedFrame(std::vector<uint32_t>* guest_reads) {
   if ((g_captureFrame % 240) == 0) {
     size_t live = EvictTranscodeCache(g_captureFrame);
     live += EvictIndexCache(g_captureFrame);
+    EvictShiftedIndices(g_captureFrame);
   }
   guest_reads->swap(g_frameGuestReads);
   g_frameGuestReads.clear();

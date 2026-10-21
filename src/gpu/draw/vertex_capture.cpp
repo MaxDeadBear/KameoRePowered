@@ -9,6 +9,7 @@
 #include "gpu/config.h"
 #include "gpu/draw/capture.h"
 #include "gpu/draw/geometry_cache.h"
+#include "gpu/frame_profile.h"
 #include "gpu/graphics_system.h"
 #include "gpu/guest_device.h"
 #include "gpu/guest_memory.h"
@@ -237,6 +238,7 @@ void ResolveDeferredVertexSources(DrawFrame& frame) {
   if (base == nullptr) return;
   ++g_renderVertexFrame;
   g_renderVertexReuse.clear();
+  const bool detailed = FrameProfileDetailed();
   for (DrawCall& call : frame.draws) {
     if (call.vertex_source == kNoData) continue;
     DeferredVertexSource source;
@@ -249,7 +251,11 @@ void ResolveDeferredVertexSources(DrawFrame& frame) {
     }
     const uint32_t bytes = source.count * source.layout->dst_stride;
     uint64_t reuse_key = source.reuse_key;
-    const uint64_t hash = HashVertexWindow(*source.layout, streams, source.first, source.count, g_renderSpanHashes, g_renderVertexFrame, &reuse_key);
+    uint64_t hash = 0;
+    {
+      ScopedNs timed(detailed ? &g_frameProfile.ns_vertex_hash : nullptr);
+      hash = HashVertexWindow(*source.layout, streams, source.first, source.count, g_renderSpanHashes, g_renderVertexFrame, &reuse_key);
+    }
     auto reused = g_renderVertexReuse.find(reuse_key);
     if (reused != g_renderVertexReuse.end()) {
       if (reused->second.hash == hash) {

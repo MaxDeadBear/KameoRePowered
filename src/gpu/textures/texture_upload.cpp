@@ -28,10 +28,28 @@ namespace kameo::gpu::detail {
 uint32_t g_mipLevelsUploaded = 0;
 uint32_t g_mippedTextures = 0;
 uint32_t g_mipChainsTruncated = 0;
+uint32_t g_textureMemoGeneration = 0;
 
 namespace {
 
 std::vector<uint8_t> g_untileScratch;
+
+// A frame's draws bind the same few hundred textures thousands of times; the answer for one fetch of one object does not change within a frame (short of a resolve, which bumps the generation), so repeats skip the resolve and texture maps. Direct-mapped and stamped, so it is never cleared.
+struct TextureMemo {
+  uint64_t key = 0;
+  uint64_t frame = 0;
+  uint32_t generation = 0;
+  uint32_t heap_index = 0;
+  bool volume = false;
+};
+constexpr uint32_t kTextureMemoBits = 12;
+TextureMemo g_textureMemo[1u << kTextureMemoBits];
+
+uint64_t TextureMemoKey(const GuestTextureFetch& fetch, uint32_t object, uint32_t object_address, uint32_t want_dimension) {
+  uint64_t key = uint64_t(object_address) ^ (uint64_t(object) << 32) ^ (uint64_t(want_dimension) << 30);
+  for (uint32_t word : fetch.words) key = (key ^ word) * 0x9E3779B97F4A7C15ull;
+  return key ^ (key >> 29);
+}
 
 // Textures the device refused, by cache key: a refusal is deterministic, and retrying it on every draw that binds the texture (one creation per 4 ms on a GTX 1060) is what a 3 fps level looked like. The fallback stands in instead.
 std::unordered_set<uint64_t> g_refusedTextures;
@@ -129,8 +147,24 @@ void CollectGuestMips(uint8_t* base, uint32_t object, const GuestTextureFetch& f
 
 }  // namespace
 
-// Untiles, converts and uploads one guest texture, returning its bindless heap index; cached on everything that describes the pixels, not on the sampler state sharing the fetch constant.
+uint32_t EnsureTextureUncached(uint8_t* base, GraphicsSystem::DrawPathContext& ctx, plume::RenderCommandList* list, const GuestTextureFetch& fetch, uint32_t object, uint32_t object_address, uint32_t want_dimension, bool* volume_out);
+
 uint32_t EnsureTexture(uint8_t* base, GraphicsSystem::DrawPathContext& ctx, plume::RenderCommandList* list, const GuestTextureFetch& fetch, uint32_t object, uint32_t object_address, uint32_t want_dimension, bool* volume_out) {
+  const uint64_t key = TextureMemoKey(fetch, object, object_address, want_dimension);
+  TextureMemo& memo = g_textureMemo[key >> (64 - kTextureMemoBits)];
+  if (memo.key == key && memo.frame == g_drawFrame && memo.generation == g_textureMemoGeneration) {
+    if (volume_out) *volume_out = memo.volume;
+    return memo.heap_index;
+  }
+  bool volume = false;
+  const uint32_t heap_index = EnsureTextureUncached(base, ctx, list, fetch, object, object_address, want_dimension, &volume);
+  memo = {key, g_drawFrame, g_textureMemoGeneration, heap_index, volume};
+  if (volume_out) *volume_out = volume;
+  return heap_index;
+}
+
+// Untiles, converts and uploads one guest texture, returning its bindless heap index; cached on everything that describes the pixels, not on the sampler state sharing the fetch constant.
+uint32_t EnsureTextureUncached(uint8_t* base, GraphicsSystem::DrawPathContext& ctx, plume::RenderCommandList* list, const GuestTextureFetch& fetch, uint32_t object, uint32_t object_address, uint32_t want_dimension, bool* volume_out) {
   if (volume_out) {
     *volume_out = false;
   }

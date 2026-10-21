@@ -117,8 +117,8 @@ bool TryMergeIndexedDraw(uint8_t* base, uint32_t device, uint32_t primitive, con
   if (!REXCVAR_GET(kameo_gfx_merge_indexed)) return false;
   if (!pre.valid() || pre.blob->empty() || g_capturing.draws.empty()) return false;
   DrawCall& target = g_capturing.draws.back();
-  // index_blob proves the target's own indices needed no rebasing, so this list shares its vertex space.
-  if (target.kind != CommandKind::Draw || target.primitive != primitive || !target.index_blob || (!target.vertex_blob && target.vertex_source == kNoData) || !target.ps) return false;
+  // An un-rebased index_blob proves the target's indices address the whole vertex buffer, so this list shares its vertex space; a re-based one addresses only the target's own window.
+  if (target.kind != CommandKind::Draw || target.primitive != primitive || !target.index_blob || target.index_rebased || (!target.vertex_blob && target.vertex_source == kNoData) || !target.ps) return false;
   if (target.deferred_vertex_addr || target.index_count + pre.blob->size() > kMaxMergedIndices) return false;
   if (pre.max_vertex >= target.vertex_count) return false;
   const uint32_t stream0 = Load32(base, device + dev::kStreamBuffer);

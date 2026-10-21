@@ -13,6 +13,7 @@
 #include "gpu/resource_check.h"
 #include "gpu/surface_pool.h"
 #include "gpu/textures/texture_heap.h"
+#include "gpu/textures/texture_upload.h"
 
 namespace kameo::gpu::detail {
 
@@ -161,6 +162,7 @@ void PerformResolve(GraphicsSystem::DrawPathContext& ctx, plume::RenderCommandLi
     };
     list->barriers(plume::RenderBarrierStage::GRAPHICS, back, uint32_t(std::size(back)));
     found_depth->second.written = true;
+    ++g_textureMemoGeneration;
     return;
   }
 
@@ -339,6 +341,7 @@ void PerformResolve(GraphicsSystem::DrawPathContext& ctx, plume::RenderCommandLi
   };
   list->barriers(plume::RenderBarrierStage::GRAPHICS, back, uint32_t(std::size(back)));
   found->second.written = true;
+  ++g_textureMemoGeneration;
 }
 
 void ReleaseResolveTargets() { g_resolveTargets.clear(); }

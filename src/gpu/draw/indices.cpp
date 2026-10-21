@@ -5,6 +5,7 @@
 #include <unordered_map>
 
 #include "gpu/draw/capture.h"
+#include "gpu/frame_profile.h"
 #include "gpu/guest_memory.h"
 #include "gpu/guest_state.h"
 #include "gpu/vertex_transcode.h"
@@ -194,7 +195,11 @@ void ReadIndexedDraw(uint8_t* base, uint32_t device, uint32_t primitive, int32_t
     cache_key = (cache_key ^ v) * 1099511628211ull;
   }
   // Hashed once per frame like the vertex spans: the shadow, depth and colour passes each draw the same range.
-  const uint64_t source_hash = FrameSpanHash(src, source_bytes, g_captureFrame);
+  uint64_t source_hash = 0;
+  {
+    ScopedAtomicNs timed(g_captureDetailed ? &g_frameProfile.ns_cap_hash : nullptr);
+    source_hash = FrameSpanHash(src, source_bytes, g_captureFrame);
+  }
 
   IndexCacheEntry* cached = FindIndexCacheEntry(cache_key);
   if (cached && cached->hash == source_hash) {

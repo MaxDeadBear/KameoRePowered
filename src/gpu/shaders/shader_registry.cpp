@@ -38,6 +38,16 @@ const ShaderCacheEntry* FindShaderCacheEntry(uint64_t hash) {
   return (found != end && found->hash == hash) ? found : nullptr;
 }
 
+// Every draw looks two bindings up; a per-thread direct-mapped front answers repeats without the mutex or the map. RegisterShader bumps the generation, since a freed object's address comes back bound to a different shader.
+struct BindingMemo {
+  uint32_t object = 0;
+  uint32_t generation = 0;
+  const ShaderCacheEntry* entry = nullptr;
+};
+constexpr uint32_t kBindingMemoSlots = 1024;
+thread_local BindingMemo t_bindingMemo[kBindingMemoSlots];
+std::atomic<uint32_t> g_bindingGeneration{1};
+
 // Per cache entry, indexed the same way, so the capture path can read a range without taking g_shaderMutex.
 std::atomic<ShaderConstantRange*> g_shaderConstantRanges{nullptr};
 std::atomic<ShaderMaterialRegisters*> g_shaderMaterialRegisters{nullptr};
@@ -64,6 +74,7 @@ void RegisterShader(uint8_t* base, uint32_t function, uint32_t object, const cha
   std::lock_guard<std::mutex> lock(g_shaderMutex);
   if (entry) {
     g_shaderBindings.insert_or_assign(object, entry);
+    g_bindingGeneration.fetch_add(1, std::memory_order_release);
     ShaderConstantRange* ranges = g_shaderConstantRanges.load(std::memory_order_acquire);
     if (!ranges) {
       ranges = new ShaderConstantRange[g_shaderCacheEntryCount];
@@ -107,9 +118,17 @@ const ShaderCacheEntry* LookupShaderBinding(uint32_t guest_object) {
   if (!guest_object) {
     return nullptr;
   }
-  std::lock_guard<std::mutex> lock(g_shaderMutex);
-  auto found = g_shaderBindings.find(guest_object);
-  return found != g_shaderBindings.end() ? found->second : nullptr;
+  const uint32_t generation = g_bindingGeneration.load(std::memory_order_acquire);
+  BindingMemo& memo = t_bindingMemo[(guest_object >> 4) & (kBindingMemoSlots - 1)];
+  if (memo.object == guest_object && memo.generation == generation) return memo.entry;
+  const ShaderCacheEntry* entry = nullptr;
+  {
+    std::lock_guard<std::mutex> lock(g_shaderMutex);
+    auto found = g_shaderBindings.find(guest_object);
+    entry = found != g_shaderBindings.end() ? found->second : nullptr;
+  }
+  memo = BindingMemo{guest_object, generation, entry};
+  return entry;
 }
 
 }  // namespace kameo::gpu

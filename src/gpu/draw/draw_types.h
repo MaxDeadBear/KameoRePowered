@@ -172,8 +172,9 @@ struct DrawCall {
 
   uint32_t index_data = kNoData;  // arena offset, always 32-bit host indices
   uint32_t index_count = 0;
-  // Set instead of index_data when the expanded indices came from the cross-frame index cache and needed no rebasing.
+  // Set instead of index_data when the expanded indices came from the cross-frame index cache; index_rebased says they were shifted to the draw's own vertex window rather than addressing the whole buffer.
   std::shared_ptr<const std::vector<uint32_t>> index_blob;
+  bool index_rebased = false;
 
   const HostLayout* layout = nullptr;
 
