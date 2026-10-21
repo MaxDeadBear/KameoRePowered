@@ -15,6 +15,7 @@
 
 #include "gpu/config.h"
 #include "gpu/draw_path.h"
+#include "gpu/frame_profile.h"
 #include "gpu/graphics_system_internal.h"
 #include "gpu/log.h"
 #include "gpu/occlusion.h"
@@ -37,8 +38,10 @@ void AdvanceGuestFenceWord(uint32_t* word, uint32_t fence) {
 void GraphicsSystem::WaitForRenderSlot() {
   std::unique_lock<std::mutex> lock(render_mutex_);
   if (!CapturedFrameWaiting()) return;
+  const auto start = std::chrono::steady_clock::now();
   // Bounded so a render thread that stops taking frames costs a dropped frame rather than a hung game.
   render_cv_.wait_for(lock, std::chrono::seconds(1), [this] { return render_stop_ || !CapturedFrameWaiting(); });
+  detail::g_frameProfile.ns_guest_stall.fetch_add(NanosSince(start), std::memory_order_relaxed);
 }
 
 void GraphicsSystem::KickRenderThread(uint32_t guest_fence, uint32_t* readback_word, std::vector<uint32_t> guest_reads) {
@@ -73,6 +76,7 @@ void GraphicsSystem::WaitForRenderIdle(const char* reason) {
   const auto start = std::chrono::steady_clock::now();
   render_cv_.wait_for(lock, std::chrono::seconds(2), [this] { return render_stop_ || render_done_ == render_kicks_; });
   const uint64_t waited = NanosSince(start);
+  detail::g_frameProfile.ns_guest_stall.fetch_add(waited, std::memory_order_relaxed);
   // A single stall long enough to be seen as a hitch, which the 120-frame budget averages hide.
   if (waited > 8'000'000) {
     static uint32_t long_waits = 0;
@@ -97,6 +101,7 @@ void GraphicsSystem::WaitForRenderReads(uint32_t begin, uint32_t end, const char
   const auto start = std::chrono::steady_clock::now();
   render_cv_.wait_for(lock, std::chrono::seconds(2), [this, last] { return render_stop_ || render_done_ >= last; });
   const uint64_t waited = NanosSince(start);
+  detail::g_frameProfile.ns_guest_stall.fetch_add(waited, std::memory_order_relaxed);
   if (waited > 8'000'000) {
     static uint32_t long_waits = 0;
     if (++long_waits < 64) KGFX_WARN("game thread stalled {:.1f} ms on the render thread ('{}', a frame in flight reads that memory)", double(waited) / 1e6, reason);

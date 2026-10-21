@@ -13,6 +13,7 @@
 #include "gpu/draw/draw_constants.h"
 #include "gpu/draw/vertex_capture.h"
 #include "gpu/draw_path.h"
+#include "gpu/frame_profile.h"
 #include "gpu/frame_ring.h"
 #include "gpu/device_removed.h"
 #include "gpu/pipeline/pipeline_cache.h"
@@ -76,6 +77,9 @@ struct DrawPlacement {
 };
 
 // Writes the draw's texture and sampler indices and shared constants into the shared block; true when it samples the storybook page.
+// Whether this frame's draws time their texture, pipeline and upload work; read once per frame.
+bool g_profileDraws = false;
+
 bool BuildSharedBlock(ReplayContext& rc, const DrawCall& call) {
   GraphicsSystem::DrawPathContext& ctx = rc.ctx;
   plume::RenderCommandList* list = rc.list;
@@ -349,19 +353,31 @@ void ReplayDraw(ReplayContext& rc, const DrawCall& call, uint32_t off_w, uint32_
   if (!vs || (!ps && !call.depth_only && !call.stencil_only)) {
     return;
   }
-  plume::RenderPipeline* pipeline = EnsurePipeline(rc.ctx, call, vs, ps, rc.current_framebuffer == rc.framebuffer ? rc.ctx.scene_samples : 1, rc.current_color_format);
+  plume::RenderPipeline* pipeline = nullptr;
+  {
+    ScopedNs timed(g_profileDraws ? &g_frameProfile.ns_pipelines : nullptr);
+    pipeline = EnsurePipeline(rc.ctx, call, vs, ps, rc.current_framebuffer == rc.framebuffer ? rc.ctx.scene_samples : 1, rc.current_color_format);
+  }
   if (!pipeline) {
     return;
   }
 
   // Workaround: the FMV orb's white disk hides the video on our side although the console shows the video through it, and the guest issues it identically.
   if (call.ps && call.ps->hash == 0x3547764B6B934FEEull && call.index_count == 192 && call.vertex_count == 65) return;
-  const bool samples_book_page = BuildSharedBlock(rc, call);
+  bool samples_book_page = false;
+  {
+    ScopedNs timed(g_profileDraws ? &g_frameProfile.ns_textures : nullptr);
+    samples_book_page = BuildSharedBlock(rc, call);
+  }
   DrawUploads up;
-  if (!UploadDrawData(rc, call, &up)) return;
-  if (!BindDraw(rc, call, pipeline, up)) return;
+  {
+    ScopedNs timed(g_profileDraws ? &g_frameProfile.ns_uploads : nullptr);
+    if (!UploadDrawData(rc, call, &up)) return;
+    if (!BindDraw(rc, call, pipeline, up)) return;
+  }
   const DrawPlacement placement = SetDrawViewport(rc, call, off_w, off_h);
   rc.list->drawIndexedInstanced(call.index_count, 1, 0, 0, 0);
+  ++g_frameProfile.draws;
   if (samples_book_page && placement.on_screen && !call.depth_only && !FindPointSprite(call) && call.layout && BookPickHasRoom()) {
     BookPickDraw pick;
     pick.vs = vs;
@@ -412,7 +428,11 @@ void DrawCapturedScene(GraphicsSystem& gfx, plume::RenderCommandList* list, plum
   if (frame.draws.empty()) {
     return;
   }
-  ResolveDeferredVertexSources(frame);
+  g_profileDraws = FrameProfileDetailed();
+  {
+    ScopedNs timed(&g_frameProfile.ns_vertices);
+    ResolveDeferredVertexSources(frame);
+  }
 
   GraphicsSystem::DrawPathContext ctx;
   if (!gfx.GetDrawPathContext(&ctx)) {
@@ -425,7 +445,10 @@ void DrawCapturedScene(GraphicsSystem& gfx, plume::RenderCommandList* list, plum
   if (!BeginFrameRings(ctx)) {
     return;
   }
-  MaterializeConstants(frame);
+  {
+    ScopedNs timed(&g_frameProfile.ns_constants);
+    MaterializeConstants(frame);
+  }
 
   EnsurePlaceholderTextures(ctx, list);
 

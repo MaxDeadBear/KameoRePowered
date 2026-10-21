@@ -40,6 +40,7 @@ struct RenderBuffer;
 struct RenderTexture;
 struct RenderTextureView;
 struct RenderShader;
+struct RenderQueryPool;
 }  // namespace plume
 
 // Declared in the generated shader_cache.h, at global scope.
@@ -196,6 +197,9 @@ class GraphicsSystem final : public rex::system::IGraphicsSystem {
     std::unique_ptr<plume::RenderCommandFence> fence;
     std::unique_ptr<plume::RenderCommandSemaphore> acquire;
     bool pending = false;  // a submission is outstanding on this slot's fence
+    // Two GPU timestamps around the slot's frame; one pool per slot, since plume's Vulkan read-back wants every query in a pool complete.
+    std::unique_ptr<plume::RenderQueryPool> timestamps;
+    bool timestamps_written = false;
   };
   struct PendingGuestReads {
     uint64_t kick = 0;

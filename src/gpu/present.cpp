@@ -14,6 +14,7 @@
 #include "gpu/config.h"
 #include "gpu/d3d12_debug.h"
 #include "gpu/draw_path.h"
+#include "gpu/frame_profile.h"
 #include "gpu/graphics_system_internal.h"
 #include "gpu/log.h"
 #include "gpu/occlusion.h"
@@ -101,19 +102,33 @@ void GraphicsSystem::PresentClear() {
   const bool retired = frame.pending;
   if (frame.pending) {
     frame.pending = false;
+    detail::ScopedNs timed(&detail::g_frameProfile.ns_wait);
     queue_->waitForCommandFence(frame.fence.get());
   }
   PublishOcclusionResults(frame_slot_, retired);
+  // The slot's last frame has retired, so its two timestamps are the GPU time that frame took.
+  if (frame.timestamps_written && frame.timestamps) {
+    frame.timestamps_written = false;
+    frame.timestamps->queryResults();
+    const uint64_t* stamps = frame.timestamps->getResults();
+    if (stamps[1] > stamps[0]) {
+      detail::g_frameProfile.ns_gpu += stamps[1] - stamps[0];
+      ++detail::g_frameProfile.gpu_frames;
+    }
+  }
   // Everything queued for destruction kFramesInFlight frames ago is provably idle now.
   RetireDrawPathGarbage(frame_index_);
 
-  // Shader modules are built here; the creation hooks run on guest threads and only queue them.
-  QueuePipelinePrecacheShaders(*this);
-  EnsureShaderModules();
-  EnsureDrawPathResources();
-  PrecacheDrawPipelines(*this);
-  // Built here rather than on the first video: creating this pipeline costs a visible hitch, and the first bink plays during a load.
-  EnsureBinkResources();
+  {
+    detail::ScopedNs timed(&detail::g_frameProfile.ns_prep);
+    // Shader modules are built here; the creation hooks run on guest threads and only queue them.
+    QueuePipelinePrecacheShaders(*this);
+    EnsureShaderModules();
+    EnsureDrawPathResources();
+    PrecacheDrawPipelines(*this);
+    // Built here rather than on the first video: creating this pipeline costs a visible hitch, and the first bink plays during a load.
+    EnsureBinkResources();
+  }
 
   uint32_t index = 0;
   const bool acquired = swap_chain_->acquireTexture(frame.acquire.get(), &index);
@@ -129,6 +144,11 @@ void GraphicsSystem::PresentClear() {
 
   plume::RenderCommandList* list = frame.list.get();
   list->begin();
+  if (!frame.timestamps) frame.timestamps = device_->createQueryPool(2);
+  if (frame.timestamps) {
+    list->resetQueryPool(frame.timestamps.get(), 0, 2);
+    list->writeTimestamp(frame.timestamps.get(), 0);
+  }
   uint32_t scene_width = width;
   uint32_t scene_height = height;
   SceneRenderSize(width, height, &scene_width, &scene_height);
@@ -157,8 +177,12 @@ void GraphicsSystem::PresentClear() {
   list->clearDepthStencil(true, true, 1.0f, 0);
   // A new guest video frame can arrive during scene replay, so consuming pending data does not exclude the fallback.
   bink_in_scene_ = false;
-  DrawCapturedScene(*this, list, scene_texture, scene_framebuffer, scene_width,
-                    scene_height);
+  {
+    detail::ScopedNs timed(&detail::g_frameProfile.ns_scene);
+    DrawCapturedScene(*this, list, scene_texture, scene_framebuffer, scene_width,
+                      scene_height);
+  }
+  detail::ScopedNs post_timed(&detail::g_frameProfile.ns_post);
   if (scaled) {
     // Everything after this -- video and UI -- belongs at the window's own resolution, so the scene is scaled onto the swap chain first.
     UpscaleScene(list, scene_texture, texture, framebuffers_[index].get(), width, height);
@@ -170,11 +194,16 @@ void GraphicsSystem::PresentClear() {
   ApplyGamma(list, texture, framebuffers_[index].get(), width, height);
   list->barriers(plume::RenderBarrierStage::NONE,
                           plume::RenderTextureBarrier(texture, plume::RenderTextureLayout::PRESENT));
+  if (frame.timestamps) {
+    list->writeTimestamp(frame.timestamps.get(), 1);
+    frame.timestamps_written = true;
+  }
   // Before the close check, so the debug layer's account of a bad call lands in the log ahead of the close failure it causes.
   detail::DrainD3D12DebugMessages();
   if (!CommandListClosesClean(list, using_vulkan_)) {
     // A list that failed to close cannot be reset, so the next frame needs a new one.
     frame.list = queue_->createCommandList();
+    frame.timestamps_written = false;  // the queries never ran
     return;
   }
   list->end();
@@ -192,7 +221,10 @@ void GraphicsSystem::PresentClear() {
   const UINT chain_flags = native_chain ? native_chain->swapChainFlags : 0;
   if (native_chain && exclusive_active_.load()) native_chain->swapChainFlags &= ~UINT(DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING);
 #endif
-  swap_chain_->present(index, &signal, 1);
+  {
+    detail::ScopedNs timed(&detail::g_frameProfile.ns_present);
+    swap_chain_->present(index, &signal, 1);
+  }
 #ifdef _WIN32
   if (native_chain) native_chain->swapChainFlags = chain_flags;
 #endif
@@ -200,8 +232,10 @@ void GraphicsSystem::PresentClear() {
   LimitFrameRate();
   frame_slot_ = (frame_slot_ + 1) % kFramesInFlight;
 
+  ++detail::g_frameProfile.frames;
   if ((frame_index_++ % 300) == 0) {
     KGFX_INFO("presented frame {} ({}x{})", frame_index_, width, height);
+    detail::ReportFrameProfile();
   }
 }
 
