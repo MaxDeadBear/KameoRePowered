@@ -6,7 +6,22 @@
 #include <chrono>
 #include <cstdint>
 
+#if defined(_MSC_VER) || defined(__x86_64__)
+#include <intrin.h>
+#endif
+
 namespace kameo::gpu::detail {
+
+// The timers read the TSC rather than the performance counter: a sampled profile showed QueryPerformanceCounter and the timer objects at 40% of CaptureCommon's own time with per-draw timing on. Ticks are converted to nanoseconds at report time from a QPC calibration, so the per-draw cost is one rdtsc.
+inline uint64_t ProfileTicks() {
+#if defined(_MSC_VER) || defined(__x86_64__)
+  return __rdtsc();
+#else
+  return uint64_t(std::chrono::steady_clock::now().time_since_epoch().count());
+#endif
+}
+// Nanoseconds per tick, from the calibration ReportFrameProfile maintains; 0 until the first report window has passed.
+double ProfileNsPerTick();
 
 struct FrameProfile {
   // Written by the render thread only.
@@ -44,19 +59,19 @@ struct FrameProfile {
 // Whether the capture hooks time their steps this frame; set by the frame handoff on the game thread, read there only.
 extern bool g_captureDetailed;
 
-// Adds the time it was alive to an atomic counter, for the game thread's hooks; a null counter measures nothing.
+// Adds the ticks it was alive to an atomic counter, for the game thread's hooks; a null counter measures nothing.
 class ScopedAtomicNs {
  public:
-  explicit ScopedAtomicNs(std::atomic<uint64_t>* counter) : counter_(counter), start_(counter ? std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{}) {}
+  explicit ScopedAtomicNs(std::atomic<uint64_t>* counter) : counter_(counter), start_(counter ? ProfileTicks() : 0) {}
   ~ScopedAtomicNs() {
-    if (counter_) counter_->fetch_add(uint64_t(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - start_).count()), std::memory_order_relaxed);
+    if (counter_) counter_->fetch_add(ProfileTicks() - start_, std::memory_order_relaxed);
   }
   ScopedAtomicNs(const ScopedAtomicNs&) = delete;
   ScopedAtomicNs& operator=(const ScopedAtomicNs&) = delete;
 
  private:
   std::atomic<uint64_t>* counter_;
-  std::chrono::steady_clock::time_point start_;
+  uint64_t start_;
 };
 
 extern FrameProfile g_frameProfile;
@@ -64,19 +79,19 @@ extern FrameProfile g_frameProfile;
 // Whether the per-draw timers run this frame (kameo_gfx_frame_profile); the per-frame stages and the GPU time are always measured. Read once per frame by DrawCapturedScene.
 bool FrameProfileDetailed();
 
-// Adds the time it was alive to `counter`; a null counter measures nothing.
+// Adds the ticks it was alive to `counter`; a null counter measures nothing. Counters hold ticks; the report converts.
 class ScopedNs {
  public:
-  explicit ScopedNs(uint64_t* counter) : counter_(counter), start_(counter ? std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{}) {}
+  explicit ScopedNs(uint64_t* counter) : counter_(counter), start_(counter ? ProfileTicks() : 0) {}
   ~ScopedNs() {
-    if (counter_) *counter_ += uint64_t(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - start_).count());
+    if (counter_) *counter_ += ProfileTicks() - start_;
   }
   ScopedNs(const ScopedNs&) = delete;
   ScopedNs& operator=(const ScopedNs&) = delete;
 
  private:
   uint64_t* counter_;
-  std::chrono::steady_clock::time_point start_;
+  uint64_t start_;
 };
 
 // Logs the averages since the last report and clears them.

@@ -391,6 +391,8 @@ class GraphicsSystem final : public rex::system::IGraphicsSystem {
   std::mutex shader_mutex_;
   std::vector<const ShaderCacheEntry*> shader_pending_;
   std::map<const ShaderCacheEntry*, std::unique_ptr<plume::RenderShader>> shader_modules_;
+  // The same modules by cache-entry index, for the two lookups every draw makes; the map walk was 408 samples of a 15 s profile.
+  std::vector<plume::RenderShader*> shader_module_by_index_;
   uint32_t shader_module_ok_ = 0;
   uint32_t shader_module_failed_ = 0;
   uint32_t shader_module_empty_ = 0;

@@ -14,6 +14,8 @@ plume::RenderShader* GraphicsSystem::ShaderModule(const ShaderCacheEntry* entry)
   if (!entry) {
     return nullptr;
   }
+  const size_t index = size_t(entry - g_shaderCacheEntries);
+  if (index < shader_module_by_index_.size()) return shader_module_by_index_[index];
   auto found = shader_modules_.find(entry);
   return found != shader_modules_.end() ? found->second.get() : nullptr;
 }
@@ -77,6 +79,11 @@ void GraphicsSystem::EnsureShaderModules() {
                                               : plume::RenderShaderFormat::DXIL);
     if (module) {
       ++shader_module_ok_;
+      const size_t index = size_t(entry - g_shaderCacheEntries);
+      if (index < g_shaderCacheEntryCount) {
+        if (shader_module_by_index_.size() < g_shaderCacheEntryCount) shader_module_by_index_.resize(g_shaderCacheEntryCount, nullptr);
+        shader_module_by_index_[index] = module.get();
+      }
       shader_modules_.emplace(entry, std::move(module));
     } else {
       ++shader_module_failed_;

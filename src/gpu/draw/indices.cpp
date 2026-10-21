@@ -31,7 +31,8 @@ struct IndexCacheMemo {
   uint64_t key = 0;
   IndexCacheEntry* entry = nullptr;
 };
-constexpr uint32_t kIndexCacheMemoSlots = 4096;
+// 64K slots: a frame draws 4,000-5,500 distinct lists, and at 4,096 slots the memo thrashed into the map walk it exists to avoid (ReadIndexedDraw's own body was 460 of its 848 profile samples).
+constexpr uint32_t kIndexCacheMemoSlots = 1u << 16;
 IndexCacheMemo g_indexCacheMemo[kIndexCacheMemoSlots];
 
 IndexCacheEntry* FindIndexCacheEntry(uint64_t key) {

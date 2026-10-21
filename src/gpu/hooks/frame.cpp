@@ -124,13 +124,13 @@ void HandOffFrame(uint8_t* base, kameo::gpu::GraphicsSystem* gfx) {
   static std::mutex drive_mutex;
   std::lock_guard<std::mutex> drive_lock(drive_mutex);
   // The game thread's own frame time: from one handoff to the next, whatever it spent the time on.
-  static std::chrono::steady_clock::time_point last_handoff;
-  const auto now = std::chrono::steady_clock::now();
-  if (last_handoff != std::chrono::steady_clock::time_point{}) {
-    kameo::gpu::detail::g_frameProfile.ns_guest_frame.fetch_add(uint64_t(std::chrono::duration_cast<std::chrono::nanoseconds>(now - last_handoff).count()), std::memory_order_relaxed);
+  static uint64_t last_handoff_ticks = 0;
+  const uint64_t now_ticks = kameo::gpu::detail::ProfileTicks();
+  if (last_handoff_ticks != 0) {
+    kameo::gpu::detail::g_frameProfile.ns_guest_frame.fetch_add(now_ticks - last_handoff_ticks, std::memory_order_relaxed);
     kameo::gpu::detail::g_frameProfile.guest_frames.fetch_add(1, std::memory_order_relaxed);
   }
-  last_handoff = now;
+  last_handoff_ticks = now_ticks;
   kameo::gpu::detail::g_captureDetailed = kameo::gpu::detail::FrameProfileDetailed();
   // The dialogs write guest state, so they run here on the guest thread rather than on the render thread.
   gfx->RunUiCallback();
