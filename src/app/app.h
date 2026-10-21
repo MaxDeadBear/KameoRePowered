@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <memory>
+#include <string>
 
 #include <rex/logging/sink.h>
 #include <rex/rex_app.h>
@@ -55,6 +56,7 @@ class KameoApp : public rex::ReXApp {
   std::unique_ptr<rex::ui::ImGuiDrawer> kameo_imgui_drawer_;
   std::shared_ptr<rex::LogCaptureSink> kameo_log_sink_;
   std::filesystem::path kameo_config_path_;
+  std::string kameo_paths_note_;  // what OnConfigurePaths wants said once logging exists
   std::unique_ptr<rex::ui::ImGuiDialog> kameo_console_overlay_;
   std::unique_ptr<rex::ui::ImGuiDialog> kameo_debug_overlay_;
   std::unique_ptr<rex::ui::ImGuiDialog> kameo_settings_overlay_;

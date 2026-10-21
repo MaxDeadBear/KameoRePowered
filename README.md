@@ -42,7 +42,7 @@ cmake --build --preset relwithdebinfo
 
 ## Playing
 
-The game reads its data from the `assets` folder next to the executable, so give the build directory (`out/build/<preset>/`) one, or start it with `--game_data_root=<your extracted game>`. Settings live in `kameo_settings.toml` next to the executable and are edited from the pause menu. Any runtime option can also be passed on the command line or kept in `kameorepowered.toml`:
+The game reads its data from the `assets` folder next to the executable (`assets/default.xex` and the rest of the disc beside it), so give the build directory (`out/build/<preset>/`) one, or point `game_data_root` at your extracted game, in `kameorepowered.toml` or as `--game_data_root=<path>`. Settings live in `kameo_settings.toml` next to the executable and are edited from the pause menu. Any runtime option can also be passed on the command line or kept in `kameorepowered.toml`:
 
 ```toml
 user_language = 4          # French

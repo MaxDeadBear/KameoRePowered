@@ -33,10 +33,11 @@ REXCVAR_DECLARE(std::string, cache_root);
 
 namespace {
 
-std::string ConfiguredUserDataRoot(const std::filesystem::path& config_path) {
+// A path from kameorepowered.toml, read here because the SDK loads that file only after it has chosen the paths.
+std::string ConfiguredPath(const std::filesystem::path& config_path, const char* key) {
   try {
     const toml::table table = toml::parse_file(config_path.string());
-    if (auto value = table["user_data_root"].value<std::string>()) return *value;
+    if (auto value = table[key].value<std::string>()) return *value;
   } catch (const toml::parse_error&) {
   }
   return {};
@@ -199,21 +200,44 @@ void KameoApp::OnPostInitLogging() {
     if (freopen_s(&redirected, path.string().c_str(), "a", stderr) == 0 && redirected != nullptr) setvbuf(stderr, nullptr, _IONBF, 0);
   }
 #endif
+  // The first thing a report needs when the game cannot find its files.
+  REXLOG_INFO("game data folder: {}", game_data_root().string());
+  if (!kameo_paths_note_.empty()) REXLOG_WARN("{}", kameo_paths_note_);
   KameoWaitForReplacedProcess();
   KameoLoadSettings();
 }
 
-// The game data is the assets folder next to the executable unless game_data_root names another; a wrong game_data_root fails with its path rather than being swapped for some other folder.
+// The game data is the assets folder next to the executable unless game_data_root names another, on the command line or in kameorepowered.toml; a wrong game_data_root fails with its path rather than being swapped for some other folder.
 void KameoApp::OnConfigurePaths(rex::PathConfig& paths) {
+  namespace fs = std::filesystem;
   kameo_config_path_ = paths.config_path;
-  // The SDK resolves paths before it loads kameorepowered.toml, so a user_data_root set only there (as the launcher expects) is applied here.
+  // The SDK resolves paths before it loads kameorepowered.toml, so a root set only there (as the launcher expects) is applied here.
   if (REXCVAR_GET(user_data_root).empty()) {
-    if (const std::string root = ConfiguredUserDataRoot(paths.config_path); !root.empty()) {
+    if (const std::string root = ConfiguredPath(paths.config_path, "user_data_root"); !root.empty()) {
       paths.user_data_root = root;
       if (REXCVAR_GET(cache_root).empty()) paths.cache_root = paths.user_data_root / "cache";
     }
   }
   if (paths.game_data_root.empty()) {
+    if (const std::string root = ConfiguredPath(paths.config_path, "game_data_root"); !root.empty()) paths.game_data_root = root;
+  }
+  if (paths.game_data_root.empty()) {
     paths.game_data_root = rex::filesystem::GetExecutableFolder() / "assets";
+  }
+  // A disc extracted one folder deeper than asked (assets\<disc name>\default.xex) is taken as it is when it is the only candidate.
+  std::error_code ec;
+  if (!fs::exists(paths.game_data_root / "default.xex", ec) && fs::is_directory(paths.game_data_root, ec)) {
+    fs::path nested;
+    int candidates = 0;
+    for (const auto& entry : fs::directory_iterator(paths.game_data_root, ec)) {
+      if (entry.is_directory(ec) && fs::exists(entry.path() / "default.xex", ec)) {
+        nested = entry.path();
+        ++candidates;
+      }
+    }
+    if (candidates == 1) {
+      kameo_paths_note_ = fmt::format("game data found one folder down, in {}; the expected layout is default.xex directly inside {}", nested.string(), paths.game_data_root.string());
+      paths.game_data_root = nested;
+    }
   }
 }
