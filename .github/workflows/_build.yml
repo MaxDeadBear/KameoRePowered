@@ -44,7 +44,8 @@ jobs:
             artifact_suffix: windows-x64
             compilers: ""
           - platform: linux
-            runner: ubuntu-latest
+            # Pinned: ubuntu-latest became 26.04 in October 2026 and apt.llvm.org has no LLVM 20 repository for it yet.
+            runner: ubuntu-24.04
             sdk_dir: linux-amd64
             artifact_suffix: linux-x64
             compilers: -DCMAKE_C_COMPILER=clang-20 -DCMAKE_CXX_COMPILER=clang++-20
