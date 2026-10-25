@@ -37,6 +37,7 @@ extern "C" REX_FUNC(sub_823F1028) {
     return;
   }
   g_currentPage = Page::None;
+  NoteActivatedPage(Page::None, 0);
   __imp__sub_823F1028(ctx, base);
 }
 
@@ -88,6 +89,7 @@ extern "C" REX_FUNC(sub_823F1078) {
   }
   if (PressLevelSelectItem(ctx, base, pause, window, id)) return;
   if (PressCollectibleItem(ctx, base, pause, window, id)) return;
+  if (PressAchievementItem(id)) return;
   if (id == kItemPlayCredits) {
     g_playCreditsRequested = true;
     g_resumeRequested = true;

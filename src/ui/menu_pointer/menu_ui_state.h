@@ -31,6 +31,8 @@ bool RenderedOntoBookPage(uint32_t text_object);
 void StoreDrawnLines(uint32_t text_object, std::vector<DrawnLine> lines);
 // The selectable line whose drawn centre is nearest y in the window's last render, within one line height of it; -2 when nothing recent was recorded.
 int32_t DrawnLineAt(uint32_t text_object, float y);
+// Every selectable line of the window's last render, in layout units; empty when nothing recent was recorded.
+std::vector<DrawnLine> DrawnLinesOf(uint32_t text_object);
 // How much taller than measured a window's selectable lines are drawn.
 float WindowTextScale(uint8_t* base, uint32_t text_object);
 

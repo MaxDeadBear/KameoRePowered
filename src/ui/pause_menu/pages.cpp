@@ -16,6 +16,7 @@ uint32_t g_brightnessIndex = 0;
 bool g_resumeRequested = false;
 bool g_playCreditsRequested = false;
 bool g_levelSelectAvailable = false;
+Page g_hotkeyPage = Page::None;
 
 namespace {
 
@@ -27,6 +28,7 @@ const PageInfo kPages[] = {
     {Page::Coop, Page::None, u"Split-screen", 0x7A5E030D},
     {Page::Gameplay, Page::None, u"Gameplay", 0x7A5E0308},
     {Page::Mods, Page::None, u"Mods", kItemModsPage},
+    {Page::Achievements, Page::None, u"Achievements", kItemAchievementsPage},
     {Page::Hud, Page::Video, u"HUD", 0x7A5E030B},
     {Page::Effects, Page::Graphics, u"Effects", 0x7A5E0303},
     {Page::Materials, Page::Graphics, u"Materials", 0x7A5E030C},
@@ -35,12 +37,13 @@ const PageInfo kPages[] = {
     {Page::PadBindings, Page::Controls, u"Controller Bindings", 0x7A5E0311},
 };
 
-// The Options page, the pause menu's and the main menu's alike: these categories, the game's own settings page when it has co-op settings to show, and Restore All Defaults.
-constexpr Page kOptionsCategories[] = {Page::Video, Page::Graphics, Page::Audio, Page::Controls, Page::Coop, Page::Gameplay, Page::Mods};
+// The Options page, the pause menu's and the main menu's alike: these categories, then Credits in a game, and Restore All Defaults.
+constexpr Page kOptionsCategories[] = {Page::Video, Page::Graphics, Page::Audio, Page::Controls, Page::Coop, Page::Gameplay, Page::Mods, Page::Achievements};
 
 void AddPageRows(PPCContext& ctx, uint8_t* base, uint32_t window, Page page) {
   if (AddLevelSelectRows(ctx, base, window, page)) return;
   if (AddCollectibleRows(ctx, base, window, page)) return;
+  if (AddAchievementRows(ctx, base, window, page)) return;
   if (page == Page::Options) {
     AddPageTitle(ctx, base, window, u"Options");
     for (const Page category : kOptionsCategories) AddCategoryLine(ctx, base, window, FindPage(category)->item, FindPage(category)->title);
@@ -147,6 +150,7 @@ void ActivatePage(PPCContext& ctx, uint8_t* base, uint32_t pause, uint32_t windo
   g_menuPlayer = uint32_t(std::clamp<int8_t>(int8_t(REX_LOAD_U8(REX_LOAD_U32(pause + 8) + 146)), 0, 3));
   AddPageRows(ctx, base, window, page);
   g_currentPage = page;
+  NoteActivatedPage(page, text_object);
   REX_STORE_U32(REX_LOAD_U32(pause + 512) + 120, 1);
 }
 

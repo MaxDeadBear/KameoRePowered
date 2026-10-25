@@ -8,6 +8,10 @@
 void KameoTickFpsCounter(PPCContext& ctx, uint8_t* base);
 // True while the FPS counter's box is being drawn in its flat-black shadow pass.
 bool KameoSkipTextBoxShadow();
+// Whether the counter is waiting for its window's ready callback; the achievement toast waits its turn, since the callback cannot tell two windows for one owner apart.
+bool KameoFpsCounterPending();
+// Whether `bytes` at a guest address are mapped and readable, for fields of a window the game may have freed.
+bool KameoGuestRangeReadable(uint32_t address, uint32_t bytes);
 
 namespace kameo::ui {
 

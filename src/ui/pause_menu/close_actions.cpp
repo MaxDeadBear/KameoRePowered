@@ -2,6 +2,7 @@
 
 #include "core/time.h"
 #include "engine/cutscene.h"
+#include "input/guest_controls.h"
 #include "ui/pause_menu/pause_menu_internal.h"
 
 using namespace kameo::ui;
@@ -33,9 +34,20 @@ void PlayCredits(PPCContext& ctx, uint8_t* base) {
 
 }  // namespace
 
-// xfixgem_storybook_initSimplePauseMenuWidget() -- where Start closes a gameplay pause (storedPauseValue bit 0x10): clearing the bit from both pause words, resetting objectPauseFrames, killing the pause objects and playing the close sound; the Resume line asks for the same.
+// xfixgem_storybook_initSimplePauseMenuWidget() -- where Start opens and closes a gameplay pause (storedPauseValue bit 0x10): the close clears the bit from both pause words, resets objectPauseFrames, kills the pause objects and plays the close sound; the Resume line asks for the same, and a hotkey wanting the menu open shows this call a Start press from player 1.
 extern "C" REX_FUNC(sub_82269838) {
+  // The XInput Start bit, which this function tests in each player's pressed-buttons word against the commit-test mask.
+  constexpr uint32_t kButtonStart = 0x10;
+  const bool open_for_hotkey = TakeHotkeyPauseOpen();
+  uint32_t pressed_word = 0;
+  uint32_t pressed_before = 0;
+  if (open_for_hotkey) {
+    pressed_word = kameo::input::PlayerStick(base, 0) + kameo::input::kStickPressed;
+    pressed_before = REX_LOAD_U32(pressed_word);
+    REX_STORE_U32(pressed_word, pressed_before | kButtonStart);
+  }
   __imp__sub_82269838(ctx, base);
+  if (open_for_hotkey) REX_STORE_U32(pressed_word, pressed_before);
   if (!g_resumeRequested) return;
   g_resumeRequested = false;
   constexpr uint32_t kStoredPauseValue = 0x82B71904;

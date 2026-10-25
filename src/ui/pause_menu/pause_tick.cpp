@@ -51,6 +51,13 @@ extern "C" REX_FUNC(sub_823EFB78) {
   const uint32_t record = pause ? REX_LOAD_U32(pause + 512) : 0;
   const uint32_t window = record ? REX_LOAD_U32(record + 68) : 0;
   NotePauseMenuWindow(window);
+  // A hotkey's page, once the menu it opened (or found open) has its window.
+  if (window && pause && g_hotkeyPage != Page::None) {
+    const Page page = g_hotkeyPage;
+    g_hotkeyPage = Page::None;
+    g_brightnessFromDisplay = false;
+    ActivatePage(ctx, base, pause, window, page);
+  }
   std::string bound_cvar;
   std::string bound_key;
   bool bind_cancelled = false;

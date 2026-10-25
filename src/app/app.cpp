@@ -14,10 +14,8 @@
 #include <rex/cvar.h>
 #include <rex/filesystem.h>
 #include <rex/logging/api.h>
-#include <rex/ui/overlay/achievements_overlay.h>
 #include <rex/ui/overlay/console_overlay.h>
 #include <rex/ui/overlay/debug_overlay.h>
-#include <rex/ui/overlay/settings_overlay.h>
 
 #include "app/process.h"
 #include "app/window_mode.h"
@@ -27,6 +25,8 @@
 #include "engine/audio.h"
 #include "engine/dlc/dlc_models.h"
 #include "input/input.h"
+#include "ui/hud/achievement_toast.h"
+#include "ui/pause_menu/pause_menu.h"
 
 REXCVAR_DECLARE(std::string, user_data_root);
 REXCVAR_DECLARE(std::string, cache_root);
@@ -122,16 +122,9 @@ bool KameoApp::SetupPresentation() {
       ToggleOverlay(ImGuiKey_F3, kameo_debug_overlay_, [this] {
         return std::make_unique<rex::ui::DebugOverlayDialog>(kameo_imgui_drawer_.get());
       });
-      ToggleOverlay(ImGuiKey_F4, kameo_settings_overlay_, [this] {
-        return std::make_unique<rex::ui::SettingsDialog>(kameo_imgui_drawer_.get(),
-                                                         kameo_config_path_);
-      });
-      // ReXApp's CreateAchievementsOverlay() builds against its own immediate drawer, which stays null here.
-      ToggleOverlay(ImGuiKey_F6, kameo_achievements_overlay_, [this] {
-        return std::make_unique<rex::ui::AchievementsOverlayDialog>(
-            kameo_imgui_drawer_.get(), kameo_immediate_drawer_.get(), runtime(),
-            &achievements());
-      });
+      // Options and Achievements are pages of the game's own menu, not ImGui: F4 and F6 open them there.
+      if (ImGui::IsKeyPressed(ImGuiKey_F4, false)) KameoRequestMenuPage(KameoMenuHotkey::Options);
+      if (ImGui::IsKeyPressed(ImGuiKey_F6, false)) KameoRequestMenuPage(KameoMenuHotkey::Achievements);
     });
   }
   return true;
@@ -143,9 +136,12 @@ void KameoApp::OnShutdown() {
     kameo_graphics_->SetUiFrameCallback(nullptr);
   }
   kameo_fps_overlay_.reset();
+  kameo_achievement_icons_.reset();
   kameo_name_entry_keys_.reset();
-  kameo_achievements_overlay_.reset();
-  kameo_settings_overlay_.reset();
+  if (kameo_achievement_listener_ != 0 && runtime()) {
+    achievements().UnregisterCallback(kameo_achievement_listener_);
+    kameo_achievement_listener_ = 0;
+  }
   kameo_debug_overlay_.reset();
   kameo_console_overlay_.reset();
   if (runtime() && runtime()->imgui_drawer() == kameo_imgui_drawer_.get()) runtime()->set_imgui_drawer(nullptr);
@@ -171,6 +167,9 @@ void KameoApp::OnPostSetup() {
   if (lang > 1) {
     kameo::app::RegisterLanguageRedirects(*runtime()->file_system(), lang);
   }
+  // The SDK shows unlocks only through its own ImGui toast, built on a drawer this app leaves null; the game's text box shows them instead.
+  kameo_achievement_listener_ = achievements().RegisterNotificationCallback([](const rex::system::AchievementEvent& event) { KameoPushAchievementToast(event); });
+  if (kameo_achievement_icons_) kameo_achievement_icons_->SetRuntime(runtime());
   CrashForTestIfAsked();
 #ifndef _WIN32
   // Installed after SDK setup so it overrides any SDK-installed SIGFPE handler.
@@ -181,6 +180,7 @@ void KameoApp::OnPostSetup() {
 void KameoApp::OnCreateDialogs(rex::ui::ImGuiDrawer* drawer) {
   kameo_name_entry_keys_ = std::make_unique<KameoNameEntryKeys>(drawer);
   kameo_fps_overlay_ = std::make_unique<KameoFpsOverlay>(drawer);
+  kameo_achievement_icons_ = std::make_unique<KameoAchievementIcons>(drawer, kameo_immediate_drawer_.get());
 }
 
 // The menu's own settings file loads after the main config so its values win, and before setup reads any of them.

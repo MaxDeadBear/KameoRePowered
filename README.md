@@ -14,6 +14,7 @@ Everyone is welcome on the [Discord server](https://discord.gg/8jaZQUkxZZ): ask 
 
 - **Native renderer** built on [plume](https://github.com/renderbag/plume): D3D12 on Windows, Vulkan everywhere; any resolution, MSAA, anisotropic filtering, shadow quality, frame-rate cap, exclusive or borderless fullscreen.
 - **Options menu** inside the game's own pause menu.
+- **Achievements** in the same menu, with the game's own art, and an unlock notice in the game's text box.
 - **Keyboard and mouse** with rebindable keys, mouse look and a cursor in menus; controller presets and rebinding.
 - **Story split-screen co-op** for a second player.
 - **Downloadable content**, including the title-update packs the original game could not read.
@@ -87,7 +88,7 @@ A fruit, elixir, Crystal Eye or costume left in a level the story has moved past
 
 ### Logs and overlay keys
 
-Logs are written to `logs/kameorepowered_N.log`. In game, F1 toggles the FPS counter, `` ` `` opens the console, F3 the debug overlay, F4 the settings overlay and F6 achievements.
+Logs are written to `logs/kameorepowered_N.log`. In game, F1 toggles the FPS counter, F4 opens the Options pages and F6 the Achievements page (both in the game's own menu), `` ` `` opens the console and F3 the debug overlay.
 
 ## Project layout
 

@@ -63,12 +63,15 @@ constexpr uint32_t kItemLevelTask = 0x7A5E0800;
 constexpr uint32_t kItemCollectiblesPage = 0x7A5E0900;
 // The tracker's rows, which do nothing when pressed.
 constexpr uint32_t kItemCollectibleRow = 0x7A5E0910;
+constexpr uint32_t kItemAchievementsPage = 0x7A5E0B00;
+// One row per achievement, in catalog order; pressed, they do nothing.
+constexpr uint32_t kItemAchievementRow = 0x7A5E0B10;
 
 // The display gamma is shown as a second copy of the game's 28-segment brightness bar, spanning 0.5 to 2.0.
 constexpr int32_t kGammaBarSegments = 28;
 
 // Options is the main menu's list of categories, and ConfirmReset asks before a Restore Defaults.
-enum class Page { None, Video, Audio, Controls, Coop, Gameplay, Mods, Hud, Graphics, Effects, Materials, Camera, Bindings, PadBindings, GameBrightness, Options, ConfirmReset, LevelSelect, LevelChapter, ConfirmJump, Collectibles };
+enum class Page { None, Video, Audio, Controls, Coop, Gameplay, Mods, Hud, Graphics, Effects, Materials, Camera, Bindings, PadBindings, GameBrightness, Options, ConfirmReset, LevelSelect, LevelChapter, ConfirmJump, Collectibles, Achievements };
 
 struct Option {
   uint32_t id;
@@ -122,6 +125,10 @@ extern bool g_resumeRequested;
 extern bool g_playCreditsRequested;
 // Level Select and Credits only appear in a game's pause menu, not the main menu's options.
 extern bool g_levelSelectAvailable;
+// A page a hotkey asked for, which the pause object's tick activates once its window exists; None otherwise.
+extern Page g_hotkeyPage;
+// True once per hotkey that found no menu open: the pause handling then runs as if player 1 had pressed Start.
+bool TakeHotkeyPauseOpen();
 
 bool HasDefaults(Page scope);
 void AddConfirmResetRows(PPCContext& ctx, uint8_t* base, uint32_t window);
@@ -145,6 +152,11 @@ void AddToggleRow(PPCContext& ctx, uint8_t* base, uint32_t window, uint32_t id, 
 bool AddCollectibleRows(PPCContext& ctx, uint8_t* base, uint32_t window, Page page);
 bool PressCollectibleItem(PPCContext& ctx, uint8_t* base, uint32_t pause, uint32_t window, uint32_t id);
 bool BackFromCollectibles(PPCContext& ctx, uint8_t* base, uint32_t pause, uint32_t window, Page page);
+// The Achievements page: the title's achievements from its XDBF, unlocked state and gamerscore, built like the collectible tracker; each returns false for anything not its own.
+bool AddAchievementRows(PPCContext& ctx, uint8_t* base, uint32_t window, Page page);
+bool PressAchievementItem(uint32_t id);
+// Called by ActivatePage for every page, so the icon layer knows when the Achievements page has gone.
+void NoteActivatedPage(Page page, uint32_t text_object);
 // Watches the pause owner's X, Y and bumper presses for a cheat code, and rebuilds the page when one unlocks something.
 void TickCheatCodes(PPCContext& ctx, uint8_t* base, uint32_t pause, uint32_t window, uint32_t pressed);
 // Moves a scroll that stops part way through a line on to that line's end, so no cut-off half line shows at the top.

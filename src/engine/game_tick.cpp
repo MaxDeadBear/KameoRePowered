@@ -7,7 +7,9 @@
 #include "engine/super_jump.h"
 #include "engine/unlocks.h"
 #include "input/input.h"
+#include "ui/hud/achievement_toast.h"
 #include "ui/hud/fps_counter.h"
+#include "ui/pause_menu/pause_menu.h"
 
 // Hooked at 0x8224F700, once per game tick.
 void KameoGameTick() {
@@ -28,4 +30,6 @@ void KameoGameTick() {
   KameoUpdateSuperJumpFloat(*ctx_ptr, base);
   KameoTickInput();
   KameoTickFpsCounter(*ctx_ptr, base);
+  KameoTickAchievementToast(*ctx_ptr, base);
+  KameoTickMenuHotkeys(*ctx_ptr, base);
 }

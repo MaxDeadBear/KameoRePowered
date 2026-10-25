@@ -13,6 +13,7 @@
 
 #include "gpu/graphics_system.h"
 #include "gpu/ui/imgui_drawer.h"
+#include "ui/hud/achievement_icons.h"
 #include "ui/hud/fps_overlay.h"
 #include "ui/name_entry/name_entry_keys.h"
 
@@ -51,6 +52,7 @@ class KameoApp : public rex::ReXApp {
   void* veh_handle_ = nullptr;
   std::unique_ptr<KameoNameEntryKeys> kameo_name_entry_keys_;
   std::unique_ptr<KameoFpsOverlay> kameo_fps_overlay_;
+  std::unique_ptr<KameoAchievementIcons> kameo_achievement_icons_;
   kameo::gpu::GraphicsSystem* kameo_graphics_ = nullptr;
   std::unique_ptr<kameo::gpu::PlumeImmediateDrawer> kameo_immediate_drawer_;
   std::unique_ptr<rex::ui::ImGuiDrawer> kameo_imgui_drawer_;
@@ -59,6 +61,6 @@ class KameoApp : public rex::ReXApp {
   std::string kameo_paths_note_;  // what OnConfigurePaths wants said once logging exists
   std::unique_ptr<rex::ui::ImGuiDialog> kameo_console_overlay_;
   std::unique_ptr<rex::ui::ImGuiDialog> kameo_debug_overlay_;
-  std::unique_ptr<rex::ui::ImGuiDialog> kameo_settings_overlay_;
-  std::unique_ptr<rex::ui::ImGuiDialog> kameo_achievements_overlay_;
+  // Unlock notices go to the game's own text box; this is the manager's callback registration.
+  uint64_t kameo_achievement_listener_ = 0;
 };

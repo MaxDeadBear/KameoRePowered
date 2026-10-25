@@ -70,6 +70,13 @@ void StoreDrawnLines(uint32_t text_object, std::vector<DrawnLine> lines) {
   drawn.tick = g_uiTick.load();
 }
 
+std::vector<DrawnLine> DrawnLinesOf(uint32_t text_object) {
+  std::lock_guard<std::mutex> lock(g_drawnLinesMutex);
+  const auto found = g_drawnLines.find(text_object);
+  if (found == g_drawnLines.end() || g_uiTick.load() - found->second.tick > 5) return {};
+  return found->second.lines;
+}
+
 // Nearest rather than strictly inside, because the book's pages flutter a few units away from the mapping.
 int32_t DrawnLineAt(uint32_t text_object, float y) {
   std::lock_guard<std::mutex> lock(g_drawnLinesMutex);

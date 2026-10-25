@@ -10,6 +10,7 @@
 
 #include "gpu/graphics_system.h"
 #include "input/guest_controls.h"
+#include "ui/hud/achievement_toast.h"
 #include "ui/menu_pointer/menu_ui_state.h"
 #include "ui/text_window.h"
 
@@ -45,14 +46,18 @@ FpsCounter g_fpsCounter;
 
 thread_local bool t_renderingFpsCounter = false;
 
+bool GuestRangeReadable(uint32_t address, uint32_t bytes) { return KameoGuestRangeReadable(address, bytes); }
+
+}  // namespace
+
 // A freed window's memory is released or reused before its delete list clears the slot, so its fields are only read where guest pages are still readable.
-bool GuestRangeReadable(uint32_t address, uint32_t bytes) {
+bool KameoGuestRangeReadable(uint32_t address, uint32_t bytes) {
   if (address < 0x10000 || address > 0xFFFFFFFFu - bytes) return false;
   rex::memory::BaseHeap* heap = rex::system::kernel_state()->memory()->LookupHeap(address);
   return heap && heap->QueryRangeAccess(address, address + bytes - 1) != rex::memory::PageAccess::kNoAccess;
 }
 
-}  // namespace
+bool KameoFpsCounterPending() { return g_fpsCounter.pending; }
 
 bool kameo::ui::IsFpsCounterText(uint8_t* base, uint32_t text_object) {
   const uint32_t slot = g_fpsCounter.slot;
@@ -126,6 +131,8 @@ extern "C" REX_FUNC(sub_824452F8) {
   FpsCounter& counter = g_fpsCounter;
   const uint32_t window = ctx.r3.u32;
   const uint32_t owner = ctx.r4.u32;
+  // The achievement toast creates the same kind of window for the same owner; only one of the two waits at a time.
+  if (!counter.pending && KameoClaimAchievementToastWindow(ctx, base, window, owner)) return;
   if (!counter.pending || !owner || owner != counter.owner || !window) {
     __imp__sub_824452F8(ctx, base);
     return;
