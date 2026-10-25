@@ -6,8 +6,10 @@
 #include <chrono>
 #include <cstdint>
 
-#if defined(_MSC_VER) || defined(__x86_64__)
+#if defined(_MSC_VER)
 #include <intrin.h>
+#elif defined(__x86_64__)
+#include <x86intrin.h>  // __rdtsc on clang and gcc; intrin.h is the MSVC spelling
 #endif
 
 namespace kameo::gpu::detail {
