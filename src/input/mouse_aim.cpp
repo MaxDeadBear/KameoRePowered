@@ -7,6 +7,7 @@
 #include <rex/cvar.h>
 
 #include "core/time.h"
+#include "engine/ability_energy.h"
 #include "input/guest_controls.h"
 #include "input/input.h"
 #include "input/input_internal.h"
@@ -124,7 +125,11 @@ extern "C" REX_FUNC(sub_8217BEC8) {
 // WaterCannonTick(deepBlue) -- sets +1452 of the 2680 record while Deep Blue's spray aims; the Deep Blue doing so is kept for PlrKeysReady.
 extern "C" REX_FUNC(sub_82503F98) {
   const uint32_t deep_blue = ctx.r3.u32;
-  __imp__sub_82503F98(ctx, base);
+  {
+    // Its spray spends energy every tick; see engine/ability_energy.cpp.
+    const kameo::engine::PerTickEnergyDrainScope energy_by_time;
+    __imp__sub_82503F98(ctx, base);
+  }
   const uint32_t record = deep_blue ? REX_LOAD_U32(deep_blue + 2680) : 0;
   if (record && REX_LOAD_U32(record + 1452) != 0) {
     g_sprayObject = deep_blue;
