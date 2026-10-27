@@ -14,6 +14,8 @@ Everyone is welcome on the [Discord server](https://discord.gg/8jaZQUkxZZ): ask 
 
 - **Native renderer** built on [plume](https://github.com/renderbag/plume): D3D12 on Windows, Vulkan everywhere; any resolution, MSAA, anisotropic filtering, shadow quality, frame-rate cap, exclusive or borderless fullscreen.
 - **Options menu** inside the game's own pause menu.
+<!-- STEREO: -->
+- **Stereoscopic 3D**: side by side or top and bottom for a 3D TV or headset, or red/cyan anaglyph on any screen, with the depth and focus distance adjustable in Options > Graphics.
 - **Achievements** in the same menu, with the game's own art, and an unlock notice in the game's text box.
 - **Keyboard and mouse** with rebindable keys, mouse look and a cursor in menus; controller presets and rebinding.
 - **Story split-screen co-op** for a second player.

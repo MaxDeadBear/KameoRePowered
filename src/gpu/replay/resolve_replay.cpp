@@ -22,7 +22,7 @@ OffscreenTarget* FindOffscreenSource(const DrawCall& call) {
     if (t.surface != call.rt_surface) {
       continue;
     }
-    if (t.cleared_frame == g_sceneFrames) {
+    if (t.cleared_frame == SceneStamp()) {
       off_match = &t;
       break;
     }
@@ -35,7 +35,7 @@ OffscreenTarget* FindOffscreenSource(const DrawCall& call) {
   const int32_t stale_max = REXCVAR_GET(kameo_gfx_stale_offscreen_frames);
   if (off_match == nullptr && off_stale != nullptr &&
       (stale_max < 0 ||
-       uint64_t(g_sceneFrames) - off_stale->cleared_frame <= uint64_t(stale_max))) {
+       FramesSince(off_stale->cleared_frame) <= uint64_t(stale_max))) {
     off_match = off_stale;
   } else if (off_match == nullptr && off_stale != nullptr) {
     static std::set<uint32_t> reported_stale;
@@ -43,7 +43,7 @@ OffscreenTarget* FindOffscreenSource(const DrawCall& call) {
       KGFX_INFO("resolve {:08X} {}x{}: surface {:08X} last rendered {} frames ago; too old "
                   "to answer this resolve",
                   call.resolve_address, call.resolve_width, call.resolve_height,
-                  call.rt_surface, uint64_t(g_sceneFrames) - off_stale->cleared_frame);
+                  call.rt_surface, FramesSince(off_stale->cleared_frame));
     }
   }
   // Last resort, a pass of exactly the resolve's size: the storybook portraits render through one surface object and resolve from another (matching by eDRAM base instead was measured to break the main menu).
@@ -59,7 +59,7 @@ OffscreenTarget* FindOffscreenSource(const DrawCall& call) {
       }
       // The same age bound as the stale path, or the warrior screen's 240x320 card-frame pass answers a main-menu resolve.
       if (stale_max >= 0 &&
-          uint64_t(g_sceneFrames) - t.cleared_frame > uint64_t(stale_max)) {
+          FramesSince(t.cleared_frame) > uint64_t(stale_max)) {
         continue;
       }
       if (by_size == nullptr || t.cleared_frame > by_size->cleared_frame) {

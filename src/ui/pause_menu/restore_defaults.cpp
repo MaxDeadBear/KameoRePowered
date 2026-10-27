@@ -20,6 +20,7 @@ struct DefaultSetting {
 const DefaultSetting kDefaultSettings[] = {
     {Page::Video, "kameo_window_mode"}, {Page::Video, "kameo_gfx_widescreen"}, {Page::Video, "kameo_gfx_render_height"}, {Page::Video, "kameo_gfx_render_width"}, {Page::Video, "kameo_gfx_user_gamma"}, {Page::Hud, "kameo_hud_layout"}, {Page::Hud, "kameo_hud_scale"},
     {Page::Graphics, "kameo_gfx_backend"}, {Page::Graphics, "kameo_gfx_msaa"}, {Page::Graphics, "kameo_gfx_anisotropy"}, {Page::Graphics, "kameo_gfx_shadows"}, {Page::Graphics, "kameo_gfx_shadow_filtering"}, {Page::Graphics, "kameo_gfx_shadow_resolution"},
+    /* STEREO: */ {Page::Graphics, "kameo_gfx_stereo"}, {Page::Graphics, "kameo_gfx_stereo_depth"}, {Page::Graphics, "kameo_gfx_stereo_focus"}, {Page::Graphics, "kameo_gfx_stereo_swap"},
     {Page::Effects, "kameo_gfx_particles"}, {Page::Effects, "kameo_gfx_grass"}, {Page::Effects, "kameo_gfx_fur"}, {Page::Effects, "kameo_gfx_dust_motes"},{Page::Effects, "kameo_gfx_bloom"}, {Page::Effects, "kameo_gfx_depth_of_field"}, {Page::Effects, "kameo_gfx_heat_haze"},
     {Page::Video, "kameo_gfx_vsync"}, {Page::Video, "kameo_fps_counter"}, {Page::Video, "kameo_gfx_fps_cap"},
     {Page::Camera, "kameo_camera_drift"}, {Page::Camera, "kameo_camera_fov"}, {Page::Camera, "kameo_camera_auto_level"},

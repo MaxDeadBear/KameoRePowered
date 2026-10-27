@@ -12,6 +12,7 @@
 #include "gpu/config.h"
 #include "gpu/log.h"
 #include "gpu/passes/gamma_pass.h"
+#include "gpu/stereo/stereo.h"  // STEREO:
 
 using kameo::gpu::hooks::Active;
 
@@ -57,19 +58,25 @@ extern "C" REX_FUNC(sub_820ED110) {
   const uint32_t view = ctx.r3.u32;
   uint32_t saved = 0;
   bool patched = false;
-  if (view && REXCVAR_GET(kameo_gfx_widescreen)) {
-    if (auto* gfx = Active()) {
-      saved = REX_LOAD_U32(view + 4);
-      float aspect = 0.0f;
-      std::memcpy(&aspect, &saved, sizeof(aspect));
-      const double display = gfx->DisplayAspect();
-      if (display > aspect && aspect > 1.6f && aspect < 1.9f) {
-        const float widened = float(display);
-        uint32_t bits = 0;
-        std::memcpy(&bits, &widened, sizeof(bits));
-        REX_STORE_U32(view + 4, bits);
-        patched = true;
+  if (view) {
+    saved = REX_LOAD_U32(view + 4);
+    float aspect = 0.0f;
+    std::memcpy(&aspect, &saved, sizeof(aspect));
+    double widened = aspect;
+    if (REXCVAR_GET(kameo_gfx_widescreen)) {
+      if (auto* gfx = Active()) {
+        const double display = gfx->DisplayAspect();
+        if (display > aspect && aspect > 1.6f && aspect < 1.9f) widened = display;
       }
+    }
+    // STEREO: stereo shifts each eye's picture sideways by up to its separation (more for what is nearer than the convergence), so the frustum widens by that much again or the shift pulls in what the guest culled.
+    if (kameo::gpu::StereoEyeCount() > 1) widened *= 1.0 + 2.0 * kameo::gpu::StereoSeparation();
+    if (widened != aspect && aspect > 0.0f) {
+      const float value = float(widened);
+      uint32_t bits = 0;
+      std::memcpy(&bits, &value, sizeof(bits));
+      REX_STORE_U32(view + 4, bits);
+      patched = true;
     }
   }
   __imp__sub_820ED110(ctx, base);

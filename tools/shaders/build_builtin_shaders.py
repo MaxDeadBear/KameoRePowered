@@ -36,6 +36,8 @@ TARGETS = [
     ("depth_resolve.hlsl", "PSMain", "ps_6_0", "g_depthResolvePS"),
     ("depth_resolve.hlsl", "PSSingle", "ps_6_0", "g_depthResolveSinglePS"),
     ("book_pick.hlsl", "PSMain", "ps_6_0", "g_bookPickPS"),
+    ("stereo.hlsl", "VSMain", "vs_6_0", "g_stereoVS"),  # STEREO:
+    ("stereo.hlsl", "PSMain", "ps_6_0", "g_stereoPS"),  # STEREO:
 ]
 
 

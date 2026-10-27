@@ -23,6 +23,7 @@
 #include "gpu/sampler_cache.h"
 #include "gpu/shaders/embedded_shaders.h"
 #include "gpu/shaders/shader_cache.h"
+#include "gpu/stereo/stereo.h"  // STEREO:
 #include "gpu/textures/texture_cache.h"
 #include "gpu/textures/texture_heap.h"
 #include "gpu/textures/texture_replacement.h"
@@ -31,6 +32,7 @@
 namespace kameo::gpu::detail {
 
 uint32_t g_sceneFrames = 0;
+uint32_t g_sceneEye = 0;  // STEREO:
 
 ReplayContext::ReplayContext(GraphicsSystem& gfx, const GraphicsSystem::DrawPathContext& ctx, plume::RenderCommandList* list, DrawFrame& frame, plume::RenderTexture* target, const plume::RenderFramebuffer* framebuffer, uint32_t width, uint32_t height)
     : gfx(gfx), ctx(ctx), list(list), frame(frame), base(frame.guest_base), target(target), framebuffer(framebuffer), width(width), height(height), current_texture(target), current_framebuffer(framebuffer), current_color_format(plume::RenderFormat(ctx.color_format)) {}
@@ -127,6 +129,8 @@ bool BuildSharedBlock(ReplayContext& rc, const DrawCall& call) {
   const auto half_pixel = state::PixelCenterOffset(call.half_pixel, call.viewport[2], call.viewport[3]);
   std::memcpy(&shared_words[66], half_pixel.data(), sizeof(float) * half_pixel.size());
   std::memcpy(&shared_words[68], &call.alpha_ref, sizeof(float));  // c17.x g_AlphaThreshold
+  // STEREO: c17.yz g_StereoShift, the eye's shift for draws seen through the main camera; zero otherwise.
+  if (rc.stereo_shift[0] != 0.0f && StereoShiftsDraw(call, rc.frame, rc.current_framebuffer == rc.framebuffer)) std::memcpy(&shared_words[69], rc.stereo_shift, sizeof(rc.stereo_shift));
   if (FindPointSprite(call)) {
     const float point[4] = {1.0f / std::max(call.viewport[2], 1.0f), 1.0f / std::max(call.viewport[3], 1.0f), float(call.point_minmax & 0xFFFFu) * 0.125f, float(call.point_minmax >> 16) * 0.125f};
     std::memcpy(&shared_words[72], point, sizeof(point));
@@ -417,7 +421,7 @@ void ReplayCommand(ReplayContext& rc, const DrawCall& call) {
 namespace kameo::gpu {
 using namespace detail;
 
-void DrawCapturedScene(GraphicsSystem& gfx, plume::RenderCommandList* list, plume::RenderTexture* target, const plume::RenderFramebuffer* framebuffer, uint32_t width, uint32_t height) {
+void DrawCapturedScene(GraphicsSystem& gfx, plume::RenderCommandList* list, plume::RenderTexture* target, const plume::RenderFramebuffer* framebuffer, uint32_t width, uint32_t height, uint32_t eyes) {
   DrawFrame& frame = g_submitting;
   if (!g_frameExchange.take(frame)) {
     return;
@@ -468,44 +472,57 @@ void DrawCapturedScene(GraphicsSystem& gfx, plume::RenderCommandList* list, plum
     return;
   }
 
-  ReplayContext rc(gfx, ctx, list, frame, target, framebuffer, width, height);
   BeginResolveBlitFrame(ctx.frame_slot);
-  PlanSurfaces(rc);
-  list->setFramebuffer(rc.current_framebuffer);
-  ClusterHudBoxes(frame, rc.hud_boxes, rc.hud_boxed);
-
-  OpenQueriesScope open_queries(rc.ctx, rc.occlusion);
   ClearPendingOcclusion(ctx.frame_slot);
-  rc.book_pick_wanted = BeginBookPickFrame();
-  for (const DrawCall& call : frame.draws) {
-    if (call.kind == CommandKind::QueryBegin || call.kind == CommandKind::QueryEnd) {
-      ReplayOcclusionQuery(rc.ctx, list, call, rc.occlusion);
-      continue;
+  // The HUD boxes come from the captured draws alone, so both eyes share them.
+  std::vector<std::array<float, 4>> hud_boxes;
+  std::vector<uint8_t> hud_boxed;
+  ClusterHudBoxes(frame, hud_boxes, hud_boxed);
+  const bool book_pick_wanted = BeginBookPickFrame();
+
+  // STEREO: stereo replays the whole frame once per eye (`eyes` is 1 otherwise): the vertex shaders shift each eye's picture by the shared constants, and the first eye is set aside before the second starts from a cleared scene. Every pass is replayed again, since an offscreen one may depend on the view; the occlusion queries and the book pick are answered once, from the first eye.
+  for (uint32_t eye = 0; eye < std::max(eyes, 1u); ++eye) {
+    g_sceneEye = eye;
+    if (eye > 0) gfx.StashStereoEye(list, target, framebuffer, width, height);
+    ReplayContext rc(gfx, ctx, list, frame, target, framebuffer, width, height);
+    if (eyes > 1) StereoEyeShift(eye, rc.stereo_shift);
+    PlanSurfaces(rc);
+    list->setFramebuffer(rc.current_framebuffer);
+    if (eye > 0) RebindSceneLayout(rc);
+    rc.hud_boxes = hud_boxes;
+    rc.hud_boxed = hud_boxed;
+
+    OpenQueriesScope open_queries(rc.ctx, rc.occlusion);
+    rc.book_pick_wanted = book_pick_wanted && eye == 0;
+    for (const DrawCall& call : frame.draws) {
+      if (call.kind == CommandKind::QueryBegin || call.kind == CommandKind::QueryEnd) {
+        if (eye == 0) ReplayOcclusionQuery(rc.ctx, list, call, rc.occlusion);
+        continue;
+      }
+      if (call.kind != CommandKind::Draw) SuspendVulkanQuery(rc.ctx, list, rc.occlusion);
+      if (call.kind == CommandKind::Bink) {
+        gfx.DrawPendingBink(list, rc.current_framebuffer == framebuffer ? ctx.scene_samples : 1);
+        RebindSceneLayout(rc);
+        continue;
+      }
+      if (call.kind == CommandKind::Resolve) {
+        ReplayResolveCommand(rc, call);
+        continue;
+      }
+      ReplayCommand(rc, call);
     }
-    if (call.kind != CommandKind::Draw) SuspendVulkanQuery(rc.ctx, list, rc.occlusion);
-    if (call.kind == CommandKind::Bink) {
-      gfx.DrawPendingBink(list, rc.current_framebuffer == framebuffer ? ctx.scene_samples : 1);
-      RebindSceneLayout(rc);
-      continue;
+
+    if (rc.current_key != 0) {
+      list->setFramebuffer(framebuffer);
+      list->setViewports(plume::RenderViewport(0.0f, 0.0f, float(width), float(height)));
+      list->setScissors(plume::RenderRect(0, 0, width, height));
     }
-    if (call.kind == CommandKind::Resolve) {
-      ReplayResolveCommand(rc, call);
-      continue;
-    }
-    ReplayCommand(rc, call);
+    if (eye == 0) DrawBookPick(rc.ctx, list, framebuffer, width, height);
+    FinishOcclusionQueries(rc.ctx, list, rc.occlusion, width, height);
   }
-
-  if (rc.current_key != 0) {
-    list->setFramebuffer(framebuffer);
-    list->setViewports(plume::RenderViewport(0.0f, 0.0f, float(width), float(height)));
-    list->setScissors(plume::RenderRect(0, 0, width, height));
-  }
-  DrawBookPick(rc.ctx, list, framebuffer, width, height);
-
-  FinishOcclusionQueries(rc.ctx, list, rc.occlusion, width, height);
-  EndFrameRings();
-
+  g_sceneEye = 0;
   ++g_sceneFrames;
+  EndFrameRings();
 }
 
 }  // namespace kameo::gpu

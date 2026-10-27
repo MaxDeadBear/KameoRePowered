@@ -183,6 +183,7 @@ void GraphicsSystem::Shutdown() {
   upscale_layout_.reset();
   upscale_constants_.reset();
   upscale_sampler_.reset();
+  ReleaseStereoResources();  // STEREO:
   scene_framebuffer_.reset();
   scene_color_view_.reset();
   scene_color_.reset();

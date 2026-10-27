@@ -11,6 +11,7 @@
 #include "engine/audio.h"
 #include "gpu/config.h"
 #include "gpu/movie/movie_replace.h"
+#include "gpu/stereo/stereo.h"  // STEREO:
 #include "gpu/textures/texture_pack.h"
 #include "input/guest_controls.h"
 #include "input/input.h"
@@ -70,6 +71,11 @@ const Option kOptions[] = {
     KAMEO_BOOL_OPTION(0x7A5E0005, Page::Graphics, u"Shadows", kameo_gfx_shadows),
     {0x7A5E000C, Page::Graphics, u"Shadow Quality", [] { const int32_t scale = REXCVAR_GET(kameo_gfx_shadow_resolution); return std::u16string(scale >= 4 ? u"Ultra" : scale >= 2 ? u"High" : u"Original"); }, [](int direction, bool wrap) { REXCVAR_SET(kameo_gfx_shadow_resolution, Step(REXCVAR_GET(kameo_gfx_shadow_resolution), {1, 2, 4}, direction, wrap)); }},
     {0x7A5E0010, Page::Graphics, u"Shadow Edges", [] { return std::u16string(REXCVAR_GET(kameo_gfx_shadow_filtering) ? u"Smooth" : u"Pixelated"); }, [](int, bool) { REXCVAR_SET(kameo_gfx_shadow_filtering, !REXCVAR_GET(kameo_gfx_shadow_filtering)); }},
+    // STEREO: the four 3D rows.
+    {0x7A5E002B, Page::Graphics, u"3D Display", [] { const int32_t mode = REXCVAR_GET(kameo_gfx_stereo); return std::u16string(mode == 1 ? u"Side by Side" : mode == 2 ? u"Top and Bottom" : mode == 3 ? u"Red/Cyan Glasses" : u"Off"); }, [](int direction, bool wrap) { REXCVAR_SET(kameo_gfx_stereo, Step(REXCVAR_GET(kameo_gfx_stereo), {0, 1, 2, 3}, direction, wrap)); }},
+    {0x7A5E002C, Page::Graphics, u"3D Depth", [] { const int32_t depth = REXCVAR_GET(kameo_gfx_stereo_depth); return Number(depth / 10, u".") + Number(depth % 10, u"%"); }, [](int direction, bool wrap) { REXCVAR_SET(kameo_gfx_stereo_depth, Step(REXCVAR_GET(kameo_gfx_stereo_depth), {5, 10, 15, 20, 25, 30, 35, 40, 50, 60, 80, 100}, direction, wrap)); }, nullptr, [] { return REXCVAR_GET(kameo_gfx_stereo) != 0; }},
+    {0x7A5E002D, Page::Graphics, u"3D Focus", [] { const int32_t focus = REXCVAR_GET(kameo_gfx_stereo_focus); return focus == 100 ? std::u16string(u"On Kameo") : Number(focus, u"%"); }, [](int direction, bool wrap) { REXCVAR_SET(kameo_gfx_stereo_focus, Step(REXCVAR_GET(kameo_gfx_stereo_focus), {25, 50, 75, 100, 150, 200, 300, 500}, direction, wrap)); }, nullptr, [] { return REXCVAR_GET(kameo_gfx_stereo) != 0; }},
+    {0x7A5E002E, Page::Graphics, u"3D Swap Eyes", [] { return OnOff(REXCVAR_GET(kameo_gfx_stereo_swap)); }, [](int, bool) { REXCVAR_SET(kameo_gfx_stereo_swap, !REXCVAR_GET(kameo_gfx_stereo_swap)); }, nullptr, [] { return REXCVAR_GET(kameo_gfx_stereo) != 0; }},
     KAMEO_BOOL_OPTION(0x7A5E0006, Page::Effects, u"Particles", kameo_gfx_particles),
     KAMEO_BOOL_OPTION(0x7A5E0007, Page::Effects, u"Grass", kameo_gfx_grass),
     KAMEO_BOOL_OPTION(0x7A5E0028, Page::Effects, u"Fur", kameo_gfx_fur),

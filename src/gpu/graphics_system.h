@@ -134,6 +134,8 @@ class GraphicsSystem final : public rex::system::IGraphicsSystem {
   void SubmitBinkFrame(const BinkFrame& frame);
   // Draws the pending Bink frame into an already-recording list at the point the guest blitted it; the present-time fallback then does nothing.
   void DrawPendingBink(plume::RenderCommandList* list, uint32_t samples);
+  // STEREO: between the two eyes of a stereo frame, copies the scene as the first eye drew it aside and clears the scene target for the second; called by the draw path.
+  void StashStereoEye(plume::RenderCommandList* list, plume::RenderTexture* scene_texture, const plume::RenderFramebuffer* scene_framebuffer, uint32_t scene_width, uint32_t scene_height);
   uint32_t SceneSamples() const { return SceneSampleCount(); }
 
   // The app drives the ImGui drawer itself (a plume-backed system exposes no presenter) and hands its geometry here, already in clip space.
@@ -246,6 +248,11 @@ class GraphicsSystem final : public rex::system::IGraphicsSystem {
   bool EnsureUpscaleResources();
   void SceneRenderSize(uint32_t window_width, uint32_t window_height, uint32_t* out_width, uint32_t* out_height) const;
   void UpscaleScene(plume::RenderCommandList* list, plume::RenderTexture* scene_texture, plume::RenderTexture* texture, plume::RenderFramebuffer* framebuffer, uint32_t width, uint32_t height);
+
+  // STEREO: stereo/stereo_pass.cpp; the first eye of a stereo frame waits in its own texture while the second is drawn, and the composite lays both onto the swap chain.
+  bool EnsureStereoResources(uint32_t width, uint32_t height);
+  void CompositeStereo(plume::RenderCommandList* list, plume::RenderTexture* scene_texture, plume::RenderTexture* texture, plume::RenderFramebuffer* framebuffer, uint32_t width, uint32_t height);
+  void ReleaseStereoResources();
 
   // passes/gamma_pass.cpp; the 360 applies the guest's gamma ramp at scanout, so it is redrawn by hand as the last thing in the frame.
   bool EnsureGammaResources(uint32_t width, uint32_t height);
@@ -378,6 +385,18 @@ class GraphicsSystem final : public rex::system::IGraphicsSystem {
   std::unique_ptr<plume::RenderSampler> upscale_sampler_;
   std::unique_ptr<plume::RenderBuffer> upscale_constants_;
   bool upscale_failed_ = false;
+
+  // STEREO: the composite's resources, through stereo_failed_.
+  std::unique_ptr<plume::RenderTexture> stereo_eye_;
+  std::unique_ptr<plume::RenderTextureView> stereo_eye_view_;
+  uint32_t stereo_width_ = 0;
+  uint32_t stereo_height_ = 0;
+  std::unique_ptr<plume::RenderPipelineLayout> stereo_layout_;
+  std::unique_ptr<plume::RenderPipeline> stereo_pipeline_;
+  std::unique_ptr<plume::RenderDescriptorSet> stereo_descriptors_[kFramesInFlight];
+  std::unique_ptr<plume::RenderBuffer> stereo_constants_[kFramesInFlight];
+  std::unique_ptr<plume::RenderSampler> stereo_sampler_;
+  bool stereo_failed_ = false;
 
   // The bindless layout the translated shaders dictate; the space4 constant buffers are root descriptors fed from the draw path's own upload ring.
   std::unique_ptr<plume::RenderPipelineLayout> draw_layout_;

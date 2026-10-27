@@ -15,8 +15,12 @@
 
 namespace kameo::gpu::detail {
 
-// Scenes recorded so far; offscreen targets are cleared once per scene.
+// Scenes recorded so far, and which eye of a stereo frame is being replayed (STEREO:, always 0 without it); offscreen targets are cleared once per eye.
 extern uint32_t g_sceneFrames;
+extern uint32_t g_sceneEye;
+// A pass's clear stamp, unique to this frame and eye, so each eye clears its own targets while age is still counted in frames.
+inline uint64_t SceneStamp() { return uint64_t(g_sceneFrames) * 2 + g_sceneEye; }
+inline uint64_t FramesSince(uint64_t stamp) { return uint64_t(g_sceneFrames) - (stamp >> 1); }
 
 // What the command list already carries; root arguments survive a pipeline bind only while the layout is unchanged, so anything that rebinds the layout resets this.
 struct BoundState {
@@ -71,6 +75,8 @@ struct ReplayContext {
   uint8_t shared_prev[kSharedConstantBytes];
   uint32_t shared_prev_offset = kNoData;
   bool shared_prev_valid = false;
+  // STEREO: the eye's clip-space shift (separation, convergence) for draws into the scene; zero without stereo. See gpu/stereo.h.
+  float stereo_shift[2] = {0.0f, 0.0f};
   bool book_pick_wanted = false;
 };
 

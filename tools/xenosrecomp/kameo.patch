@@ -304,7 +304,7 @@ index 67968f6..7715e46 100644
  };
 \ No newline at end of file
 diff --git a/XenosRecomp/shader_common.h b/XenosRecomp/shader_common.h
-index 1c74034..d555f76 100644
+index 1c74034..09c81e3 100644
 --- a/XenosRecomp/shader_common.h
 +++ b/XenosRecomp/shader_common.h
 @@ -3,6 +3,8 @@
@@ -316,11 +316,25 @@ index 1c74034..d555f76 100644
  
  #ifdef UNLEASHED_RECOMP
      #define SPEC_CONSTANT_BICUBIC_GI_FILTER (1 << 2)
-@@ -43,7 +45,29 @@ struct PushConstants
-     float2 g_HalfPixelOffset : packoffset(c16.z); \
-     float g_AlphaThreshold : packoffset(c17.x);
+@@ -30,6 +32,8 @@ struct PushConstants
+ #define g_SwappedTexcoords         vk::RawBufferLoad<uint>(g_PushConstants.SharedConstants + 260)
+ #define g_HalfPixelOffset          vk::RawBufferLoad<float2>(g_PushConstants.SharedConstants + 264)
+ #define g_AlphaThreshold           vk::RawBufferLoad<float>(g_PushConstants.SharedConstants + 272)
++// KAMEO: stereoscopic 3D, c17.yz: x = the eye's separation, y = the convergence depth; the host leaves both zero when no eye is being drawn.
++#define g_StereoShift              vk::RawBufferLoad<float2>(g_PushConstants.SharedConstants + 276)
  
+ [[vk::constant_id(0)]] const uint g_SpecConstants = 0;
+ 
+@@ -41,9 +45,32 @@ struct PushConstants
+     uint g_Booleans : packoffset(c16.x); \
+     uint g_SwappedTexcoords : packoffset(c16.y); \
+     float2 g_HalfPixelOffset : packoffset(c16.z); \
+-    float g_AlphaThreshold : packoffset(c17.x);
+-
 -uint g_SpecConstants();
++    float g_AlphaThreshold : packoffset(c17.x); \
++    float2 g_StereoShift : packoffset(c17.y);
++
 +// KAMEO: a DEFINITION, not a declaration.
 +//
 +// Upstream leaves this unresolved and compiles the shader as `lib_6_3` whenever
@@ -347,7 +361,7 @@ index 1c74034..d555f76 100644
  
  #endif
  
-@@ -65,6 +89,13 @@ float4 tfetch2D(uint resourceDescriptorIndex, uint samplerDescriptorIndex, float
+@@ -65,6 +92,13 @@ float4 tfetch2D(uint resourceDescriptorIndex, uint samplerDescriptorIndex, float
      return texture.Sample(g_SamplerDescriptorHeap[samplerDescriptorIndex], texCoord + offset / getTexture2DDimensions(texture));
  }
  
@@ -361,7 +375,7 @@ index 1c74034..d555f76 100644
  float2 getWeights2D(uint resourceDescriptorIndex, uint samplerDescriptorIndex, float2 texCoord, float2 offset)
  {
      Texture2D<float4> texture = g_Texture2DDescriptorHeap[resourceDescriptorIndex];
-@@ -161,8 +192,18 @@ float4 tfetchCube(uint resourceDescriptorIndex, uint samplerDescriptorIndex, flo
+@@ -161,8 +195,18 @@ float4 tfetchCube(uint resourceDescriptorIndex, uint samplerDescriptorIndex, flo
  
  float4 tfetchR11G11B10(uint4 value)
  {
@@ -382,7 +396,7 @@ index 1c74034..d555f76 100644
              (value.x & 0x00000400 ? -1.0 : 0.0) + ((value.x & 0x3FF) / 1024.0),
              (value.x & 0x00200000 ? -1.0 : 0.0) + (((value.x >> 11) & 0x3FF) / 1024.0),
 diff --git a/XenosRecomp/shader_recompiler.cpp b/XenosRecomp/shader_recompiler.cpp
-index 698a418..d86788f 100644
+index 698a418..998e1f5 100644
 --- a/XenosRecomp/shader_recompiler.cpp
 +++ b/XenosRecomp/shader_recompiler.cpp
 @@ -94,6 +94,12 @@ static constexpr DeclUsageLocation USAGE_LOCATIONS[] =
@@ -1083,6 +1097,16 @@ index 698a418..d86788f 100644
      bool simpleControlFlow = true;
  
      while (instrAddress < instrSize)
+@@ -1833,6 +1985,9 @@ void ShaderRecompiler::recompile(const uint8_t* shaderData, const std::string_vi
+                 #endif
+                     {
+                         out += "\toPos.xy += g_HalfPixelOffset * oPos.w;\n";
++                        // KAMEO: stereoscopic 3D as a clip-space shift, x += s * (w - c): an off-axis eye at separation s converging at depth c.
++                        // A w of exactly 1 is a screen-space draw (the HUD, the post-process quads), which stays at the screen plane.
++                        out += "\tif (oPos.w != 1.0) oPos.x += g_StereoShift.x * (oPos.w - g_StereoShift.y);\n";
+                     }
+                 }
+ 
 diff --git a/XenosRecomp/shader_recompiler.h b/XenosRecomp/shader_recompiler.h
 index b2e317d..6bd6ba4 100644
 --- a/XenosRecomp/shader_recompiler.h

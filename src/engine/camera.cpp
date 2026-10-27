@@ -6,6 +6,7 @@
 #include <rex/cvar.h>
 
 #include "engine/guest_addresses.h"
+#include "gpu/stereo/stereo.h"  // STEREO:
 
 REXCVAR_DEFINE_BOOL(kameo_camera_drift, false, "Kameo", "true restores the original follow camera, which falls further behind and higher the longer you run; false keeps it at its default distance.");
 REXCVAR_DEFINE_BOOL(kameo_camera_auto_level, false, "Kameo", "true lets the follow camera tilt itself back to its default angle while you move, as the original game did.");
@@ -36,6 +37,13 @@ extern "C" REX_FUNC(sub_82440D28) {
   const uint32_t pitch_bits = keep_pitch ? REX_LOAD_U32(camera + 200) : 0;
   __imp__sub_82440D28(ctx, base);
   if (keep_pitch) REX_STORE_U32(camera + 200, pitch_bits);
+  // STEREO: how far the follow camera sits from the point it looks at, which is where Kameo stands; stereo 3D puts that depth on the screen plane.
+  if (camera && out) {
+    const float ex = LoadGuestFloat(base, out) - LoadGuestFloat(base, camera + 172);
+    const float ey = LoadGuestFloat(base, out + 4) - LoadGuestFloat(base, camera + 176);
+    const float ez = LoadGuestFloat(base, out + 8) - LoadGuestFloat(base, camera + 180);
+    kameo::gpu::NoteStereoFocusDistance(std::sqrt(ex * ex + ey * ey + ez * ez));
+  }
   if (REXCVAR_GET(kameo_camera_drift) || !camera || !out) return;
   const uint32_t record = REX_LOAD_U32(camera + 252);
   if (!record) return;

@@ -108,8 +108,8 @@ bool RouteDrawTarget(ReplayContext& rc, const DrawCall& call, uint32_t& off_w, u
       list->setFramebuffer(current_framebuffer);
       RebindSceneLayout(rc);
     }
-    if (d->cleared_frame != g_sceneFrames) {
-      d->cleared_frame = g_sceneFrames;
+    if (d->cleared_frame != SceneStamp()) {
+      d->cleared_frame = SceneStamp();
       list->clearDepthStencil(true, true, 1.0f, 0);
     }
   } else if (want_key != current_key) {
@@ -130,8 +130,8 @@ bool RouteDrawTarget(ReplayContext& rc, const DrawCall& call, uint32_t& off_w, u
       current_color_format = off->format;
       list->setFramebuffer(current_framebuffer);
       // Each offscreen target is cleared once per frame, the first time the stream lands on it.
-      if (off->cleared_frame != g_sceneFrames) {
-        off->cleared_frame = g_sceneFrames;
+      if (off->cleared_frame != SceneStamp()) {
+        off->cleared_frame = SceneStamp();
         list->clearColor(0, plume::RenderColor(0.0f, 0.0f, 0.0f, 0.0f));
         list->clearDepthStencil(true, true, 1.0f, 0);
       }

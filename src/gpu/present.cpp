@@ -19,6 +19,7 @@
 #include "gpu/log.h"
 #include "gpu/occlusion.h"
 #include "gpu/pipeline/pso_precache.h"
+#include "gpu/stereo/stereo.h"  // STEREO:
 
 namespace kameo::gpu {
 
@@ -154,11 +155,14 @@ void GraphicsSystem::PresentClear() {
   SceneRenderSize(width, height, &scene_width, &scene_height);
   // A multisampled scene cannot be the swap chain image, so it always takes the scene target and is resolved onto the window.
   const uint32_t samples = SceneSampleCount();
-  const bool scaled = (scene_width != width || scene_height != height || samples > 1) && EnsureUpscaleResources() && EnsureSceneTarget(scene_width, scene_height, samples);
+  // STEREO: both eyes have to be textures for the composite, so stereo always takes the scene target too.
+  const uint32_t eyes = StereoEyeCount();
+  const bool scaled = (scene_width != width || scene_height != height || samples > 1 || eyes > 1) && EnsureUpscaleResources() && EnsureSceneTarget(scene_width, scene_height, samples);
   if (!scaled) {
     scene_width = width;
     scene_height = height;
   }
+  const bool stereo = eyes > 1 && scaled && EnsureStereoResources(scene_width, scene_height);
   plume::RenderTexture* scene_texture = scaled ? scene_color_.get() : texture;
   plume::RenderFramebuffer* scene_framebuffer = scaled ? scene_framebuffer_.get() : framebuffers_[index].get();
   active_scene_depth_ = scaled ? scene_depth_.get() : depth_texture_.get();
@@ -180,12 +184,14 @@ void GraphicsSystem::PresentClear() {
   {
     detail::ScopedNs timed(&detail::g_frameProfile.ns_scene);
     DrawCapturedScene(*this, list, scene_texture, scene_framebuffer, scene_width,
-                      scene_height);
+                      scene_height, stereo ? 2u : 1u);  // STEREO:
   }
   detail::ScopedNs post_timed(&detail::g_frameProfile.ns_post);
   if (scaled) {
-    // Everything after this -- video and UI -- belongs at the window's own resolution, so the scene is scaled onto the swap chain first.
-    UpscaleScene(list, scene_texture, texture, framebuffers_[index].get(), width, height);
+    // Everything after this -- video and UI -- belongs at the window's own resolution, so the scene is scaled onto the swap chain first; a stereo frame lays its two eyes out in the display's format instead.
+    if (stereo) CompositeStereo(  // STEREO:
+        list, scene_texture, texture, framebuffers_[index].get(), width, height);
+    else UpscaleScene(list, scene_texture, texture, framebuffers_[index].get(), width, height);
   }
   if (!bink_in_scene_) DrawBink(list, false);
   // Before ApplyGamma, which rebinds its own state, so the UI goes through the scanout ramp like everything else.

@@ -33,8 +33,8 @@ extern thread_local uint32_t g_hudGroup;
 
 // Called from the Swap hook: hands the frame just captured to the presenter, starts a new one, and returns how many commands the published frame holds.
 uint32_t SubmitCapturedFrame(std::vector<uint32_t>* guest_reads);
-// Called from PresentClear, on the presenting thread.
-void DrawCapturedScene(GraphicsSystem& gfx, plume::RenderCommandList* list, plume::RenderTexture* target, const plume::RenderFramebuffer* framebuffer, uint32_t width, uint32_t height);
+// Called from PresentClear, on the presenting thread; STEREO: `eyes` is 2 for a stereo frame, which replays the scene once per eye with the first set aside in between (see gpu/stereo/stereo.h).
+void DrawCapturedScene(GraphicsSystem& gfx, plume::RenderCommandList* list, plume::RenderTexture* target, const plume::RenderFramebuffer* framebuffer, uint32_t width, uint32_t height, uint32_t eyes);
 
 // True while a published captured frame is waiting for the render thread to take it.
 bool CapturedFrameWaiting();
