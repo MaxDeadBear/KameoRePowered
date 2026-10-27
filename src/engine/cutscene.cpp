@@ -23,6 +23,20 @@ constexpr uint32_t kMovieEventCount = 92;
 constexpr uint32_t kMovieEvents = 96;
 constexpr uint32_t kMovieLoops = 269;
 constexpr uint32_t kFmvSkippable = 212;
+// The scripted scene's audio: movieLoadAndPlayPrepare readies its speech and music cues in one global block, and the scene's first tick plays the prepared cue handles at +52 and +56. They are left to run out with the scene, so a skipped scene has to stop them.
+constexpr uint32_t kSceneCueHandles[] = {0x8289EAC4, 0x8289EAC8};
+
+// Stops a scene's cues as the game stops any cue by handle (xfix_audioStopCueByHandle), so their stopped callbacks release the music ducking just as a scene that played out does.
+void StopSceneAudio(PPCContext& ctx, uint8_t* base) {
+  for (const uint32_t address : kSceneCueHandles) {
+    const uint32_t handle = REX_LOAD_U32(address);
+    if (!handle) continue;
+    PPCContext stop = ctx;
+    stop.r3.u64 = handle;
+    sub_822EAAC0(stop, base);
+    REXLOG_INFO("[kameo] skipped cutscene: stopped its audio cue {:08X}", handle);
+  }
+}
 
 // Start pressed this tick on any playing controller, read the way fmvTick reads its skip buttons.
 bool StartPressed(uint8_t* base) {
@@ -42,6 +56,7 @@ bool StartPressed(uint8_t* base) {
 // _movieUpdate(movie, dt) -- advances the scene clock at +136 and runs every event whose millisecond time at +4 it passes, in order, until one (mxmlEndMovie sets the end state 6 and returns 0) stops it; Start stretches this step to the last event, so the scene's flags, fades, actor placement and end callback all still happen and only the waiting is skipped.
 extern "C" REX_FUNC(sub_822D85F8) {
   const uint32_t movie = ctx.r3.u32;
+  bool skipped = false;
   if (movie && REXCVAR_GET(kameo_skip_cutscenes) && REX_LOAD_U8(movie + kMovieCameraMode) == kMovieHasCamera && REX_LOAD_U8(movie + kMovieLoops) == 0 && StartPressed(base)) {
     const uint32_t events = REX_LOAD_U32(movie + kMovieEvents);
     uint32_t last_ms = 0;
@@ -53,9 +68,13 @@ extern "C" REX_FUNC(sub_822D85F8) {
     if (remaining > ctx.f1.f64) {
       REXLOG_INFO("[kameo] cutscene skipped {:.1f}s ahead", remaining);
       ctx.f1.f64 = remaining;
+      skipped = true;
     }
   }
+  // The update can clobber the context, so the stop works from a copy taken before it.
+  PPCContext saved = ctx;
   __imp__sub_822D85F8(ctx, base);
+  if (skipped) StopSceneAudio(saved, base);
 }
 
 int64_t g_kameo_credits_requested_ms = 0;
