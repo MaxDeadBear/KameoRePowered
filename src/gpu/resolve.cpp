@@ -100,7 +100,7 @@ void PerformResolve(GraphicsSystem::DrawPathContext& ctx, plume::RenderCommandLi
         plume::RenderFramebufferDesc fb;
         fb.colorAttachments = &attachment;
         fb.colorAttachmentsCount = 1;
-        entry.framebuffer = ctx.device->createFramebuffer(fb);
+        entry.framebuffer = CreateFramebufferChecked(ctx.device, fb, "depth resolve framebuffer");
         if (!entry.framebuffer) return;
       }
       entry.view = entry.texture->createTextureView(
@@ -226,7 +226,8 @@ void PerformResolve(GraphicsSystem::DrawPathContext& ctx, plume::RenderCommandLi
     plume::RenderFramebufferDesc resolve_fb;
     resolve_fb.colorAttachments = resolve_attachments;
     resolve_fb.colorAttachmentsCount = 1;
-    entry.framebuffer = ctx.device->createFramebuffer(resolve_fb);
+    entry.framebuffer = CreateFramebufferChecked(ctx.device, resolve_fb, "resolve framebuffer");
+    if (!entry.framebuffer) return;
     const uint32_t resolve_slot = g_textureSlots.allocate();
     if (resolve_slot == kNoSlot) {
       return;

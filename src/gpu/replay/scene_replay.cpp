@@ -20,6 +20,7 @@
 #include "gpu/replay/book_pick.h"
 #include "gpu/replay/screen_layout.h"
 #include "gpu/resolve_blit.h"
+#include "gpu/surface_pool.h"
 #include "gpu/sampler_cache.h"
 #include "gpu/shaders/embedded_shaders.h"
 #include "gpu/shaders/shader_cache.h"
@@ -461,7 +462,10 @@ void DrawCapturedScene(GraphicsSystem& gfx, plume::RenderCommandList* list, plum
   ApplyTextureInvalidations(ctx);
   ApplyTexturePackChanges(ctx);
   EvictColdTextures(ctx);
-  if ((g_drawFrame % 240) == 0) SweepResidentGeometry(ctx);
+  if ((g_drawFrame % 240) == 0) {
+    SweepResidentGeometry(ctx);
+    SweepIdleOffscreen(ctx);
+  }
   g_residentCreatesLeft = kResidentCreatesPerFrame;
   g_replacementUploadLeft = kReplacementUploadBytesPerFrame;
 

@@ -10,5 +10,7 @@ namespace kameo::gpu::detail {
 
 std::unique_ptr<plume::RenderTexture> CreateTextureChecked(plume::RenderDevice* device, const plume::RenderTextureDesc& desc, const char* what);
 std::unique_ptr<plume::RenderBuffer> CreateBufferChecked(plume::RenderDevice* device, const plume::RenderBufferDesc& desc, const char* what);
+// A framebuffer whose render-target and depth descriptors were all allocated, or null.
+std::unique_ptr<plume::RenderFramebuffer> CreateFramebufferChecked(plume::RenderDevice* device, const plume::RenderFramebufferDesc& desc, const char* what);
 
 }  // namespace kameo::gpu::detail

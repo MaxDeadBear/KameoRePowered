@@ -49,5 +49,7 @@ extern std::unordered_map<uint64_t, DepthOnlyTarget> g_depthOnly;
 
 DepthOnlyTarget* EnsureDepthOnly(GraphicsSystem::DrawPathContext& ctx, uint32_t w, uint32_t h);
 OffscreenTarget* EnsureOffscreen(GraphicsSystem::DrawPathContext& ctx, uint64_t key, uint32_t w, uint32_t h);
+// Frees offscreen targets no pass has drawn into for a while; run between frames, before any draw is recorded.
+void SweepIdleOffscreen(GraphicsSystem::DrawPathContext& ctx);
 
 }  // namespace kameo::gpu::detail

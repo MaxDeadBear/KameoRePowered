@@ -74,6 +74,28 @@ std::unique_ptr<plume::RenderTexture> CreateTextureChecked(plume::RenderDevice* 
   return nullptr;
 }
 
+std::unique_ptr<plume::RenderFramebuffer> CreateFramebufferChecked(plume::RenderDevice* device, const plume::RenderFramebufferDesc& desc, const char* what) {
+  std::unique_ptr<plume::RenderFramebuffer> framebuffer = device->createFramebuffer(desc);
+  if (!framebuffer) {
+    KGFX_ERROR("{}: framebuffer creation failed", what);
+    return nullptr;
+  }
+#ifdef _WIN32
+  // On D3D12 each attachment takes a descriptor from a fixed RTV or DSV heap, and a full heap leaves the framebuffer without one; clearing or drawing through it reads a null handle and crashes (issue #10).
+  if (!UsingVulkan()) {
+    const auto* d3d12 = static_cast<const plume::D3D12Framebuffer*>(framebuffer.get());
+    const bool colors_missing = d3d12->colorHandles.size() != desc.colorAttachmentsCount;
+    const bool depth_missing = desc.depthAttachment != nullptr && d3d12->depthTargetAllocatorOffset == plume::D3D12DescriptorHeapAllocator::INVALID_OFFSET;
+    if (colors_missing || depth_missing) {
+      static int logged = 0;
+      if (logged++ < 8) KGFX_ERROR("{}: no free {} descriptor for the framebuffer; the draws aimed at it fall back to the scene", what, colors_missing ? "render target" : "depth stencil");
+      return nullptr;
+    }
+  }
+#endif
+  return framebuffer;
+}
+
 std::unique_ptr<plume::RenderBuffer> CreateBufferChecked(plume::RenderDevice* device, const plume::RenderBufferDesc& desc, const char* what) {
   std::unique_ptr<plume::RenderBuffer> buffer = device->createBuffer(desc);
   if (!buffer || !BufferBackingMissing(buffer.get())) return buffer;
