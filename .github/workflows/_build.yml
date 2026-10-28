@@ -165,6 +165,11 @@ jobs:
             (cd modkit_stage && 7z a -tzip ../pkg/modkit/kameo_modkit_blender279.zip kameo_modkit_279 '-xr!__pycache__')
           fi
           rm -f pkg/*.pdb pkg/*.ilk
+          # No symbols ship: the Linux build carries its debug information inside the binaries, so it is stripped.
+          if [ "${{ matrix.platform }}" != "windows" ]; then
+            strip --strip-all pkg/kameorepowered
+            strip --strip-unneeded pkg/*.so*
+          fi
 
           if [ "${{ matrix.platform }}" = "windows" ]; then
             archive="${out}.zip"
