@@ -151,6 +151,19 @@ jobs:
           cp "${BUILD_DIR}"/kameorepowered* pkg/ 2>/dev/null || true
           cp "${BUILD_DIR}"/*.dll pkg/ 2>/dev/null || true
           cp "${BUILD_DIR}"/*.so* pkg/ 2>/dev/null || true
+          # The Windows launcher, with the copy of the runtime it runs on so it never holds the game's (src/launcher/runtime_loader.cpp).
+          if [ "${{ matrix.platform }}" = "windows" ]; then
+            cp "${BUILD_DIR}"/KameoLauncher.exe pkg/
+            mkdir -p pkg/launcher
+            cp "${BUILD_DIR}"/launcher/rexruntime.dll pkg/launcher/
+            # The Blender add-on that makes mods (docs/modding.md): one zip for Blender 3.6 and newer, and one for 2.79
+            # holding its bridge add-on with the modkit inside it.
+            mkdir -p pkg/modkit modkit_stage/kameo_modkit_279
+            (cd tools/modkit && 7z a -tzip ../../pkg/modkit/kameo_modkit.zip kameo_modkit '-xr!__pycache__')
+            cp tools/modkit/addon_279/__init__.py modkit_stage/kameo_modkit_279/
+            cp -r tools/modkit/kameo_modkit modkit_stage/kameo_modkit_279/
+            (cd modkit_stage && 7z a -tzip ../pkg/modkit/kameo_modkit_blender279.zip kameo_modkit_279 '-xr!__pycache__')
+          fi
           rm -f pkg/*.pdb pkg/*.ilk
 
           if [ "${{ matrix.platform }}" = "windows" ]; then

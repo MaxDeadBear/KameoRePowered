@@ -29,6 +29,12 @@ Kameo: RePowered is available on [Goopie](https://goopie.xyz). Stable builds are
 
 Extract your game into an `assets` folder next to the executable and run `kameorepowered`.
 
+On Windows, `KameoLauncher` beside the game edits every setting, installs DLC and level mods, and starts the game. Its Builds page lists every release and pre-release, downloads them and switches the game between them, keeping your settings, saves and game files; the Play page says when a newer build is out. See [docs/launcher.md](docs/launcher.md).
+
+### Mods
+
+Install mods from the launcher's Mods page: put `.kmod` files in its mods folder and switch them on. Make your own character skins and add-ons with the Blender add-on in the Windows download's `modkit` folder. See [docs/modding.md](docs/modding.md).
+
 ## Building from source
 
 The short version, assuming the SDK is unpacked and `REXGLUE_SDK` points at it:
