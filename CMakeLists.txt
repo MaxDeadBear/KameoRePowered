@@ -29,6 +29,7 @@ if(_kameo_shader_cache_head MATCHES "^version https://git-lfs")
 endif()
 
 file(GLOB_RECURSE KAMEO_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
+list(FILTER KAMEO_SOURCES EXCLUDE REGEX "/src/launcher/")
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/src" PREFIX src FILES ${KAMEO_SOURCES})
 list(APPEND KAMEO_SOURCES
     "${KAMEO_SHADER_CACHE}"
@@ -88,4 +89,24 @@ if(KAMEO_X86_64_V3 AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
             target_compile_options(${_kameo_target} PRIVATE -march=x86-64-v3 -ffp-contract=off)
         endif()
     endforeach()
+endif()
+
+# The launcher edits settings, installs DLC, fetches and switches builds and starts the game, borrowing the game's runtime DLL for ImGui and STFS.
+if(WIN32)
+    file(GLOB_RECURSE KAMEO_LAUNCHER_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/launcher/*.cpp")
+    add_executable(KameoLauncher WIN32
+        ${KAMEO_LAUNCHER_SOURCES}
+        thirdparty/imgui_backends/imgui_impl_win32.cpp
+        thirdparty/imgui_backends/imgui_impl_dx11.cpp
+        res/windows/kameo.rc)
+    target_include_directories(KameoLauncher PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} src thirdparty)
+    target_link_libraries(KameoLauncher PRIVATE rex::runtime d3d11 dxgi dwmapi d3dcompiler winhttp)
+    target_link_options(KameoLauncher PRIVATE "LINKER:/DELAYLOAD:rexruntime.dll")
+    target_link_libraries(KameoLauncher PRIVATE delayimp)
+    # The launcher runs on its own copy of the runtime DLL in launcher\ (see src/launcher/runtime_loader.cpp), so switching builds can replace the game's.
+    add_custom_command(TARGET KameoLauncher POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:KameoLauncher>/launcher
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:rex::runtime> $<TARGET_FILE_DIR:KameoLauncher>/launcher/
+        VERBATIM)
+    add_dependencies(kameorepowered KameoLauncher)
 endif()
