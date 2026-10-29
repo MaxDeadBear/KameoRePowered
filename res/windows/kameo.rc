@@ -1,2 +1,38 @@
 // llvm-rc compiles a preprocessed copy in the build tree, so the icon is named relative to the source root.
 MAINICON ICON "res/windows/kameo.ico"
+
+#include "kameo_version.h"
+
+#ifdef KAMEO_RC_LAUNCHER
+#define KAMEO_RC_DESCRIPTION "Kameo: RePowered launcher"
+#define KAMEO_RC_NAME "KameoLauncher"
+#else
+#define KAMEO_RC_DESCRIPTION "Kameo: RePowered"
+#define KAMEO_RC_NAME "kameorepowered"
+#endif
+
+1 VERSIONINFO
+FILEVERSION KAMEO_VERSION_NUMBERS
+PRODUCTVERSION KAMEO_VERSION_NUMBERS
+FILEOS 0x40004
+FILETYPE 0x1
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "040904B0"
+    BEGIN
+      VALUE "CompanyName", "Kameo: RePowered contributors"
+      VALUE "FileDescription", KAMEO_RC_DESCRIPTION
+      VALUE "FileVersion", KAMEO_VERSION_STRING
+      VALUE "InternalName", KAMEO_RC_NAME
+      VALUE "LegalCopyright", "MIT License, Kameo: RePowered contributors"
+      VALUE "OriginalFilename", KAMEO_RC_NAME ".exe"
+      VALUE "ProductName", "Kameo: RePowered"
+      VALUE "ProductVersion", KAMEO_VERSION_STRING
+    END
+  END
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x409, 1200
+  END
+END

@@ -9,6 +9,20 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(KAMEO_X86_64_V3 "Build for x86-64-v3 (AVX2, Haswell and newer)" ON)
 
+# The release tag (v0.3.1-beta.4) goes into the Windows executables' version information; unsigned binaries without any
+# are what virus scanners' machine-learning engines flag most often.
+set(KAMEO_VERSION "dev" CACHE STRING "Version written into the executables, normally the release tag")
+set(KAMEO_VERSION_COMMAS "0,0,0,0")
+if(KAMEO_VERSION MATCHES "^v?([0-9]+)\\.([0-9]+)\\.([0-9]+)(-[A-Za-z]+\\.?([0-9]+))?")
+    # The pre-release number (beta.4) is the fourth part.
+    set(_kameo_build 0)
+    if(CMAKE_MATCH_5)
+        set(_kameo_build ${CMAKE_MATCH_5})
+    endif()
+    set(KAMEO_VERSION_COMMAS "${CMAKE_MATCH_1},${CMAKE_MATCH_2},${CMAKE_MATCH_3},${_kameo_build}")
+endif()
+configure_file(res/windows/kameo_version.h.in "${CMAKE_CURRENT_BINARY_DIR}/res/kameo_version.h" @ONLY)
+
 include(generated/rexglue.cmake)
 
 if(NOT REXGLUE_ENTRYPOINT_GENERATED_SOURCES)
@@ -45,6 +59,7 @@ endif()
 target_include_directories(kameorepowered PRIVATE
     src
     res
+    "${CMAKE_CURRENT_BINARY_DIR}/res"
     thirdparty
     thirdparty/XenosRecomp/thirdparty/xxHash
     thirdparty/XenosRecomp/thirdparty/smol-v/source)
@@ -99,7 +114,8 @@ if(WIN32)
         thirdparty/imgui_backends/imgui_impl_win32.cpp
         thirdparty/imgui_backends/imgui_impl_dx11.cpp
         res/windows/kameo.rc)
-    target_include_directories(KameoLauncher PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} src thirdparty)
+    target_include_directories(KameoLauncher PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} src thirdparty "${CMAKE_CURRENT_BINARY_DIR}/res")
+    target_compile_definitions(KameoLauncher PRIVATE $<$<COMPILE_LANGUAGE:RC>:KAMEO_RC_LAUNCHER>)
     target_link_libraries(KameoLauncher PRIVATE rex::runtime d3d11 dxgi dwmapi d3dcompiler winhttp)
     target_link_options(KameoLauncher PRIVATE "LINKER:/DELAYLOAD:rexruntime.dll")
     target_link_libraries(KameoLauncher PRIVATE delayimp)

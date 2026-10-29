@@ -128,7 +128,7 @@ jobs:
         run: |
           preset="${{ inputs.build_preset }}"
           # The published SDK ships RelWithDebInfo only; the release preset maps onto it.
-          cmake --preset "${preset}" ${{ matrix.compilers }} -DCMAKE_CXX_COMPILER_LAUNCHER=sccache
+          cmake --preset "${preset}" ${{ matrix.compilers }} -DCMAKE_CXX_COMPILER_LAUNCHER=sccache -DKAMEO_VERSION="${{ inputs.tag || 'dev' }}"
           cmake --build --preset "${preset}" --parallel
           echo "BUILD_DIR=out/build/${preset}" >> "$GITHUB_ENV"
 
