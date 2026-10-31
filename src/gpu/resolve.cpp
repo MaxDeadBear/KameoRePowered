@@ -7,9 +7,11 @@
 
 #include "gpu/config.h"
 #include "gpu/draw/draw_constants.h"
+#include "gpu/frame_profile.h"
 #include "gpu/log.h"
 #include "gpu/replay/screen_layout.h"
 #include "gpu/resolve_blit.h"
+#include "gpu/scene_resolve_state.h"
 #include "gpu/resource_check.h"
 #include "gpu/surface_pool.h"
 #include "gpu/textures/texture_heap.h"
@@ -172,12 +174,15 @@ void PerformResolve(GraphicsSystem::DrawPathContext& ctx, plume::RenderCommandLi
   // A multisampled scene cannot be sampled or copied directly, so the resolve works from a single-sample copy of it.
   plume::RenderTexture* multisampled_scene = nullptr;
   if (source_is_scene && ctx.scene_samples > 1 && ctx.scene_resolved != nullptr) {
-    const plume::RenderTextureBarrier to_resolve[] = {
-        plume::RenderTextureBarrier(source, plume::RenderTextureLayout::RESOLVE_SOURCE),
-        plume::RenderTextureBarrier(ctx.scene_resolved, plume::RenderTextureLayout::RESOLVE_DEST),
-    };
-    list->barriers(plume::RenderBarrierStage::COPY, to_resolve, uint32_t(std::size(to_resolve)));
-    list->resolveTexture(ctx.scene_resolved, source);
+    const bool resolved = ResolveSceneColorIfDirty(ctx.scene_resolve_dirty, [&] {
+      const plume::RenderTextureBarrier to_resolve[] = {
+          plume::RenderTextureBarrier(source, plume::RenderTextureLayout::RESOLVE_SOURCE),
+          plume::RenderTextureBarrier(ctx.scene_resolved, plume::RenderTextureLayout::RESOLVE_DEST),
+      };
+      list->barriers(plume::RenderBarrierStage::COPY, to_resolve, uint32_t(std::size(to_resolve)));
+      list->resolveTexture(ctx.scene_resolved, source);
+    });
+    ++(resolved ? g_frameProfile.msaa_resolves : g_frameProfile.msaa_resolve_reuses);
     multisampled_scene = source;
     source = ctx.scene_resolved;
   }

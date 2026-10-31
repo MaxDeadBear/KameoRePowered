@@ -8,9 +8,11 @@
 #include <rex/logging.h>
 
 #include "gpu/graphics_system.h"
+#include "gpu/frame_profile.h"
 #include "gpu/graphics_system_internal.h"
 #include "gpu/log.h"
 #include "gpu/resource_check.h"
+#include "gpu/scene_resolve_state.h"
 #include "gpu/shaders/builtin_shaders.h"
 #include "gpu/stereo/stereo.h"
 
@@ -106,6 +108,7 @@ void GraphicsSystem::StashStereoEye(plume::RenderCommandList* list, plume::Rende
     };
     list->barriers(plume::RenderBarrierStage::COPY, to_resolve, uint32_t(std::size(to_resolve)));
     list->resolveTexture(stereo_eye_.get(), scene_texture);
+    ++detail::g_frameProfile.msaa_resolves;
   } else {
     const plume::RenderTextureBarrier to_copy[] = {
         plume::RenderTextureBarrier(scene_texture, plume::RenderTextureLayout::COPY_SOURCE),
@@ -124,6 +127,7 @@ void GraphicsSystem::StashStereoEye(plume::RenderCommandList* list, plume::Rende
   list->setScissors(plume::RenderRect(0, 0, scene_width, scene_height));
   // The same clears the frame began with: alpha to zero for the heat-haze mask, depth and stencil fresh.
   list->clearColor(0, plume::RenderColor(0.0f, 0.0f, 0.0f, 0.0f));
+  scene_resolve_dirty_ = true;
   list->clearDepthStencil(true, true, 1.0f, 0);
 }
 
@@ -132,12 +136,15 @@ void GraphicsSystem::CompositeStereo(plume::RenderCommandList* list, plume::Rend
   plume::RenderTexture* right = scene_texture;
   plume::RenderTextureView* right_view = scene_color_view_.get();
   if (active_scene_samples_ > 1 && scene_resolved_) {
-    const plume::RenderTextureBarrier to_resolve[] = {
-        plume::RenderTextureBarrier(scene_texture, plume::RenderTextureLayout::RESOLVE_SOURCE),
-        plume::RenderTextureBarrier(scene_resolved_.get(), plume::RenderTextureLayout::RESOLVE_DEST),
-    };
-    list->barriers(plume::RenderBarrierStage::COPY, to_resolve, uint32_t(std::size(to_resolve)));
-    list->resolveTexture(scene_resolved_.get(), scene_texture);
+    const bool resolved = detail::ResolveSceneColorIfDirty(&scene_resolve_dirty_, [&] {
+      const plume::RenderTextureBarrier to_resolve[] = {
+          plume::RenderTextureBarrier(scene_texture, plume::RenderTextureLayout::RESOLVE_SOURCE),
+          plume::RenderTextureBarrier(scene_resolved_.get(), plume::RenderTextureLayout::RESOLVE_DEST),
+      };
+      list->barriers(plume::RenderBarrierStage::COPY, to_resolve, uint32_t(std::size(to_resolve)));
+      list->resolveTexture(scene_resolved_.get(), scene_texture);
+    });
+    ++(resolved ? detail::g_frameProfile.msaa_resolves : detail::g_frameProfile.msaa_resolve_reuses);
     right = scene_resolved_.get();
     right_view = scene_resolved_view_.get();
   }

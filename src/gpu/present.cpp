@@ -81,6 +81,7 @@ bool GraphicsSystem::DropStaleSwapChain() {
 }
 
 void GraphicsSystem::PresentClear() {
+  PaceMinimizedWindow();
   if (DropStaleSwapChain()) {
     return;
   }
@@ -143,6 +144,19 @@ void GraphicsSystem::PresentClear() {
   ui_width_.store(width, std::memory_order_relaxed);
   ui_height_.store(height, std::memory_order_relaxed);
 
+  const float gamma_exponent = GammaExponent();
+  const bool gamma_identity = gamma_exponent > 0.999f && gamma_exponent < 1.001f;
+  const bool gamma = !gamma_identity && EnsureGammaResources(width, height, gamma_exponent);
+  plume::RenderTexture* composition_texture = gamma ? gamma_source_.get() : texture;
+  plume::RenderFramebuffer* composition_framebuffer = gamma ? gamma_framebuffer_.get() : framebuffers_[index].get();
+  if (gamma) {
+    static bool reported_gamma_composition = false;
+    if (!reported_gamma_composition) {
+      KGFX_INFO("gamma presentation: composing scene, video and UI directly into the gamma source; no full-frame copy");
+      reported_gamma_composition = true;
+    }
+  }
+
   plume::RenderCommandList* list = frame.list.get();
   list->begin();
   if (!frame.timestamps) frame.timestamps = device_->createQueryPool(2);
@@ -163,8 +177,8 @@ void GraphicsSystem::PresentClear() {
     scene_height = height;
   }
   const bool stereo = eyes > 1 && scaled && EnsureStereoResources(scene_width, scene_height);
-  plume::RenderTexture* scene_texture = scaled ? scene_color_.get() : texture;
-  plume::RenderFramebuffer* scene_framebuffer = scaled ? scene_framebuffer_.get() : framebuffers_[index].get();
+  plume::RenderTexture* scene_texture = scaled ? scene_color_.get() : composition_texture;
+  plume::RenderFramebuffer* scene_framebuffer = scaled ? scene_framebuffer_.get() : composition_framebuffer;
   active_scene_depth_ = scaled ? scene_depth_.get() : depth_texture_.get();
   active_scene_samples_ = scaled ? scene_samples_ : 1;
   // The shared depth buffer needs its own transition: clearing it in COMMON is rejected at submit.
@@ -178,6 +192,7 @@ void GraphicsSystem::PresentClear() {
   list->setScissors(plume::RenderRect(0, 0, scene_width, scene_height));
   // Alpha clears to zero: the heat-haze shader reads backbuffer alpha as a perturbation mask, and most draws never write alpha.
   list->clearColor(0, plume::RenderColor(0.0f, 0.0f, 0.0f, 0.0f));
+  scene_resolve_dirty_ = true;
   list->clearDepthStencil(true, true, 1.0f, 0);
   // A new guest video frame can arrive during scene replay, so consuming pending data does not exclude the fallback.
   bink_in_scene_ = false;
@@ -190,14 +205,14 @@ void GraphicsSystem::PresentClear() {
   if (scaled) {
     // Everything after this -- video and UI -- belongs at the window's own resolution, so the scene is scaled onto the swap chain first; a stereo frame lays its two eyes out in the display's format instead.
     if (stereo) CompositeStereo(  // STEREO:
-        list, scene_texture, texture, framebuffers_[index].get(), width, height);
-    else UpscaleScene(list, scene_texture, texture, framebuffers_[index].get(), width, height);
+        list, scene_texture, composition_texture, composition_framebuffer, width, height);
+    else UpscaleScene(list, scene_texture, composition_texture, composition_framebuffer, width, height);
   }
   if (!bink_in_scene_) DrawBink(list, false);
   // Before ApplyGamma, which rebinds its own state, so the UI goes through the scanout ramp like everything else.
-  DrawUi(list, framebuffers_[index].get(), width, height);
+  DrawUi(list, composition_framebuffer, width, height);
   // Last thing in the frame, exactly where the console's scanout ramp sits.
-  ApplyGamma(list, texture, framebuffers_[index].get(), width, height);
+  if (gamma) ApplyGamma(list, texture, framebuffers_[index].get(), width, height);
   list->barriers(plume::RenderBarrierStage::NONE,
                           plume::RenderTextureBarrier(texture, plume::RenderTextureLayout::PRESENT));
   if (frame.timestamps) {

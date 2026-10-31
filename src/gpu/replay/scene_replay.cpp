@@ -22,6 +22,7 @@
 #include "gpu/resolve_blit.h"
 #include "gpu/surface_pool.h"
 #include "gpu/sampler_cache.h"
+#include "gpu/scene_resolve_state.h"
 #include "gpu/shaders/embedded_shaders.h"
 #include "gpu/shaders/shader_cache.h"
 #include "gpu/stereo/stereo.h"  // STEREO:
@@ -382,6 +383,7 @@ void ReplayDraw(ReplayContext& rc, const DrawCall& call, uint32_t off_w, uint32_
   }
   const DrawPlacement placement = SetDrawViewport(rc, call, off_w, off_h);
   rc.list->drawIndexedInstanced(call.index_count, 1, 0, 0, 0);
+  if (placement.on_screen && call.color_mask != 0) InvalidateSceneColorResolve(rc.ctx.scene_resolve_dirty);
   ++g_frameProfile.draws;
   if (samples_book_page && placement.on_screen && !call.depth_only && !FindPointSprite(call) && call.layout && BookPickHasRoom()) {
     BookPickDraw pick;
@@ -506,6 +508,7 @@ void DrawCapturedScene(GraphicsSystem& gfx, plume::RenderCommandList* list, plum
       if (call.kind != CommandKind::Draw) SuspendVulkanQuery(rc.ctx, list, rc.occlusion);
       if (call.kind == CommandKind::Bink) {
         gfx.DrawPendingBink(list, rc.current_framebuffer == framebuffer ? ctx.scene_samples : 1);
+        if (rc.current_framebuffer == framebuffer) InvalidateSceneColorResolve(ctx.scene_resolve_dirty);
         RebindSceneLayout(rc);
         continue;
       }

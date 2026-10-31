@@ -40,6 +40,9 @@ struct FrameProfile {
   uint64_t ns_present = 0;    // the present call itself (vsync waits land here)
   uint64_t ns_gpu = 0;        // GPU time between the frame's first and last command
   uint32_t draws = 0;
+  // Whole-scene MSAA resolves recorded, and avoided by reusing unchanged colour.
+  uint32_t msaa_resolves = 0;
+  uint32_t msaa_resolve_reuses = 0;
   uint32_t frames = 0;
   uint32_t gpu_frames = 0;
   // Written by the game thread.

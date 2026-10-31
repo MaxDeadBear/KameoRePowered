@@ -31,6 +31,26 @@ void ClosePreciseTimer(void* timer) {
 #endif
 }
 
+// A minimized Win32 window may still report its old client size and present
+// without waiting. Slow hidden frames to at most 15 FPS, but replay each one:
+// one-time offscreen and shadow renders must still populate their textures.
+void GraphicsSystem::PaceMinimizedWindow() {
+#ifdef _WIN32
+  const auto window = static_cast<HWND>(get_native_window_ ? get_native_window_() : nullptr);
+  const bool minimized = window != nullptr && ::IsIconic(window);
+  if (minimized != minimized_last_) {
+    minimized_last_ = minimized;
+    fps_cap_deadline_ = {};
+    present_times_.clear();
+    std::lock_guard<std::mutex> lock(stats_mutex_);
+    frame_stats_ = {};
+  }
+  // Use a blocking wait, with no spin, and check the window again next frame
+  // so restoring it costs no more than this one 67 ms wait.
+  if (minimized) std::this_thread::sleep_for(std::chrono::microseconds(1'000'000 / 15));
+#endif
+}
+
 void SleepUntilPrecise(std::chrono::steady_clock::time_point deadline, void* timer) {
   const auto spin_margin = std::chrono::milliseconds(1);
   const auto now = std::chrono::steady_clock::now();

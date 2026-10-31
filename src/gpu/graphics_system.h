@@ -175,6 +175,8 @@ class GraphicsSystem final : public rex::system::IGraphicsSystem {
     // With MSAA the scene target is multisampled: draws into it need that sample count, and anything reading it goes through the resolved copy.
     uint32_t scene_samples = 1;
     plume::RenderTexture* scene_resolved = nullptr;
+    // Shared with the final composite; invalidated only by scene colour writes.
+    bool* scene_resolve_dirty = nullptr;
     // Bumped whenever the scene targets are recreated, since a new texture can land at the address of the one it replaced.
     uint64_t scene_target_generation = 0;
     // plume::RenderFormat values, carried as integers because the scoped enum cannot be forward declared.
@@ -236,6 +238,7 @@ class GraphicsSystem final : public rex::system::IGraphicsSystem {
   // frame_pacing.cpp
   void RecordPresentTime();
   void LimitFrameRate();
+  void PaceMinimizedWindow();
 
   // render_thread.cpp
   void RenderThreadMain();
@@ -255,7 +258,8 @@ class GraphicsSystem final : public rex::system::IGraphicsSystem {
   void ReleaseStereoResources();
 
   // passes/gamma_pass.cpp; the 360 applies the guest's gamma ramp at scanout, so it is redrawn by hand as the last thing in the frame.
-  bool EnsureGammaResources(uint32_t width, uint32_t height);
+  float GammaExponent() const;
+  bool EnsureGammaResources(uint32_t width, uint32_t height, float exponent);
   void ApplyGamma(plume::RenderCommandList* list, plume::RenderTexture* target, plume::RenderFramebuffer* framebuffer, uint32_t width, uint32_t height);
 
   // movie/bink_renderer.cpp
@@ -303,6 +307,7 @@ class GraphicsSystem final : public rex::system::IGraphicsSystem {
 
   std::chrono::steady_clock::time_point fps_cap_deadline_{};
   void* fps_cap_timer_ = nullptr;
+  bool minimized_last_ = false;
   std::deque<std::chrono::steady_clock::time_point> present_times_;
   std::mutex stats_mutex_;
   FrameStats frame_stats_;
@@ -356,6 +361,8 @@ class GraphicsSystem final : public rex::system::IGraphicsSystem {
   std::unique_ptr<plume::RenderSampler> gamma_sampler_;
   std::unique_ptr<plume::RenderTexture> gamma_source_;
   std::unique_ptr<plume::RenderTextureView> gamma_source_view_;
+  // Final scene/video/UI composition before the scanout curve; shares window depth.
+  std::unique_ptr<plume::RenderFramebuffer> gamma_framebuffer_;
   std::unique_ptr<plume::RenderBuffer> gamma_constants_;
   // Written only when the gamma settings change, behind a full GPU wait, because the descriptor set binding it cannot rotate.
   float gamma_constants_shadow_ = 0.0f;
@@ -371,6 +378,7 @@ class GraphicsSystem final : public rex::system::IGraphicsSystem {
   std::unique_ptr<plume::RenderFramebuffer> scene_framebuffer_;
   std::unique_ptr<plume::RenderTexture> scene_resolved_;
   std::unique_ptr<plume::RenderTextureView> scene_resolved_view_;
+  bool scene_resolve_dirty_ = true;
   uint32_t scene_width_ = 0;
   uint32_t scene_height_ = 0;
   uint32_t scene_samples_ = 1;

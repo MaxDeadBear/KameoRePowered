@@ -7,6 +7,7 @@
 #include "gpu/replay/replay_context.h"
 #include "gpu/replay/screen_layout.h"
 #include "gpu/resolve.h"
+#include "gpu/scene_resolve_state.h"
 #include "gpu/surface_pool.h"
 
 namespace kameo::gpu::detail {
@@ -153,6 +154,7 @@ void ReplayResolveCommand(ReplayContext& rc, const DrawCall& call) {
         if (call.resolve_clear_rt && !call.resolve_depth) {
           const float* c = call.resolve_clear_color;
           list->clearColor(0, plume::RenderColor(c[0], c[1], c[2], c[3]), &rect, 1);
+          if (source == target) InvalidateSceneColorResolve(ctx.scene_resolve_dirty);
         }
         if (call.resolve_clear_depth) list->clearDepthStencil(true, true, call.clear_depth, 0, &rect, 1);
       }

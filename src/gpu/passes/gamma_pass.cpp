@@ -18,21 +18,27 @@ namespace kameo::gpu {
 
 std::atomic<float> g_guestGammaExponent{1.0f};
 
-// The 360 applies D3DDevice_SetGammaRamp in the display hardware to every presented pixel, and we present to a plain UNORM swap chain, so the ramp is redrawn by hand.
-// The finished image is copied aside and drawn back through a power curve, since a pixel shader cannot sample the surface it writes and the scene's framebuffers stay untouched.
-bool GraphicsSystem::EnsureGammaResources(uint32_t width, uint32_t height) {
+float GraphicsSystem::GammaExponent() const {
+  // Sample once for the frame: the guest may install a new ramp during replay.
+  const float user_gamma = float(std::clamp(REXCVAR_GET(kameo_gfx_user_gamma), 20, 400)) / 100.0f;
+  return (REXCVAR_GET(kameo_gfx_gamma) ? g_guestGammaExponent.load() : 1.0f) / user_gamma;
+}
+
+// Compose directly into a native-size UNORM target, then apply the scanout curve
+// to the swap chain. This keeps scene, video and UI ordering without a frame copy.
+bool GraphicsSystem::EnsureGammaResources(uint32_t width, uint32_t height, float exponent) {
   if (gamma_failed_) {
     return false;
   }
-  if (gamma_pipeline_ && gamma_width_ == width && gamma_height_ == height) {
-    return true;
-  }
 
-  if (gamma_width_ != width || gamma_height_ != height) {
+  const bool source_changed = !gamma_source_ || gamma_width_ != width || gamma_height_ != height;
+  if (source_changed) {
+    // The source and its descriptor may still be read by an earlier frame.
+    WaitForAllFrames();
+    gamma_framebuffer_.reset();
     gamma_source_view_.reset();
     gamma_source_.reset();
-    gamma_source_ = device_->createTexture(plume::RenderTextureDesc::Texture2D(
-        width, height, 1, plume::RenderFormat::B8G8R8A8_UNORM));
+    gamma_source_ = device_->createTexture(plume::RenderTextureDesc::ColorTarget(width, height, kColorFormat));
     if (!gamma_source_) {
       KGFX_ERROR("gamma scratch texture {}x{} failed", width, height);
       gamma_failed_ = true;
@@ -40,11 +46,17 @@ bool GraphicsSystem::EnsureGammaResources(uint32_t width, uint32_t height) {
     }
     gamma_source_view_ = gamma_source_->createTextureView(
         plume::RenderTextureViewDesc::Texture2D(plume::RenderFormat::B8G8R8A8_UNORM));
+    if (!gamma_source_view_) {
+      KGFX_ERROR("gamma source view creation failed");
+      gamma_failed_ = true;
+      return false;
+    }
     gamma_width_ = width;
     gamma_height_ = height;
   }
 
-  if (!gamma_pipeline_) {
+  const bool pipeline_changed = !gamma_pipeline_;
+  if (pipeline_changed) {
     gamma_sampler_ = device_->createSampler(plume::RenderSamplerDesc());
     plume::RenderDescriptorRange ranges[] = {
         plume::RenderDescriptorRange(plume::RenderDescriptorRangeType::TEXTURE, 0, 1),
@@ -60,6 +72,11 @@ bool GraphicsSystem::EnsureGammaResources(uint32_t width, uint32_t height) {
     // The vertex shader builds its triangle from SV_VertexID, so there is no vertex buffer and no input layout.
     layout_desc.allowInputLayout = false;
     gamma_layout_ = device_->createPipelineLayout(layout_desc);
+    if (!gamma_sampler_ || !gamma_descriptors_ || !gamma_layout_) {
+      KGFX_ERROR("gamma layout or descriptors creation failed");
+      gamma_failed_ = true;
+      return false;
+    }
 
     const plume::RenderShaderFormat format = interface_->getCapabilities().shaderFormat;
     std::unique_ptr<plume::RenderShader> vs = CreateBuiltinShader(device_.get(), format, shaders::g_gammaVSDxil, shaders::g_gammaVSSpirv, "VSMain");
@@ -79,27 +96,35 @@ bool GraphicsSystem::EnsureGammaResources(uint32_t width, uint32_t height) {
 
     gamma_constants_ = device_->createBuffer(
         plume::RenderBufferDesc::UploadBuffer(16, plume::RenderBufferFlag::CONSTANT));
+    if (!gamma_constants_) {
+      KGFX_ERROR("gamma constants creation failed");
+      gamma_failed_ = true;
+      return false;
+    }
     gamma_descriptors_->setSampler(1, gamma_sampler_.get());
     gamma_descriptors_->setBuffer(2, gamma_constants_.get(), 16);
     KGFX_INFO("gamma pass ready ({})",
                 format == plume::RenderShaderFormat::SPIRV ? "spirv" : "dxil");
   }
 
-  gamma_descriptors_->setTexture(0, gamma_source_.get(), plume::RenderTextureLayout::SHADER_READ,
-                                 gamma_source_view_.get());
-  return true;
-}
-
-void GraphicsSystem::ApplyGamma(plume::RenderCommandList* list, plume::RenderTexture* target, plume::RenderFramebuffer* framebuffer, uint32_t width, uint32_t height) {
-  // The user's gamma divides the exponent, so a higher setting lifts the midtones on top of the game's own brightness ramp.
-  const float user_gamma = float(std::clamp(REXCVAR_GET(kameo_gfx_user_gamma), 20, 400)) / 100.0f;
-  const float exponent = (REXCVAR_GET(kameo_gfx_gamma) ? g_guestGammaExponent.load() : 1.0f) / user_gamma;
-  // 1.0 is the identity curve, so the copy and the full-screen draw are skipped entirely.
-  if (exponent > 0.999f && exponent < 1.001f) {
-    return;
+  // Avoid rewriting an unchanged descriptor while another frame uses it.
+  if (source_changed || pipeline_changed) {
+    gamma_descriptors_->setTexture(0, gamma_source_.get(), plume::RenderTextureLayout::SHADER_READ,
+                                   gamma_source_view_.get());
   }
-  if (!EnsureGammaResources(width, height)) {
-    return;
+  if (!gamma_framebuffer_) {
+    const plume::RenderTexture* color = gamma_source_.get();
+    plume::RenderFramebufferDesc desc;
+    desc.colorAttachments = &color;
+    desc.colorAttachmentsCount = 1;
+    desc.depthAttachment = depth_texture_.get();
+    desc.depthAttachmentView = depth_view_.get();
+    gamma_framebuffer_ = device_->createFramebuffer(desc);
+    if (!gamma_framebuffer_) {
+      KGFX_ERROR("gamma composition framebuffer creation failed");
+      gamma_failed_ = true;
+      return false;
+    }
   }
 
   // Written only when the exponent changes, behind a full GPU wait, because a frame in flight may be reading the buffer through a descriptor set that cannot rotate.
@@ -112,16 +137,16 @@ void GraphicsSystem::ApplyGamma(plume::RenderCommandList* list, plume::RenderTex
       gamma_constants_->unmap();
       gamma_constants_shadow_ = exponent;
       gamma_constants_written_ = true;
+    } else {
+      return false;  // Keep rendering directly to the window if preparation fails.
     }
   }
+  return true;
+}
 
-  const plume::RenderTextureBarrier to_copy[] = {
-      plume::RenderTextureBarrier(target, plume::RenderTextureLayout::COPY_SOURCE),
-      plume::RenderTextureBarrier(gamma_source_.get(), plume::RenderTextureLayout::COPY_DEST),
-  };
-  list->barriers(plume::RenderBarrierStage::COPY, to_copy, uint32_t(std::size(to_copy)));
-  list->copyTexture(gamma_source_.get(), target);
-
+void GraphicsSystem::ApplyGamma(plume::RenderCommandList* list, plume::RenderTexture* target, plume::RenderFramebuffer* framebuffer, uint32_t width, uint32_t height) {
+  // EnsureGammaResources prepared the frame's sampled exponent before routing
+  // any pixels into gamma_source_; it already contains the complete composition.
   const plume::RenderTextureBarrier to_draw[] = {
       plume::RenderTextureBarrier(gamma_source_.get(), plume::RenderTextureLayout::SHADER_READ),
       plume::RenderTextureBarrier(target, plume::RenderTextureLayout::COLOR_WRITE),

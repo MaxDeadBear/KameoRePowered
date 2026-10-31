@@ -92,9 +92,14 @@ void ReportFrameProfile() {
   if (detailed) line += fmt::format(" of which hashing {:.1f}", ms(p.ns_vertex_hash));
   line += fmt::format(", constants {:.1f}", ms(p.ns_constants));
   if (detailed) line += fmt::format(", textures {:.1f}, pipelines {:.1f}, uploads {:.1f}", ms(p.ns_textures), ms(p.ns_pipelines), ms(p.ns_uploads));
+  if (p.msaa_resolves || p.msaa_resolve_reuses) {
+    line += fmt::format(" | MSAA resolves {:.1f}, reused {:.1f} per frame",
+                        double(p.msaa_resolves) / p.frames, double(p.msaa_resolve_reuses) / p.frames);
+  }
   KGFX_INFO("{}", line);
   p.ns_wait = p.ns_prep = p.ns_vertices = p.ns_vertex_hash = p.ns_constants = p.ns_textures = p.ns_pipelines = p.ns_uploads = p.ns_scene = p.ns_post = p.ns_present = p.ns_gpu = 0;
   p.draws = p.frames = p.gpu_frames = 0;
+  p.msaa_resolves = p.msaa_resolve_reuses = 0;
 }
 
 }  // namespace kameo::gpu::detail

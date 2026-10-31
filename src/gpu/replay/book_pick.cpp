@@ -157,10 +157,15 @@ void DrawBookPick(GraphicsSystem::DrawPathContext& ctx, plume::RenderCommandList
     g_bookPick.failed = true;
     return;
   }
+  const int32_t px = std::clamp(int32_t(point_x * float(width)), 0, int32_t(width) - 1);
+  const int32_t py = std::clamp(int32_t(point_y * float(height)), 0, int32_t(height) - 1);
+  const plume::RenderRect pick_rect(px, py, px + 1, py + 1);
   list->barriers(plume::RenderBarrierStage::GRAPHICS, plume::RenderTextureBarrier(g_bookPick.texture.get(), plume::RenderTextureLayout::COLOR_WRITE));
   list->setFramebuffer(g_bookPick.framebuffer.get());
-  list->setScissors(plume::RenderRect(0, 0, width, height));
-  list->clearColor(0, plume::RenderColor(0.0f, 0.0f, 0.0f, 0.0f));
+  // Only this texel is read back. Keep each draw's full viewport so its page UV
+  // interpolation is unchanged, but clear and shade only the requested pixel.
+  list->setScissors(pick_rect);
+  list->clearColor(0, plume::RenderColor(0.0f, 0.0f, 0.0f, 0.0f), &pick_rect, 1);
   BindSceneDescriptors(list, ctx);
   for (const BookPickDraw& draw : g_bookPick.draws) {
     plume::RenderPipeline* pipeline = EnsureBookPickPipeline(ctx, draw);
@@ -184,8 +189,6 @@ void DrawBookPick(GraphicsSystem::DrawPathContext& ctx, plume::RenderCommandList
     list->drawIndexedInstanced(draw.call->index_count, 1, 0, 0, 0);
   }
   g_bookPick.draws.clear();
-  const int32_t px = std::clamp(int32_t(point_x * float(width)), 0, int32_t(width) - 1);
-  const int32_t py = std::clamp(int32_t(point_y * float(height)), 0, int32_t(height) - 1);
   list->barriers(plume::RenderBarrierStage::COPY, plume::RenderTextureBarrier(g_bookPick.texture.get(), plume::RenderTextureLayout::COPY_SOURCE));
   if (ctx.spirv) {
     VkBufferImageCopy region = {};

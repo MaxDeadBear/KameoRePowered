@@ -175,6 +175,7 @@ void GraphicsSystem::Shutdown() {
   gamma_pipeline_.reset();
   gamma_layout_.reset();
   gamma_constants_.reset();
+  gamma_framebuffer_.reset();
   gamma_source_view_.reset();
   gamma_source_.reset();
   gamma_sampler_.reset();

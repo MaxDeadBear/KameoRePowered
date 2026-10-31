@@ -236,6 +236,8 @@ bool GraphicsSystem::CreateFrameResources() {
   }
 
   // One depth buffer shared by every swap chain image, standing in for the guest's EDRAM depth.
+  // The gamma composition target shares this attachment even on a same-size rebuild.
+  gamma_framebuffer_.reset();
   depth_view_.reset();
   // A zero-sized swap chain makes plume hand back a texture with a null image, which crashes createTextureView, so the invariant is checked rather than trusted.
   if (swap_chain_->getWidth() == 0 || swap_chain_->getHeight() == 0) {

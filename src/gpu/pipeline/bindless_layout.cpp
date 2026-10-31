@@ -106,6 +106,7 @@ bool GraphicsSystem::GetDrawPathContext(DrawPathContext* out) {
   out->scene_depth = active_scene_depth_ ? active_scene_depth_ : depth_texture_.get();
   out->scene_samples = active_scene_samples_;
   out->scene_resolved = active_scene_samples_ > 1 ? scene_resolved_.get() : nullptr;
+  out->scene_resolve_dirty = &scene_resolve_dirty_;
   out->scene_target_generation = scene_target_generation_;
   out->color_format = uint32_t(kColorFormat);
   out->depth_format = uint32_t(kDepthFormat);

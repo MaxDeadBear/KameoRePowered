@@ -9,9 +9,11 @@
 #include <rex/logging.h>
 
 #include "gpu/config.h"
+#include "gpu/frame_profile.h"
 #include "gpu/graphics_system_internal.h"
 #include "gpu/log.h"
 #include "gpu/resource_check.h"
+#include "gpu/scene_resolve_state.h"
 #include "gpu/shaders/builtin_shaders.h"
 
 namespace kameo::gpu {
@@ -64,6 +66,7 @@ bool GraphicsSystem::EnsureSceneTarget(uint32_t width, uint32_t height, uint32_t
   scene_depth_.reset();
   scene_resolved_view_.reset();
   scene_resolved_.reset();
+  scene_resolve_dirty_ = true;
   const plume::RenderMultisampling multisampling(samples);
   scene_color_ = detail::CreateTextureChecked(device_.get(), plume::RenderTextureDesc::ColorTarget(width, height, kColorFormat, multisampling), "scene colour");
   scene_depth_ = detail::CreateTextureChecked(device_.get(), plume::RenderTextureDesc::DepthTarget(width, height, kDepthFormat, multisampling), "scene depth");
@@ -151,15 +154,57 @@ bool GraphicsSystem::EnsureUpscaleResources() {
 
 // Resolves a multisampled scene, then scales it onto the swap chain image, letterboxed to its own aspect.
 void GraphicsSystem::UpscaleScene(plume::RenderCommandList* list, plume::RenderTexture* scene_texture, plume::RenderTexture* texture, plume::RenderFramebuffer* framebuffer, uint32_t width, uint32_t height) {
+  // At native size there is nothing to scale. Resolve directly into the window
+  // instead of resolving into a temporary and sampling it through a full-screen
+  // pass; an already-current single-sample scene copy only needs a texture copy.
+  // plume's Vulkan acquire waits only at COLOR_ATTACHMENT_OUTPUT, so its
+  // swapchain must keep the graphics path rather than a transfer-first write.
+  if (!using_vulkan_ && scene_width_ == width && scene_height_ == height) {
+    if (frame_index_ == 0) KGFX_INFO("native-size D3D12 presentation: direct scene transfer, no fullscreen scaling pass");
+    if (active_scene_samples_ > 1 && (scene_resolve_dirty_ || !scene_resolved_)) {
+      const plume::RenderTextureBarrier to_resolve[] = {
+          plume::RenderTextureBarrier(scene_texture, plume::RenderTextureLayout::RESOLVE_SOURCE),
+          plume::RenderTextureBarrier(texture, plume::RenderTextureLayout::RESOLVE_DEST),
+      };
+      list->barriers(plume::RenderBarrierStage::COPY, to_resolve, uint32_t(std::size(to_resolve)));
+      list->resolveTexture(texture, scene_texture);
+      ++detail::g_frameProfile.msaa_resolves;
+      // The shared resolve texture was not written, so it stays dirty.
+    } else {
+      plume::RenderTexture* source = active_scene_samples_ > 1 ? scene_resolved_.get() : scene_texture;
+      const plume::RenderTextureBarrier to_copy[] = {
+          plume::RenderTextureBarrier(source, plume::RenderTextureLayout::COPY_SOURCE),
+          plume::RenderTextureBarrier(texture, plume::RenderTextureLayout::COPY_DEST),
+      };
+      list->barriers(plume::RenderBarrierStage::COPY, to_copy, uint32_t(std::size(to_copy)));
+      list->copyTexture(texture, source);
+      if (active_scene_samples_ > 1) ++detail::g_frameProfile.msaa_resolve_reuses;
+    }
+    // The video fallback following this function uses the current framebuffer,
+    // viewport and scissor, so establish the same state as the drawn upscale.
+    const plume::RenderTextureBarrier to_draw[] = {
+        plume::RenderTextureBarrier(texture, plume::RenderTextureLayout::COLOR_WRITE),
+        plume::RenderTextureBarrier(depth_texture_.get(), plume::RenderTextureLayout::DEPTH_WRITE),
+    };
+    list->barriers(plume::RenderBarrierStage::GRAPHICS, to_draw, uint32_t(std::size(to_draw)));
+    list->setFramebuffer(framebuffer);
+    list->setViewports(plume::RenderViewport(0.0f, 0.0f, float(width), float(height)));
+    list->setScissors(plume::RenderRect(0, 0, width, height));
+    return;
+  }
+
   plume::RenderTexture* upscale_source = scene_texture;
   plume::RenderTextureView* upscale_view = scene_color_view_.get();
   if (active_scene_samples_ > 1 && scene_resolved_) {
-    const plume::RenderTextureBarrier to_resolve[] = {
-        plume::RenderTextureBarrier(scene_texture, plume::RenderTextureLayout::RESOLVE_SOURCE),
-        plume::RenderTextureBarrier(scene_resolved_.get(), plume::RenderTextureLayout::RESOLVE_DEST),
-    };
-    list->barriers(plume::RenderBarrierStage::COPY, to_resolve, uint32_t(std::size(to_resolve)));
-    list->resolveTexture(scene_resolved_.get(), scene_texture);
+    const bool resolved = detail::ResolveSceneColorIfDirty(&scene_resolve_dirty_, [&] {
+      const plume::RenderTextureBarrier to_resolve[] = {
+          plume::RenderTextureBarrier(scene_texture, plume::RenderTextureLayout::RESOLVE_SOURCE),
+          plume::RenderTextureBarrier(scene_resolved_.get(), plume::RenderTextureLayout::RESOLVE_DEST),
+      };
+      list->barriers(plume::RenderBarrierStage::COPY, to_resolve, uint32_t(std::size(to_resolve)));
+      list->resolveTexture(scene_resolved_.get(), scene_texture);
+    });
+    ++(resolved ? detail::g_frameProfile.msaa_resolves : detail::g_frameProfile.msaa_resolve_reuses);
     upscale_source = scene_resolved_.get();
     upscale_view = scene_resolved_view_.get();
   }
