@@ -140,17 +140,17 @@ jobs:
 
       # Sentry walks a crash's stack and names its functions from the build's debug files, so every build that reports
       # sends them there (never into the release) before anyone runs it. Skipped when the SENTRY_AUTH_TOKEN secret is not
-      # set, and a Sentry outage does not stop the build going out. sentry-cli is pinned and installed in a step of its own,
-      # so an install script never runs with the token in its environment.
+      # set. A failure stops a release, whose crashes could never be read afterwards, but not a CI build. sentry-cli is
+      # pinned and installed in a step of its own, so an install script never runs with the token in its environment.
       - name: Install sentry-cli
         if: matrix.platform == 'windows'
-        continue-on-error: true
+        continue-on-error: ${{ inputs.publish_mode != 'release' }}
         shell: bash
         run: npm install -g @sentry/cli@3.8.2
 
       - name: Upload debug files to Sentry
         if: matrix.platform == 'windows'
-        continue-on-error: true
+        continue-on-error: ${{ inputs.publish_mode != 'release' }}
         shell: bash
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
