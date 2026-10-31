@@ -207,6 +207,7 @@ void KameoApp::OnCreateDialogs(rex::ui::ImGuiDrawer* drawer) {
         .title_name = "Kameo: Elements of Power",
         .on_quit = [this] { if (auto* w = window()) w->RequestClose(); },
         .immediate_drawer = kameo_immediate_drawer_.get(),
+        .build = KAMEO_BUILD_NAME,
     });
     kameo_guide_installed_ = true;
   }

@@ -87,6 +87,9 @@ rexglue_setup_target(kameorepowered GPU_PLUGINS xenos)
 # replaces XAM and network imports, so its sources compile into the executable (src/app/app.cpp installs it).
 include(thirdparty/RexLiveless/CMakeLists.txt)
 rexglue_guide_attach(kameorepowered)
+# Sent with leaderboard scores, which the RexLiveless server refuses from a build with no name or an old one.
+string(REGEX REPLACE "^v" "" _kameo_build_name "${KAMEO_VERSION}")
+target_compile_definitions(kameorepowered PRIVATE KAMEO_BUILD_NAME="Kameo: RePowered ${_kameo_build_name}")
 
 # SentryWork: crash reports to the project's Sentry, sent by the sentry-crash helper staged next to the executable
 # (src/app/app.cpp starts it). Only builds given a DSN report, which CI takes from the SENTRY_DSN repository variable for
