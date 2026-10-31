@@ -17,6 +17,7 @@
 #include "gpu/frame_ring.h"
 #include "gpu/device_removed.h"
 #include "gpu/pipeline/pipeline_cache.h"
+#include "gpu/pipeline/pso_precache.h"
 #include "gpu/replay/book_pick.h"
 #include "gpu/replay/screen_layout.h"
 #include "gpu/resolve_blit.h"
@@ -435,6 +436,7 @@ void DrawCapturedScene(GraphicsSystem& gfx, plume::RenderCommandList* list, plum
   if (frame.draws.empty()) {
     return;
   }
+  NoteGamePicture();
   g_profileDraws = FrameProfileDetailed();
   {
     ScopedNs timed(&g_frameProfile.ns_vertices);

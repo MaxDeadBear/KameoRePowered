@@ -48,6 +48,8 @@ void RetireDrawPathGarbage(uint64_t frame_index) {
 }
 
 void ReleaseDrawPathCaches() {
+  // First, because the workers read the pipeline layout and embedded shaders released below.
+  StopPipelinePrecache();
   ResetTextureInvalidations();
   {
     std::lock_guard lock(g_captureMutex);

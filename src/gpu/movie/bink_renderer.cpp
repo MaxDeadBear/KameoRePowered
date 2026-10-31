@@ -10,6 +10,7 @@
 
 #include "gpu/graphics_system_internal.h"
 #include "gpu/log.h"
+#include "gpu/pipeline/pso_precache.h"
 #include "gpu/shaders/builtin_shaders.h"
 #include "gpu/textures/texture_codec.h"
 
@@ -200,6 +201,7 @@ void GraphicsSystem::DrawBink(plume::RenderCommandList* list, bool hold_last, ui
       bink_pending_ = BinkFrame{};
       bink_held_ = 0;
       fresh = true;
+      NoteGamePicture();
     } else if (hold_last) {
       ++bink_held_;
     }

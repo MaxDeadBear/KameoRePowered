@@ -110,6 +110,7 @@ bool KameoApp::SetupPresentation() {
   if (kameo_graphics_ && !imgui_drawer() && window()) {
     kameo_immediate_drawer_ = std::make_unique<kameo::gpu::PlumeImmediateDrawer>(kameo_graphics_);
     kameo_imgui_drawer_ = std::make_unique<rex::ui::ImGuiDrawer>(window(), 64, [](ImFontAtlas* atlas) {
+      KameoLoadingOverlay::ConfigureFonts(atlas);
       if (REXCVAR_GET(kameo_rexliveless)) rexglue_guide::ConfigureFonts(atlas);
     });
     // A null presenter is supported: AddDialog registers the drawer's own window input listener and only touches the presenter when there is one.
@@ -145,6 +146,7 @@ void KameoApp::OnShutdown() {
   if (kameo_graphics_) {
     kameo_graphics_->SetUiFrameCallback(nullptr);
   }
+  kameo_loading_overlay_.reset();
   kameo_fps_overlay_.reset();
   kameo_achievement_icons_.reset();
   kameo_name_entry_keys_.reset();
@@ -197,6 +199,7 @@ void KameoApp::OnPostSetup() {
 void KameoApp::OnCreateDialogs(rex::ui::ImGuiDrawer* drawer) {
   kameo_name_entry_keys_ = std::make_unique<KameoNameEntryKeys>(drawer);
   kameo_fps_overlay_ = std::make_unique<KameoFpsOverlay>(drawer);
+  kameo_loading_overlay_ = std::make_unique<KameoLoadingOverlay>(drawer);
   kameo_achievement_icons_ = std::make_unique<KameoAchievementIcons>(drawer, kameo_immediate_drawer_.get());
   // Last, so the Guide draws over the game's own overlays.
   if (REXCVAR_GET(kameo_rexliveless) && kameo_immediate_drawer_) {

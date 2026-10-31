@@ -15,6 +15,7 @@
 #include "gpu/ui/imgui_drawer.h"
 #include "ui/hud/achievement_icons.h"
 #include "ui/hud/fps_overlay.h"
+#include "ui/hud/loading_overlay.h"
 #include "ui/name_entry/name_entry_keys.h"
 
 namespace rex::filesystem { class VirtualFileSystem; }
@@ -52,6 +53,7 @@ class KameoApp : public rex::ReXApp {
   void* veh_handle_ = nullptr;
   std::unique_ptr<KameoNameEntryKeys> kameo_name_entry_keys_;
   std::unique_ptr<KameoFpsOverlay> kameo_fps_overlay_;
+  std::unique_ptr<KameoLoadingOverlay> kameo_loading_overlay_;
   std::unique_ptr<KameoAchievementIcons> kameo_achievement_icons_;
   kameo::gpu::GraphicsSystem* kameo_graphics_ = nullptr;
   std::unique_ptr<kameo::gpu::PlumeImmediateDrawer> kameo_immediate_drawer_;

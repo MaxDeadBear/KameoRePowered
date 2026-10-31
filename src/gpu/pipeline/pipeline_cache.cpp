@@ -1,6 +1,7 @@
 #include "gpu/pipeline/pipeline_cache.h"
 
 #include <cstring>
+#include <mutex>
 #include <unordered_map>
 #include <vector>
 
@@ -17,11 +18,15 @@
 
 namespace kameo::gpu::detail {
 
-uint32_t g_pipelineFailures = 0;
+std::atomic<uint32_t> g_pipelineFailures{0};
 
 namespace {
 
+// Held only around the map, never across a compile, so a worker's slow build cannot stall a draw that needs a pipeline already here.
+std::mutex g_pipelinesMutex;
 std::unordered_map<uint64_t, std::unique_ptr<plume::RenderPipeline>> g_pipelines;
+// The point sprite and wet lens shaders are built on first use, which any thread may reach.
+std::mutex g_shaderVariantsMutex;
 
 }  // namespace
 
@@ -46,14 +51,17 @@ plume::RenderPipeline* EnsurePipeline(GraphicsSystem::DrawPathContext& ctx, cons
   const plume::RenderPrimitiveTopology topology = HostTopology(call.primitive);
   PointSpriteVariant* sprite = FindPointSprite(call);
   const bool point_sprites = sprite != nullptr;
-  if (sprite) {
-    if (!EnsurePointSpriteShaders(ctx, *sprite)) return nullptr;
-    vs = sprite->vs.get();
-    ps = sprite->ps.get();
-  }
-  if (UsesWetLensVS(call)) {
-    vs = EnsureWetLensVS(ctx);
-    if (!vs) return nullptr;
+  {
+    std::lock_guard lock(g_shaderVariantsMutex);
+    if (sprite) {
+      if (!EnsurePointSpriteShaders(ctx, *sprite)) return nullptr;
+      vs = sprite->vs.get();
+      ps = sprite->ps.get();
+    }
+    if (UsesWetLensVS(call)) {
+      vs = EnsureWetLensVS(ctx);
+      if (!vs) return nullptr;
+    }
   }
 
   uint64_t key = 1469598103934665603ull;
@@ -82,9 +90,12 @@ plume::RenderPipeline* EnsurePipeline(GraphicsSystem::DrawPathContext& ctx, cons
     mix(sc);
   }
 
-  auto found = g_pipelines.find(key);
-  if (found != g_pipelines.end()) {
-    return found->second.get();
+  {
+    std::lock_guard lock(g_pipelinesMutex);
+    auto found = g_pipelines.find(key);
+    if (found != g_pipelines.end()) {
+      return found->second.get();
+    }
   }
 
   std::vector<plume::RenderInputElement> elements;
@@ -177,7 +188,7 @@ plume::RenderPipeline* EnsurePipeline(GraphicsSystem::DrawPathContext& ctx, cons
   }
   auto pipeline = ctx.device->createGraphicsPipeline(desc);
   if (!PipelineCreated(pipeline.get())) {
-    if (++g_pipelineFailures <= 12) {
+    if (g_pipelineFailures.fetch_add(1) < 12) {
       KGFX_WARN("pipeline creation failed ({} inputs, stride {}, prim {})",
                   elements.size(), call.layout->dst_stride, call.primitive);
       for (const plume::RenderInputElement& e : elements) {
@@ -185,6 +196,7 @@ plume::RenderPipeline* EnsurePipeline(GraphicsSystem::DrawPathContext& ctx, cons
                     uint32_t(e.format), e.alignedByteOffset);
       }
     }
+    std::lock_guard lock(g_pipelinesMutex);
     g_pipelines.emplace(key, nullptr);
     return nullptr;
   }
@@ -192,13 +204,19 @@ plume::RenderPipeline* EnsurePipeline(GraphicsSystem::DrawPathContext& ctx, cons
   // plume's D3D12 backend applies stencilRef in setPipeline but never copies it from the desc.
   if (!ctx.spirv) static_cast<plume::D3D12GraphicsPipeline*>(pipeline.get())->stencilRef = desc.stencilReference;
 #endif
-  auto* raw = pipeline.get();
-  g_pipelines.emplace(key, std::move(pipeline));
-  return raw;
+  std::lock_guard lock(g_pipelinesMutex);
+  // Another thread may have built the same one while the lock was down; whichever arrived first is the one kept.
+  return g_pipelines.try_emplace(key, std::move(pipeline)).first->second.get();
 }
 
-size_t PipelineCount() { return g_pipelines.size(); }
+size_t PipelineCount() {
+  std::lock_guard lock(g_pipelinesMutex);
+  return g_pipelines.size();
+}
 
-void ReleasePipelines() { g_pipelines.clear(); }
+void ReleasePipelines() {
+  std::lock_guard lock(g_pipelinesMutex);
+  g_pipelines.clear();
+}
 
 }  // namespace kameo::gpu::detail
