@@ -74,6 +74,14 @@ kameo_rexliveless = false
 
 While the Guide is on, the game connects to rexliveless.xyz when it starts, even if you never sign in, to fetch the lists of gamerpics and themes. With it off, there's no Guide, no sign-in screen and no connection to that server.
 
+### Cheats and leaderboards
+
+Cheated scores stay off the leaderboards. This covers **Unlock All Extras** and **All Warriors & Upgrades**. Level Select and the collectible tracker don't count as cheats.
+
+The first time a cheat takes effect, the game backs up your saves. Leaderboard scores then stay off, even if you turn the cheat off again.
+
+If you turned one on by accident, close the game, open the launcher's **Mods** page and choose **Restore Saves From Before Cheats**. That puts your saves back, turns the cheats off and lets you post scores again. Any progress since the backup goes back too, but your newer saves are kept in `save_backups` inside `Documents\kameorepowered`.
+
 ## Crash reports
 
 Crash reports are **completely optional**. Most crashes never get reported on Discord or GitHub, so a report is how the developers find out what went wrong and fix it.

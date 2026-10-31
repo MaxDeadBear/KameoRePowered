@@ -1,8 +1,13 @@
 // Starting the game, with the level mods' data folder when any are enabled, and the launcher's own preferences file.
 
+#include <windows.h>
+
+#include <tlhelp32.h>
+
 #include <fstream>
 #include <string>
 
+#include "core/save_backup.h"
 #include "launcher/app.h"
 
 namespace kameo::launcher {
@@ -10,9 +15,31 @@ namespace {
 
 std::filesystem::path LauncherPrefsPath(const App& app) { return app.folder / "kameo_launcher.toml"; }
 
+bool GameIsRunning() {
+  const HANDLE snapshot = ::CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+  if (snapshot == INVALID_HANDLE_VALUE) return false;
+  PROCESSENTRY32W entry = {sizeof(entry)};
+  bool running = false;
+  for (BOOL more = ::Process32FirstW(snapshot, &entry); more && !running; more = ::Process32NextW(snapshot, &entry)) {
+    running = _wcsicmp(entry.szExeFile, L"kameorepowered.exe") == 0;
+  }
+  ::CloseHandle(snapshot);
+  return running;
+}
+
 }  // namespace
 
 void RefreshDlc(App& app) { app.installed = ListInstalledDlc(app.content_root); }
+
+bool RestoreCheatSaves(App& app, std::string& error) {
+  // The running game holds its save open and would write its cheated state straight back.
+  if (GameIsRunning()) return error = "Close the game first.", false;
+  if (!save_backup::Restore(app.content_root, error)) return false;
+  app.settings.SetBool("kameo_cheats_used", false);
+  app.settings.SetBool("kameo_unlock_all_extras", false);
+  app.settings.SetBool("kameo_unlock_all_warriors", false);
+  return true;
+}
 
 bool LaunchGame(App& app) {
   const std::filesystem::path exe = app.folder / L"kameorepowered.exe";

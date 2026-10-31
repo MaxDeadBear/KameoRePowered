@@ -53,8 +53,10 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int show) {
   bool list_builds = false;
   std::string switch_build;
   std::filesystem::path unpack_source;
+  bool restore_saves = false;
   for (int i = 1; arguments && i < argument_count; ++i) {
     if (std::wstring(arguments[i]) == L"--build-mods") build_mods = true;
+    else if (std::wstring(arguments[i]) == L"--restore-cheat-saves") restore_saves = true;
     else if (std::wstring(arguments[i]) == L"--list-builds") list_builds = true;
     else if (i + 1 < argument_count && std::wstring(arguments[i]) == L"--page") {
       // Opens on a page by name, for shortcuts and screenshots.
@@ -151,6 +153,16 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int show) {
   app.settings = Settings(app.folder / "kameo_settings.toml");
   app.settings.Load();
   app.content_root = ContentRoot(app.folder);
+  // KameoLauncher --restore-cheat-saves does what the Mods page's button does.
+  if (restore_saves) {
+    UseConsole();
+    std::string error;
+    const bool restored = RestoreCheatSaves(app, error);
+    std::printf("%s\n", restored ? "Your saves from before cheats are back." : error.c_str());
+    std::fflush(stdout);
+    ::CoUninitialize();
+    return restored ? 0 : 1;
+  }
   app.level_mods.Load(app.folder);
   app.has_game_files = HasGameFiles(app.folder);
   LoadPrefs(app);

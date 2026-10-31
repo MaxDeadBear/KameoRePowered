@@ -52,6 +52,10 @@ after 300 ms and times out after 5 s.
 
 When neither `assets` nor `game_data_root` holds a `default.xex`, the Play page shows a Set Up Your Game card. It opens the player's disc image through the runtime's `DiscImageDevice`, or a Games on Demand package through `StfsContainerDevice`, checks the title ID in `default.xex` and the free space, then unpacks into `assets.unpacking` and renames that to `assets` only once every file is out, so a failed or cancelled run leaves nothing behind. Names from the image that would leave the folder are refused, and `$SystemUpdate` is skipped. An image is memory-mapped, so reads go through SEH: a truncated file or a removed drive ends as an error message rather than a crash. `KameoLauncher --unpack-game <file>` does the same without the window.
 
+## Cheats
+
+`core/cheat_guard.cpp` backs up the saves the first time a cheat takes effect and sets `kameo_cheats_used`, which keeps leaderboard scores off even after the cheat is turned off. While that is set the Mods page shows a card that puts the backup back, through `core/save_backup.h`, which the game shares. The saves it replaces move to `save_backups\replaced_N`, and it refuses to run while the game is open. `KameoLauncher --restore-cheat-saves` does the same without the window.
+
 ## Crash reports
 
 `src/crash_dialog/` builds `KameoCrashDialog.exe`, drawn with the launcher's `window_d3d11.cpp` and `ui/theme.cpp`. It is a separate executable that runs on the game's own `rexruntime.dll`, because switching builds leaves the launcher alone and the dialog has to match the game beside it. The game's crash filter (`src/core/crash_reporter.cpp`) starts it and passes the crash on to Sentry's filter only on a yes. The Play page's card sets `crash_reports`.

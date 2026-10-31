@@ -15,6 +15,7 @@
 #include "app/process.h"
 #include "app/window_mode.h"
 #include "core/settings.h"
+#include "core/cheat_guard.h"
 #include "core/settings_schema.h"
 #include "engine/audio.h"
 #include "input/input.h"
@@ -77,6 +78,8 @@ void KameoLoadSettings() {
 
 void KameoSaveSettings() {
   if (!g_loaded) return;
+  // First, so a cheat just turned on is recorded in the file written here.
+  KameoNoteCheatSettings();
   std::lock_guard<std::mutex> lock(g_save_mutex);
   for (const VolumeBinding& binding : kVolumes) rex::cvar::SetFlagByName(binding.name, std::to_string(binding.volume->load()));
   const std::string text = KameoFormatSettingsFile([](const KameoSettingSpec& spec, std::string& value) {

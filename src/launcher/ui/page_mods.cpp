@@ -6,6 +6,7 @@
 
 #include <shellapi.h>
 
+#include "core/save_backup.h"
 #include "launcher/ui/pages.h"
 #include "launcher/ui/widgets.h"
 
@@ -68,10 +69,39 @@ void LevelModsSection(App& app) {
   ImGui::Spacing();
 }
 
+// Shown once a cheat has been used. The restore takes a second click, since it replaces the player's saves.
+void CheatsUsedCard(App& app) {
+  static bool confirming = false;
+  static std::string error;
+  ImGui::BeginChild("mods_cheats_used", ImVec2(0, 0), ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_AlwaysUseWindowPadding);
+  ImGui::TextColored(kGold, "Cheats Were Used");
+  ImGui::Separator();
+  if (!save_backup::Exists(app.content_root)) {
+    ImGui::TextWrapped("Leaderboard scores are off because a cheat was used, and there is no backup of your saves from before it.");
+  } else {
+    ImGui::TextWrapped("Leaderboard scores are off because a cheat was used. Your saves were backed up just before that. Restoring them turns the cheats off and lets you post scores again, but any progress since then goes back too. Your current saves are kept in the save_backups folder.");
+    if (!confirming) {
+      if (ImGui::Button("Restore Saves From Before Cheats")) confirming = true;
+    } else {
+      if (ImGui::Button("Yes, Restore My Saves")) {
+        confirming = false;
+        error.clear();
+        if (RestoreCheatSaves(app, error)) app.status = "Your saves from before cheats are back.";
+      }
+      ImGui::SameLine();
+      if (ImGui::Button("Cancel")) confirming = false;
+    }
+    if (!error.empty()) ImGui::TextColored(kGold, "%s", error.c_str());
+  }
+  ImGui::EndChild();
+  ImGui::Spacing();
+}
+
 }  // namespace
 
 void PageMods(App& app) {
   PageTitle(app, "Mods", nullptr);
+  if (app.settings.GetBool("kameo_cheats_used")) CheatsUsedCard(app);
   LevelModsSection(app);
   RestoreButton(app, {"kameo_gfx_texture_replacements", "kameo_gfx_dump_textures", "kameo_movie_replacements","kameo_story_splitscreen", "kameo_unlock_all_extras", "kameo_skip_cutscenes"});
   if (BeginSection("textures", "Textures")) {

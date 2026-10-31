@@ -114,6 +114,8 @@ On Windows, minimizing the game reduces rendering to at most 15 FPS to save back
 
 The Guide comes from [RexLiveless](https://github.com/SolarCookies/RexLiveless) and uses its server at rexliveless.xyz. Press F10 or the controller's Guide button to open it, and choose Play Offline on the sign-in screen to skip making a profile. While it is on, the game connects to that server at startup, even if you never sign in, to fetch the lists of gamerpics and themes. To turn it off, set `kameo_rexliveless = false` in `kameorepowered.toml`. See [Getting Started](docs/getting-started.md#the-xbox-guide-rexliveless).
 
+Cheated scores stay off the leaderboards. The game backs up your saves the first time Unlock All Extras or All Warriors & Upgrades takes effect, and scores stay off until the launcher's Mods page restores that backup. See [Cheats and leaderboards](docs/getting-started.md#cheats-and-leaderboards).
+
 ### Crash reports
 
 Crash reports are completely optional. Most crashes never reach a bug report, so a report is how the developers find out what went wrong and fix it.

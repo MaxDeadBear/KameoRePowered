@@ -21,6 +21,7 @@
 
 #include "app/process.h"
 #include "app/window_mode.h"
+#include "core/cheat_guard.h"
 #include "core/crash_reporter.h"
 #include "core/fp_guard.h"
 #include "core/settings.h"
@@ -207,6 +208,7 @@ void KameoApp::OnCreateDialogs(rex::ui::ImGuiDrawer* drawer) {
         .title_name = "Kameo: Elements of Power",
         .on_quit = [this] { if (auto* w = window()) w->RequestClose(); },
         .immediate_drawer = kameo_immediate_drawer_.get(),
+        .leaderboard_block = [] { return KameoLeaderboardBlock(); },
         .build = KAMEO_BUILD_NAME,
     });
     kameo_guide_installed_ = true;
@@ -235,6 +237,7 @@ void KameoApp::OnPostInitLogging() {
   if (!kameo_paths_note_.empty()) REXLOG_WARN("{}", kameo_paths_note_);
   KameoWaitForReplacedProcess();
   KameoLoadSettings();
+  KameoInitCheatGuard(user_data_root());
   // After the settings, which hold crash_reports, and before the runtime, whose exception handler has to follow Sentry's. It stays off in builds without a DSN.
   sentrywork::Init({.app_name = "kameorepowered", .tags = {{"game", "Kameo: Elements of Power"}}});
   InstallCrashReporter();

@@ -59,6 +59,8 @@ struct App : WindowState {
 void DrawFrame(App& app);
 
 void RefreshDlc(App& app);
+// Puts back the saves from before a cheat was first used, clears the mark and turns the cheats off.
+bool RestoreCheatSaves(App& app, std::string& error);
 bool LaunchGame(App& app);
 void LoadPrefs(App& app);
 void SavePrefs(const App& app);
