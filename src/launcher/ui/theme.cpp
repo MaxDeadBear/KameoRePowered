@@ -56,7 +56,7 @@ void ApplyTheme(float scale) {
   style.FontScaleDpi = scale;
 }
 
-void LoadFonts(App& app) {
+void LoadFonts(WindowState& window) {
   ImGuiIO& io = ImGui::GetIO();
   io.Fonts->Clear();
   const std::filesystem::path fonts = std::filesystem::path(L"C:\\Windows\\Fonts");
@@ -65,10 +65,10 @@ void LoadFonts(App& app) {
     if (std::filesystem::exists(fonts / file, ec)) return io.Fonts->AddFontFromFileTTF((fonts / file).string().c_str(), size);
     return nullptr;
   };
-  app.body = load(L"segoeui.ttf", 18.0f);
-  if (!app.body) app.body = io.Fonts->AddFontDefault();
-  app.heading = load(L"palab.ttf", 30.0f);
-  if (!app.heading) app.heading = app.body;
+  window.body = load(L"segoeui.ttf", 18.0f);
+  if (!window.body) window.body = io.Fonts->AddFontDefault();
+  window.heading = load(L"palab.ttf", 30.0f);
+  if (!window.heading) window.heading = window.body;
   ImGui::GetStyle().FontSizeBase = 18.0f;
 }
 

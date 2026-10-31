@@ -120,4 +120,13 @@ std::string ReadMainConfigUserDataRoot(const std::filesystem::path& config_path)
   return {};
 }
 
+std::string ReadMainConfigGameDataRoot(const std::filesystem::path& config_path) {
+  try {
+    const toml::table table = toml::parse_file(config_path.string());
+    if (auto value = table["game_data_root"].value<std::string>()) return *value;
+  } catch (const toml::parse_error&) {
+  }
+  return {};
+}
+
 }  // namespace kameo::launcher

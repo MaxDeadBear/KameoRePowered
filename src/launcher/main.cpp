@@ -24,6 +24,14 @@ void UseConsole() {
   if (::AttachConsole(ATTACH_PARENT_PROCESS)) freopen_s(&reopened, "CONOUT$", "w", stdout);
 }
 
+bool OpenLauncherWindow(HINSTANCE instance, int show, kameo::launcher::App& app) {
+  using namespace kameo::launcher;
+  const WindowOptions options = {.title = L"Kameo RePowered Launcher", .width = 1120, .height = 740, .min_width = 900, .min_height = 620};
+  if (RunWindow(instance, show, options, app, [&app] { DrawFrame(app); })) return true;
+  ::MessageBoxW(nullptr, L"Direct3D 11 could not be started.", L"Kameo RePowered Launcher", MB_ICONERROR);
+  return false;
+}
+
 }  // namespace
 
 int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int show) {
@@ -44,6 +52,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int show) {
   bool build_mods = false;
   bool list_builds = false;
   std::string switch_build;
+  std::filesystem::path unpack_source;
   for (int i = 1; arguments && i < argument_count; ++i) {
     if (std::wstring(arguments[i]) == L"--build-mods") build_mods = true;
     else if (std::wstring(arguments[i]) == L"--list-builds") list_builds = true;
@@ -56,6 +65,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int show) {
     }
     else if (i + 1 < argument_count && std::wstring(arguments[i]) == L"--switch-build") switch_build = std::filesystem::path(arguments[++i]).string();
     else if (i + 1 < argument_count && std::wstring(arguments[i]) == L"--install-dlc") install_source = arguments[++i];
+    else if (i + 1 < argument_count && std::wstring(arguments[i]) == L"--unpack-game") unpack_source = arguments[++i];
     else if (i + 1 < argument_count && std::wstring(arguments[i]) == L"--content-root") content_root_override = arguments[++i];
   }
   if (arguments) ::LocalFree(arguments);
@@ -111,6 +121,17 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int show) {
     ::CoUninitialize();
     return result;
   }
+  // KameoLauncher --unpack-game <disc image or Games on Demand package> unpacks it into assets without opening the window.
+  if (!unpack_source.empty()) {
+    UseConsole();
+    app.iso.Start(unpack_source, app.folder / "assets");
+    while (app.iso.running()) ::Sleep(50);
+    std::printf("%s\n", app.iso.TakeResult().c_str());
+    std::fflush(stdout);
+    const int result = app.iso.installed() ? 0 : 1;
+    ::CoUninitialize();
+    return result;
+  }
   if (!install_source.empty()) {
     UseConsole();
     const std::filesystem::path root = content_root_override.empty() ? ContentRoot(app.folder) : content_root_override;
@@ -131,12 +152,13 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int show) {
   app.settings.Load();
   app.content_root = ContentRoot(app.folder);
   app.level_mods.Load(app.folder);
+  app.has_game_files = HasGameFiles(app.folder);
   LoadPrefs(app);
   RefreshDlc(app);
   app.builds.Init(app.folder, app.active_build);
   if (app.check_for_builds) app.builds.Refresh();
 
-  if (!RunLauncherWindow(instance, show, app)) return 1;
+  if (!OpenLauncherWindow(instance, show, app)) return 1;
   ::CoUninitialize();
   return 0;
 }

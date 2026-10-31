@@ -42,5 +42,7 @@ class Settings {
 bool ReadMainConfigFullscreen(const std::filesystem::path& config_path);
 // user_data_root from kameorepowered.toml, or empty when it is not set.
 std::string ReadMainConfigUserDataRoot(const std::filesystem::path& config_path);
+// game_data_root from kameorepowered.toml, or empty when it is not set.
+std::string ReadMainConfigGameDataRoot(const std::filesystem::path& config_path);
 
 }  // namespace kameo::launcher

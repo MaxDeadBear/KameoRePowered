@@ -33,6 +33,17 @@ void DrawFrame(App& app) {
   static bool was_installing = false;
   if (was_installing && !app.installer.running()) RefreshDlc(app);
   was_installing = app.installer.running();
+  static bool was_unpacking = false;
+  if (was_unpacking && !app.iso.running()) {
+    app.game_files_message = app.iso.TakeResult();
+    if (app.iso.installed()) {
+      app.has_game_files = true;
+      app.level_mods.Load(app.folder);
+      app.status = app.game_files_message;
+      app.game_files_message.clear();
+    }
+  }
+  was_unpacking = app.iso.running();
   PollCapture(app);
   if (app.builds.TakeActiveChanged()) {
     app.active_build = app.builds.active();
@@ -71,7 +82,7 @@ void DrawFrame(App& app) {
   const ImVec2 at = ImGui::GetCursorScreenPos();
   const ImVec2 size(ImGui::GetContentRegionAvail().x, play_height);
   // A build switch replaces the game's files, so the game cannot start while one runs.
-  const bool busy = app.installer.running() || app.builds.busy();
+  const bool busy = app.installer.running() || app.builds.busy() || app.iso.running();
   ImGui::BeginDisabled(busy);
   const bool play = ImGui::InvisibleButton("play", size);
   ImGui::EndDisabled();

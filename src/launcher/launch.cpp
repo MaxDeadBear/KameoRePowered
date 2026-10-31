@@ -21,6 +21,11 @@ bool LaunchGame(App& app) {
     app.status = "kameorepowered.exe was not found next to the launcher.";
     return false;
   }
+  if (!app.has_game_files) {
+    app.status = "The game files are missing. Choose your game on the Play page first.";
+    app.page = Page::Play;
+    return false;
+  }
   std::wstring command = L"\"" + exe.wstring() + L"\"";
   if (app.level_mods.AnyEnabled()) {
     std::filesystem::path data_root;

@@ -63,4 +63,6 @@ class KameoApp : public rex::ReXApp {
   std::unique_ptr<rex::ui::ImGuiDialog> kameo_debug_overlay_;
   // Unlock notices go to the game's own text box; this is the manager's callback registration.
   uint64_t kameo_achievement_listener_ = 0;
+  // The RexLiveless Guide (kameo_rexliveless), installed with the dialogs.
+  bool kameo_guide_installed_ = false;
 };

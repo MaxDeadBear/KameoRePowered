@@ -6,6 +6,9 @@ MAINICON ICON "res/windows/kameo.ico"
 #ifdef KAMEO_RC_LAUNCHER
 #define KAMEO_RC_DESCRIPTION "Kameo: RePowered launcher"
 #define KAMEO_RC_NAME "KameoLauncher"
+#elif defined(KAMEO_RC_CRASH_DIALOG)
+#define KAMEO_RC_DESCRIPTION "Kameo: RePowered crash dialog"
+#define KAMEO_RC_NAME "KameoCrashDialog"
 #else
 #define KAMEO_RC_DESCRIPTION "Kameo: RePowered"
 #define KAMEO_RC_NAME "kameorepowered"

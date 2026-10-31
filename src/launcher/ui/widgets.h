@@ -14,7 +14,7 @@ struct Choice {
 };
 
 void ApplyTheme(float scale);
-void LoadFonts(App& app);
+void LoadFonts(WindowState& window);
 void DrawBackground(ImDrawList* draw, ImVec2 size, float time);
 
 bool Toggle(const char* id, bool value);

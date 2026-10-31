@@ -16,6 +16,8 @@
 #include <rex/logging/api.h>
 #include <rex/ui/overlay/console_overlay.h>
 #include <rex/ui/overlay/debug_overlay.h>
+#include <rexglue_guide/guide.h>
+#include <sentrywork/sentrywork.h>
 
 #include "app/process.h"
 #include "app/window_mode.h"
@@ -30,6 +32,7 @@
 
 REXCVAR_DECLARE(std::string, user_data_root);
 REXCVAR_DECLARE(std::string, cache_root);
+REXCVAR_DEFINE_BOOL(kameo_rexliveless, true, "Kameo", "Show the Xbox 360 Guide from RexLiveless (F10 or the Guide button): sign-in, friends, achievements and online play through rexliveless.xyz. Takes effect on the next start.");
 
 namespace {
 
@@ -78,6 +81,8 @@ std::unique_ptr<rex::ui::WindowedApp> KameoApp::Create(rex::ui::WindowedAppConte
 }
 
 void KameoApp::OnPreSetup(rex::RuntimeConfig& config) {
+  // The RexLiveless Guide sees the controller's Guide button in the game's own pad reads, which carry it only with guide_button on; a config that sets it still decides.
+  if (const rex::cvar::FlagEntry* flag = rex::cvar::GetFlagInfo("guide_button"); REXCVAR_GET(kameo_rexliveless) && flag && flag->source == rex::cvar::Source::kDefault) rex::cvar::SetFlagByName("guide_button", "true");
   SyncKameoDlcListForCustomModels(user_data_root());
   // The host VFS snapshots the tree at mount time, so a folder created after this resolves but exposes no children.
   kameo::app::BuildMergedLanguageDir(game_data_root());
@@ -104,7 +109,9 @@ bool KameoApp::SetupPresentation() {
   }
   if (kameo_graphics_ && !imgui_drawer() && window()) {
     kameo_immediate_drawer_ = std::make_unique<kameo::gpu::PlumeImmediateDrawer>(kameo_graphics_);
-    kameo_imgui_drawer_ = std::make_unique<rex::ui::ImGuiDrawer>(window(), 64);
+    kameo_imgui_drawer_ = std::make_unique<rex::ui::ImGuiDrawer>(window(), 64, [](ImFontAtlas* atlas) {
+      if (REXCVAR_GET(kameo_rexliveless)) rexglue_guide::ConfigureFonts(atlas);
+    });
     // A null presenter is supported: AddDialog registers the drawer's own window input listener and only touches the presenter when there is one.
     kameo_imgui_drawer_->SetPresenterAndImmediateDrawer(nullptr,
                                                         kameo_immediate_drawer_.get());
@@ -125,6 +132,7 @@ bool KameoApp::SetupPresentation() {
       // Options and Achievements are pages of the game's own menu, not ImGui: F4 and F6 open them there.
       if (ImGui::IsKeyPressed(ImGuiKey_F4, false)) KameoRequestMenuPage(KameoMenuHotkey::Options);
       if (ImGui::IsKeyPressed(ImGuiKey_F6, false)) KameoRequestMenuPage(KameoMenuHotkey::Achievements);
+      CrashIfTestKeyHeld();
     });
   }
   return true;
@@ -132,6 +140,8 @@ bool KameoApp::SetupPresentation() {
 
 void KameoApp::OnShutdown() {
   KameoNoteExclusiveFullscreen(false);
+  if (kameo_guide_installed_) rexglue_guide::Shutdown();
+  kameo_guide_installed_ = false;
   if (kameo_graphics_) {
     kameo_graphics_->SetUiFrameCallback(nullptr);
   }
@@ -149,6 +159,7 @@ void KameoApp::OnShutdown() {
   kameo_immediate_drawer_.reset();
   RemoveGuestFpExceptionHandler(veh_handle_);
   veh_handle_ = nullptr;
+  sentrywork::Shutdown();
 }
 
 void KameoApp::OnPostSetup() {
@@ -168,8 +179,14 @@ void KameoApp::OnPostSetup() {
     kameo::app::RegisterLanguageRedirects(*runtime()->file_system(), lang);
   }
   // The SDK shows unlocks only through its own ImGui toast, built on a drawer this app leaves null; the game's text box shows them instead.
-  kameo_achievement_listener_ = achievements().RegisterNotificationCallback([](const rex::system::AchievementEvent& event) { KameoPushAchievementToast(event); });
+  // The Guide shows its own unlock pop-up, so the text box stands down while it is installed.
+  kameo_achievement_listener_ = achievements().RegisterNotificationCallback([this](const rex::system::AchievementEvent& event) {
+    if (!kameo_guide_installed_) KameoPushAchievementToast(event);
+  });
   if (kameo_achievement_icons_) kameo_achievement_icons_->SetRuntime(runtime());
+  // Sentry takes the last-chance filter back here and ends the process without calling the one before it, so the local report goes back on top: crash_*.txt and .dmp are still written, the player is asked before the crash goes on to Sentry, and the log Sentry attaches carries the guest function names.
+  sentrywork::OnRuntimeReady(runtime());
+  InstallCrashReporter();
   CrashForTestIfAsked();
 #ifndef _WIN32
   // Installed after SDK setup so it overrides any SDK-installed SIGFPE handler.
@@ -181,6 +198,15 @@ void KameoApp::OnCreateDialogs(rex::ui::ImGuiDrawer* drawer) {
   kameo_name_entry_keys_ = std::make_unique<KameoNameEntryKeys>(drawer);
   kameo_fps_overlay_ = std::make_unique<KameoFpsOverlay>(drawer);
   kameo_achievement_icons_ = std::make_unique<KameoAchievementIcons>(drawer, kameo_immediate_drawer_.get());
+  // Last, so the Guide draws over the game's own overlays.
+  if (REXCVAR_GET(kameo_rexliveless) && kameo_immediate_drawer_) {
+    rexglue_guide::Install(this, drawer, {
+        .title_name = "Kameo: Elements of Power",
+        .on_quit = [this] { if (auto* w = window()) w->RequestClose(); },
+        .immediate_drawer = kameo_immediate_drawer_.get(),
+    });
+    kameo_guide_installed_ = true;
+  }
 }
 
 // The menu's own settings file loads after the main config so its values win, and before setup reads any of them.
@@ -205,6 +231,9 @@ void KameoApp::OnPostInitLogging() {
   if (!kameo_paths_note_.empty()) REXLOG_WARN("{}", kameo_paths_note_);
   KameoWaitForReplacedProcess();
   KameoLoadSettings();
+  // After the settings, which hold crash_reports, and before the runtime, whose exception handler has to follow Sentry's. It stays off in builds without a DSN.
+  sentrywork::Init({.app_name = "kameorepowered", .tags = {{"game", "Kameo: Elements of Power"}}});
+  InstallCrashReporter();
 }
 
 // The game data is the assets folder next to the executable unless game_data_root names another, on the command line or in kameorepowered.toml; a wrong game_data_root fails with its path rather than being swapped for some other folder.

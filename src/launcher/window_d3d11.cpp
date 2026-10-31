@@ -1,4 +1,4 @@
-// The launcher's Win32 window and its Direct3D 11 swap chain, driving one ImGui frame per loop.
+// The Win32 window and Direct3D 11 swap chain the launcher and crash dialog run in, driving one ImGui frame per loop.
 
 #include <d3d11.h>
 #include <dwmapi.h>
@@ -6,6 +6,7 @@
 #include "imgui_backends/imgui_impl_dx11.h"
 #include "imgui_backends/imgui_impl_win32.h"
 #include "launcher/ui/widgets.h"
+#include "launcher/window.h"
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);
 
@@ -18,7 +19,8 @@ IDXGISwapChain* g_swap_chain = nullptr;
 ID3D11RenderTargetView* g_target = nullptr;
 UINT g_resize_width = 0;
 UINT g_resize_height = 0;
-App* g_app = nullptr;
+WindowState* g_state = nullptr;
+const WindowOptions* g_options = nullptr;
 
 void CreateTarget() {
   ID3D11Texture2D* back_buffer = nullptr;
@@ -72,16 +74,17 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
       }
       return 0;
     case WM_GETMINMAXINFO: {
-      const float scale = g_app ? g_app->dpi_scale : 1.0f;
-      auto* info = reinterpret_cast<MINMAXINFO*>(lparam);
-      info->ptMinTrackSize.x = LONG(900 * scale);
-      info->ptMinTrackSize.y = LONG(620 * scale);
+      if (g_state && g_options->min_width > 0) {
+        auto* info = reinterpret_cast<MINMAXINFO*>(lparam);
+        info->ptMinTrackSize.x = LONG(g_options->min_width * g_state->dpi_scale);
+        info->ptMinTrackSize.y = LONG(g_options->min_height * g_state->dpi_scale);
+      }
       return 0;
     }
     case WM_DPICHANGED: {
-      if (g_app) {
-        g_app->dpi_scale = float(HIWORD(wparam)) / 96.0f;
-        if (ImGui::GetCurrentContext()) ApplyTheme(g_app->dpi_scale);
+      if (g_state) {
+        g_state->dpi_scale = float(HIWORD(wparam)) / 96.0f;
+        if (ImGui::GetCurrentContext()) ApplyTheme(g_state->dpi_scale);
       }
       const RECT* suggested = reinterpret_cast<RECT*>(lparam);
       ::SetWindowPos(hwnd, nullptr, suggested->left, suggested->top, suggested->right - suggested->left, suggested->bottom - suggested->top, SWP_NOZORDER | SWP_NOACTIVATE);
@@ -99,49 +102,55 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lpara
 
 }  // namespace
 
-bool RunLauncherWindow(HINSTANCE instance, int show, App& app) {
-  g_app = &app;
+bool RunWindow(HINSTANCE instance, int show, const WindowOptions& options, WindowState& state, const std::function<void()>& draw) {
+  g_state = &state;
+  g_options = &options;
   WNDCLASSEXW window_class = {sizeof(window_class), CS_CLASSDC, WindowProc, 0, 0, instance, ::LoadIconW(instance, L"MAINICON"), ::LoadCursorW(nullptr, MAKEINTRESOURCEW(32512)), nullptr, nullptr, L"KameoLauncher", ::LoadIconW(instance, L"MAINICON")};
   ::RegisterClassExW(&window_class);
   const POINT origin = {0, 0};
   const HMONITOR monitor = ::MonitorFromPoint(origin, MONITOR_DEFAULTTOPRIMARY);
-  app.dpi_scale = ImGui_ImplWin32_GetDpiScaleForMonitor(monitor);
-  const int width = int(1120 * app.dpi_scale);
-  const int height = int(740 * app.dpi_scale);
+  state.dpi_scale = ImGui_ImplWin32_GetDpiScaleForMonitor(monitor);
+  const int width = int(options.width * state.dpi_scale);
+  const int height = int(options.height * state.dpi_scale);
   MONITORINFO info = {sizeof(info)};
   ::GetMonitorInfoW(monitor, &info);
   const int x = info.rcWork.left + (info.rcWork.right - info.rcWork.left - width) / 2;
   const int y = info.rcWork.top + (info.rcWork.bottom - info.rcWork.top - height) / 2;
-  HWND hwnd = ::CreateWindowW(window_class.lpszClassName, L"Kameo RePowered Launcher", WS_OVERLAPPEDWINDOW, x, y, width, height, nullptr, nullptr, instance, nullptr);
+  HWND hwnd = ::CreateWindowW(window_class.lpszClassName, options.title, options.dialog ? WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU : WS_OVERLAPPEDWINDOW, x, y, width, height, nullptr, nullptr, instance, nullptr);
   const BOOL dark = TRUE;
   ::DwmSetWindowAttribute(hwnd, 20, &dark, sizeof(dark));
 
   if (!CreateDevice(hwnd)) {
     ReleaseDevice();
-    ::MessageBoxW(nullptr, L"Direct3D 11 could not be started.", L"Kameo RePowered Launcher", MB_ICONERROR);
+    ::DestroyWindow(hwnd);
+    ::UnregisterClassW(window_class.lpszClassName, instance);
     return false;
   }
   ::ShowWindow(hwnd, show);
   ::UpdateWindow(hwnd);
+  if (options.dialog) {
+    ::SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+    ::SetForegroundWindow(hwnd);
+  }
 
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
   ImGuiIO& io = ImGui::GetIO();
   io.IniFilename = nullptr;
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-  ApplyTheme(app.dpi_scale);
-  LoadFonts(app);
+  ApplyTheme(state.dpi_scale);
+  LoadFonts(state);
   ImGui_ImplWin32_Init(hwnd);
   ImGui_ImplDX11_Init(g_device, g_context);
 
-  while (!app.quit) {
+  while (!state.quit) {
     MSG message;
     while (::PeekMessageW(&message, nullptr, 0, 0, PM_REMOVE)) {
       ::TranslateMessage(&message);
       ::DispatchMessageW(&message);
-      if (message.message == WM_QUIT) app.quit = true;
+      if (message.message == WM_QUIT) state.quit = true;
     }
-    if (app.quit) break;
+    if (state.quit) break;
     if (::IsIconic(hwnd)) {
       ::Sleep(20);
       continue;
@@ -155,7 +164,7 @@ bool RunLauncherWindow(HINSTANCE instance, int show, App& app) {
     ImGui_ImplDX11_NewFrame();
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
-    DrawFrame(app);
+    draw();
     ImGui::Render();
     const float clear[4] = {0.02f, 0.03f, 0.09f, 1.0f};
     g_context->OMSetRenderTargets(1, &g_target, nullptr);

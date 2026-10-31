@@ -61,6 +61,7 @@ inline constexpr KameoSettingSpec kKameoSettings[] = {
     {nullptr, "kameo_unlock_all_warriors", nullptr, KameoSettingType::Bool, "false"},
     {nullptr, "kameo_unlocked_codes", "Features unlocked by pause-menu cheat codes, one bit each.", KameoSettingType::Int, "0"},
     {nullptr, "kameo_skip_cutscenes", "Start skips in-engine cutscenes and every FMV.", KameoSettingType::Bool, "true"},
+    {"Crash reports (true or false)", "crash_reports", "Optional. true asks whether to send a report to the developers when the game crashes, and sends nothing unless you agree; false never asks. Takes effect the next time the game starts.", KameoSettingType::Bool, "true"},
     {"Controls", "kameo_input_mode", "Player one: 0 = keyboard and mouse, 1 = first available gamepad.", KameoSettingType::Int, "0"},
     {nullptr, "kameo_p2_input_mode", "0 = Co-op gamepad, 1 = Co-op keyboard and mouse (a second physical keyboard is needed when player one also uses one).", KameoSettingType::Int, "0"},
     {nullptr, "kameo_p1_keyboard_device", "Player one physical keyboard: 0 = Keyboard 1, 1 = Keyboard 2.", KameoSettingType::Int, "0"},

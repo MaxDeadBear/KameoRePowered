@@ -5,7 +5,9 @@
 #include <Windows.h>
 
 #include <DbgHelp.h>
+#include <dwmapi.h>
 
+#include <csignal>
 #include <cstdarg>
 #include <cstdint>
 #include <cstdio>
@@ -16,8 +18,12 @@
 #include <rex/filesystem.h>
 #include <rex/logging.h>
 #include <rex/ppc/func.h>
+#include <sentrywork/sentrywork.h>
+
+#include "crash_dialog/crash_dialog.h"
 
 REXCVAR_DEFINE_BOOL(kameo_crash_test, false, "Kameo", "Crash on purpose once the game is set up, to check that the crash report is written.");
+REXCVAR_DEFINE_BOOL(kameo_crash_key, false, "Kameo", "Ctrl+Shift+F12 crashes the game on purpose, to try the crash report during play.");
 
 namespace {
 
@@ -28,6 +34,7 @@ volatile LONG g_reporting = 0;
 
 constexpr size_t kReportBytes = 8192;
 constexpr int kMaxFrames = 48;
+constexpr DWORD kAbortCode = 0x40000015;  // STATUS_FATAL_APP_EXIT, which is what abort() ends a process with
 
 struct Report {
   char text[kReportBytes];
@@ -53,6 +60,7 @@ const char* ExceptionName(DWORD code) {
     case EXCEPTION_INT_DIVIDE_BY_ZERO: return "integer divide by zero";
     case EXCEPTION_BREAKPOINT: return "breakpoint";
     case 0xE06D7363: return "unhandled C++ exception";
+    case kAbortCode: return "abort";
     default: return "exception";
   }
 }
@@ -142,6 +150,39 @@ bool WriteMinidump(const wchar_t* path, EXCEPTION_POINTERS* exception) {
   return ok == TRUE;
 }
 
+// Takes a window of this process off the screen so the dialog stands alone. Cloaking goes through the compositor, so unlike ShowWindow it does not need the window's thread, which may be the one that crashed, and runs none of the game's window code in a crashed process.
+BOOL CALLBACK CloakWindow(HWND window, LPARAM) {
+  DWORD owner = 0;
+  GetWindowThreadProcessId(window, &owner);
+  if (owner == GetCurrentProcessId()) {
+    const BOOL cloak = TRUE;
+    DwmSetWindowAttribute(window, DWMWA_CLOAK, &cloak, sizeof(cloak));
+  }
+  return TRUE;
+}
+
+// Shows KameoCrashDialog.exe from beside the executable and waits for the answer. Without it, or if it fails, the answer is no.
+bool PlayerAllowsReport() {
+  wchar_t dialog[MAX_PATH + 32] = {};
+  GetModuleFileNameW(nullptr, dialog, MAX_PATH);
+  wchar_t* name = wcsrchr(dialog, L'\\');
+  if (name == nullptr) return false;
+  wcscpy_s(name + 1, dialog + _countof(dialog) - (name + 1), L"KameoCrashDialog.exe");
+  wchar_t command[MAX_PATH + 64];
+  _snwprintf_s(command, _TRUNCATE, L"\"%s\" %lu", dialog, static_cast<unsigned long>(GetCurrentProcessId()));
+  STARTUPINFOW startup = {};
+  startup.cb = sizeof(startup);
+  PROCESS_INFORMATION process = {};
+  if (!CreateProcessW(dialog, command, nullptr, nullptr, FALSE, 0, nullptr, nullptr, &startup, &process)) return false;
+  AllowSetForegroundWindow(process.dwProcessId);
+  WaitForSingleObject(process.hProcess, INFINITE);
+  DWORD answer = 0;
+  GetExitCodeProcess(process.hProcess, &answer);
+  CloseHandle(process.hThread);
+  CloseHandle(process.hProcess);
+  return answer == kCrashDialogSendReport;
+}
+
 LONG WINAPI ReportCrash(EXCEPTION_POINTERS* exception) {
   // A second thread crashing while the first reports waits for the process to end rather than writing over it.
   if (InterlockedCompareExchange(&g_reporting, 1, 0) != 0) {
@@ -177,9 +218,34 @@ LONG WINAPI ReportCrash(EXCEPTION_POINTERS* exception) {
   char base_utf8[MAX_PATH * 3] = {};
   WideCharToMultiByte(CP_UTF8, 0, base, -1, base_utf8, sizeof(base_utf8), nullptr, nullptr);
   REXLOG_ERROR("{}", report.text);
-  REXLOG_ERROR("crash report written to {}.txt{}", base_utf8, dumped ? " and .dmp (send both with this log)" : " (the minidump failed)");
+  REXLOG_ERROR("crash report written to {}.txt{}", base_utf8, dumped ? " and .dmp (for a bug report, send the .txt with this log; the .dmp can hold sign-in details, so never post it publicly)" : " (the minidump failed)");
+
+  // Sentry's filter is the one that sends, and it is the filter below this one, so a crash reaches it only if the player says yes.
+  if (sentrywork::Enabled()) {
+    // Without this Windows puts a "Not Responding" copy of the window back up while the player reads.
+    DisableProcessWindowsGhosting();
+    EnumWindows(CloakWindow, 0);
+    const bool send = PlayerAllowsReport();
+    REXLOG_INFO("crash report {}", send ? "sent to the developers" : "not sent");
+    if (send && g_previous_filter) g_previous_filter(exception);
+    // Windows' own "stopped working" box would only ask the player about the crash a second time.
+    TerminateProcess(GetCurrentProcess(), record.ExceptionCode);
+  }
 
   return g_previous_filter ? g_previous_filter(exception) : EXCEPTION_CONTINUE_SEARCH;
+}
+
+// abort() and std::terminate never reach the exception filter, and Sentry catches them with a signal handler that sends without asking. This one takes its place, so they are reported like any other crash.
+void ReportAbort(int) {
+  static CONTEXT context;
+  RtlCaptureContext(&context);
+  static EXCEPTION_RECORD record;
+  record.ExceptionCode = kAbortCode;
+  record.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
+  record.ExceptionAddress = reinterpret_cast<void*>(context.Rip);
+  EXCEPTION_POINTERS pointers = {&record, &context};
+  ReportCrash(&pointers);
+  TerminateProcess(GetCurrentProcess(), 3);
 }
 
 }  // namespace
@@ -188,7 +254,9 @@ void InstallCrashReporter() {
   // Beside the log, which the SDK keeps in logs/ next to the executable.
   const std::wstring dir = (rex::filesystem::GetExecutableFolder() / "logs").wstring();
   wcsncpy_s(g_crash_dir, dir.c_str(), _TRUNCATE);
-  g_previous_filter = SetUnhandledExceptionFilter(ReportCrash);
+  const LPTOP_LEVEL_EXCEPTION_FILTER previous = SetUnhandledExceptionFilter(ReportCrash);
+  if (previous != ReportCrash) g_previous_filter = previous;
+  signal(SIGABRT, ReportAbort);
 }
 
 void CrashForTestIfAsked() {
@@ -202,9 +270,23 @@ void CrashForTestIfAsked() {
   *nowhere = 1;
 }
 
+void CrashIfTestKeyHeld() {
+  if (!REXCVAR_GET(kameo_crash_key)) return;
+  const auto held = [](int key) { return (GetAsyncKeyState(key) & 0x8000) != 0; };
+  if (!held(VK_CONTROL) || !held(VK_SHIFT) || !held(VK_F12)) return;
+  // Asked of Windows rather than ImGui, so only this game being in front counts.
+  DWORD front = 0;
+  GetWindowThreadProcessId(GetForegroundWindow(), &front);
+  if (front != GetCurrentProcessId()) return;
+  REXLOG_WARN("kameo_crash_key: crashing on purpose");
+  volatile int* nowhere = nullptr;
+  *nowhere = 1;
+}
+
 #else
 
 void InstallCrashReporter() {}
 void CrashForTestIfAsked() {}
+void CrashIfTestKeyHeld() {}
 
 #endif

@@ -7,6 +7,7 @@
 #include <mutex>
 
 #include <rex/cvar.h>
+#include <rexglue_guide/guide.h>
 
 #include "core/time.h"
 #include "input/guest_controls.h"
@@ -64,6 +65,18 @@ uint32_t KameoStandbyPadButtons() { return g_standbyPadButtons.load(std::memory_
 extern "C" REX_FUNC(sub_826BA2F0) {
   const uint32_t user = ctx.r3.u32;
   const uint32_t state = ctx.r4.u32;
+  // The RexLiveless Guide reads the pads from the read this wraps (its XamInputGetState), so the read stays live and only the game is given a pad at rest while the Guide is up; the packet number changes so the game sees the release.
+  struct HoldForGuide {
+    PPCContext& ctx;
+    uint8_t* base;
+    uint32_t state;
+    ~HoldForGuide() {
+      if (state && ctx.r3.u32 == 0 && rexglue_guide::IsOpen()) {
+        std::memset(base + state + 4, 0, 12);
+        REX_STORE_U32(state, REX_LOAD_U32(state) ^ 0x80000000u);
+      }
+    }
+  } hold_for_guide{ctx, base, state};
   if (user == 1 && state && KameoPausedBy() == 1 && !CoopInputRouteActive()) {
     std::memcpy(base + state, &g_playerOneOutput, sizeof(g_playerOneOutput));
     ctx.r3.u64 = 0;

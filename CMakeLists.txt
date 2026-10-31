@@ -29,7 +29,7 @@ if(NOT REXGLUE_ENTRYPOINT_GENERATED_SOURCES)
     message(FATAL_ERROR "No recompiled code. Run codegen first:\n  rexglue codegen kameorepowered_manifest.toml")
 endif()
 
-foreach(submodule plume XenosRecomp)
+foreach(submodule plume XenosRecomp RexLiveless SentryWork)
     if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/${submodule}/CMakeLists.txt")
         message(FATAL_ERROR "thirdparty/${submodule} is missing:\n  git submodule update --init --recursive")
     endif()
@@ -43,7 +43,7 @@ if(_kameo_shader_cache_head MATCHES "^version https://git-lfs")
 endif()
 
 file(GLOB_RECURSE KAMEO_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
-list(FILTER KAMEO_SOURCES EXCLUDE REGEX "/src/launcher/")
+list(FILTER KAMEO_SOURCES EXCLUDE REGEX "/src/(launcher|crash_dialog)/")
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/src" PREFIX src FILES ${KAMEO_SOURCES})
 list(APPEND KAMEO_SOURCES
     "${KAMEO_SHADER_CACHE}"
@@ -67,8 +67,8 @@ target_include_directories(kameorepowered PRIVATE
 # plume is a static library, so its D3D12 imports are satisfied here; Vulkan is loaded through volk.
 target_link_libraries(kameorepowered PRIVATE plume)
 if(WIN32)
-    # dbghelp writes the crash reporter's minidump.
-    target_link_libraries(kameorepowered PRIVATE d3d12 dbghelp mfplat mfreadwrite mfuuid ole32 xaudio2)
+    # dbghelp writes the crash reporter's minidump, and dwmapi takes the crashed game's window off the screen.
+    target_link_libraries(kameorepowered PRIVATE d3d12 dbghelp dwmapi mfplat mfreadwrite mfuuid ole32 xaudio2)
 elseif(UNIX AND NOT APPLE)
     # plume only builds Xlib surfaces on Linux, and the guest memory-free wrappers find the runtime's exports through dlsym.
     target_link_libraries(kameorepowered PRIVATE X11 ${CMAKE_DL_LIBS})
@@ -82,6 +82,33 @@ endif()
 
 # The xenos plugin stays staged as the reference renderer behind --kameo_native_renderer=false.
 rexglue_setup_target(kameorepowered GPU_PLUGINS xenos)
+
+# RexLiveless: the Xbox 360 Guide with sign-in, friends, achievements and online play through rexliveless.xyz. It
+# replaces XAM and network imports, so its sources compile into the executable (src/app/app.cpp installs it).
+include(thirdparty/RexLiveless/CMakeLists.txt)
+rexglue_guide_attach(kameorepowered)
+
+# SentryWork: crash reports to the project's Sentry, sent by the sentry-crash helper staged next to the executable
+# (src/app/app.cpp starts it). Only builds given a DSN report, which CI takes from the SENTRY_DSN repository variable for
+# Windows, so forks and local builds send nothing. Linux gets no DSN: its minidumps carry the player's environment
+# variables. The debug files go to Sentry with kameorepowered_upload_symbols, never into a release.
+set(KAMEO_SENTRY_DSN "" CACHE STRING "Sentry DSN crash reports go to; empty builds without reporting")
+set(KAMEO_SENTRY_ORG "" CACHE STRING "Sentry organization slug, for kameorepowered_upload_symbols")
+set(KAMEO_SENTRY_PROJECT "" CACHE STRING "Sentry project slug, for kameorepowered_upload_symbols")
+if(NOT KAMEO_SENTRY_DSN)
+    set(SENTRYWORK_DISABLE ON)
+endif()
+set(_kameo_sentry_args RELEASE "kameorepowered@${KAMEO_VERSION}")
+if(KAMEO_SENTRY_DSN)
+    list(APPEND _kameo_sentry_args DSN "${KAMEO_SENTRY_DSN}")
+endif()
+if(KAMEO_SENTRY_ORG AND KAMEO_SENTRY_PROJECT)
+    list(APPEND _kameo_sentry_args ORG "${KAMEO_SENTRY_ORG}" PROJECT "${KAMEO_SENTRY_PROJECT}")
+endif()
+include(thirdparty/SentryWork/CMakeLists.txt)
+sentrywork_attach(kameorepowered ${_kameo_sentry_args})
+# SentryWork builds Sentry's options itself; this sends its sentry_init call through src/core/sentry_setup.cpp first.
+set_property(SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/SentryWork/src/sentrywork.cpp" APPEND PROPERTY COMPILE_DEFINITIONS "sentry_init=kameo_sentry_init")
 
 # The SDK only stages its shared libraries next to the executable on Windows and macOS.
 if(UNIX AND NOT APPLE)
@@ -125,4 +152,17 @@ if(WIN32)
         COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:rex::runtime> $<TARGET_FILE_DIR:KameoLauncher>/launcher/
         VERBATIM)
     add_dependencies(kameorepowered KameoLauncher)
+
+    # The window that asks a player whether to send a crash to Sentry (src/core/crash_reporter.cpp starts it), drawn with the launcher's window and theme. Unlike the launcher it runs on the game's runtime DLL, because it ships with each build.
+    add_executable(KameoCrashDialog WIN32
+        src/crash_dialog/main.cpp
+        src/launcher/window_d3d11.cpp
+        src/launcher/ui/theme.cpp
+        thirdparty/imgui_backends/imgui_impl_win32.cpp
+        thirdparty/imgui_backends/imgui_impl_dx11.cpp
+        res/windows/kameo.rc)
+    target_include_directories(KameoCrashDialog PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} src thirdparty "${CMAKE_CURRENT_BINARY_DIR}/res")
+    target_compile_definitions(KameoCrashDialog PRIVATE $<$<COMPILE_LANGUAGE:RC>:KAMEO_RC_CRASH_DIALOG>)
+    target_link_libraries(KameoCrashDialog PRIVATE rex::runtime d3d11 dxgi dwmapi d3dcompiler)
+    add_dependencies(kameorepowered KameoCrashDialog)
 endif()

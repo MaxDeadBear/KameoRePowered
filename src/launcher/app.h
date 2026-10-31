@@ -16,8 +16,10 @@
 
 #include "launcher/builds.h"
 #include "launcher/dlc_install.h"
+#include "launcher/iso_install.h"
 #include "launcher/level_mods.h"
 #include "launcher/settings_file.h"
+#include "launcher/window.h"
 
 namespace kameo::launcher {
 
@@ -30,12 +32,16 @@ inline constexpr ImVec4 kTextDim = ImVec4(0.66f, 0.62f, 0.80f, 1.0f);
 
 enum class Page { Play, Video, Audio, Controls, Bindings, Mods, Dlc, Builds };
 
-struct App {
+struct App : WindowState {
   std::filesystem::path folder;
   Settings settings{std::filesystem::path()};
   std::filesystem::path content_root;
   std::vector<InstalledDlc> installed;
   DlcInstaller installer;
+  // Unpacks the player's game; game_files_message is what became of the last try.
+  IsoInstaller iso;
+  bool has_game_files = false;
+  std::string game_files_message;
   LevelMods level_mods;
   std::vector<std::string> dlc_log;
   Page page = Page::Play;
@@ -48,14 +54,8 @@ struct App {
   std::string status;
   std::string capture_target;
   std::chrono::steady_clock::time_point capture_started;
-  ImFont* body = nullptr;
-  ImFont* heading = nullptr;
-  float dpi_scale = 1.0f;
-  bool quit = false;
 };
 
-// Opens the launcher window and runs it until it closes; false when Direct3D 11 could not be started.
-bool RunLauncherWindow(HINSTANCE instance, int show, App& app);
 void DrawFrame(App& app);
 
 void RefreshDlc(App& app);

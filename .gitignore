@@ -1,6 +1,10 @@
 # Build output
 /out/
 
+# Logs, dumps and clips players sent in; a dump can hold their sign-in details
+/RandoLogs/
+/githubreports/
+
 # Machine-local presets (hold this machine's SDK path)
 CMakeUserPresets.json
 

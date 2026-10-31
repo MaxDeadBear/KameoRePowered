@@ -75,7 +75,8 @@ jobs:
         if: matrix.platform == 'linux'
         run: |
           wget -qO- https://apt.llvm.org/llvm.sh | sudo bash -s -- 20
-          sudo apt-get install -y ninja-build libgtk-3-dev libx11-dev libx11-xcb-dev
+          # libcurl is what SentryWork sends crash reports over.
+          sudo apt-get install -y ninja-build libgtk-3-dev libx11-dev libx11-xcb-dev libcurl4-openssl-dev
 
       - name: Install LLVM, CMake, Ninja (Windows)
         if: matrix.platform == 'windows'
@@ -125,12 +126,43 @@ jobs:
 
       - name: Build
         shell: bash
+        env:
+          # Crash reports go to the project's Sentry; without the repository variable the build reports nowhere. Linux never
+          # gets it, because the minidumps sentry-native writes there carry the player's environment variables.
+          SENTRY_DSN: ${{ matrix.platform == 'windows' && vars.SENTRY_DSN || '' }}
         run: |
           preset="${{ inputs.build_preset }}"
           # The published SDK ships RelWithDebInfo only; the release preset maps onto it.
-          cmake --preset "${preset}" ${{ matrix.compilers }} -DCMAKE_CXX_COMPILER_LAUNCHER=sccache -DKAMEO_VERSION="${{ inputs.tag || 'dev' }}"
+          cmake --preset "${preset}" ${{ matrix.compilers }} -DCMAKE_CXX_COMPILER_LAUNCHER=sccache -DKAMEO_VERSION="${{ inputs.tag || 'dev' }}" \
+            -DKAMEO_SENTRY_DSN="${SENTRY_DSN}"
           cmake --build --preset "${preset}" --parallel
           echo "BUILD_DIR=out/build/${preset}" >> "$GITHUB_ENV"
+
+      # Sentry walks a crash's stack and names its functions from the build's debug files, so every build that reports
+      # sends them there (never into the release) before anyone runs it. Skipped when the SENTRY_AUTH_TOKEN secret is not
+      # set, and a Sentry outage does not stop the build going out. sentry-cli is pinned and installed in a step of its own,
+      # so an install script never runs with the token in its environment.
+      - name: Install sentry-cli
+        if: matrix.platform == 'windows'
+        continue-on-error: true
+        shell: bash
+        run: npm install -g @sentry/cli@3.8.2
+
+      - name: Upload debug files to Sentry
+        if: matrix.platform == 'windows'
+        continue-on-error: true
+        shell: bash
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
+        run: |
+          if [ -z "${SENTRY_AUTH_TOKEN}" ] || [ -z "${SENTRY_ORG}" ] || [ -z "${SENTRY_PROJECT}" ]; then
+            echo "SENTRY_AUTH_TOKEN, SENTRY_ORG or SENTRY_PROJECT is not set, so no debug files are uploaded"
+            exit 0
+          fi
+          sentry-cli debug-files upload --org "${SENTRY_ORG}" --project "${SENTRY_PROJECT}" --wait \
+            "${BUILD_DIR}"/kameorepowered.exe "${BUILD_DIR}"/kameorepowered.pdb "${BUILD_DIR}"/*.dll
 
       - name: sccache stats
         if: always()
@@ -153,6 +185,8 @@ jobs:
           cp "${BUILD_DIR}"/*.so* pkg/ 2>/dev/null || true
           # The Windows launcher, with the copy of the runtime it runs on so it never holds the game's (src/launcher/runtime_loader.cpp).
           if [ "${{ matrix.platform }}" = "windows" ]; then
+            # SentryWork's helper, which writes up and sends a crash from outside the crashed game, and the dialog that asks first.
+            cp "${BUILD_DIR}"/sentry-crash.exe "${BUILD_DIR}"/KameoCrashDialog.exe pkg/
             cp "${BUILD_DIR}"/KameoLauncher.exe pkg/
             mkdir -p pkg/launcher
             cp "${BUILD_DIR}"/launcher/rexruntime.dll pkg/launcher/
