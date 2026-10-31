@@ -1,8 +1,8 @@
 # Launcher
 
 `KameoLauncher.exe` sits beside `kameorepowered.exe`. It edits the same
-`kameo_settings.toml` the pause menu writes, rebinds keys, installs Xbox 360 DLC
-packages, applies `.kmod` mods (levels and character models), downloads and switches game builds, and
+`kameo_settings.toml` the pause menu writes, rebinds keys, unpacks the player's
+game, installs Xbox 360 DLC packages, applies `.kmod` mods (levels and character models), downloads and switches game builds, and
 starts the game. It is a separate
 Windows executable (Direct3D 11 + Dear ImGui through the vendored
 `thirdparty/imgui_backends`), built from `src/launcher/**/*.cpp` with the
@@ -18,13 +18,14 @@ folder it falls back to the game's copy.
 | --- | --- |
 | `main.cpp` | `wWinMain`: command line, the console-only modes, settings load, then the window |
 | `app.h` | `App` (state every page shares), `Page`, the palette, entry points |
-| `window_d3d11.cpp` | Win32 window, D3D11 swap chain, WndProc (resize, DPI, min size), the frame loop |
+| `window.h`, `window_d3d11.cpp` | Win32 window, D3D11 swap chain, WndProc (resize, DPI, min size), the frame loop; shared with the crash dialog |
 | `launch.cpp` | Starting the game, the launcher's own preferences (`kameo_launcher.toml`) |
 | `ui/theme.cpp` | ImGui style and colours, Segoe UI / Palatino fonts, the night-sky background |
 | `ui/widgets.h/.cpp` | Toggle, help marker, section cards and the setting rows every page uses |
 | `ui/shell.cpp` | Sidebar, Play button, page switch and status footer |
 | `ui/pages.h`, `ui/page_*.cpp` | One file per page: Play, Video, Audio, Controls, Key Bindings, Mods, DLC |
 | `settings_file.h/.cpp` | `kameo_settings.toml` through `core/settings_schema.h`, written on every change |
+| `iso_install.h/.cpp` | Unpacking the player's disc image or Games on Demand package into `assets` on a worker thread |
 | `dlc_install.h/.cpp` | Finding LIVE/PIRS/CON packages and unpacking them on a worker thread |
 | `level_mods.h/.cpp` | The mods folder, load order and the linked data folder the game runs from |
 | `kmod.h/.cpp` | The `.kmod` format: CAFF archives (levels, models) stored as differences |
@@ -46,6 +47,14 @@ back to the main config's fullscreen flag when `kameo_window_mode` is unset.
 Key Bindings reproduces the pause menu's rule: binding a key another action
 already has gives that action the rebound action's old keys. A capture arms
 after 300 ms and times out after 5 s.
+
+## Game setup
+
+When neither `assets` nor `game_data_root` holds a `default.xex`, the Play page shows a Set Up Your Game card. It opens the player's disc image through the runtime's `DiscImageDevice`, or a Games on Demand package through `StfsContainerDevice`, checks the title ID in `default.xex` and the free space, then unpacks into `assets.unpacking` and renames that to `assets` only once every file is out, so a failed or cancelled run leaves nothing behind. Names from the image that would leave the folder are refused, and `$SystemUpdate` is skipped. An image is memory-mapped, so reads go through SEH: a truncated file or a removed drive ends as an error message rather than a crash. `KameoLauncher --unpack-game <file>` does the same without the window.
+
+## Crash reports
+
+`src/crash_dialog/` builds `KameoCrashDialog.exe`, drawn with the launcher's `window_d3d11.cpp` and `ui/theme.cpp`. It is a separate executable that runs on the game's own `rexruntime.dll`, because switching builds leaves the launcher alone and the dialog has to match the game beside it. The game's crash filter (`src/core/crash_reporter.cpp`) starts it and passes the crash on to Sentry's filter only on a yes. The Play page's card sets `crash_reports`.
 
 ## Play
 

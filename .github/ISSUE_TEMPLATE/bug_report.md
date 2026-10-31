@@ -30,4 +30,6 @@ If applicable, attach screenshots or a short clip.
  - CPU: [e.g. Ryzen 7 7800X3D]
 
 **Log file**
-Attach the newest `logs/kameorepowered_*.log` (and its `.1`/`.2` parts) if the bug is a crash or freeze.
+Attach the newest `logs/kameorepowered_*.log` (and its `.1`/`.2` parts) if the bug is a crash or freeze, plus the `logs/crash_*.txt` from a crash.
+
+Do not attach a `crash_*.dmp` here: issues are public, and a dump can hold your sign-in details.
