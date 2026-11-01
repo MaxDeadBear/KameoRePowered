@@ -86,8 +86,9 @@ void KameoUnlockDlc(PPCRegister& r3) {
   r3.s64 = 1;
 }
 
-// Entry of objectAlternativeSetFileInUse(model type, suffix): Kameo's suffix is replaced with the active skin's.
-void KameoOverrideDlcSelectorMid(PPCRegister& r3, PPCRegister& r4, PPCRegister& r1) {
+namespace {
+
+void OverrideDlcSelector(PPCRegister& r3, PPCRegister& r4, PPCRegister& r1) {
   if (g_kameo_dlc_swap_enabled.load(std::memory_order_acquire) == 0) {
     return;
   }
@@ -114,6 +115,16 @@ void KameoOverrideDlcSelectorMid(PPCRegister& r3, PPCRegister& r4, PPCRegister& 
   const uint32_t guest_string = r1.u32 - 80;
   WriteGuestStringAt(base, guest_string, suffix);
   r4.u64 = guest_string;
+}
+
+}  // namespace
+
+// Entry of objectAlternativeSetFileInUse(model type, suffix): Kameo's suffix is replaced with the active skin's, and the
+// shader mod's costume loads as her everyday outfit.
+void KameoOverrideDlcSelectorMid(PPCRegister& r3, PPCRegister& r4, PPCRegister& r1) {
+  OverrideDlcSelector(r3, r4, r1);
+  if (r3.u32 != kKameoModelType) return;
+  if (uint8_t* base = GuestBase()) KameoSettingSkin(base, r4, r1);
 }
 
 bool KameoShouldSkipNextDlcModelLoad() {

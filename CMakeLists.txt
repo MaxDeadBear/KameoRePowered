@@ -43,7 +43,7 @@ if(_kameo_shader_cache_head MATCHES "^version https://git-lfs")
 endif()
 
 file(GLOB_RECURSE KAMEO_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
-list(FILTER KAMEO_SOURCES EXCLUDE REGEX "/src/(launcher|crash_dialog)/")
+list(FILTER KAMEO_SOURCES EXCLUDE REGEX "/src/(launcher|crash_dialog|shader_editor)/")
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/src" PREFIX src FILES ${KAMEO_SOURCES})
 list(APPEND KAMEO_SOURCES
     "${KAMEO_SHADER_CACHE}"
@@ -168,4 +168,29 @@ if(WIN32)
     target_compile_definitions(KameoCrashDialog PRIVATE $<$<COMPILE_LANGUAGE:RC>:KAMEO_RC_CRASH_DIALOG>)
     target_link_libraries(KameoCrashDialog PRIVATE rex::runtime d3d11 dxgi dwmapi d3dcompiler)
     add_dependencies(kameorepowered KameoCrashDialog)
+
+    # The shader editor (docs/modding.md), with the compiler and the game's translated shaders it builds mods from beside it.
+    file(GLOB KAMEO_SHADER_EDITOR_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/shader_editor/*.cpp")
+    add_executable(KameoShaderEditor WIN32
+        ${KAMEO_SHADER_EDITOR_SOURCES}
+        src/launcher/window_d3d11.cpp
+        src/launcher/ui/theme.cpp
+        src/launcher/zip_extract.cpp
+        src/launcher/kmod_zlib.cpp
+        thirdparty/imgui_backends/imgui_impl_win32.cpp
+        thirdparty/imgui_backends/imgui_impl_dx11.cpp
+        res/windows/kameo.rc)
+    target_include_directories(KameoShaderEditor PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} src thirdparty thirdparty/RexLiveless/third_party "${CMAKE_CURRENT_BINARY_DIR}/res")
+    target_compile_definitions(KameoShaderEditor PRIVATE $<$<COMPILE_LANGUAGE:RC>:KAMEO_RC_SHADER_EDITOR>)
+    target_link_libraries(KameoShaderEditor PRIVATE rex::runtime d3d11 dxgi dwmapi d3dcompiler shell32 ole32)
+    target_compile_definitions(KameoShaderEditor PRIVATE NOMINMAX)
+    set(KAMEO_DXC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/XenosRecomp/thirdparty/dxc-bin/bin/x64)
+    add_custom_command(TARGET KameoShaderEditor POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:KameoShaderEditor>/editor_shaders
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${KAMEO_DXC_DIR}/dxc.exe ${KAMEO_DXC_DIR}/dxcompiler.dll ${KAMEO_DXC_DIR}/dxil.dll
+            $<TARGET_FILE_DIR:KameoShaderEditor>/editor_shaders
+        VERBATIM)
+    # Copied as the project configures, so a rebuilt pack arrives even when the editor itself doesn't relink.
+    configure_file(res/shader_mods/source.zip ${CMAKE_CURRENT_BINARY_DIR}/editor_shaders/source.zip COPYONLY)
+    add_dependencies(kameorepowered KameoShaderEditor)
 endif()

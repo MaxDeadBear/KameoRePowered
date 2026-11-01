@@ -28,6 +28,7 @@ folder it falls back to the game's copy.
 | `iso_install.h/.cpp` | Unpacking the player's disc image or Games on Demand package into `assets` on a worker thread |
 | `dlc_install.h/.cpp` | Finding LIVE/PIRS/CON packages and unpacking them on a worker thread |
 | `level_mods.h/.cpp` | The mods folder, load order and the linked data folder the game runs from |
+| `ui/page_mods.cpp` | Also shader mods: the game reads `shader_mods/*.kshader` itself, so switching one off only adds `.off` to its name |
 | `kmod.h/.cpp` | The `.kmod` format: CAFF archives (levels, models) stored as differences |
 | `kmod_zlib.cpp` | zlib for `.kmod` via stb (the launcher's only stb_image/stb_image_write implementation) |
 | `runtime_loader.cpp` | The delay-load hook that loads `launcher\rexruntime.dll` |

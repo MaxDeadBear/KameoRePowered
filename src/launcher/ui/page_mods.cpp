@@ -1,6 +1,9 @@
-// Mods page: .kmod level mods in load order, texture and movie replacements, and gameplay switches.
+// Mods page: .kmod level mods in load order, shader mods, texture and movie replacements, and gameplay switches.
 
+#include <algorithm>
+#include <filesystem>
 #include <string>
+#include <vector>
 
 #include <windows.h>
 
@@ -69,6 +72,61 @@ void LevelModsSection(App& app) {
   ImGui::Spacing();
 }
 
+// Shader mods are files the game reads from shader_mods/ by itself, even while it runs; one switched off ends in .off.
+void ShaderModsSection(App& app) {
+  namespace fs = std::filesystem;
+  constexpr double kRescanSeconds = 1.0;
+  static std::vector<fs::path> files;
+  static double scanned = -kRescanSeconds;
+  const fs::path folder = app.folder / "shader_mods";
+  if (ImGui::GetTime() - scanned >= kRescanSeconds) {
+    scanned = ImGui::GetTime();
+    files.clear();
+    std::error_code error;
+    for (const auto& entry : fs::directory_iterator(folder, error)) {
+      const std::string name = entry.path().filename().string();
+      if (name.ends_with(".kshader") || name.ends_with(".kshader.off")) files.push_back(entry.path());
+    }
+    std::sort(files.begin(), files.end());
+  }
+  const bool has_editor = fs::exists(app.folder / "KameoShaderEditor.exe");
+  ImGui::BeginChild("shader_mods", ImVec2(0, 0), ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_AlwaysUseWindowPadding);
+  ImGui::TextColored(kGold, "Shader Mods");
+  const float buttons = (has_editor ? ImGui::CalcTextSize("Shader Editor").x + ImGui::GetStyle().FramePadding.x * 2 + ImGui::GetStyle().ItemSpacing.x : 0.0f) + ImGui::CalcTextSize("Open Folder").x + ImGui::GetStyle().FramePadding.x * 2;
+  ImGui::SameLine(ImGui::GetContentRegionAvail().x + ImGui::GetCursorPosX() - buttons);
+  if (has_editor) {
+    if (ImGui::Button("Shader Editor")) ::ShellExecuteW(nullptr, L"open", (app.folder / "KameoShaderEditor.exe").c_str(), nullptr, app.folder.c_str(), SW_SHOWNORMAL);
+    ImGui::SameLine();
+  }
+  if (ImGui::Button("Open Folder##shader")) {
+    std::error_code error;
+    fs::create_directories(folder, error);
+    ::ShellExecuteW(nullptr, L"open", folder.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  }
+  ImGui::Separator();
+  if (files.empty()) ImGui::TextColored(kTextDim, "No shader mods yet. Put .kshader files in the shader_mods folder, or make your own with the Shader Editor.");
+  for (size_t i = 0; i < files.size(); ++i) {
+    const std::string name = files[i].filename().string();
+    const bool on = name.ends_with(".kshader");
+    ImGui::PushID(int(i));
+    if (Toggle("enabled", on)) {
+      fs::path renamed = files[i];
+      if (on) renamed += ".off";
+      else renamed.replace_extension();
+      std::error_code error;
+      fs::rename(files[i], renamed, error);
+      scanned = -kRescanSeconds;
+    }
+    ImGui::SameLine();
+    ImGui::AlignTextToFramePadding();
+    ImGui::TextUnformatted(name.substr(0, name.find(".kshader")).c_str());
+    ImGui::PopID();
+  }
+  ImGui::TextColored(kTextDim, "Shader mods change how things are drawn, and apply straight away, even with the game running.");
+  ImGui::EndChild();
+  ImGui::Spacing();
+}
+
 // Shown once a cheat has been used. The restore takes a second click, since it replaces the player's saves.
 void CheatsUsedCard(App& app) {
   static bool confirming = false;
@@ -103,6 +161,7 @@ void PageMods(App& app) {
   PageTitle(app, "Mods", nullptr);
   if (app.settings.GetBool("kameo_cheats_used")) CheatsUsedCard(app);
   LevelModsSection(app);
+  ShaderModsSection(app);
   RestoreButton(app, {"kameo_gfx_texture_replacements", "kameo_gfx_dump_textures", "kameo_movie_replacements","kameo_story_splitscreen", "kameo_unlock_all_extras", "kameo_skip_cutscenes"});
   if (BeginSection("textures", "Textures")) {
     BoolRow(app, "Texture Replacements", "kameo_gfx_texture_replacements", "Load replacement textures from the textures folder.");

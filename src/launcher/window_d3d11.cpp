@@ -142,6 +142,8 @@ bool RunWindow(HINSTANCE instance, int show, const WindowOptions& options, Windo
   LoadFonts(state);
   ImGui_ImplWin32_Init(hwnd);
   ImGui_ImplDX11_Init(g_device, g_context);
+  state.device = g_device;
+  state.context = g_context;
 
   while (!state.quit) {
     MSG message;

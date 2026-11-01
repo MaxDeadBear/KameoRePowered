@@ -188,6 +188,9 @@ jobs:
             # SentryWork's helper, which writes up and sends a crash from outside the crashed game, and the dialog that asks first.
             cp "${BUILD_DIR}"/sentry-crash.exe "${BUILD_DIR}"/KameoCrashDialog.exe pkg/
             cp "${BUILD_DIR}"/KameoLauncher.exe pkg/
+            # The shader editor (docs/modding.md), with the compiler and the game's translated shaders it builds mods from.
+            cp "${BUILD_DIR}"/KameoShaderEditor.exe pkg/
+            cp -r "${BUILD_DIR}"/editor_shaders pkg/
             mkdir -p pkg/launcher
             cp "${BUILD_DIR}"/launcher/rexruntime.dll pkg/launcher/
             # The Blender add-on that makes mods (docs/modding.md): one zip for Blender 3.6 and newer, and one for 2.79

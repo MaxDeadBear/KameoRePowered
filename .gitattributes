@@ -11,3 +11,6 @@
 
 # The recompiled shader cache is far over GitHub's 100 MB file limit.
 res/shader_cache/*.cpp filter=lfs diff=lfs merge=lfs -text
+
+# The game's translated pixel shaders, which the shader editor builds mods from.
+res/shader_mods/*.zip filter=lfs diff=lfs merge=lfs -text

@@ -26,6 +26,7 @@ void KameoGameTick() {
   KameoReloadLanguageStringTable(*ctx_ptr, base);
   KameoReplayCachedVolumes(*ctx_ptr, base);
   kameo::engine::ProcessPendingDlcSwap(*ctx_ptr, base);
+  kameo::engine::TickKameoSkin(base);
   kameo::engine::TickWarriorUnlock(*ctx_ptr, base);
   KameoUpdateSuperJumpFloat(*ctx_ptr, base);
   KameoTickInput();

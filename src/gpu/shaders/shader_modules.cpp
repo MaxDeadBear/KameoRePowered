@@ -15,6 +15,17 @@ plume::RenderShader* GraphicsSystem::ShaderModule(const ShaderCacheEntry* entry)
     return nullptr;
   }
   const size_t index = size_t(entry - g_shaderCacheEntries);
+  if (shader_mod_by_index_ && index < g_shaderCacheEntryCount) {
+    if (plume::RenderShader* standin = shader_mod_by_index_[index].load(std::memory_order_relaxed)) return standin;
+  }
+  return GameShaderModule(entry);
+}
+
+plume::RenderShader* GraphicsSystem::GameShaderModule(const ShaderCacheEntry* entry) {
+  if (!entry) {
+    return nullptr;
+  }
+  const size_t index = size_t(entry - g_shaderCacheEntries);
   if (index < shader_module_by_index_.size()) return shader_module_by_index_[index];
   auto found = shader_modules_.find(entry);
   return found != shader_modules_.end() ? found->second.get() : nullptr;

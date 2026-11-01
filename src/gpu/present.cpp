@@ -125,6 +125,7 @@ void GraphicsSystem::PresentClear() {
     detail::ScopedNs timed(&detail::g_frameProfile.ns_prep);
     // Shader modules are built here; the creation hooks run on guest threads and only queue them.
     QueuePipelinePrecacheShaders(*this);
+    UpdateShaderMods();
     EnsureShaderModules();
     EnsureDrawPathResources();
     PrecacheDrawPipelines(*this);

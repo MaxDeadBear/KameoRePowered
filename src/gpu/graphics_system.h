@@ -191,6 +191,8 @@ class GraphicsSystem final : public rex::system::IGraphicsSystem {
   bool GetDrawPathContext(DrawPathContext* out);
   // The translated module for a cache entry, or null if it never got built.
   plume::RenderShader* ShaderModule(const ShaderCacheEntry* entry);
+  // The game's own, past any shader mod's stand-in.
+  plume::RenderShader* GameShaderModule(const ShaderCacheEntry* entry);
 
   // The active system, for the guest-function hooks; null when the native renderer is not in use.
   static GraphicsSystem* instance();
@@ -277,6 +279,9 @@ class GraphicsSystem final : public rex::system::IGraphicsSystem {
 
   // shaders/shader_modules.cpp
   void EnsureShaderModules();
+
+  // shaders/shader_mods.cpp
+  void UpdateShaderMods();
 
   std::function<void*()> get_native_window_;
   Backend backend_ = Backend::Auto;
@@ -420,6 +425,11 @@ class GraphicsSystem final : public rex::system::IGraphicsSystem {
   std::map<const ShaderCacheEntry*, std::unique_ptr<plume::RenderShader>> shader_modules_;
   // The same modules by cache-entry index, for the two lookups every draw makes; the map walk was 408 samples of a 15 s profile.
   std::vector<plume::RenderShader*> shader_module_by_index_;
+  // What shader mods draw in place of a cache entry, by index; null draws the game's own. Precache workers read it too.
+  std::unique_ptr<std::atomic<plume::RenderShader*>[]> shader_mod_by_index_;
+  std::vector<std::unique_ptr<plume::RenderShader>> shader_mod_modules_;
+  uint64_t shader_mod_stamp_ = 0;
+  uint32_t shader_mod_frames_ = 0;
   uint32_t shader_module_ok_ = 0;
   uint32_t shader_module_failed_ = 0;
   uint32_t shader_module_empty_ = 0;

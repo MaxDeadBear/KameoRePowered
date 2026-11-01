@@ -26,6 +26,7 @@
 #include "gpu/scene_resolve_state.h"
 #include "gpu/shaders/embedded_shaders.h"
 #include "gpu/shaders/shader_cache.h"
+#include "gpu/shaders/shader_mods.h"
 #include "gpu/stereo/stereo.h"  // STEREO:
 #include "gpu/textures/texture_cache.h"
 #include "gpu/textures/texture_heap.h"
@@ -134,6 +135,9 @@ bool BuildSharedBlock(ReplayContext& rc, const DrawCall& call) {
   std::memcpy(&shared_words[68], &call.alpha_ref, sizeof(float));  // c17.x g_AlphaThreshold
   // STEREO: c17.yz g_StereoShift, the eye's shift for draws seen through the main camera; zero otherwise.
   if (rc.stereo_shift[0] != 0.0f && StereoShiftsDraw(call, rc.frame, rc.current_framebuffer == rc.framebuffer)) std::memcpy(&shared_words[69], rc.stereo_shift, sizeof(rc.stereo_shift));
+  // c17.w, which only shader mods read.
+  const float mod_time = ShaderModTime();
+  std::memcpy(&shared_words[71], &mod_time, sizeof(float));
   if (FindPointSprite(call)) {
     const float point[4] = {1.0f / std::max(call.viewport[2], 1.0f), 1.0f / std::max(call.viewport[3], 1.0f), float(call.point_minmax & 0xFFFFu) * 0.125f, float(call.point_minmax >> 16) * 0.125f};
     std::memcpy(&shared_words[72], point, sizeof(point));
@@ -356,7 +360,7 @@ void ReplayDraw(ReplayContext& rc, const DrawCall& call, uint32_t off_w, uint32_
   }
 
   plume::RenderShader* vs = rc.gfx.ShaderModule(call.vs);
-  plume::RenderShader* ps = (call.depth_only || call.stencil_only) ? nullptr : rc.gfx.ShaderModule(call.ps);
+  plume::RenderShader* ps = (call.depth_only || call.stencil_only) ? nullptr : call.shader_mod_skipped ? rc.gfx.GameShaderModule(call.ps) : rc.gfx.ShaderModule(call.ps);
   if (!vs || (!ps && !call.depth_only && !call.stencil_only)) {
     return;
   }

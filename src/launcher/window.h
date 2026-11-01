@@ -6,6 +6,8 @@
 #include <functional>
 
 struct ImFont;
+struct ID3D11Device;
+struct ID3D11DeviceContext;
 
 namespace kameo::launcher {
 
@@ -26,6 +28,9 @@ struct WindowState {
   ImFont* heading = nullptr;
   float dpi_scale = 1.0f;
   bool quit = false;
+  // For drawing off-screen during `draw`, before the window sets its own target.
+  ID3D11Device* device = nullptr;
+  ID3D11DeviceContext* context = nullptr;
 };
 
 // Opens the window and calls draw once a frame until it closes or state.quit is set; false when Direct3D 11 could not be started.

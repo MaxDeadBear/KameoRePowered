@@ -210,6 +210,8 @@ void GraphicsSystem::Shutdown() {
   draw_texture_set_.reset();
   draw_layout_.reset();
   shader_modules_.clear();
+  shader_mod_by_index_.reset();
+  shader_mod_modules_.clear();
   depth_view_.reset();
   depth_texture_.reset();
   framebuffers_.clear();

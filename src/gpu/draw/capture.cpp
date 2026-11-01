@@ -22,6 +22,7 @@
 #include "gpu/guest_memory.h"
 #include "gpu/log.h"
 #include "gpu/occlusion.h"
+#include "gpu/shaders/shader_mods.h"
 #include "gpu/vertex_declaration.h"
 
 REXCVAR_DEFINE_BOOL(kameo_gfx_stale_pixel_shader, true, "Kameo", "Draw colour draws that bind no pixel shader with the last one bound, as the console's GPU does; this is how fading models such as an absorbed baby warrior draw. Off drops them.");
@@ -208,6 +209,7 @@ void CaptureCommon(uint8_t* base, uint32_t device, uint32_t primitive, uint32_t 
       call.stream0_stride = Load8(base, device + dev::kStreamStride) << dev::kStreamStrideShift;
     }
   }
+  call.shader_mod_skipped = ShaderModSkipsDraw(ps, call.stream0_address ? GuestData(base, call.stream0_address) : nullptr, ((call.stream0_fetch1 >> 2) & 0xFFFFFFu) * 4);
 
   uint32_t index_base = 0;
   {

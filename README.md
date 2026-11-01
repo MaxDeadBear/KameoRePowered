@@ -43,7 +43,7 @@ The launcher also edits every setting, installs DLC and level mods, and switches
 
 ### Mods
 
-Install mods from the launcher's Mods page: put `.kmod` files in its mods folder and switch them on. Make your own character skins and add-ons with the Blender add-on in the Windows download's `modkit` folder. See [docs/modding.md](docs/modding.md).
+Install mods from the launcher's Mods page: put `.kmod` files in its mods folder and switch them on, or make your own looks in the Shader Editor, which previews them on any character and costume and updates the running game as you edit. Make your own character skins and add-ons with the Blender add-on in the Windows download's `modkit` folder. See [docs/modding.md](docs/modding.md).
 
 ## Building from source
 
