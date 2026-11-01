@@ -41,9 +41,9 @@ ADDON = __package__
 # Model files are named by the ELF hash of the object they dress, and a skin number.
 CHARACTERS = {
     0x007183BF: "Kameo", 0x0CE65812: "Pummel Weed", 0x0A70BAB2: "Snare", 0x037AABBF: "Major Ruin", 0x079B8925: "Rubble",
-    0x0BBEAEDE: "Ash", 0x005C444C: "Thermite", 0x05800519: "Chilla", 0x008B5284: "40 Below", 0x08EBDF9E: "Flex", 0x056D64DE: "Deep Blue",
+    0x0BBEAEDE: "Ash", 0x005C444C: "Deep Blue", 0x05800519: "Chilla", 0x008B5284: "Thermite", 0x08EBDF9E: "Flex", 0x056D64DE: "40 Below",
 }
-KAMEO_OUTFITS = {0: "default outfit", 1: "second outfit", 2: "third outfit"}
+KAMEO_OUTFITS = {0: "Classic", 1: "Gothic", 2: "Coyote"}
 
 
 def _preferences():
