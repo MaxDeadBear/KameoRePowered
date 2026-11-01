@@ -164,6 +164,7 @@ The nodes to start with:
 | Key light | A light placed from the camera, which looks the same in every scene |
 | Sun light | The level's own sun or main light |
 | Rim | 0 facing the camera, 1 at the silhouette |
+| Outline | 1 on an inked line a set number of pixels wide just inside the silhouette, and round any part seen in front of another |
 
 ### What to expect
 
@@ -190,6 +191,9 @@ The nodes to start with:
 - **Light is worked out from the other two,** so it holds shine as well as light.
 - **Key light follows the camera,** which keeps the shadow on the same side of a character wherever they turn.
 - **Surfaces the game doesn't light are left alone:** glows, sparks and other effects.
+- **Outlines are drawn on the surface, just inside its edge,** since a shader can only colour its own pixels. They
+  keep their width in pixels at any distance. Strongly bumpy surfaces can show specks of line; lower the width or leave
+  Outline off there.
 - **The preview's lighting stands in for a level's.** Run the game to see the real thing.
 - **Mods can't read pictures of their own yet.**
 
@@ -216,7 +220,7 @@ of a graph. Both run in the preview as well as in the game.
 | `uv`, `screen` | The first texture coordinate, and the pixel's position in pixels |
 | `time` | Seconds since the game started, wrapping hourly |
 
-Helpers: `ModKeyLight(s, towards, up, side)`, `ModStep(edge, x)`, `ModBands(x, count)`, `ModFresnel(s)`,
+Helpers: `ModKeyLight(s, towards, up, side)`, `ModStep(edge, x)`, `ModBands(x, count)`, `ModFresnel(s)`, `ModOutline(s, width)`,
 `ModHalftone(s.screen, amount, cell)`, `ModLuminance(colour)` and `ModNoise(uv)`. If `Shade` returns a value that isn't a
 number, such as after dividing by zero, the game's own colour is drawn for that pixel.
 

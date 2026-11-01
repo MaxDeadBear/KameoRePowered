@@ -496,7 +496,7 @@ void Editor::Draw(ID3D11Device* device, ID3D11DeviceContext* context) {
   ImGui::SameLine();
   ImGui::BeginChild("graph", ImVec2(ImGui::GetContentRegionAvail().x - kRightWidth, 0), ImGuiChildFlags_Borders, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
   if (g.raw) {
-    ImGui::TextDisabled("float3 Shade(ShadeInputs s) {  ... the body below ...  }   Helpers: ModKeyLight, ModStep, ModBands, ModFresnel, ModHalftone, ModLuminance, ModNoise (docs/modding.md).");
+    ImGui::TextDisabled("float3 Shade(ShadeInputs s) {  ... the body below ...  }   Helpers: ModKeyLight, ModStep, ModBands, ModFresnel, ModOutline, ModHalftone, ModLuminance, ModNoise (docs/modding.md).");
     InputMultiline("##hlsl", g.raw_code, ImVec2(-1, -1));
   } else {
     canvas_.Draw(g);

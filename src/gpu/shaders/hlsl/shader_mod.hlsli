@@ -75,6 +75,17 @@ float ModHalftone(float2 screen, float amount, float cell) {
     return 1.0 - smoothstep(radius - w, radius + w, d);
 }
 
+// An inked outline: 1 on a line width pixels wide just inside the silhouette, where the surface turns away from the
+// camera, and 0 elsewhere. How far a pixel is from that edge is how much it still faces the camera over how fast that
+// changes across the screen, so the line keeps its width at any distance, as a drawn one does, and also runs round
+// any part seen in front of another.
+float ModOutline(ShadeInputs s, float width) {
+    if (!s.has_normal) return 0.0;
+    const float facing = saturate(dot(s.normal, s.view));
+    const float pixels = facing / max(fwidth(facing), 1e-4);
+    return 1.0 - smoothstep(width - 0.5, width + 0.5, pixels);
+}
+
 float ModLuminance(float3 c) {
     return dot(c, float3(0.2126, 0.7152, 0.0722));
 }

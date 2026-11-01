@@ -17,7 +17,7 @@ const Float3 kZero{0, 0, 0}, kOne{1, 1, 1};
 
 // Stable names for the saved files, by NodeKind.
 const char* const kKindNames[] = {"output", "game_colour", "albedo", "light", "uv", "screen", "key_light", "sun_light", "fresnel", "up_facing", "float", "color", "add", "subtract", "multiply", "divide", "lerp", "one_minus", "saturate", "power", "min", "max", "step", "smoothstep", "bands", "desaturate", "luminance", "halftone", "custom",
-                                  "reroute", "time", "panner", "noise", "sine", "cosine", "frac", "floor", "ceil", "abs", "clamp", "dot", "cross", "normalize", "length", "distance", "remap", "if", "component_mask", "make_colour", "normal", "camera_vector", "up_vector", "key_vector", "sun_vector", "sun_colour"};
+                                  "reroute", "time", "panner", "noise", "sine", "cosine", "frac", "floor", "ceil", "abs", "clamp", "dot", "cross", "normalize", "length", "distance", "remap", "if", "component_mask", "make_colour", "normal", "camera_vector", "up_vector", "key_vector", "sun_vector", "sun_colour", "outline"};
 static_assert(std::size(kKindNames) == size_t(NodeKind::kCount));
 
 const std::vector<NodeInfo> kInfos = {
@@ -76,6 +76,7 @@ const std::vector<NodeInfo> kInfos = {
     {"Key vector", "Lighting", {}, {}, {"Towards camera", "Up", "Side"}, {0.8f, 0.55f, 0.45f}, "The direction to the light Key light uses, camera space."},
     {"Sun vector", "Lighting", {}, {}, {}, {}, "The direction to the level's sun or main light, camera space."},
     {"Sun colour", "Lighting", {}, {}, {}, {}, "The colour of the level's sun or main light."},
+    {"Outline", "Cel", {"Width"}, {{2.5f, 2.5f, 2.5f}}, {}, {}, "1 on an inked line Width pixels wide just inside the silhouette, and round any part seen in front of another; 0 elsewhere. It keeps its width at any distance.", 'I'},
 };
 
 std::string Hlsl(float v) {
@@ -230,6 +231,7 @@ std::string GenerateHlsl(const ShaderGraph& graph) {
       case NodeKind::kKeyVector: e = std::format("ModKeyDirection(s, {}, {}, {})", set(0), set(1), set(2)); break;
       case NodeKind::kSunVector: e = "s.light_dir"; break;
       case NodeKind::kSunColour: e = "s.light_colour"; break;
+      case NodeKind::kOutline: e = std::format("(float3)ModOutline(s, ({}).x)", in[0]); break;
       case NodeKind::kCount: break;
     }
     body += std::format("    const float3 {} = {};\n", name, e);
@@ -326,7 +328,25 @@ ShaderGraph MakePreset(Preset preset) {
     g.Connect(darker_id, result, 1);
     g.Connect(dots_id, result, 2);
   }
-  g.Find(output)->x = 1050;
+  // The comic looks are inked round the edge.
+  if (preset == Preset::kCelShade || preset == Preset::kComicHalftone) {
+    Node& width = g.Add(NodeKind::kFloat, 700, 560);
+    width.settings = {2.5f};
+    width.name = "Ink width";
+    const int width_id = width.id;
+    const int outline = g.Add(NodeKind::kOutline, 860, 520).id;
+    g.Connect(width_id, outline, 0);
+    Node& ink = g.Add(NodeKind::kColor, 860, 620);
+    ink.settings = {0.012f, 0.01f, 0.02f};
+    ink.name = "Ink colour";
+    const int ink_id = ink.id;
+    const int inked = g.Add(NodeKind::kLerp, 1050, 300).id;
+    g.Connect(result, inked, 0);
+    g.Connect(ink_id, inked, 1);
+    g.Connect(outline, inked, 2);
+    result = inked;
+  }
+  g.Find(output)->x = 1250;
   g.Connect(result, output, 0);
   return g;
 }

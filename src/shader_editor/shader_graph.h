@@ -67,6 +67,7 @@ enum class NodeKind {
   kKeyVector,
   kSunVector,
   kSunColour,
+  kOutline,
   kCount,
 };
 
