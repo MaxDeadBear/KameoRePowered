@@ -54,7 +54,7 @@ inline constexpr KameoSettingSpec kKameoSettings[] = {
     {nullptr, "kameo_volume_cutscenes", nullptr, KameoSettingType::Int, "50"},
     {"Language (takes effect on the next launch)", "kameo_language", "0 = keep user_language, 1 English, 2 Japanese, 3 German, 4 French, 5 Spanish, 6 Italian, 7 Korean, 8 Traditional Chinese.", KameoSettingType::Int, "0"},
     {"Mods (true or false)", "kameo_gfx_texture_replacements", nullptr, KameoSettingType::Bool, "true"},
-    {nullptr, "kameo_gfx_dump_textures", nullptr, KameoSettingType::Bool, "true"},
+    {nullptr, "kameo_gfx_dump_textures", nullptr, KameoSettingType::Bool, "false"},
     {nullptr, "kameo_movie_replacements", "Play movies/<name>.mp4 in place of fmv/<name>.bik. With a soundtrack it plays its own sound for its own length; without one only the picture is replaced.", KameoSettingType::Bool, "true"},
     {nullptr, "kameo_story_splitscreen", nullptr, KameoSettingType::Bool, "false"},
     {nullptr, "kameo_unlock_all_extras", nullptr, KameoSettingType::Bool, "false"},

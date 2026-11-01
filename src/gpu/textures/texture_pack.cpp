@@ -36,7 +36,7 @@
 #include "gpu/log.h"
 #include "gpu/textures/texture_codec.h"
 
-REXCVAR_DEFINE_BOOL(kameo_gfx_dump_textures, true, "Kameo", "Write each distinct texture the game draws with to <kameo_gfx_texture_dir>/dump/<level it loaded in, or global>/<width>x<height>/, named by a hash of its contents so a copy placed in replace/ swaps it in.");
+REXCVAR_DEFINE_BOOL(kameo_gfx_dump_textures, false, "Kameo", "Write each distinct texture the game draws with to <kameo_gfx_texture_dir>/dump/<level it loaded in, or global>/<width>x<height>/, named by a hash of its contents so a copy placed in replace/ swaps it in.");
 REXCVAR_DEFINE_STRING(kameo_gfx_dump_texture_format, "png", "Kameo", "File format for dumped textures: png or tga.");
 REXCVAR_DEFINE_BOOL(kameo_gfx_texture_replacements, true, "Kameo", "Replace textures with images from <kameo_gfx_texture_dir>/replace/ whose file name starts with the 16-digit hash of a dumped texture; png, tga, jpg and bmp at any resolution.");
 REXCVAR_DEFINE_BOOL(kameo_gfx_texture_live_reload, true, "Kameo", "Watch the replace/ folder while the game runs: an added or edited image swaps in once it has finished saving, and a deleted one restores the original texture.");
