@@ -31,11 +31,14 @@ class ShaderSource {
   std::vector<std::string> Shaders(const std::vector<std::string>& keys) const;
   // The meshes a mod is limited to: a target that stands for one model has them, and any other target beside it lifts them.
   std::vector<uint64_t> Meshes(const std::vector<std::string>& keys) const;
+  // The character a mod is a costume for, by model type, when its one target is a character's standard look; else 0.
+  uint32_t CostumeModel(const std::vector<std::string>& keys) const;
 
  private:
   std::filesystem::path folder_;
   std::vector<Target> characters_, levels_;
   std::map<std::string, std::vector<uint64_t>> meshes_;
+  std::map<std::string, uint32_t> costume_models_;
   Target all_characters_, everything_;
 };
 
@@ -43,6 +46,8 @@ struct BuildRequest {
   std::string shade;
   std::vector<std::string> shaders;
   std::vector<uint64_t> meshes;
+  // With meshes, the character the costume is for.
+  uint32_t model_type = 0;
   std::filesystem::path out;
   bool dxil = true;
   bool spirv = true;

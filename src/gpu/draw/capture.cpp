@@ -209,7 +209,7 @@ void CaptureCommon(uint8_t* base, uint32_t device, uint32_t primitive, uint32_t 
       call.stream0_stride = Load8(base, device + dev::kStreamStride) << dev::kStreamStrideShift;
     }
   }
-  call.shader_mod_skipped = ShaderModSkipsDraw(ps, call.stream0_address ? GuestData(base, call.stream0_address) : nullptr, ((call.stream0_fetch1 >> 2) & 0xFFFFFFu) * 4);
+  call.shader_mod_costume = ShaderModCostumeStandIn(ps, call.stream0_address ? GuestData(base, call.stream0_address) : nullptr, ((call.stream0_fetch1 >> 2) & 0xFFFFFFu) * 4);
 
   uint32_t index_base = 0;
   {

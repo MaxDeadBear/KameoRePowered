@@ -44,7 +44,7 @@ int BuildFromCommandLine(const std::vector<std::wstring>& arguments) {
     std::vector<std::string> targets;
     std::stringstream list(Narrow(arguments[2]));
     for (std::string target; std::getline(list, target, ',');) targets.push_back(target);
-    ok = BuildMod(source, {.shade = GenerateHlsl(*graph), .shaders = source.Shaders(targets), .meshes = source.Meshes(targets), .out = out}, log);
+    ok = BuildMod(source, {.shade = GenerateHlsl(*graph), .shaders = source.Shaders(targets), .meshes = source.Meshes(targets), .model_type = source.CostumeModel(targets), .out = out}, log);
   }
   std::filesystem::path log_file = out;
   log_file += ".log";

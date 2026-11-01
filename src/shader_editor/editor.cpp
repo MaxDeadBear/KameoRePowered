@@ -163,6 +163,7 @@ void Editor::Build(bool full) {
   request.shade = GenerateHlsl(mod_.graph);
   request.shaders = source_.Shaders(mod_.targets);
   request.meshes = source_.Meshes(mod_.targets);
+  request.model_type = source_.CostumeModel(mod_.targets);
   request.out = ModsFolder() / (file + kPackageExtension);
   const bool vulkan = GameUsesVulkan();
   request.dxil = full || !vulkan;

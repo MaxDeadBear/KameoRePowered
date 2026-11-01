@@ -156,8 +156,8 @@ struct DrawCall {
   uint32_t source_vertex_data = kNoData;
   uint32_t source_vertex_bytes = 0;
   uint32_t stream0_object = 0;
-  // A shader mod's stand-in for this pixel shader is for other meshes, so this draw keeps the game's.
-  bool shader_mod_skipped = false;
+  // The stand-in a shader mod costume worn now gives this mesh, or null for the pixel shader's usual one.
+  plume::RenderShader* shader_mod_costume = nullptr;
   uint32_t stream0_address = 0;
   uint32_t stream0_fetch1 = 0;
   uint32_t stream0_offset = 0;

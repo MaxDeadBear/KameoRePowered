@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <rex/ppc.h>
@@ -16,20 +17,21 @@ namespace kameo::engine {
 // Loads a skin queued by the model dialog through objectAlternativeSetFileInUse; called from the per-frame game tick.
 void ProcessPendingDlcSwap(PPCContext& ctx, uint8_t* base);
 
-// Notes which skin Kameo is wearing, from the per-frame game tick.
+// Notes which skin Kameo and each warrior is wearing, from the per-frame game tick.
 void TickKameoSkin(uint8_t* base);
 
-// Each shader mod made for her everyday outfit adds a Bonus costume of its own, after the last one: that outfit with
-// the mod's look. The GPU side names them, in file order, whenever the mods change.
-void SetKameoShaderSkins(std::vector<std::u16string> names);
-// The position in that list of the costume chosen, or -1. Readable from any thread.
-int KameoShaderSkinChosen();
-// Whether she wears it now: chosen, and no costume model loaded over her everyday outfit.
-bool KameoWearsShaderSkin();
-// While set, the Bonus costume line's next-costume call steps back one costume instead. Game thread only.
-void SetKameoCostumeStepBack(bool back);
-// The entry of objectAlternativeSetFileInUse for Kameo: the costume is saved as this suffix, which loads as her
-// everyday outfit with the costume chosen, and any other suffix leaves it.
-void KameoSettingSkin(uint8_t* base, PPCRegister& r4, PPCRegister& r1);
+// Each shader mod made for a character's standard look (Kameo's everyday outfit) adds a costume of its own after their
+// last skin: that look with the mod's shading. The GPU side lists them, by model type and in file order, whenever the
+// mods change.
+void SetShaderSkins(std::vector<std::pair<uint32_t, std::u16string>> costumes);
+// The position among that character's costumes of the one chosen, or -1. Readable from any thread.
+int ShaderSkinChosen(uint32_t model_type);
+// Whether the character wears it now: chosen, and no skin model loaded over their standard look.
+bool WearsShaderSkin(uint32_t model_type);
+// While set, a skin line's next-skin call steps back one skin instead. Game thread only.
+void SetCostumeStepBack(bool back);
+// The entry of objectAlternativeSetFileInUse: a costume is saved as its own suffix, which loads as the standard look
+// with the costume chosen, and any other suffix leaves it.
+void SettingSkin(uint8_t* base, uint32_t model_type, PPCRegister& r4, PPCRegister& r1);
 
 }  // namespace kameo::engine

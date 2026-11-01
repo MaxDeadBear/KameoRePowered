@@ -170,17 +170,19 @@ The nodes to start with:
 
 - **Applies to chooses shaders, not objects.** Anything else the game draws with the same shaders changes too, so a
   mod for one warrior can reach another that shares its look, and a mod for Kameo's costumes can reach another costume.
-  **Kameo: new costume (everyday outfit)** is the exception: chosen alone, it holds to that outfit exactly, and makes a
-  costume of its own (see below). A wider choice takes longer to compile: Everything in the game takes a few minutes,
-  and Live Update stops above 400 shaders, so press Save instead.
-- **A mod for her everyday outfit is a new costume, not a change to that outfit.** It's listed after the last of her
-  costumes on the Bonus pages, under the mod's file name (so `Cel Shaded Kameo.kshader` reads like the others). On the
-  Kameo costume line, left on the stick or d-pad steps back a costume, and right or A steps forward, so from her
-  everyday outfit one press left reaches the last mod. Each such mod is a costume of its own, in file name order, so
-  you can keep several versions of a look side by side. Her everyday outfit stays as it was, and your save remembers
-  which you chose. The costume line needs one of her costumes unlocked (see
-  [Kameo skins and the Bonus costumes](#kameo-skins-and-the-bonus-costumes)). With the mod switched off, the
-  costume leaves the list and she wears her everyday outfit.
+  The **new costume** choices are the exception: **Kameo: new costume (everyday outfit)** and each warrior's
+  **new costume (standard look)**, chosen alone, hold to that look exactly and make a costume of their own (see below).
+  A wider choice takes longer to compile: Everything in the game takes a few minutes, and Live Update stops above 400
+  shaders, so press Save instead.
+- **A mod for a character's standard look is a new costume, not a change to that look.** For Kameo, it's listed after
+  the last of her costumes on the Bonus pages, under the mod's file name (so `Cel Shaded Kameo.kshader` reads like the
+  others). For a warrior, it comes after their last skin on **Change Skin** on their page in the storybook. On either
+  line, left on the stick or d-pad steps back a skin, and right or A steps forward, so from the standard look one
+  press left reaches the last mod. Each such mod is a costume of its own, in file name order, so you can keep several
+  versions of a look side by side. The standard look stays as it was, and your save remembers which you chose. The
+  skin lines need one of the character's other skins unlocked (see
+  [Kameo skins and the Bonus costumes](#kameo-skins-and-the-bonus-costumes)). With the mod switched off, the costume
+  leaves the list and the character goes back to their standard look.
 - **Reading Base texture or Light costs more.** To work them out, each shader runs a second time with its lighting
   turned off, so a mod that uses them draws those surfaces at twice the work. A mod that doesn't use them pays nothing.
 - **Base texture is often paler than a surface looks in game,** because the game's lights darken and warm it. A comic
@@ -269,12 +271,13 @@ For contributors; the source is in [`tools/modkit`](../tools/modkit).
   each shader also holds a copy of itself reading white ambient, black lights, no shadow and no fog in place of those
   constants, whose output is the surface's colour. The compiler drops the copy when a mod doesn't read it.
 - A `.kshader` maps game shader hashes to compiled stand-ins. `src/gpu/shaders/shader_mods.cpp` swaps them in by hash.
-  It can also list mesh keys, hashes of the start of vertex buffers, which limit it to those meshes, and make it a
-  costume (`src/engine/dlc/dlc_skin_names.cpp`): the Bonus costume line's next-costume call gains a step between her
-  last costume and her everyday outfit for each such package, which load no model. The game only steps forward, so
-  `src/ui/bonus_costumes.cpp` steps back by running the same call with its find-next told where to land. A save keeps the choice as `s` and
-  six hex digits of a hash of the package's name, a suffix no model file has. Only the chosen costume's stand-ins are
-  swapped in, and they draw only while no costume model is loaded, as her costumes reuse parts of her everyday outfit,
-  eyes among them.
+  It can also list mesh keys, hashes of the start of vertex buffers, and the model type of the character they belong
+  to (version 3; a version 2 package's are Kameo's), which make it a costume (`src/engine/dlc/dlc_skin_names.cpp`): the
+  game's next-skin call gains a step between that character's last skin and their standard look for each such package,
+  which load no model. The game only steps forward, so `src/ui/bonus_costumes.cpp` steps back by running the same call
+  with its find-next told where to land. A save keeps the choice as `s` and six hex digits of a hash of the package's
+  name, a suffix no model file has. Characters share shaders, so a shader can carry stand-ins from several costumes:
+  each draw picks one as it's recorded, by its mesh and whether that costume is chosen and no skin model is loaded,
+  since a character's skins reuse parts of their standard look (Kameo's eyes among them).
   Pipelines are cached by shader module, so a swap builds new pipelines by itself, and looking at the folder twice a
   second is all live reload needs.

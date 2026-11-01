@@ -119,12 +119,11 @@ void OverrideDlcSelector(PPCRegister& r3, PPCRegister& r4, PPCRegister& r1) {
 
 }  // namespace
 
-// Entry of objectAlternativeSetFileInUse(model type, suffix): Kameo's suffix is replaced with the active skin's, and the
-// shader mod's costume loads as her everyday outfit.
+// Entry of objectAlternativeSetFileInUse(model type, suffix): Kameo's suffix is replaced with the active skin's, and a
+// shader mod costume loads as the character's standard look.
 void KameoOverrideDlcSelectorMid(PPCRegister& r3, PPCRegister& r4, PPCRegister& r1) {
   OverrideDlcSelector(r3, r4, r1);
-  if (r3.u32 != kKameoModelType) return;
-  if (uint8_t* base = GuestBase()) KameoSettingSkin(base, r4, r1);
+  if (uint8_t* base = GuestBase()) SettingSkin(base, r3.u32, r4, r1);
 }
 
 bool KameoShouldSkipNextDlcModelLoad() {

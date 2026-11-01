@@ -63,7 +63,11 @@ def main() -> int:
     with zipfile.ZipFile(SOURCE) as source, tempfile.TemporaryDirectory() as folder:
         shaders = wanted(json.loads(source.read("targets.json")), arguments.targets.split(","))
         mesh_table = json.loads(source.read("meshes.json"))
-        meshes = [int(mesh, 16) for mesh in mesh_table.get(arguments.meshes or arguments.targets, [])]
+        # A character's standard look alone makes a costume for that character; older packs only had Kameo's.
+        costume_table = json.loads(source.read("costumes.json")) if "costumes.json" in source.namelist() else {"kameo_everyday": "007183BF"}
+        costume = arguments.meshes or arguments.targets
+        meshes = [int(mesh, 16) for mesh in mesh_table.get(costume, [])] if costume in costume_table else []
+        model_type = int(costume_table[costume], 16) if meshes else 0
         for name in ["shader_common.h", "shader_mod.hlsli"] + [f"{shader}.hlsl" for shader in shaders]:
             source.extract(name, folder)
         with open(arguments.shade, encoding="utf-8") as handle, open(os.path.join(folder, "shade.hlsl"), "w", encoding="utf-8") as shade:
@@ -81,7 +85,7 @@ def main() -> int:
 
     blobs = bytearray()
     entries = []
-    base = 16 + 24 * len(shaders) + 8 * len(meshes)
+    base = 20 + 24 * len(shaders) + 8 * len(meshes)
     for shader, (dxil_blob, _), (spirv_blob, _) in zip(shaders, dxil, spirv):
         dxil_offset = base + len(blobs)
         blobs += dxil_blob
@@ -93,7 +97,7 @@ def main() -> int:
     # Written beside and renamed over, so the running game never reads half a file.
     partial = arguments.output + ".partial"
     with open(partial, "wb") as handle:
-        handle.write(b"KSHD" + struct.pack("<III", 2, len(shaders), len(meshes)) + b"".join(entries) + struct.pack(f"<{len(meshes)}Q", *meshes) + blobs)
+        handle.write(b"KSHD" + struct.pack("<IIII", 3, len(shaders), len(meshes), model_type) + b"".join(entries) + struct.pack(f"<{len(meshes)}Q", *meshes) + blobs)
     os.replace(partial, arguments.output)
     print(f"{len(shaders)} shaders, {(base + len(blobs)) / 1e6:.1f} MB: {arguments.output}")
     return 0

@@ -360,7 +360,7 @@ void ReplayDraw(ReplayContext& rc, const DrawCall& call, uint32_t off_w, uint32_
   }
 
   plume::RenderShader* vs = rc.gfx.ShaderModule(call.vs);
-  plume::RenderShader* ps = (call.depth_only || call.stencil_only) ? nullptr : call.shader_mod_skipped ? rc.gfx.GameShaderModule(call.ps) : rc.gfx.ShaderModule(call.ps);
+  plume::RenderShader* ps = (call.depth_only || call.stencil_only) ? nullptr : call.shader_mod_costume ? call.shader_mod_costume : rc.gfx.ShaderModule(call.ps);
   if (!vs || (!ps && !call.depth_only && !call.stencil_only)) {
     return;
   }

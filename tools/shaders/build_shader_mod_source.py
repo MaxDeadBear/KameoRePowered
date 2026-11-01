@@ -55,6 +55,9 @@ OUTPUT = os.path.join(ROOT, "res", "shader_mods", "source.zip")
 CONTAINER = re.compile(rb"\x10\x2A\x0E\x00")
 SHARED_ARCHIVE = "011C2CC3.lvl"
 EVERYDAY_TARGET = "kameo_everyday"
+# Each character a shader mod can make a costume for, by the model type its skins are listed under in the game: a
+# costume target is that character's standard look alone, Kameo's everyday outfit for her.
+COSTUME_MODELS = {"kameo": "007183BF", "flowerboxer": "0CE65812", "spitter": "0A70BAB2", "rubble": "079B8925", "armadillo": "037AABBF", "watercreature_small": "005C444C", "watercannon": "08EBDF9E", "snow_man": "056D64DE", "ice_b_yeti": "05800519", "fire_ant": "008B5284", "firedragon": "0BBEAEDE"}
 MESH_KEY_BYTES = 256  # kShaderModMeshKeyBytes
 # Each character's standard look: its rendergraph's position in the shared archive, matched by skeleton to its skins.
 STANDARD_GRAPHS = {"kameo": 1, "flowerboxer": 8, "spitter": 36, "rubble": 27, "armadillo": 10, "watercreature_small": 34, "watercannon": 43, "snow_man": 48, "ice_b_yeti": 12, "fire_ant": 39, "firedragon": 29}
@@ -217,6 +220,11 @@ def patched_common(common: str) -> str:
     return common.replace(direct, "    float2 g_StereoShift : packoffset(c17.y); \\\n    float g_ModTime : packoffset(c17.w);\n")
 
 
+def costume_target(character: str) -> str:
+    """The target a costume for one character is built from."""
+    return EVERYDAY_TARGET if character == "kameo" else f"{character}_standard"
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("--assets", required=True, help="the game's assets folder")
@@ -227,6 +235,7 @@ def main() -> int:
 
     targets: dict[str, set[str]] = {}
     meshes: dict[str, list[str]] = {}
+    costumes: dict[str, str] = {}
     containers: dict[str, bytes] = {}
     for name in sorted(os.listdir(arguments.assets)):
         if not name.lower().endswith((".lvl", ".mdl")):
@@ -238,8 +247,11 @@ def main() -> int:
         if name == SHARED_ARCHIVE:
             for character, position in STANDARD_GRAPHS.items():
                 targets.setdefault(character, set()).update(graph_shaders(archive, found, position))
-            targets[EVERYDAY_TARGET] = graph_shaders(archive, found, STANDARD_GRAPHS["kameo"])
-            meshes[EVERYDAY_TARGET] = graph_meshes(archive, STANDARD_GRAPHS["kameo"])
+            for character, model in COSTUME_MODELS.items():
+                target = costume_target(character)
+                targets[target] = graph_shaders(archive, found, STANDARD_GRAPHS[character])
+                meshes[target] = graph_meshes(archive, STANDARD_GRAPHS[character])
+                costumes[target] = model
     if arguments.dlc:
         root = os.path.expandvars(os.path.join(arguments.dlc, "0000000000000000", "4D5307D2", "00000002"))
         for folder, _, files in os.walk(root):
@@ -276,6 +288,7 @@ def main() -> int:
             pack.writestr("shader_mod.hlsli", handle.read())
         pack.writestr("targets.json", json.dumps({name: sorted(shaders) for name, shaders in sorted(targets.items())}))
         pack.writestr("meshes.json", json.dumps(meshes))
+        pack.writestr("costumes.json", json.dumps(costumes))
         for shader, text in pool.map(translate, [(shader, folder) for shader in sorted(containers)]):
             source, found = inject(text, common)
             tally.update(found)

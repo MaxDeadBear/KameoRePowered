@@ -116,6 +116,16 @@ bool ShaderSource::Prepare(std::string& error) {
       for (const std::string& mesh : list) meshes_[key].push_back(std::stoull(mesh, nullptr, 16));
     }
   }
+  // A character's standard look alone, which the game shows as a costume of its own, so that look stays as it was.
+  costume_models_.clear();
+  std::ifstream costume_file(folder_ / "costumes.json");
+  const nlohmann::json costume_table = nlohmann::json::parse(costume_file, nullptr, false);
+  if (!costume_table.is_discarded()) {
+    for (const auto& [key, model] : costume_table.items()) costume_models_[key] = uint32_t(std::stoul(model.get<std::string>(), nullptr, 16));
+  }
+  // Older packs listed only Kameo's.
+  constexpr char kEveryday[] = "kameo_everyday";
+  if (costume_models_.empty() && meshes_.contains(kEveryday)) costume_models_[kEveryday] = 0x007183BF;
   std::set<std::string> models, all;
   for (const auto& [key, list] : shaders) all.insert(list.begin(), list.end());
   characters_.clear();
@@ -126,12 +136,13 @@ bool ShaderSource::Prepare(std::string& error) {
     characters_.push_back({c.key, c.label, found->second});
     models.insert(found->second.begin(), found->second.end());
     shaders.erase(found);
-  }
-  // Her everyday outfit alone, which the game shows as a Bonus costume of its own, so her outfit stays as it was.
-  constexpr char kEveryday[] = "kameo_everyday";
-  if (const auto found = shaders.find(kEveryday); found != shaders.end()) {
-    characters_.insert(characters_.begin() + 1, {kEveryday, "Kameo: new costume (everyday outfit)", found->second});
-    shaders.erase(found);
+    const std::string costume = c.key == std::string_view("kameo") ? kEveryday : std::string(c.key) + "_standard";
+    if (const auto look = shaders.find(costume); look != shaders.end()) {
+      if (costume_models_.contains(costume)) {
+        characters_.push_back({costume, std::format("{}: new costume ({})", c.label, c.key == std::string_view("kameo") ? "everyday outfit" : "standard look"), look->second});
+      }
+      shaders.erase(look);
+    }
   }
   for (const auto& [key, list] : shaders) levels_.push_back({key, key == "LevelRequiredObjects" ? "Shared objects" : key, list});
   all_characters_ = {"characters", "All characters", {models.begin(), models.end()}};
@@ -152,9 +163,15 @@ std::vector<std::string> ShaderSource::Shaders(const std::vector<std::string>& k
 }
 
 std::vector<uint64_t> ShaderSource::Meshes(const std::vector<std::string>& keys) const {
-  if (keys.size() != 1) return {};
+  if (keys.size() != 1 || !costume_models_.contains(keys[0])) return {};
   const auto found = meshes_.find(keys[0]);
   return found == meshes_.end() ? std::vector<uint64_t>{} : found->second;
+}
+
+uint32_t ShaderSource::CostumeModel(const std::vector<std::string>& keys) const {
+  if (keys.size() != 1) return 0;
+  const auto found = costume_models_.find(keys[0]);
+  return found == costume_models_.end() ? 0 : found->second;
 }
 
 bool BuildMod(const ShaderSource& source, const BuildRequest& request, std::string& log, std::atomic<size_t>* done) {
@@ -255,9 +272,10 @@ bool BuildMod(const ShaderSource& source, const BuildRequest& request, std::stri
   }
   gpu::ShaderModHeader header{};
   std::memcpy(header.magic, "KSHD", sizeof(header.magic));
-  header.version = 2;
+  header.version = 3;
   header.count = uint32_t(count);
   header.mesh_count = uint32_t(request.meshes.size());
+  header.model_type = request.meshes.empty() ? 0 : request.model_type;
 
   fs::create_directories(request.out.parent_path(), ec);
   // Written beside and moved over, so the game's reload never reads half a file.
