@@ -30,6 +30,7 @@ REXCVAR_DECLARE(int32_t, kameo_gfx_fur_max_shells);
 REXCVAR_DECLARE(bool, kameo_gfx_dust_motes);
 REXCVAR_DECLARE(bool, kameo_gfx_bloom);
 REXCVAR_DECLARE(bool, kameo_gfx_depth_of_field);
+REXCVAR_DECLARE(bool, kameo_gfx_stable_geometry_skip);
 REXCVAR_DECLARE(bool, kameo_gfx_heat_haze);
 REXCVAR_DECLARE(bool, kameo_gfx_normal_maps);
 REXCVAR_DECLARE(bool, kameo_gfx_bump_maps);

@@ -1,19 +1,38 @@
 #include "gpu/vertex_transcode.h"
 
 #include <algorithm>
+#include <atomic>
 #include <cmath>
 #include <cstring>
 
+#include "gpu/config.h"
 #include "gpu/draw/draw_constants.h"
 #include "gpu/draw/geometry_cache.h"
 #include "gpu/guest_memory.h"
 
+namespace kameo::gpu {
+namespace {
+std::atomic<uint32_t> g_spanLevel{1};
+}  // namespace
+
+void ForgetStableVertexSpans() { g_spanLevel.fetch_add(1, std::memory_order_relaxed); }
+}  // namespace kameo::gpu
+
 namespace kameo::gpu::detail {
+namespace {
+
+// Most spans are models that never change, and hashing them every frame was an eighth of the render thread's work. One
+// unchanged for this long is only hashed again on a staggered one frame in this many.
+constexpr uint32_t kStableSpanFrames = 60;
+constexpr uint64_t kStableSpanRecheckMask = 7;
+
+}  // namespace
 
 SpanHash g_spanHashes[kSpanHashSlots];
 SpanHash g_renderSpanHashes[kSpanHashSlots];
 
-// A costume swap rewrites a buffer in place and sampling windows misses a rewrite between them, so the whole span is hashed.
+// A costume swap rewrites a buffer in place and sampling windows misses a rewrite between them, so the whole span is
+// hashed; a stable one can only be late to notice, by less than a recheck.
 uint64_t FrameSpanHashIn(SpanHash* table, const uint8_t* src, size_t len, uint64_t frame) {
   const uint64_t key = MixGeometryKey(reinterpret_cast<uintptr_t>(src), len);
   const uint32_t home = uint32_t(key * 0x9E3779B97F4A7C15ull >> 51);
@@ -21,8 +40,15 @@ uint64_t FrameSpanHashIn(SpanHash* table, const uint8_t* src, size_t len, uint64
     SpanHash& slot = table[(home + probe) & (kSpanHashSlots - 1)];
     if (slot.frame == frame && slot.key == key) return slot.hash;
     if (slot.frame != frame) {
-      slot = SpanHash{key, GeometryContentHash(src, len), frame};
-      return slot.hash;
+      const uint32_t level = g_spanLevel.load(std::memory_order_relaxed);
+      const bool continuing = slot.key == key && slot.level == level && frame - slot.frame == 1;
+      if (continuing && slot.stable_frames >= kStableSpanFrames && ((frame + key) & kStableSpanRecheckMask) != 0 && REXCVAR_GET(kameo_gfx_stable_geometry_skip)) {
+        slot.frame = frame;
+        return slot.hash;
+      }
+      const uint64_t hash = GeometryContentHash(src, len);
+      slot = SpanHash{key, hash, frame, continuing && slot.hash == hash ? slot.stable_frames + 1 : 0, level};
+      return hash;
     }
   }
   return GeometryContentHash(src, len);

@@ -5,6 +5,13 @@
 
 #include "gpu/draw/draw_types.h"
 
+namespace kameo::gpu {
+
+// A new level reuses the memory of the last, so a span's history says nothing about what is there now.
+void ForgetStableVertexSpans();
+
+}  // namespace kameo::gpu
+
 namespace kameo::gpu::detail {
 
 // Hundreds of draws a frame share one packed vertex buffer, so each source span is hashed once per frame rather than once per draw.
@@ -12,6 +19,9 @@ struct SpanHash {
   uint64_t key = 0;
   uint64_t hash = 0;
   uint64_t frame = ~0ull;
+  // Frames in a row the span has hashed the same, and the level it did so in.
+  uint32_t stable_frames = 0;
+  uint32_t level = 0;
 };
 inline constexpr uint32_t kSpanHashSlots = 1u << 13;
 // The guest thread's table, and the render thread's for the vertex sources it resolves.

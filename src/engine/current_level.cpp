@@ -5,6 +5,7 @@
 #include <rex/logging.h>
 
 #include "engine/guest_addresses.h"
+#include "gpu/vertex_transcode.h"
 
 namespace {
 
@@ -34,6 +35,7 @@ extern "C" REX_FUNC(sub_820B6B18) {
       std::lock_guard<std::mutex> lock(g_levelMutex);
       g_currentLevel = name;
     }
+    kameo::gpu::ForgetStableVertexSpans();
     REXLOG_INFO("[kameo] level change -> '{}'", name);
   }
   __imp__sub_820B6B18(ctx, base);
