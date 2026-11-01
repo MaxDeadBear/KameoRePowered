@@ -32,4 +32,5 @@ void KameoGameTick() {
   KameoTickFpsCounter(*ctx_ptr, base);
   KameoTickAchievementToast(*ctx_ptr, base);
   KameoTickMenuHotkeys(*ctx_ptr, base);
+  KameoDevStartTaskTick(*ctx_ptr, base);
 }

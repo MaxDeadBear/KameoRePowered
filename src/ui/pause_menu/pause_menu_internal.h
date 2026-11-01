@@ -145,6 +145,7 @@ bool PressLevelSelectItem(PPCContext& ctx, uint8_t* base, uint32_t pause, uint32
 bool BackFromLevelSelect(PPCContext& ctx, uint8_t* base, uint32_t pause, uint32_t window, Page page);
 // Starts the task Level Select picked, once the pause menu has closed.
 void StartPendingLevelJump(PPCContext& ctx, uint8_t* base);
+void JumpToTask(PPCContext& ctx, uint8_t* base, int32_t task);
 
 // A label and its value on one row, like a setting's.
 void AddToggleRow(PPCContext& ctx, uint8_t* base, uint32_t window, uint32_t id, const std::u16string& label, uint32_t value_text);

@@ -3,6 +3,10 @@
 #include <string>
 #include <vector>
 
+#include <rex/cvar.h>
+
+#include "engine/current_level.h"
+#include "engine/dlc/dlc_swap.h"
 #include "engine/kept_progress.h"
 #include "ui/pause_menu/pause_menu_internal.h"
 
@@ -132,6 +136,11 @@ bool BackFromLevelSelect(PPCContext& ctx, uint8_t* base, uint32_t pause, uint32_
   return false;
 }
 
+void JumpToTask(PPCContext& ctx, uint8_t* base, int32_t task) {
+  g_levelJumpTask = task;
+  StartPendingLevelJump(ctx, base);
+}
+
 void StartPendingLevelJump(PPCContext& ctx, uint8_t* base) {
   const int32_t task = g_levelJumpTask;
   g_levelJumpTask = -1;
@@ -156,3 +165,21 @@ void StartPendingLevelJump(PPCContext& ctx, uint8_t* base) {
 }
 
 }  // namespace kameo::ui
+
+REXCVAR_DEFINE_INT32(kameo_dev_start_task, -1, "Kameo", "For testing: jump to this story task a few seconds after a level starts, as the pause menu's level select does. -1 is off. Keep it off with a save you care about.");
+
+REXCVAR_DEFINE_STRING(kameo_dev_skin, "", "Kameo", "For testing: put Kameo in this skin, by file suffix (00 is Classic), some seconds after a level starts.");
+
+void KameoDevStartTaskTick(PPCContext& ctx, uint8_t* base) {
+  constexpr uint32_t kTaskTick = 300;
+  constexpr uint32_t kSkinTick = 900;
+  static uint32_t ticks = 0;
+  const int32_t task = REXCVAR_GET(kameo_dev_start_task);
+  const std::string skin = REXCVAR_GET(kameo_dev_skin);
+  if ((task < 0 && skin.empty()) || ticks > kSkinTick) return;
+  const std::string level = KameoCurrentLevelName();
+  if (level.empty() || level == "FrontEndLevel") return;
+  ++ticks;
+  if (ticks == kTaskTick + 1 && task >= 0) kameo::ui::JumpToTask(ctx, base, task);
+  if (ticks == kSkinTick + 1 && !skin.empty()) QueueKameoDlcSuffix(skin);
+}

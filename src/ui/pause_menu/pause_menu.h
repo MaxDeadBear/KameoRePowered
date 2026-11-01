@@ -15,6 +15,8 @@ enum class KameoMenuHotkey { Options, Achievements };
 void KameoRequestMenuPage(KameoMenuHotkey which);
 // Once per game tick, on the game thread.
 void KameoTickMenuHotkeys(PPCContext& ctx, uint8_t* base);
+// Testing only: jumps to the task --kameo_dev_start_task names, a few seconds into a level.
+void KameoDevStartTaskTick(PPCContext& ctx, uint8_t* base);
 
 // What the Achievements page is showing, for the icons drawn beside its rows: one entry per selectable row, in order.
 struct KameoAchievementIconRow {
