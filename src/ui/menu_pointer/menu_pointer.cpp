@@ -169,9 +169,25 @@ bool DriveMenuWithMouse(PPCContext& ctx, uint8_t* base, uint32_t text_object) {
 }  // namespace
 
 // textWindow_tick(textObject) -- menus take the mouse pointer before the game reads the controller, and any selectable window marks a menu as open so the pointer is freed from mouse look.
+// A held direction moves the cursor again after a count of ticks in menu+96: 30 after the first step, then 10 between
+// repeats. The console ticked at 30 Hz, making those a second and a third of one; this port ticks every frame, so at
+// high frame rates a tap outlasted the delay and the cursor ran on. Each count the game sets is stretched to the
+// same time at the frame rate now.
 extern "C" REX_FUNC(sub_82107D88) {
-  if (ctx.r3.u32 && DriveMenuWithMouse(ctx, base, ctx.r3.u32)) return;
+  constexpr uint32_t kMenuRepeatTicks = 96;
+  constexpr float kConsoleTick = 1.0f / 30.0f;
+  const uint32_t text_object = ctx.r3.u32;
+  if (text_object && DriveMenuWithMouse(ctx, base, text_object)) return;
+  const uint32_t menu = text_object ? MenuOf(base, text_object) : 0;
+  const uint8_t before = menu ? REX_LOAD_U8(menu + kMenuRepeatTicks) : 0;
   __imp__sub_82107D88(ctx, base);
+  if (!menu) return;
+  const uint8_t after = REX_LOAD_U8(menu + kMenuRepeatTicks);
+  // Set only as the cursor moves, from a count that had run down; a count running down only ever loses one.
+  if (before > 1 || (after != 10 && after != 30)) return;
+  const float frame = LoadFloat(base, kameo::input::kFrameTime);
+  if (!(frame > 0.0f && frame < kConsoleTick)) return;
+  REX_STORE_U8(menu + kMenuRepeatTicks, uint8_t(std::clamp(std::lround(after * kConsoleTick / frame), long(after), 255L)));
 }
 
 // ReplayObjTick(replay) -- the storybook front end's object; while its state at +256 is anything but inactive (75150789, ReplayObjInactive) the pointer is freed as for an open menu.

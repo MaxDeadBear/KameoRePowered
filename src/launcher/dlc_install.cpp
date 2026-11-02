@@ -19,9 +19,14 @@
 #include <rex/system/xam/content_device.h>
 #include <rex/system/xam/content_manager.h>
 
+#include "core/localization.h"
 #include "launcher/settings_file.h"
+#include "launcher/title_update.h"
 
 namespace kameo::launcher {
+
+using l10n::Tr;
+using l10n::TrFormat;
 
 namespace {
 
@@ -76,7 +81,7 @@ std::filesystem::path ContentRoot(const std::filesystem::path& game_folder) {
   return rex::filesystem::GetUserFolder() / "kameorepowered";
 }
 
-std::vector<InstalledDlc> ListInstalledDlc(const std::filesystem::path& content_root) {
+std::vector<InstalledDlc> ListInstalledDlc(const std::filesystem::path& content_root, bool title_update) {
   std::vector<InstalledDlc> installed;
   std::error_code ec;
   for (const auto& entry : std::filesystem::directory_iterator(PackageRoot(content_root), ec)) {
@@ -103,9 +108,12 @@ std::vector<InstalledDlc> ListInstalledDlc(const std::filesystem::path& content_
       levels = levels || _stricmp(extension.c_str(), ".lvl") == 0;
       text = text || _stricmp(extension.c_str(), ".str") == 0;
     }
-    if (levels) dlc.support = std::to_string(models) + " skins; its new levels need the title update";
-    else if (text) dlc.support = std::to_string(models) + " skins; its new text needs the title update";
-    else dlc.support = models > 0 ? std::to_string(models) + " skins" : "Nothing this version can use";
+    const std::string count = std::to_string(models);
+    if (levels && title_update) dlc.support = TrFormat("{0} skins, Expert mode, Rune Battle and Time Attack", {count});
+    else if (levels) dlc.support = TrFormat("{0} skins; its new levels need the title update", {count});
+    else if (text && !title_update) dlc.support = TrFormat("{0} skins; its new text needs the title update", {count});
+    else if (text) dlc.support = TrFormat("{0} skins", {count});
+    else dlc.support = models > 0 ? TrFormat("{0} skins", {count}) : std::string(Tr("Nothing this version can use"));
     installed.push_back(std::move(dlc));
   }
   std::sort(installed.begin(), installed.end(), [](const InstalledDlc& a, const InstalledDlc& b) { return a.display_name < b.display_name; });
@@ -116,7 +124,7 @@ bool RemoveDlc(const std::filesystem::path& content_root, const std::string& fil
   std::error_code ec;
   std::filesystem::remove_all(PackageRoot(content_root) / file_name, ec);
   if (ec) {
-    error = "Could not remove " + file_name + ": " + ec.message();
+    error = TrFormat("Could not remove {0}: {1}", {file_name, ec.message()});
     return false;
   }
   std::filesystem::remove(HeaderRoot(content_root) / (file_name + ".header"), ec);
@@ -140,10 +148,12 @@ DlcInstaller::~DlcInstaller() {
   if (thread_.joinable()) thread_.join();
 }
 
-void DlcInstaller::Start(std::vector<std::filesystem::path> packages, std::filesystem::path content_root) {
+void DlcInstaller::Start(std::vector<std::filesystem::path> packages, std::filesystem::path content_root, std::filesystem::path game_folder) {
   if (running_.load()) return;
   if (thread_.joinable()) thread_.join();
+  game_folder_ = std::move(game_folder);
   running_.store(true);
+  failures_.store(0);
   done_bytes_.store(0);
   uint64_t total = 0;
   std::error_code ec;
@@ -171,7 +181,7 @@ void DlcInstaller::Run(std::vector<std::filesystem::path> packages, std::filesys
       current_ = package.filename().string();
     }
     std::string message;
-    InstallOne(package, content_root, message);
+    if (!InstallOne(package, content_root, message)) failures_.fetch_add(1);
     std::lock_guard<std::mutex> lock(mutex_);
     results_.push_back(message);
   }
@@ -195,24 +205,29 @@ bool DlcInstaller::InstallOne(const std::filesystem::path& package, const std::f
     return ok;
   };
   auto device = std::make_unique<rex::filesystem::StfsContainerDevice>("", package);
-  if (!device->Initialize()) return finish(false, "Skipped " + file_name + ": not a readable Xbox 360 package.");
+  if (!device->Initialize()) return finish(false, TrFormat("Skipped {0}: not a readable Xbox 360 package.", {file_name}));
   const auto& header = device->header();
   const uint32_t title_id = header.metadata.execution_info.title_id;
   if (title_id != kKameoTitleId) {
     char text[16];
     std::snprintf(text, sizeof(text), "%08X", title_id);
-    return finish(false, "Skipped " + file_name + ": it belongs to title " + text + ", not Kameo.");
+    return finish(false, TrFormat("Skipped {0}: it belongs to title {1}, not Kameo.", {file_name, text}));
   }
-  if (header.metadata.content_type != rex::system::XContentType::kMarketplaceContent) return finish(false, "Skipped " + file_name + ": it is not downloadable content.");
+  if (IsTitleUpdatePackage(*device)) {
+    std::string text;
+    const bool ok = InstallTitleUpdate(*device, game_folder_, text);
+    return finish(ok, text);
+  }
+  if (header.metadata.content_type != rex::system::XContentType::kMarketplaceContent) return finish(false, TrFormat("Skipped {0}: it is not downloadable content.", {file_name}));
   std::string display_name = Narrow(header.metadata.display_name(rex::system::XLanguage::kEnglish));
   if (display_name.empty()) display_name = file_name;
 
   const std::filesystem::path install_path = PackageRoot(content_root) / file_name;
   std::filesystem::create_directories(install_path, ec);
-  if (ec) return finish(false, "Could not create " + install_path.string() + ": " + ec.message());
+  if (ec) return finish(false, TrFormat("Could not create {0}: {1}", {install_path.string(), ec.message()}));
 
   rex::filesystem::Entry* root = device->ResolvePath("");
-  if (!root) return finish(false, "Skipped " + file_name + ": the package has no files.");
+  if (!root) return finish(false, TrFormat("Skipped {0}: the package has no files.", {file_name}));
   const auto buffer = std::make_unique<uint8_t[]>(4 * 1024 * 1024);
   uint64_t written = 0;
   std::queue<rex::filesystem::Entry*> queue;
@@ -230,11 +245,11 @@ bool DlcInstaller::InstallOne(const std::filesystem::path& package, const std::f
     }
     std::filesystem::create_directories(destination.parent_path(), ec);
     rex::filesystem::File* in_file = nullptr;
-    if (entry->Open(rex::filesystem::FileAccess::kFileReadData, &in_file) != 0 || !in_file) return finish(false, "Could not read " + relative + " from " + file_name + ".");
+    if (entry->Open(rex::filesystem::FileAccess::kFileReadData, &in_file) != 0 || !in_file) return finish(false, TrFormat("Could not read {0} from {1}.", {relative, file_name}));
     std::ofstream out(destination, std::ios::binary | std::ios::trunc);
     if (!out) {
       in_file->Destroy();
-      return finish(false, "Could not write " + destination.string() + ".");
+      return finish(false, TrFormat("Could not write {0}.", {destination.string()}));
     }
     size_t offset = 0;
     size_t remaining = entry->size();
@@ -264,10 +279,10 @@ bool DlcInstaller::InstallOne(const std::filesystem::path& package, const std::f
   data.set_display_name(header.metadata.display_name(rex::system::XLanguage::kEnglish).empty() ? std::u16string(file_name.begin(), file_name.end()) : header.metadata.display_name(rex::system::XLanguage::kEnglish));
   std::filesystem::create_directories(HeaderRoot(content_root), ec);
   std::ofstream header_file(HeaderRoot(content_root) / (file_name + ".header"), std::ios::binary | std::ios::trunc);
-  if (!header_file) return finish(false, "Unpacked " + display_name + " but could not write its header.");
+  if (!header_file) return finish(false, TrFormat("Unpacked {0} but could not write its header.", {display_name}));
   header_file.write(reinterpret_cast<const char*>(&data), sizeof(data));
   if (license_mask != 0) header_file.write(reinterpret_cast<const char*>(&license_mask), sizeof(license_mask));
-  return finish(true, "Installed " + display_name + ".");
+  return finish(true, TrFormat("Installed {0}.", {display_name}));
 }
 
 }  // namespace kameo::launcher

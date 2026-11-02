@@ -8,6 +8,7 @@
 #include <rex/cvar.h>
 #include <rex/system/kernel_state.h>
 
+#include "core/localization.h"
 #include "gpu/graphics_system.h"
 #include "input/guest_controls.h"
 #include "ui/hud/achievement_toast.h"
@@ -19,6 +20,7 @@ REXCVAR_DEFINE_BOOL(kameo_fps_counter, false, "Kameo", "Show the frame rate in a
 using namespace kameo::ui;
 using kameo::input::kFrameTime;
 using kameo::input::kPlayerList;
+using kameo::l10n::TrFormat;
 
 namespace {
 
@@ -108,7 +110,7 @@ void KameoTickFpsCounter(PPCContext& ctx, uint8_t* base) {
   counter.refresh = 0.5f;
   auto* gfx = kameo::gpu::GraphicsSystem::instance();
   const int32_t fps = gfx ? int32_t(gfx->GetFrameStats().fps + 0.5) : 0;
-  const std::u16string text = Number(fps, u" FPS");
+  const std::u16string text = TrFormat(u"{0} FPS", {Number(fps, u"")});
   if (text == counter.shown) return;
   counter.shown = text;
   CallGuest(ctx, base, sub_8210A470, window);

@@ -87,10 +87,28 @@ bool SpawnPlayer2(uint8_t* base) {
 
 using namespace kameo::engine;
 
+namespace {
+
+// KamNetworkIsNetGame: an online or System Link game with both players in, where player 2 is the other console's.
+bool NetGame(uint8_t* base) {
+  PPCContext* c = CurrentGuestContext();
+  if (!c) return false;
+  PPCContext net = *c;
+  net.r1.u64 = ScratchFrame(c->r1.u32);
+  sub_8229F978(net, base);
+  return net.r3.u32 != 0;
+}
+
+}  // namespace
+
 // Entry of mainSetupMainRenderInfo: services the teleport and tap requests, then drives player 2 toward what kameo_story_splitscreen asks for.
+// In an online game player 2 belongs to the network, so none of this touches him.
 void KameoSplitScreenTick() {
   uint8_t* base = GuestBase();
   if (!base) {
+    return;
+  }
+  if (NetGame(base)) {
     return;
   }
 
@@ -158,10 +176,15 @@ void KameoSplitScreenTick() {
 }
 
 // PlayerReady(player, playerNo) chains levelCreatePlayerSetup("Kai") for the next player while numPlayers < numWantedPlayers, so with split-screen off a level load stops at player 1 instead of rebuilding player 2.
+// An online game's player 2 is the other console's player, built by the same chain, so KamNetworkIsNetGame leaves it alone.
 extern "C" REX_FUNC(sub_8226CE68) {
   if (!REXCVAR_GET(kameo_story_splitscreen) && ctx.r4.u32 == 0 && REX_LOAD_U32(kNumWantedPlayers) > 1) {
-    REX_STORE_U32(kNumWantedPlayers, 1);
-    REXLOG_INFO("[splitscreen] split-screen off: level loads with player 1 only");
+    PPCContext net = ctx;
+    sub_8229F978(net, base);
+    if (net.r3.u32 == 0) {
+      REX_STORE_U32(kNumWantedPlayers, 1);
+      REXLOG_INFO("[splitscreen] split-screen off: level loads with player 1 only");
+    }
   }
   __imp__sub_8226CE68(ctx, base);
 }

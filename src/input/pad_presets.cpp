@@ -8,6 +8,7 @@
 
 #include <rex/cvar.h>
 
+#include "core/localization.h"
 #include "input/input.h"
 #include "input/input_internal.h"
 
@@ -49,30 +50,30 @@ struct PadBinding {
 };
 
 constexpr PadBinding kPadBindings[] = {
-    {"padbind_a", "face_bottom", u"Face Bottom", rex::input::X_INPUT_GAMEPAD_A},
-    {"padbind_b", "face_right", u"Face Right", rex::input::X_INPUT_GAMEPAD_B},
-    {"padbind_x", "face_left", u"Face Left", rex::input::X_INPUT_GAMEPAD_X},
-    {"padbind_y", "face_top", u"Face Top", rex::input::X_INPUT_GAMEPAD_Y},
-    {"padbind_left_shoulder", "left_shoulder", u"Left Shoulder", rex::input::X_INPUT_GAMEPAD_LEFT_SHOULDER},
-    {"padbind_right_shoulder", "right_shoulder", u"Right Shoulder", rex::input::X_INPUT_GAMEPAD_RIGHT_SHOULDER},
-    {"padbind_left_trigger", "left_trigger", u"Left Trigger", 0},
-    {"padbind_right_trigger", "right_trigger", u"Right Trigger", 0},
-    {"padbind_left_stick_press", "left_stick_press", u"Left Stick Press", rex::input::X_INPUT_GAMEPAD_LEFT_THUMB},
-    {"padbind_right_stick_press", "right_stick_press", u"Right Stick Press", rex::input::X_INPUT_GAMEPAD_RIGHT_THUMB},
-    {"padbind_dpad_up", "dpad_up", u"D-Pad Up", rex::input::X_INPUT_GAMEPAD_DPAD_UP},
-    {"padbind_dpad_down", "dpad_down", u"D-Pad Down", rex::input::X_INPUT_GAMEPAD_DPAD_DOWN},
-    {"padbind_dpad_left", "dpad_left", u"D-Pad Left", rex::input::X_INPUT_GAMEPAD_DPAD_LEFT},
-    {"padbind_dpad_right", "dpad_right", u"D-Pad Right", rex::input::X_INPUT_GAMEPAD_DPAD_RIGHT},
-    {"padbind_start", "start", u"Start", rex::input::X_INPUT_GAMEPAD_START},
-    {"padbind_back", "back", u"Back", rex::input::X_INPUT_GAMEPAD_BACK},
-    {"padbind_left_up", "left_up", u"Left Stick Up", 0},
-    {"padbind_left_down", "left_down", u"Left Stick Down", 0},
-    {"padbind_left_left", "left_left", u"Left Stick Left", 0},
-    {"padbind_left_right", "left_right", u"Left Stick Right", 0},
-    {"padbind_right_up", "right_up", u"Right Stick Up", 0},
-    {"padbind_right_down", "right_down", u"Right Stick Down", 0},
-    {"padbind_right_left", "right_left", u"Right Stick Left", 0},
-    {"padbind_right_right", "right_right", u"Right Stick Right", 0},
+    {"padbind_a", "face_bottom", TR_NOOP(u"Face Bottom"), rex::input::X_INPUT_GAMEPAD_A},
+    {"padbind_b", "face_right", TR_NOOP(u"Face Right"), rex::input::X_INPUT_GAMEPAD_B},
+    {"padbind_x", "face_left", TR_NOOP(u"Face Left"), rex::input::X_INPUT_GAMEPAD_X},
+    {"padbind_y", "face_top", TR_NOOP(u"Face Top"), rex::input::X_INPUT_GAMEPAD_Y},
+    {"padbind_left_shoulder", "left_shoulder", TR_NOOP(u"Left Shoulder"), rex::input::X_INPUT_GAMEPAD_LEFT_SHOULDER},
+    {"padbind_right_shoulder", "right_shoulder", TR_NOOP(u"Right Shoulder"), rex::input::X_INPUT_GAMEPAD_RIGHT_SHOULDER},
+    {"padbind_left_trigger", "left_trigger", TR_NOOP(u"Left Trigger"), 0},
+    {"padbind_right_trigger", "right_trigger", TR_NOOP(u"Right Trigger"), 0},
+    {"padbind_left_stick_press", "left_stick_press", TR_NOOP(u"Left Stick Press"), rex::input::X_INPUT_GAMEPAD_LEFT_THUMB},
+    {"padbind_right_stick_press", "right_stick_press", TR_NOOP(u"Right Stick Press"), rex::input::X_INPUT_GAMEPAD_RIGHT_THUMB},
+    {"padbind_dpad_up", "dpad_up", TR_NOOP(u"D-Pad Up"), rex::input::X_INPUT_GAMEPAD_DPAD_UP},
+    {"padbind_dpad_down", "dpad_down", TR_NOOP(u"D-Pad Down"), rex::input::X_INPUT_GAMEPAD_DPAD_DOWN},
+    {"padbind_dpad_left", "dpad_left", TR_NOOP(u"D-Pad Left"), rex::input::X_INPUT_GAMEPAD_DPAD_LEFT},
+    {"padbind_dpad_right", "dpad_right", TR_NOOP(u"D-Pad Right"), rex::input::X_INPUT_GAMEPAD_DPAD_RIGHT},
+    {"padbind_start", "start", TR_NOOP(u"Start"), rex::input::X_INPUT_GAMEPAD_START},
+    {"padbind_back", "back", TR_NOOP(u"Back"), rex::input::X_INPUT_GAMEPAD_BACK},
+    {"padbind_left_up", "left_up", TR_NOOP(u"Left Stick Up"), 0},
+    {"padbind_left_down", "left_down", TR_NOOP(u"Left Stick Down"), 0},
+    {"padbind_left_left", "left_left", TR_NOOP(u"Left Stick Left"), 0},
+    {"padbind_left_right", "left_right", TR_NOOP(u"Left Stick Right"), 0},
+    {"padbind_right_up", "right_up", TR_NOOP(u"Right Stick Up"), 0},
+    {"padbind_right_down", "right_down", TR_NOOP(u"Right Stick Down"), 0},
+    {"padbind_right_left", "right_left", TR_NOOP(u"Right Stick Left"), 0},
+    {"padbind_right_right", "right_right", TR_NOOP(u"Right Stick Right"), 0},
 };
 
 constexpr size_t kPadBindingCount = std::size(kPadBindings);
@@ -170,9 +171,9 @@ void KameoSetPadPreset(int preset) {
 
 std::u16string KameoPadBindingLabel(const char* cvar) {
   const int destination = PadBindingIndex(cvar);
-  if (destination < 0) return u"Unknown";
-  if (KameoPadCaptureTarget() == cvar) return u"Press a control (wait 8s to cancel)";
-  return kPadBindings[PadSourceIndex(size_t(destination))].label;
+  if (destination < 0) return kameo::l10n::Tr(u"Unknown");
+  if (KameoPadCaptureTarget() == cvar) return kameo::l10n::Tr(u"Press a control (wait 8s to cancel)");
+  return kameo::l10n::Tr(kPadBindings[PadSourceIndex(size_t(destination))].label);
 }
 
 void KameoStartPadCapture(const char* cvar) {

@@ -138,6 +138,35 @@ jobs:
           cmake --build --preset "${preset}" --parallel
           echo "BUILD_DIR=out/build/${preset}" >> "$GITHUB_ENV"
 
+      # The title update's delta patch, from the same assets repository at TU/default.xexp. Without it the release has
+      # only the vanilla build, and the launcher never offers the update.
+      - name: Fetch title-update patch
+        env:
+          GH_TOKEN: ${{ secrets.ASSETS_TOKEN }}
+        shell: bash
+        run: |
+          mkdir -p assets/TU
+          if gh api -H "Accept: application/vnd.github.raw" "repos/${{ env.ASSETS_REPO }}/contents/TU/default.xexp" > assets/TU/default.xexp 2>/dev/null \
+             && [ "$(wc -c < assets/TU/default.xexp)" -ge 65536 ]; then
+            echo "HAVE_TITLE_UPDATE=1" >> "$GITHUB_ENV"
+          else
+            rm -f assets/TU/default.xexp
+            echo "No TU/default.xexp in the assets repository, so no title-update build"
+          fi
+
+      # kameorepowered-tu: the game as its title update patched it, with our sources translated to its addresses (tools/tu/).
+      - name: Build title-update flavour
+        if: env.HAVE_TITLE_UPDATE == '1'
+        shell: bash
+        env:
+          SENTRY_DSN: ${{ matrix.platform == 'windows' && vars.SENTRY_DSN || '' }}
+        run: |
+          preset="${{ inputs.build_preset }}"
+          cmake --preset "${preset}" -B "out/build/${preset}-tu" ${{ matrix.compilers }} -DCMAKE_CXX_COMPILER_LAUNCHER=sccache \
+            -DKAMEO_VERSION="${{ inputs.tag || 'dev' }}" -DKAMEO_SENTRY_DSN="${SENTRY_DSN}" -DKAMEO_TITLE_UPDATE=ON
+          cmake --build "out/build/${preset}-tu" --target kameorepowered --parallel
+          cp "out/build/${preset}-tu"/kameorepowered-tu* "${BUILD_DIR}/"
+
       # Sentry walks a crash's stack and names its functions from the build's debug files, so every build that reports
       # sends them there (never into the release) before anyone runs it. Skipped when the SENTRY_AUTH_TOKEN secret is not
       # set. A failure stops a release, whose crashes could never be read afterwards, but not a CI build. sentry-cli is
@@ -162,7 +191,8 @@ jobs:
             exit 0
           fi
           sentry-cli debug-files upload --org "${SENTRY_ORG}" --project "${SENTRY_PROJECT}" --wait \
-            "${BUILD_DIR}"/kameorepowered.exe "${BUILD_DIR}"/kameorepowered.pdb "${BUILD_DIR}"/*.dll
+            "${BUILD_DIR}"/kameorepowered.exe "${BUILD_DIR}"/kameorepowered.pdb "${BUILD_DIR}"/*.dll \
+            $(ls "${BUILD_DIR}"/kameorepowered-tu.exe "${BUILD_DIR}"/kameorepowered-tu.pdb 2>/dev/null)
 
       - name: sccache stats
         if: always()
@@ -183,6 +213,7 @@ jobs:
           cp "${BUILD_DIR}"/kameorepowered* pkg/ 2>/dev/null || true
           cp "${BUILD_DIR}"/*.dll pkg/ 2>/dev/null || true
           cp "${BUILD_DIR}"/*.so* pkg/ 2>/dev/null || true
+          cp -r "${BUILD_DIR}"/lang pkg/
           # The Windows launcher, with the copy of the runtime it runs on so it never holds the game's (src/launcher/runtime_loader.cpp).
           if [ "${{ matrix.platform }}" = "windows" ]; then
             # SentryWork's helper, which writes up and sends a crash from outside the crashed game, and the dialog that asks first.
@@ -205,6 +236,7 @@ jobs:
           # No symbols ship: the Linux build carries its debug information inside the binaries, so it is stripped.
           if [ "${{ matrix.platform }}" != "windows" ]; then
             strip --strip-all pkg/kameorepowered
+            if [ -f pkg/kameorepowered-tu ]; then strip --strip-all pkg/kameorepowered-tu; fi
             strip --strip-unneeded pkg/*.so*
           fi
 

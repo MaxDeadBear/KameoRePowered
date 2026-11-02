@@ -1,0 +1,7 @@
+# Translated from config/hooks/render_guards.toml for the title-update build by tools/tu/translate.py.
+[[midasm_hook]]
+address = 0x8228AF0C
+name = "KameoGuardEffectsDispatch"
+registers = ["r8"]
+after_instruction = true
+

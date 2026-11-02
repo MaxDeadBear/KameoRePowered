@@ -25,10 +25,16 @@ thread_local uint32_t t_renderingFmv = 0;
 
 // An fmv player's movie name: the fmv file name without .bik, at +192 of its object at +8.
 std::string FmvMovieName(uint8_t* base, uint32_t fmv) {
+  // The title update's object record has four more bytes ahead of the name.
+#if KAMEO_TU
+  constexpr uint32_t kObjectName = 196;
+#else
+  constexpr uint32_t kObjectName = 192;
+#endif
   std::string name;
   const uint32_t object = REX_LOAD_U32(fmv + 8);
   for (uint32_t i = 0; object && i < 64; ++i) {
-    const char c = char(REX_LOAD_U8(object + 192 + i));
+    const char c = char(REX_LOAD_U8(object + kObjectName + i));
     if (!c) break;
     name.push_back(c);
   }

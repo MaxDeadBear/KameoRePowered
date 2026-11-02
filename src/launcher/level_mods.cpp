@@ -7,9 +7,14 @@
 #include <map>
 #include <sstream>
 
+#include "core/localization.h"
 #include "launcher/kmod.h"
 
 namespace kameo::launcher {
+
+using l10n::Tr;
+using l10n::TrFormat;
+
 namespace {
 
 namespace fs = std::filesystem;
@@ -57,11 +62,12 @@ bool Mirror(const fs::path& assets, const fs::path& data, std::string& error) {
       continue;
     }
     if (!::CreateHardLinkW(target.c_str(), it->path().c_str(), nullptr)) {
-      error = "could not link " + relative.string() + " (error " + std::to_string(::GetLastError()) + ")";
+      const std::string code = std::to_string(::GetLastError());
+      error = TrFormat("could not link {0} (error {1})", {relative.string(), code});
       return false;
     }
   }
-  if (ec) error = "could not read the game folder: " + ec.message();
+  if (ec) error = TrFormat("could not read the game folder: {0}", {ec.message()});
   return !ec;
 }
 
@@ -123,9 +129,9 @@ std::vector<std::string> LevelMods::Conflicts() const {
   std::vector<std::string> out;
   for (const auto& [level, names] : changers) {
     if (names.size() < 2) continue;
-    std::string text = level + " is changed by ";
-    for (size_t i = 0; i < names.size(); ++i) text += (i ? (i + 1 == names.size() ? " and " : ", ") : "") + names[i];
-    out.push_back(text + "; only " + names.back() + " (lowest in the list) is used for it.");
+    std::string list = names[0];
+    for (size_t i = 1; i < names.size(); ++i) list = i + 1 == names.size() ? TrFormat("{0} and {1}", {list, names[i]}) : list + ", " + names[i];
+    out.push_back(TrFormat("{0} is changed by {1}; only {2} (lowest in the list) is used for it.", {level, list, names.back()}));
   }
   return out;
 }
@@ -136,7 +142,7 @@ void LevelMods::Move(size_t index, int step) {
 }
 
 bool LevelMods::Build(fs::path& data_root, std::string& error) {
-  if (assets_.empty()) return error = "the game folder (assets with default.xex) was not found", false;
+  if (assets_.empty()) return error = Tr("the game folder (assets with default.xex) was not found"), false;
   std::map<std::string, kmod::FilePatch> patches;
   for (const LevelMod& mod : mods_) {
     if (!mod.enabled) continue;
@@ -158,7 +164,7 @@ bool LevelMods::Build(fs::path& data_root, std::string& error) {
     const fs::path old = root / "assets.old";
     fs::remove_all(old, ec);
     fs::rename(data, old, ec);
-    if (ec) return error = "the game is still running from the mod build; close it first (" + ec.message() + ")", false;
+    if (ec) return error = TrFormat("the game is still running from the mod build; close it first ({0})", {ec.message()}), false;
     fs::remove_all(old, ec);
   }
   fs::remove(root / "stamp.txt", ec);
@@ -169,7 +175,7 @@ bool LevelMods::Build(fs::path& data_root, std::string& error) {
     fs::remove(data / name, ec);
     std::ofstream file(data / name, std::ios::binary);
     file.write(reinterpret_cast<const char*>(out.data()), std::streamsize(out.size()));
-    if (!file) return error = "could not write " + name, false;
+    if (!file) return error = TrFormat("could not write {0}", {name}), false;
   }
   std::ofstream(root / "stamp.txt", std::ios::trunc) << stamp;
   data_root = data;

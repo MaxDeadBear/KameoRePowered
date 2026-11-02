@@ -6,9 +6,12 @@
 #include <cstdio>
 #include <filesystem>
 #include <iterator>
+#include <vector>
 
 #include <imgui.h>
 
+#include "core/localization.h"
+#include "ui/pause_menu/option_values.h"
 #include "gpu/pipeline/pso_precache.h"
 
 namespace {
@@ -80,8 +83,29 @@ void KameoLoadingOverlay::ConfigureFonts(ImFontAtlas* atlas) {
     const std::filesystem::path path = std::filesystem::path(L"C:\\Windows\\Fonts") / file;
     return std::filesystem::exists(path, ec) ? atlas->AddFontFromFileTTF(path.string().c_str(), size) : nullptr;
   };
+  // Japanese, Korean and Chinese text needs a font that has it, merged into each: the one Windows ships for the
+  // language, or the next it might have. The game's language is known by now, before the first tick sets it too.
+  kameo::l10n::SetLanguage(kameo::ui::ChosenLanguage());
+  std::vector<const wchar_t*> asian;
+  switch (kameo::l10n::CurrentLanguage()) {
+    case kameo::l10n::kJapanese: asian = {L"YuGothM.ttc", L"meiryo.ttc", L"msgothic.ttc"}; break;
+    case kameo::l10n::kKorean: asian = {L"malgun.ttf", L"gulim.ttc"}; break;
+    case kameo::l10n::kChinese: asian = {L"msjh.ttc", L"mingliu.ttc"}; break;
+    default: break;
+  }
+  const auto merge_asian = [&](float size) {
+    ImFontConfig config;
+    config.MergeMode = true;
+    for (const wchar_t* file : asian) {
+      std::error_code ec;
+      const std::filesystem::path path = std::filesystem::path(L"C:\\Windows\\Fonts") / file;
+      if (std::filesystem::exists(path, ec) && atlas->AddFontFromFileTTF(path.string().c_str(), size, &config)) break;
+    }
+  };
   g_wordmarkFont = load(L"palab.ttf", 36.0f);
+  if (g_wordmarkFont) merge_asian(36.0f);
   g_textFont = load(L"segoeui.ttf", 20.0f);
+  if (g_textFont) merge_asian(20.0f);
 #else
   (void)atlas;
 #endif
@@ -154,7 +178,7 @@ void KameoLoadingOverlay::OnDraw(ImGuiIO& io) {
   // What is happening in plain words, under the flourish, so nobody takes a long first start for a hang.
   const float text_size = 18.0f * scale;
   ImFont* text_font = g_textFont ? g_textFont : ImGui::GetFont();
-  const char* status = shaders ? "Gathering the elements: preparing shaders" : "Awakening the kingdom: loading the game";
+  const char* status = shaders ? kameo::l10n::Tr("Gathering the elements: preparing shaders") : kameo::l10n::Tr("Awakening the kingdom: loading the game");
   const float text_y = bar_top + bar_height + 8.0f * scale;
   draw->AddText(text_font, text_size, ImVec2(corner.x + pad, text_y), Colour(kText, alpha), status);
   if (shaders && total > 0) {

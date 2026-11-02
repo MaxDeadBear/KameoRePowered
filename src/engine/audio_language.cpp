@@ -21,6 +21,12 @@ namespace {
 constexpr uint32_t kStringTableHandle = 0x827556B8;
 // Speech wave banks: a list whose nodes link on at +4 and name themselves at +8.
 constexpr uint32_t kWaveBankList = 0x82B732A4;
+// The title update gave a node's name 256 more bytes, so its fields after it (+44 to +64) sit that much further on.
+#if KAMEO_TU
+constexpr uint32_t kNodeTail = 256;
+#else
+constexpr uint32_t kNodeTail = 0;
+#endif
 
 }  // namespace
 
@@ -62,14 +68,14 @@ void KameoReloadLanguageStringTable(PPCContext& ctx, uint8_t* base) {
                            (strstr(name, "_NPC_")  != nullptr) ||
                            (strstr(name, "_Loc_")  != nullptr);
     if (!is_speech) continue;
-    if (REX_LOAD_U32(node + 56) == 0) continue;  // already unloaded
+    if (REX_LOAD_U32(node + kNodeTail + 56) == 0) continue;  // already unloaded
 
-    REX_STORE_U32(node + 44, 0);  // XACT bank ptr  -- overwritten by sub_8230C0C8
-    REX_STORE_U32(node + 48, 0);  // file buffer    -- overwritten by async load
-    REX_STORE_U32(node + 52, 1);  // reload flag=1  -- sub_822ECD10 calls sub_822ECDF8
-    REX_STORE_U32(node + 56, 0);  // state=0        -- triggers sub_822ECC30 next tick
-    REX_STORE_U32(node + 60, 0);  // voice buf ptr  -- overwritten by sub_8228A5B0
-    REX_STORE_U32(node + 64, 0);  // voice buf size -- overwritten on reload
+    REX_STORE_U32(node + kNodeTail + 44, 0);  // XACT bank ptr  -- overwritten by sub_8230C0C8
+    REX_STORE_U32(node + kNodeTail + 48, 0);  // file buffer    -- overwritten by async load
+    REX_STORE_U32(node + kNodeTail + 52, 1);  // reload flag=1  -- sub_822ECD10 calls sub_822ECDF8
+    REX_STORE_U32(node + kNodeTail + 56, 0);  // state=0        -- triggers sub_822ECC30 next tick
+    REX_STORE_U32(node + kNodeTail + 60, 0);  // voice buf ptr  -- overwritten by sub_8228A5B0
+    REX_STORE_U32(node + kNodeTail + 64, 0);  // voice buf size -- overwritten on reload
   }
 }
 

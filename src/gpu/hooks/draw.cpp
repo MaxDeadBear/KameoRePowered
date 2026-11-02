@@ -162,8 +162,8 @@ extern "C" REX_FUNC(sub_820CEA50) {
   }
   if (ctx.r3.u32 == 0) {
     t_pendingIndexedRing = args;
-    t_pendingIndexedRing.vertices = REX_LOAD_U32(args.device + 13624);
-    t_pendingIndexedRing.indices = REX_LOAD_U32(args.device + 13628);
+    t_pendingIndexedRing.vertices = REX_LOAD_U32(args.device + kameo::gpu::dev::kBeginVerticesData);
+    t_pendingIndexedRing.indices = REX_LOAD_U32(args.device + kameo::gpu::dev::kBeginIndicesData);
   }
 }
 

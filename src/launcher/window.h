@@ -26,6 +26,8 @@ struct WindowOptions {
 struct WindowState {
   ImFont* body = nullptr;
   ImFont* heading = nullptr;
+  // The language the fonts were loaded for; they're loaded again when it changes, for its letters.
+  int fonts_language = 0;
   float dpi_scale = 1.0f;
   bool quit = false;
   // For drawing off-screen during `draw`, before the window sets its own target.

@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 
+#include "core/localization.h"
 #include "imgui_backends/imgui_impl_win32.h"
 #include "launcher/app.h"
 
@@ -28,7 +29,7 @@ bool OpenLauncherWindow(HINSTANCE instance, int show, kameo::launcher::App& app)
   using namespace kameo::launcher;
   const WindowOptions options = {.title = L"Kameo RePowered Launcher", .width = 1120, .height = 740, .min_width = 900, .min_height = 620};
   if (RunWindow(instance, show, options, app, [&app] { DrawFrame(app); })) return true;
-  ::MessageBoxW(nullptr, L"Direct3D 11 could not be started.", L"Kameo RePowered Launcher", MB_ICONERROR);
+  ::MessageBoxW(nullptr, reinterpret_cast<const wchar_t*>(kameo::l10n::Tr(u"Direct3D 11 could not be started.").c_str()), L"Kameo RePowered Launcher", MB_ICONERROR);
   return false;
 }
 
@@ -43,6 +44,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int show) {
   wchar_t module[MAX_PATH];
   ::GetModuleFileNameW(nullptr, module, MAX_PATH);
   app.folder = std::filesystem::path(module).parent_path();
+  kameo::l10n::SetLanguage(kameo::l10n::LanguageFromSettings(app.folder / "kameo_settings.toml"));
 
   // KameoLauncher --install-dlc <folder or file> [--content-root <folder>] installs without opening the window and reports to the console it was started from.
   int argument_count = 0;
@@ -139,16 +141,12 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int show) {
     const std::filesystem::path root = content_root_override.empty() ? ContentRoot(app.folder) : content_root_override;
     const std::vector<std::filesystem::path> packages = FindPackages(install_source);
     std::printf("Installing %d package(s) into %s\n", int(packages.size()), root.string().c_str());
-    app.installer.Start(packages, root);
+    app.installer.Start(packages, root, app.folder);
     while (app.installer.running()) ::Sleep(50);
-    int failures = 0;
-    for (const std::string& line : app.installer.TakeResults()) {
-      std::printf("%s\n", line.c_str());
-      if (line.rfind("Installed ", 0) != 0) ++failures;
-    }
+    for (const std::string& line : app.installer.TakeResults()) std::printf("%s\n", line.c_str());
     std::fflush(stdout);
     ::CoUninitialize();
-    return packages.empty() ? 2 : failures;
+    return packages.empty() ? 2 : app.installer.failures();
   }
   app.settings = Settings(app.folder / "kameo_settings.toml");
   app.settings.Load();

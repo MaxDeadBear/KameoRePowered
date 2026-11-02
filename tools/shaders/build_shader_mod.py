@@ -40,9 +40,15 @@ def wanted(table: dict[str, list[str]], names: list[str]) -> list[str]:
     return sorted(shaders)
 
 
-def compile_one(folder: str, shader: str, spirv: bool) -> tuple[bytes, str]:
+# Targets that are surfaces the game draws unlit (build_shader_mod_source.py), which always need --unlit.
+SURFACES = {"lava", "fire"}
+
+
+def compile_one(folder: str, shader: str, spirv: bool, unlit: bool = False) -> tuple[bytes, str]:
     output = os.path.join(folder, f"{shader}.{'spv' if spirv else 'dxil'}")
     flags = ["-spirv", "-fvk-use-dx-layout"] if spirv else ["-Wno-ignored-attributes", "-Qstrip_reflect"]
+    if unlit:
+        flags += ["-D", "MOD_INCLUDE_UNLIT=1"]
     result = subprocess.run([DXC, "-T", "ps_6_0", "-HV", "2021", "-all-resources-bound", *flags, "-Qstrip_debug", "-Fo", output, os.path.join(folder, f"{shader}.hlsl")], capture_output=True, text=True)
     if result.returncode != 0:
         return b"", result.stderr
@@ -56,6 +62,7 @@ def main() -> int:
     parser.add_argument("output", help="the .kshader to write")
     parser.add_argument("--targets", default="characters", help="comma-separated targets")
     parser.add_argument("--dxil-only", action="store_true", help="leave out Vulkan, for quicker test builds")
+    parser.add_argument("--unlit", action="store_true", help="reach surfaces the game doesn't light too: glows, effects, lava (always on for the lava target)")
     parser.add_argument("--meshes", help="limit the mod to a meshes.json entry; by default a lone target that has one uses it")
     parser.add_argument("--threads", type=int, default=max(2, (os.cpu_count() or 4) - 2))
     arguments = parser.parse_args()
@@ -74,8 +81,9 @@ def main() -> int:
             shade.write(handle.read())
 
         with ThreadPoolExecutor(arguments.threads) as pool:
-            dxil = list(pool.map(lambda shader: compile_one(folder, shader, False), shaders))
-            spirv = [(b"", "")] * len(shaders) if arguments.dxil_only else list(pool.map(lambda shader: compile_one(folder, shader, True), shaders))
+            unlit = arguments.unlit or any(name in SURFACES for name in arguments.targets.split(","))
+            dxil = list(pool.map(lambda shader: compile_one(folder, shader, False, unlit), shaders))
+            spirv = [(b"", "")] * len(shaders) if arguments.dxil_only else list(pool.map(lambda shader: compile_one(folder, shader, True, unlit), shaders))
         failed = [(shader, error) for shader, (blob, error) in zip(shaders, dxil + spirv) if error]
         for shader, error in failed[:3]:
             print(f"{shader}:\n{error}", file=sys.stderr)

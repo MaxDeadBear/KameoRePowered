@@ -21,6 +21,13 @@ struct ShadeInputs {
 
 float3 Shade(ShadeInputs s);
 
+// Every 2D texture read in the game's shaders goes through MOD_FETCH2D(texture, sampler, uv, offset), which is the
+// game's tfetch2D unless a mod's shade.hlsl defines it first. A mod can read from somewhere else there, to make a
+// surface flow or ripple; anything it doesn't mean to move should get tfetch2D's answer unchanged, as shadow maps and
+// normal maps are read the same way. Where it's used, the shader's ModState is called mod, so the macro can pass on
+// mod.s.time, the seconds since the game started:
+//   #define MOD_FETCH2D(texture, sampler, uv, offset) MyFetch(texture, sampler, uv, offset, mod.s.time)
+
 // Smooth value noise in 0..1 over a lattice of unit cells.
 float ModNoise(float2 p) {
     const float2 i = floor(p), f = frac(p);
@@ -140,12 +147,24 @@ float3 ModNormalize(float3 v, float3 fallback) {
 
 // The end of the shader, as they add to their colour after fog and would paint over a result given any earlier. A
 // result that isn't a colour draws the game's, since a stray NaN from a divide would bloom across the screen.
+// Surfaces the game doesn't light (glows, effects, and some surfaces lit from within, such as lava) are left alone
+// unless the mod is built with MOD_INCLUDE_UNLIT; for those, colour is the finished pixel with any fog already in it,
+// and there's no albedo, light or normal.
 float3 ModFinish(inout ModState m, float3 colour, float alpha) {
+#ifndef MOD_INCLUDE_UNLIT
     if (!m.lit) return colour;
-    if (!m.s.has_albedo) m.s.albedo = colour;
-    m.s.colour = colour;
+#endif
+    // The colour has the fog in it by now, and fog goes on again over the result, so it's taken out first: a pixel a
+    // mod leaves alone then comes out as the game drew it, rather than fogged twice. Fully fogged, nothing shows.
+    float3 clear = colour;
+    if (m.has_fog) {
+        if (m.fog_amount < 1.0 / 255.0) return colour;
+        clear = m.fog_colour + (colour - m.fog_colour) / m.fog_amount;
+    }
+    if (!m.s.has_albedo) m.s.albedo = clear;
+    m.s.colour = clear;
     m.s.alpha = alpha;
-    if (m.derive_light) m.s.light = min(colour / max(m.s.albedo, 1.0 / 255.0), 8.0);
+    if (m.derive_light) m.s.light = min(clear / max(m.s.albedo, 1.0 / 255.0), 8.0);
     const float3 result = Shade(m.s);
     if (!all(isfinite(result))) return colour;
     return m.has_fog ? lerp(m.fog_colour, max(result, 0.0), m.fog_amount) : max(result, 0.0);

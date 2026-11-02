@@ -11,6 +11,7 @@
 #include "gpu/occlusion.h"
 #include "gpu/resource_check.h"
 #include "gpu/textures/texture_codec.h"
+#include "gpu/textures/texture_upload.h"
 #include "gpu/textures/texture_heap.h"
 #include "gpu/textures/texture_pack.h"
 
@@ -63,6 +64,7 @@ bool UploadReplacementTexture(GraphicsSystem::DrawPathContext& ctx, plume::Rende
   entry->texture = std::move(texture);
   entry->view = std::move(view);
   entry->heap_index = slot;
+  kameo::gpu::detail::NoteTextureSlot(slot, entry->content_hash);
   entry->volume = false;
   entry->replacement_pending = false;
   entry->replacement_bytes = image.bytes;

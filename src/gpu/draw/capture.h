@@ -6,11 +6,12 @@
 #include <vector>
 
 #include "gpu/draw/draw_types.h"
+#include "gpu/guest_device.h"
 
 namespace kameo::gpu::detail {
 
 // The device fields D3D::LazyWriteShaders and SetVertexDeclaration keep: the bound shader objects and the declaration (guest_device.h's kVertexDeclaration 0x3010 is the separate FVF-built slot).
-inline constexpr uint32_t kDeviceVertexShader = 0x4FD8;
+inline constexpr uint32_t kDeviceVertexShader = 0x4FD8 + dev::kDeviceTail;
 inline constexpr uint32_t kDevicePixelShader = 0x3290;
 inline constexpr uint32_t kDeviceVertexDeclaration = 0x2C90;
 

@@ -24,6 +24,7 @@ Everyone is welcome on the [Discord server](https://discord.gg/8jaZQUkxZZ): ask 
 - **Keyboard and mouse** with rebindable keys, mouse look and a cursor in menus; controller presets and rebinding.
 - **Story split-screen co-op** for a second player.
 - **Downloadable content**, including the title-update packs the original game could not read.
+- **The title update**, if you have it: Expert mode, and Rune Battle and Time Attack in Multiplayer, played by a second build the launcher starts when the update is installed.
 - **Texture and movie replacement packs**.
 - **Missed collectibles** left behind by a sequence break are sold back in the tribe shops for score.
 
@@ -91,6 +92,12 @@ The game defaults to English. Pick another language in **Options > Gameplay**, o
 
 Copy your content packages into the save-data folder's `00000002` directory and run `python tools/extract_dlc.py`, which unpacks each one in place.
 
+### Title update
+
+Kameo's title update reworked about half the game's code and added Expert mode (Solo > Expert), and Expert Co-Op, Rune Battle and Time Attack (Multiplayer). Their levels come in a DLC pack, and their code only in the update, so they are played by a second build, `kameorepowered-tu`, made from the update's patched game. Copy the update package from your console's hard drive (`Content\0000000000000000\4D5307D2\000B0000`) or from Xenia's content folder, and install it with **Install Title Update...** on the launcher's DLC page. The launcher checks that it fits your copy of the game and is the update this release was built from, and unpacks it into `assets/TU`; it then starts `kameorepowered-tu` instead of `kameorepowered`. Removing the update there goes back to the original build. Both share settings, saves and DLC.
+
+To build it, put the update's `default.xexp` in `assets/TU` and configure with `-DKAMEO_TITLE_UPDATE=ON` (the `release-tu` preset does). Our sources are written once, against the original game, and translated to the update's addresses as it builds; see [tools/tu/README.md](tools/tu/README.md).
+
 ### Codes
 
 Enter a code on any page of the pause menu (Back) to reveal a feature for good. On the keyboard X, Y, LB and RB are `1`, `2`, Q and E.
@@ -106,7 +113,7 @@ A fruit, elixir, Crystal Eye or costume left in a level the story has moved past
 
 ### Logs and overlay keys
 
-Logs are written to `logs/kameorepowered_N.log`. In game, F1 toggles the FPS counter, F4 opens the Options pages and F6 the Achievements page (both in the game's own menu), F10 opens the Xbox Guide, `` ` `` opens the console and F3 the debug overlay.
+Logs are written to `logs/kameorepowered_N.log`. In game, F1 toggles the FPS counter, F4 opens the Options pages and F6 the Achievements page (both in the game's own menu), F10 opens the Xbox Guide, `` ` `` opens the console, F3 the debug overlay and F7 the shader list, which switches the game's shaders on and off one at a time to find which one draws something (its hashes are what a shader mod targets).
 
 On Windows, minimizing the game reduces rendering to at most 15 FPS to save background GPU work. Restoring the window resumes your selected frame rate, including uncapped. Frame timing logs include GPU time and the number of MSAA resolves performed and reused per frame.
 

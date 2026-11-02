@@ -184,7 +184,8 @@ def compile_one(idx, label, blob, work, exe, include, retries, cache_dir):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--exe", required=True)
-    ap.add_argument("--image", default=None, help="decompressed guest image (built-in shaders)")
+    ap.add_argument("--image", action="append", default=[],
+                    help="decompressed guest image (built-in shaders); repeat it for the title update's image too")
     # Scanning the image is NOT sufficient for Kameo: most shaders are
     # decompressed out of packed game data into the heap at load time, so they
     # never appear in the XEX. The runtime creation hook captures those to
@@ -245,13 +246,15 @@ def main():
                 pass
 
     sources = []
-    if args.image:
-        with open(args.image, "rb") as f:
+    for number, path in enumerate(args.image):
+        with open(path, "rb") as f:
             image = f.read()
         found = find_containers(image)
-        print(f"found {len(found)} shader containers in {args.image}")
+        print(f"found {len(found)} shader containers in {path}")
+        # The first image keeps its plain labels; later ones (the title update's) are told apart by number.
+        label = "image" if number == 0 else f"image{number}"
         for off, total in found:
-            sources.append((f"image@0x{off:X}", image[off:off + total]))
+            sources.append((f"{label}@0x{off:X}", image[off:off + total]))
 
     if args.containers:
         names = sorted(n for n in os.listdir(args.containers) if n.endswith(".bin"))

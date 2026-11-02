@@ -55,6 +55,26 @@ OUTPUT = os.path.join(ROOT, "res", "shader_mods", "source.zip")
 CONTAINER = re.compile(rb"\x10\x2A\x0E\x00")
 SHARED_ARCHIVE = "011C2CC3.lvl"
 EVERYDAY_TARGET = "kameo_everyday"
+# Kinds of surface, by the shaders that draw them, found with the game's F7 shader list and the
+# kameo_dev_find_texture_shaders log. Some are unlit, so a mod for them is built with MOD_INCLUDE_UNLIT.
+SURFACES = {"lava": [
+    "019C91C2AC8436A7",
+    "049D8B13CFC489E5",
+    "31F5F851F6841602",
+    "3A04EBDFDE2633A9",
+    "42477341E4D3F511",
+    "55C19895B82426FC",
+    "5C5057C59A9B581E",
+    "70189F822F1AA455",
+    "74980142E87993E6",
+    "86634CC00F646AAE",
+    "B80FD95F69DFFC50",
+    "D8D32630B274DFF1",
+    "F1723B429B3EBFF1",
+    "F709021AFC457795",
+], "fire": [
+    "13FFE0BD01E855A3",
+]}
 # Each character a shader mod can make a costume for, by the model type its skins are listed under in the game: a
 # costume target is that character's standard look alone, Kameo's everyday outfit for her.
 COSTUME_MODELS = {"kameo": "007183BF", "flowerboxer": "0CE65812", "spitter": "0A70BAB2", "rubble": "079B8925", "armadillo": "037AABBF", "watercreature_small": "005C444C", "watercannon": "08EBDF9E", "snow_man": "056D64DE", "ice_b_yeti": "05800519", "fire_ant": "008B5284", "firedragon": "0BBEAEDE"}
@@ -76,6 +96,8 @@ POSITION = re.compile(r"(r\d+)\.z \* c_fog\.x")
 UV = re.compile(r"tfetch2D\(\w+, \w+, (r\d+)\.xy, float2\(0, 0\)\)")
 ALPHA_TEST = "[branch] if (g_SpecConstants() & SPEC_CONSTANT_ALPHA_TEST)"
 START_MARK = "CubeMapData cubeMapData = (CubeMapData)0;"
+# After the mod's shade.hlsl, so a mod can define MOD_FETCH2D first.
+FETCH_DEFAULT = "// A mod may read textures its own way by defining MOD_FETCH2D in shade.hlsl (shader_mod.hlsli).\n#ifndef MOD_FETCH2D\n#define MOD_FETCH2D tfetch2D\n#endif\n"
 
 
 def containers_of(archive: Caff) -> dict[str, tuple[bytes, int]]:
@@ -207,7 +229,9 @@ def inject(text: str, common: str) -> tuple[str, Counter]:
         lines.insert(index + (side == "after"), "\t" + code)
 
     found = Counter(lit=is_lit, fog=fog is not None, normal=normal is not None, view=position is not None)
-    return '#include "shader_common.h"\n#include "shader_mod.hlsli"\n#include "shade.hlsl"\n' + "\n".join(lines), found
+    # Texture reads go through MOD_FETCH2D, which a mod's shade.hlsl may define, as tfetch2D otherwise.
+    body = "\n".join(lines).replace("tfetch2D(", "MOD_FETCH2D(")
+    return '#include "shader_common.h"\n#include "shader_mod.hlsli"\n#include "shade.hlsl"\n' + FETCH_DEFAULT + body, found
 
 
 def patched_common(common: str) -> str:
@@ -263,6 +287,9 @@ def main() -> int:
                 # A DLC skin is named like the model it dresses; its levels have names no game file does.
                 owner = area_of(f"game:{name}")
                 targets.setdefault("DLC levels" if owner == os.path.splitext(name)[0] else owner, set()).update(found)
+    for surface, shaders in SURFACES.items():
+        targets[surface] = set(shaders)
+        containers.update({shader: b"" for shader in shaders if shader not in containers})
     # A shader the game's cache lacks can't be drawn, modded or not.
     known = {name[:16] for name in os.listdir(DUMPS)}
     missing = set(containers) - known

@@ -12,7 +12,9 @@
 #include <rex/logging.h>
 
 #include "core/guest.h"
+#include "core/localization.h"
 #include "engine/dlc/dlc.h"
+#include "ui/text_window.h"
 
 namespace {
 
@@ -25,10 +27,10 @@ struct KameoSkinName {
 // The title update's skin table (17 entries at 0x82048920 in the patched image): the three built-in skins name themselves from vanilla strings, and the downloadable ones from strings only the update's own tables carry, so their English names are kept here.
 constexpr KameoSkinName kKameoSkinNames[] = {
     {"007183BF_00", 1976, nullptr}, {"007183BF_01", 1977, nullptr}, {"007183BF_02", 1978, nullptr},
-    {"007183BF_35", 4884, u"Armored Kameo"}, {"007183BF_46", 4883, u"Fright Pack Kameo"},
-    {"007183BF_57", 4895, u"Masquerade Kameo #1"}, {"007183BF_58", 4896, u"Masquerade Kameo #2"}, {"007183BF_59", 4897, u"Masquerade Kameo #3"}, {"007183BF_60", 4898, u"Masquerade Kameo #4"}, {"007183BF_61", 4899, u"Masquerade Kameo #5"},
-    {"007183BF_62", 4890, u"Masquerade Kameo #6"}, {"007183BF_63", 4891, u"Masquerade Kameo #7"}, {"007183BF_64", 4892, u"Masquerade Kameo #8"}, {"007183BF_65", 4893, u"Masquerade Kameo #9"}, {"007183BF_66", 4894, u"Masquerade Kameo #10"},
-    {"007183BF_xmas1", 4882, u"Winter Warrior Kameo"}, {"007183BF_67", 35000, u"Design-A-Skin Kameo"},
+    {"007183BF_35", 4884, TR_NOOP(u"Armored Kameo")}, {"007183BF_46", 4883, TR_NOOP(u"Fright Pack Kameo")},
+    {"007183BF_57", 4895, TR_NOOP(u"Masquerade Kameo #1")}, {"007183BF_58", 4896, TR_NOOP(u"Masquerade Kameo #2")}, {"007183BF_59", 4897, TR_NOOP(u"Masquerade Kameo #3")}, {"007183BF_60", 4898, TR_NOOP(u"Masquerade Kameo #4")}, {"007183BF_61", 4899, TR_NOOP(u"Masquerade Kameo #5")},
+    {"007183BF_62", 4890, TR_NOOP(u"Masquerade Kameo #6")}, {"007183BF_63", 4891, TR_NOOP(u"Masquerade Kameo #7")}, {"007183BF_64", 4892, TR_NOOP(u"Masquerade Kameo #8")}, {"007183BF_65", 4893, TR_NOOP(u"Masquerade Kameo #9")}, {"007183BF_66", 4894, TR_NOOP(u"Masquerade Kameo #10")},
+    {"007183BF_xmas1", 4882, TR_NOOP(u"Winter Warrior Kameo")}, {"007183BF_67", 35000, TR_NOOP(u"Design-A-Skin Kameo")},
 };
 
 }  // namespace
@@ -132,8 +134,14 @@ std::vector<uint32_t> UnlockedCostumes(PPCContext& ctx, uint8_t* base, uint32_t 
   std::vector<uint32_t> costumes;
   for (uint32_t entry = REX_LOAD_U32(node + 32 + 4); entry; entry = REX_LOAD_U32(entry + 4)) {
     PPCContext call = ctx;
+#if KAMEO_TU
+    // The update's check takes the skin record itself.
+    call.r3.u64 = entry;
+    sub_8225E158(call, base);
+#else
     call.r3.u64 = entry + 51;
     sub_8224F458(call, base);
+#endif
     if (call.r3.u32) costumes.push_back(entry);
   }
   return costumes;
@@ -163,6 +171,22 @@ void TickKameoSkin(uint8_t* base) {
   }
 }
 
+std::string KameoSkinState(uint8_t* base) {
+  const uint32_t node = SkinNode(base, kKameoModelType);
+  if (!node) return "no skin record";
+  const uint32_t entry = REX_LOAD_U32(node + 12);
+  const uint32_t previous = REX_LOAD_U32(node + 16);
+  std::string text = "in use '" + SkinInUse(base, node) + "'";
+  text += previous ? " previous set" : " no previous";
+  text += " busy " + std::to_string(REX_LOAD_U32(node + 20)) + " step " + std::to_string(REX_LOAD_U32(node + 24)) +
+          " loading " + std::to_string(REX_LOAD_U32(node + 28));
+#if KAMEO_TU
+  // +240: set once the other console confirms this skin in an online game.
+  if (entry) text += " confirmed " + std::to_string(REX_LOAD_U32(entry + 240));
+#endif
+  return text;
+}
+
 void SetShaderSkins(std::vector<std::pair<uint32_t, std::u16string>> costumes) {
   std::lock_guard<std::mutex> lock(g_shaderSkinMutex);
   for (CostumeSlot& slot : g_slots) slot.names.clear();
@@ -183,6 +207,7 @@ bool WearsShaderSkin(uint32_t model_type) {
 }
 
 void SetCostumeStepBack(bool back) { g_stepBack = back; }
+bool CostumeStepBack() { return g_stepBack; }
 
 void SettingSkin(uint8_t* base, uint32_t model_type, PPCRegister& r4, PPCRegister& r1) {
   CostumeSlot* slot = SlotOf(model_type);
@@ -201,6 +226,15 @@ void SettingSkin(uint8_t* base, uint32_t model_type, PPCRegister& r4, PPCRegiste
 
 }  // namespace kameo::engine
 
+std::u16string kameo::engine::KameoSkinDisplayName(PPCContext& ctx, uint8_t* base, const std::string& model) {
+  for (const KameoSkinName& skin : kKameoSkinNames) {
+    if (model != skin.model) continue;
+    if (skin.english) return kameo::l10n::Tr(skin.english);
+    return kameo::ui::PlainGuestText(base, kameo::ui::LocalisedString(ctx, base, int32_t(skin.string_id)));
+  }
+  return std::u16string(model.begin(), model.end());
+}
+
 std::u16string KameoDlcSkinName(uint32_t string_id) {
   using namespace kameo::engine;
   if (string_id >= kShaderSkinString) {
@@ -209,7 +243,7 @@ std::u16string KameoDlcSkinName(uint32_t string_id) {
     if (string_id - kShaderSkinString < names.size()) return names[string_id - kShaderSkinString];
   }
   for (const KameoSkinName& skin : kKameoSkinNames) {
-    if (skin.string_id == string_id && skin.english) return skin.english;
+    if (skin.string_id == string_id && skin.english) return kameo::l10n::Tr(skin.english);
   }
   return {};
 }
@@ -226,6 +260,14 @@ extern "C" REX_FUNC(sub_8224F530) {
     __imp__sub_8224F530(ctx, base);
     return;
   }
+  if (model_type == kKameoModelType) REXLOG_INFO("[kameo] skin step{}: {}", g_stepBack ? " back" : "", KameoSkinState(base));
+  struct LogAfter {
+    uint8_t* base;
+    bool kameo;
+    ~LogAfter() {
+      if (kameo) REXLOG_INFO("[kameo] skin step done: {}", KameoSkinState(base));
+    }
+  } log_after{base, model_type == kKameoModelType};
   std::unique_lock<std::mutex> lock(g_shaderSkinMutex);
   const int count = int(slot->names.size());
   const int chosen = slot->chosen.load(std::memory_order_relaxed);
@@ -284,7 +326,16 @@ extern "C" REX_FUNC(sub_8224F4D0) {
     __imp__sub_8224F4D0(ctx, base);
     return;
   }
-  REX_STORE_U32(ctx.r3.u32 + 12, g_findNextTarget);
+  const uint32_t node = ctx.r3.u32;
+  REX_STORE_U32(node + 12, g_findNextTarget);
+#if KAMEO_TU
+  // The update's find-next ends by telling the other console in an online game (node, 0); without it a step back
+  // changed the costume on this console only.
+  PPCContext call = ctx;
+  call.r3.u64 = node;
+  call.r4.u64 = 0;
+  sub_8225E288(call, base);
+#endif
   ctx.r3.u64 = 1;
 }
 

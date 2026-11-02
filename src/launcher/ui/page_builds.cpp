@@ -7,10 +7,15 @@
 
 #include <shellapi.h>
 
+#include "core/localization.h"
 #include "launcher/ui/pages.h"
 #include "launcher/ui/widgets.h"
 
 namespace kameo::launcher {
+
+using l10n::Tr;
+using l10n::TrFormat;
+
 namespace {
 
 constexpr ImVec4 kPrerelease = ImVec4(0.55f, 0.75f, 1.0f, 1.0f);
@@ -36,7 +41,7 @@ const InstalledBuild* FindInstalled(const std::vector<InstalledBuild>& installed
 }  // namespace
 
 void PageBuilds(App& app) {
-  PageTitle(app, "Builds", "Download new versions of the game and switch between them. Your settings, saves and game files stay as they are.");
+  PageTitle(app, Tr("Builds"), Tr("Download new versions of the game and switch between them. Your settings, saves and game files stay as they are."));
   BuildManager& builds = app.builds;
   const bool busy = builds.busy();
   const std::vector<BuildRelease> releases = builds.releases();
@@ -44,23 +49,23 @@ void PageBuilds(App& app) {
   const std::string active = builds.active();
 
   ImGui::BeginChild("builds_current", ImVec2(0, 0), ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_AlwaysUseWindowPadding);
-  ImGui::TextColored(kGold, "In Use");
+  ImGui::TextColored(kGold, "%s", Tr("In Use"));
   ImGui::Separator();
   ImGui::AlignTextToFramePadding();
-  if (active.empty()) ImGui::TextWrapped("The build in the game folder was installed by hand, so its version is not known. Switching to a build below keeps a copy of it first.");
+  if (active.empty()) ImGui::TextWrapped("%s", Tr("The build in the game folder was installed by hand, so its version is not known. Switching to a build below keeps a copy of it first."));
   else ImGui::Text("%s", active.c_str());
   if (const BuildRelease* newer = builds.Newer(releases, app.include_prereleases)) {
-    ImGui::TextColored(kGold, "%s is available.", newer->tag.c_str());
+    ImGui::TextColored(kGold, "%s", TrFormat("{0} is available.", {newer->tag}).c_str());
     ImGui::SameLine();
     ImGui::BeginDisabled(busy);
-    if (ImGui::Button("Download and Switch")) builds.Activate(newer->tag);
+    if (ImGui::Button(Tr("Download and Switch"))) builds.Activate(newer->tag);
     ImGui::EndDisabled();
   } else if (builds.fetched()) {
-    ImGui::TextColored(kTextDim, "You have the newest %s.", app.include_prereleases ? "build" : "release");
+    ImGui::TextColored(kTextDim, "%s", app.include_prereleases ? Tr("You have the newest build.") : Tr("You have the newest release."));
   }
-  if (ImGui::Checkbox("Include pre-releases in update notices", &app.include_prereleases)) SavePrefs(app);
-  Help("Pre-releases are test builds with the newest fixes; releases are the ones considered stable. Both are always listed below.");
-  if (ImGui::Checkbox("Check for new builds when the launcher opens", &app.check_for_builds)) SavePrefs(app);
+  if (ImGui::Checkbox(Tr("Include pre-releases in update notices"), &app.include_prereleases)) SavePrefs(app);
+  Help(Tr("Pre-releases are test builds with the newest fixes; releases are the ones considered stable. Both are always listed below."));
+  if (ImGui::Checkbox(Tr("Check for new builds when the launcher opens"), &app.check_for_builds)) SavePrefs(app);
   ImGui::EndChild();
 
   if (busy) {
@@ -71,19 +76,20 @@ void PageBuilds(App& app) {
     if (progress >= 0.0f) ImGui::ProgressBar(progress, ImVec2(-ImGui::GetFrameHeight() * 4.0f, 0));
     else ImGui::ProgressBar(-1.0f * float(ImGui::GetTime()), ImVec2(-ImGui::GetFrameHeight() * 4.0f, 0), "");
     ImGui::SameLine();
-    if (ImGui::Button("Cancel")) builds.Cancel();
+    if (ImGui::Button(Tr("Cancel"))) builds.Cancel();
   }
 
   ImGui::Spacing();
   ImGui::BeginChild("builds_list", ImVec2(0, 0), ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_AlwaysUseWindowPadding);
-  ImGui::TextColored(kGold, "Available Builds");
-  ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Refresh").x - ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetCursorPosX());
+  ImGui::TextColored(kGold, "%s", Tr("Available Builds"));
+  const char* refresh = Tr("Refresh");
+  ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(refresh).x - ImGui::GetStyle().FramePadding.x * 2.0f + ImGui::GetCursorPosX());
   ImGui::BeginDisabled(busy);
-  if (ImGui::SmallButton("Refresh")) builds.Refresh();
+  if (ImGui::SmallButton(refresh)) builds.Refresh();
   ImGui::EndDisabled();
   ImGui::Separator();
   if (releases.empty()) {
-    ImGui::TextColored(kTextDim, "%s", busy ? "Looking for builds..." : builds.fetched() ? "No builds have been published yet." : "Press Refresh to see the builds published on GitHub.");
+    ImGui::TextColored(kTextDim, "%s", busy ? Tr("Looking for builds...") : builds.fetched() ? Tr("No builds have been published yet.") : Tr("Press Refresh to see the builds published on GitHub."));
   }
   if (!releases.empty() && ImGui::BeginTable("builds_table", 4, ImGuiTableFlags_RowBg | ImGuiTableFlags_PadOuterX)) {
     ImGui::TableSetupColumn("Build", ImGuiTableColumnFlags_WidthStretch);
@@ -101,13 +107,13 @@ void PageBuilds(App& app) {
       ImGui::TextColored(in_use ? kActive : kText, "%s", release.tag.c_str());
       if (release.prerelease) {
         ImGui::SameLine();
-        ImGui::TextColored(kPrerelease, "pre-release");
+        ImGui::TextColored(kPrerelease, "%s", Tr("pre-release"));
       }
-      if (!release.notes.empty() && ImGui::TreeNodeEx("notes", ImGuiTreeNodeFlags_SpanAvailWidth, "Notes")) {
+      if (!release.notes.empty() && ImGui::TreeNodeEx("notes", ImGuiTreeNodeFlags_SpanAvailWidth, "%s", Tr("Notes"))) {
         ImGui::PushTextWrapPos(0.0f);
         ImGui::TextColored(kTextDim, "%s", release.notes.c_str());
         ImGui::PopTextWrapPos();
-        if (ImGui::SmallButton("Open on GitHub")) OpenInBrowser(release.url);
+        if (ImGui::SmallButton(Tr("Open on GitHub"))) OpenInBrowser(release.url);
         ImGui::TreePop();
       }
 
@@ -117,23 +123,23 @@ void PageBuilds(App& app) {
 
       ImGui::TableNextColumn();
       ImGui::AlignTextToFramePadding();
-      if (in_use) ImGui::TextColored(kActive, "In use");
-      else if (here) ImGui::TextColored(kText, "Downloaded");
-      else if (release.asset_url.empty()) ImGui::TextColored(kTextDim, "No Windows build");
+      if (in_use) ImGui::TextColored(kActive, "%s", Tr("In use"));
+      else if (here) ImGui::TextColored(kText, "%s", Tr("Downloaded"));
+      else if (release.asset_url.empty()) ImGui::TextColored(kTextDim, "%s", Tr("No Windows build"));
       else ImGui::TextColored(kTextDim, "%s", SizeText(release.asset_size).c_str());
 
       ImGui::TableNextColumn();
       ImGui::BeginDisabled(busy);
       if (!in_use && !release.asset_url.empty()) {
-        if (ImGui::Button(here ? "Switch" : "Download and Switch")) builds.Activate(release.tag);
+        if (ImGui::Button(here ? Tr("Switch") : Tr("Download and Switch"))) builds.Activate(release.tag);
         if (!here) {
           ImGui::SameLine();
-          if (ImGui::Button("Download")) builds.Install(release.tag);
+          if (ImGui::Button(Tr("Download"))) builds.Install(release.tag);
         }
       }
       if (here && !in_use) {
         ImGui::SameLine();
-        if (ImGui::Button("Delete")) builds.Remove(release.tag);
+        if (ImGui::Button(Tr("Delete"))) builds.Remove(release.tag);
       }
       ImGui::EndDisabled();
       ImGui::PopID();
@@ -148,9 +154,9 @@ void PageBuilds(App& app) {
   if (any_saved) {
     ImGui::Spacing();
     ImGui::BeginChild("builds_saved", ImVec2(0, 0), ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_AlwaysUseWindowPadding);
-    ImGui::TextColored(kGold, "Your Previous Builds");
+    ImGui::TextColored(kGold, "%s", Tr("Your Previous Builds"));
     ImGui::Separator();
-    ImGui::TextWrapped("Copies of the build that was in the game folder before the launcher first switched it.");
+    ImGui::TextWrapped("%s", Tr("Copies of the build that was in the game folder before the launcher first switched it."));
     for (const InstalledBuild& build : installed) {
       if (!build.saved_local) continue;
       ImGui::PushID(build.tag.c_str());
@@ -158,9 +164,9 @@ void PageBuilds(App& app) {
       ImGui::TextColored(build.tag == active ? kActive : kText, "%s", build.tag.c_str());
       ImGui::SameLine();
       ImGui::BeginDisabled(busy || build.tag == active);
-      if (ImGui::Button("Switch")) builds.Activate(build.tag);
+      if (ImGui::Button(Tr("Switch"))) builds.Activate(build.tag);
       ImGui::SameLine();
-      if (ImGui::Button("Delete")) builds.Remove(build.tag);
+      if (ImGui::Button(Tr("Delete"))) builds.Remove(build.tag);
       ImGui::EndDisabled();
       ImGui::PopID();
     }

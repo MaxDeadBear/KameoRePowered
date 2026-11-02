@@ -25,11 +25,14 @@ constexpr const char* kWarriors[] = {
 constexpr uint32_t kFirstMirrorUnlockEvent = 0x1E5;
 constexpr uint32_t kLastMirrorUnlockEvent = 0x20E;
 
+// The title update took the Upgrade All Warriors check out of the warrior move checks and rewrote kaiSackPopulate, so the warriors cheat is the original game's alone.
+#if !KAMEO_TU
 // The game's own Upgrade All Warriors cheat, which every warrior move check passes on; like the game's other cheats it stops Battle Points while it is on.
 constexpr uint32_t kEventMonsterUpgradeAll = 0x82B71CE4;
 // Each player's warrior sack, the one kaiSackPopulate fills.
 constexpr uint32_t kFirstWarriorSack = 0x82804058;
 constexpr uint32_t kWarriorSackBytes = 8960;
+#endif  // !KAMEO_TU
 
 bool WarriorsWanted() { return REXCVAR_GET(kameo_unlock_all_warriors) && KameoCodeUnlocked(KameoUnlockCode::Warriors); }
 
@@ -51,6 +54,10 @@ void AddAllWarriors(PPCContext& ctx, uint8_t* base, uint32_t sack) {
 namespace kameo::engine {
 
 void TickWarriorUnlock(PPCContext& ctx, uint8_t* base) {
+#if KAMEO_TU
+  (void)ctx;
+  (void)base;
+#else
   static bool applied = false;
   const bool wanted = WarriorsWanted();
   // Loading a save restores the game's cheat record, so the cheat is held every tick rather than set once.
@@ -67,6 +74,7 @@ void TickWarriorUnlock(PPCContext& ctx, uint8_t* base) {
     AddAllWarriors(ctx, base, kFirstWarriorSack + player * kWarriorSackBytes);
     REXLOG_INFO("[kameo] gave player {} every warrior", player + 1);
   }
+#endif  // KAMEO_TU
 }
 
 }  // namespace kameo::engine

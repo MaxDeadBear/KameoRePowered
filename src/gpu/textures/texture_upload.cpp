@@ -149,6 +149,17 @@ void CollectGuestMips(uint8_t* base, uint32_t object, const GuestTextureFetch& f
 
 uint32_t EnsureTextureUncached(uint8_t* base, GraphicsSystem::DrawPathContext& ctx, plume::RenderCommandList* list, const GuestTextureFetch& fetch, uint32_t object, uint32_t object_address, uint32_t want_dimension, bool* volume_out);
 
+namespace {
+std::vector<uint64_t> g_contentHashBySlot;
+}  // namespace
+
+void NoteTextureSlot(uint32_t slot, uint64_t content_hash) {
+  if (slot >= g_contentHashBySlot.size()) g_contentHashBySlot.resize(slot + 1, 0);
+  g_contentHashBySlot[slot] = content_hash;
+}
+
+uint64_t TextureContentHashAt(uint32_t slot) { return slot < g_contentHashBySlot.size() ? g_contentHashBySlot[slot] : 0; }
+
 uint32_t EnsureTexture(uint8_t* base, GraphicsSystem::DrawPathContext& ctx, plume::RenderCommandList* list, const GuestTextureFetch& fetch, uint32_t object, uint32_t object_address, uint32_t want_dimension, bool* volume_out) {
   const uint64_t key = TextureMemoKey(fetch, object, object_address, want_dimension);
   TextureMemo& memo = g_textureMemo[key >> (64 - kTextureMemoBits)];
@@ -539,6 +550,7 @@ uint32_t EnsureTextureUncached(uint8_t* base, GraphicsSystem::DrawPathContext& c
   entry.height = height;
   entry.volume = volume;
   entry.content_hash = content_hash;
+  NoteTextureSlot(slot, content_hash);
   entry.replacement_channels = replacement_channels;
   entry.replaceable = pack_format;
   entry.replacement_pending = has_replacement;

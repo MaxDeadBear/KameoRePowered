@@ -24,6 +24,7 @@ class ShaderSource {
   bool Prepare(std::string& error);
   const std::vector<Target>& characters() const { return characters_; }
   const std::vector<Target>& levels() const { return levels_; }
+  const std::vector<Target>& surfaces() const { return surfaces_; }
   const Target& all_characters() const { return all_characters_; }
   const Target& everything() const { return everything_; }
   const std::filesystem::path& folder() const { return folder_; }
@@ -33,10 +34,12 @@ class ShaderSource {
   std::vector<uint64_t> Meshes(const std::vector<std::string>& keys) const;
   // The character a mod is a costume for, by model type, when its one target is a character's standard look; else 0.
   uint32_t CostumeModel(const std::vector<std::string>& keys) const;
+  // Whether a target is a surface the game draws unlit, which a mod only reaches when built to include those.
+  bool NeedsUnlit(const std::vector<std::string>& keys) const;
 
  private:
   std::filesystem::path folder_;
-  std::vector<Target> characters_, levels_;
+  std::vector<Target> characters_, levels_, surfaces_;
   std::map<std::string, std::vector<uint64_t>> meshes_;
   std::map<std::string, uint32_t> costume_models_;
   Target all_characters_, everything_;
@@ -48,6 +51,8 @@ struct BuildRequest {
   std::vector<uint64_t> meshes;
   // With meshes, the character the costume is for.
   uint32_t model_type = 0;
+  // Reach surfaces the game doesn't light too (MOD_INCLUDE_UNLIT in shader_mod.hlsli).
+  bool unlit = false;
   std::filesystem::path out;
   bool dxil = true;
   bool spirv = true;

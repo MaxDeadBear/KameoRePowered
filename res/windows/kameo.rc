@@ -35,6 +35,8 @@ BEGIN
       VALUE "OriginalFilename", KAMEO_RC_NAME ".exe"
       VALUE "ProductName", "Kameo: RePowered"
       VALUE "ProductVersion", KAMEO_VERSION_STRING
+      // The launcher reads this from kameorepowered-tu.exe to install only the update that build plays.
+      VALUE "TitleUpdatePatchSha1", KAMEO_TU_PATCH_SHA1
     END
   END
   BLOCK "VarFileInfo"

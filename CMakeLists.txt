@@ -21,9 +21,40 @@ if(KAMEO_VERSION MATCHES "^v?([0-9]+)\\.([0-9]+)\\.([0-9]+)(-[A-Za-z]+\\.?([0-9]
     endif()
     set(KAMEO_VERSION_COMMAS "${CMAKE_MATCH_1},${CMAKE_MATCH_2},${CMAKE_MATCH_3},${_kameo_build}")
 endif()
+# The title-update flavour, kameorepowered-tu: the game as patched by its title update (Expert mode, Rune Battle, Time
+# Attack and the update's fixes), for players who have the update. Its recompiled code comes from the patched image, and
+# our sources are compiled translated to the update's addresses (tools/tu/). It needs assets/TU/default.xexp.
+option(KAMEO_TITLE_UPDATE "Build kameorepowered-tu, the title-update flavour, from assets/TU/default.xexp" OFF)
+
+# kameorepowered-tu runs only the update it was recompiled from, so its version info names that patch by SHA-1 and the
+# launcher refuses any other (src/launcher/title_update.cpp).
+set(KAMEO_TU_PATCH_SHA1 "")
+if(KAMEO_TITLE_UPDATE AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/assets/TU/default.xexp")
+    file(SHA1 "${CMAKE_CURRENT_SOURCE_DIR}/assets/TU/default.xexp" KAMEO_TU_PATCH_SHA1)
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/assets/TU/default.xexp")
+endif()
 configure_file(res/windows/kameo_version.h.in "${CMAKE_CURRENT_BINARY_DIR}/res/kameo_version.h" @ONLY)
 
-include(generated/rexglue.cmake)
+if(KAMEO_TITLE_UPDATE)
+    find_package(Python3 REQUIRED COMPONENTS Interpreter)
+    execute_process(COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/tu/prepare.py RESULT_VARIABLE _kameo_tu_prepared)
+    if(_kameo_tu_prepared)
+        message(FATAL_ERROR "tools/tu/prepare.py failed: the title-update build needs assets/TU/default.xexp")
+    endif()
+    # The SDK's boilerplate, pointed at the title-update workspace instead of generated/default.
+    set(KAMEO_TU_WS "${CMAKE_CURRENT_SOURCE_DIR}/generated/tu")
+    file(READ generated/rexglue.cmake _kameo_rexglue)
+    string(REPLACE "\${CMAKE_CURRENT_SOURCE_DIR}/generated/default" "${KAMEO_TU_WS}/generated/default" _kameo_rexglue "${_kameo_rexglue}")
+    string(REPLACE "include(generated/default/" "include(${KAMEO_TU_WS}/generated/default/" _kameo_rexglue "${_kameo_rexglue}")
+    string(REPLACE "\${CMAKE_CURRENT_SOURCE_DIR}/kameorepowered_manifest.toml" "${KAMEO_TU_WS}/kameorepowered_manifest.toml" _kameo_rexglue "${_kameo_rexglue}")
+    string(REPLACE "WORKING_DIRECTORY \${CMAKE_CURRENT_SOURCE_DIR}" "WORKING_DIRECTORY ${KAMEO_TU_WS}" _kameo_rexglue "${_kameo_rexglue}")
+    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/rexglue_tu.cmake" "${_kameo_rexglue}")
+    include("${CMAKE_CURRENT_BINARY_DIR}/rexglue_tu.cmake")
+    set(KAMEO_SRC_DIR "${KAMEO_TU_WS}/src")
+else()
+    include(generated/rexglue.cmake)
+    set(KAMEO_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
+endif()
 
 if(NOT REXGLUE_ENTRYPOINT_GENERATED_SOURCES)
     message(FATAL_ERROR "No recompiled code. Run codegen first:\n  rexglue codegen kameorepowered_manifest.toml")
@@ -42,9 +73,9 @@ if(_kameo_shader_cache_head MATCHES "^version https://git-lfs")
     message(FATAL_ERROR "res/shader_cache/shader_cache.cpp is a Git LFS pointer:\n  git lfs pull")
 endif()
 
-file(GLOB_RECURSE KAMEO_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
+file(GLOB_RECURSE KAMEO_SOURCES CONFIGURE_DEPENDS "${KAMEO_SRC_DIR}/*.cpp")
 list(FILTER KAMEO_SOURCES EXCLUDE REGEX "/src/(launcher|crash_dialog|shader_editor)/")
-source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/src" PREFIX src FILES ${KAMEO_SOURCES})
+source_group(TREE "${KAMEO_SRC_DIR}" PREFIX src FILES ${KAMEO_SOURCES})
 list(APPEND KAMEO_SOURCES
     "${KAMEO_SHADER_CACHE}"
     # XenosRecomp smol-v encodes the cache's SPIR-V, so the Vulkan backend decodes it before use.
@@ -56,8 +87,14 @@ else()
     add_executable(kameorepowered ${KAMEO_SOURCES})
 endif()
 
+# Translations of our own text (src/core/localization.h), beside the programs that show it.
+add_custom_target(kameo_lang ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/res/lang ${CMAKE_CURRENT_BINARY_DIR}/lang
+    VERBATIM)
+add_dependencies(kameorepowered kameo_lang)
+
 target_include_directories(kameorepowered PRIVATE
-    src
+    "${KAMEO_SRC_DIR}"
     res
     "${CMAKE_CURRENT_BINARY_DIR}/res"
     thirdparty
@@ -82,6 +119,18 @@ endif()
 
 # The xenos plugin stays staged as the reference renderer behind --kameo_native_renderer=false.
 rexglue_setup_target(kameorepowered GPU_PLUGINS xenos)
+if(KAMEO_TITLE_UPDATE)
+    # The launcher starts kameorepowered-tu when the update is installed, and the sources pick its addresses by KAMEO_TU.
+    set_target_properties(kameorepowered PROPERTIES OUTPUT_NAME kameorepowered-tu)
+    target_compile_definitions(kameorepowered PRIVATE KAMEO_TU=1)
+    # Every build re-translates src/ (rewriting only what changed), so edits there reach this flavour.
+    add_custom_target(kameo_tu_translate
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/tu/translate.py --sources
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMENT "Translating src/ to the title update's addresses"
+        VERBATIM)
+    add_dependencies(kameorepowered kameo_tu_translate)
+endif()
 
 # RexLiveless: the Xbox 360 Guide with sign-in, friends, achievements and online play through rexliveless.xyz. It
 # replaces XAM and network imports, so its sources compile into the executable (src/app/app.cpp installs it).
@@ -141,12 +190,15 @@ if(WIN32)
     file(GLOB_RECURSE KAMEO_LAUNCHER_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/launcher/*.cpp")
     add_executable(KameoLauncher WIN32
         ${KAMEO_LAUNCHER_SOURCES}
+        src/core/localization.cpp
         thirdparty/imgui_backends/imgui_impl_win32.cpp
         thirdparty/imgui_backends/imgui_impl_dx11.cpp
         res/windows/kameo.rc)
     target_include_directories(KameoLauncher PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} src thirdparty "${CMAKE_CURRENT_BINARY_DIR}/res")
     target_compile_definitions(KameoLauncher PRIVATE $<$<COMPILE_LANGUAGE:RC>:KAMEO_RC_LAUNCHER>)
-    target_link_libraries(KameoLauncher PRIVATE rex::runtime d3d11 dxgi dwmapi d3dcompiler winhttp)
+    # bcrypt hashes the title update's patch against default.xex before installing it, and version reads which patch
+    # kameorepowered-tu.exe was built from.
+    target_link_libraries(KameoLauncher PRIVATE rex::runtime d3d11 dxgi dwmapi d3dcompiler winhttp bcrypt version)
     target_link_options(KameoLauncher PRIVATE "LINKER:/DELAYLOAD:rexruntime.dll")
     target_link_libraries(KameoLauncher PRIVATE delayimp)
     # The launcher runs on its own copy of the runtime DLL in launcher\ (see src/launcher/runtime_loader.cpp), so switching builds can replace the game's.
@@ -159,6 +211,7 @@ if(WIN32)
     # The window that asks a player whether to send a crash to Sentry (src/core/crash_reporter.cpp starts it), drawn with the launcher's window and theme. Unlike the launcher it runs on the game's runtime DLL, because it ships with each build.
     add_executable(KameoCrashDialog WIN32
         src/crash_dialog/main.cpp
+        src/core/localization.cpp
         src/launcher/window_d3d11.cpp
         src/launcher/ui/theme.cpp
         thirdparty/imgui_backends/imgui_impl_win32.cpp
@@ -173,6 +226,7 @@ if(WIN32)
     file(GLOB KAMEO_SHADER_EDITOR_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/shader_editor/*.cpp")
     add_executable(KameoShaderEditor WIN32
         ${KAMEO_SHADER_EDITOR_SOURCES}
+        src/core/localization.cpp
         src/launcher/window_d3d11.cpp
         src/launcher/ui/theme.cpp
         src/launcher/zip_extract.cpp

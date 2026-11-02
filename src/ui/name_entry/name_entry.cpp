@@ -7,6 +7,7 @@
 #include <utility>
 #include <vector>
 
+#include "core/localization.h"
 #include "input/guest_controls.h"
 #include "input/input.h"
 #include "ui/name_entry/name_entry.h"
@@ -66,7 +67,7 @@ std::vector<std::vector<std::u16string>> NameEntryGrid(bool lower_case) {
   std::vector<std::vector<std::u16string>> grid(4);
   for (size_t i = 0; i < letters.size(); ++i) grid[i < 13 ? 0 : 1].push_back(std::u16string(1, letters[i]));
   for (char16_t c : std::u16string(u"0123456789-.!")) grid[2].push_back(std::u16string(1, c));
-  grid[3] = {u"Space", lower_case ? u"ABC" : u"abc", u"Delete", u"Done"};
+  grid[3] = {TR_NOOP(u"Space"), lower_case ? u"ABC" : u"abc", TR_NOOP(u"Delete"), TR_NOOP(u"Done")};
   return grid;
 }
 
@@ -208,14 +209,16 @@ void RefreshNameEntryWindow(PPCContext& ctx, uint8_t* base, uint32_t window) {
     for (size_t c = 0; c < grid[r].size(); ++c) {
       const bool selected = int32_t(r) == entry.row && int32_t(c) == entry.column;
       if (!line.empty()) line += r == grid.size() - 1 ? u"    " : u" ";
-      line += selected ? u"[" + grid[r][c] + u"]" : u" " + grid[r][c] + u" ";
+      // The action cells keep their English in the grid, which PressNameEntryCell matches, and show translated.
+      const std::u16string& cell = r == grid.size() - 1 ? kameo::l10n::Tr(grid[r][c]) : grid[r][c];
+      line += selected ? u"[" + cell + u"]" : u" " + cell + u" ";
     }
     lines.push_back({0, line});
   }
   const size_t actions_line = lines.size() - 1;
   lines.push_back({-6, u""});
   // Button tags rather than glyph characters, so keyboard and mouse players see their keys.
-  lines.push_back({-2, KameoKeyboardMouseMode() ? u"Type a name   Bksp Delete   Enter Done   Esc Cancel" : u"{button='A'} Type   {button='B'} Delete   {button='Y'} Case   {button='start'} Done"});
+  lines.push_back({-2, KameoKeyboardMouseMode() ? kameo::l10n::Tr(u"Type a name   Bksp Delete   Enter Done   Esc Cancel") : kameo::l10n::TrFormat(u"{0} Type   {1} Delete   {2} Case   {3} Done", {u"{button='A'}", u"{button='B'}", u"{button='Y'}", u"{button='start'}"})});
   std::u16string layout;
   for (const auto& [offset, line] : lines) layout += line + u"\n";
   if (layout == entry.shown) return;
@@ -267,7 +270,7 @@ extern "C" REX_FUNC(sub_823EC530) {
     const uint32_t pressed_address = PlayerStick(base, player) + kStickPressed;
     const uint32_t pressed = REX_LOAD_U32(pressed_address);
     const uint32_t save = (pressed & REX_LOAD_U32(kCommitTestButtonMask) & kButtonX) != 0 ? HoveredSave(base, record) : 0;
-    if (save && OpenNameEntry(ctx, base, object, GuestWideString(u"Rename Saved Game"), REX_LOAD_U32(save + 8))) {
+    if (save && OpenNameEntry(ctx, base, object, GuestWideString(kameo::l10n::Tr(u"Rename Saved Game")), REX_LOAD_U32(save + 8))) {
       REX_STORE_U32(pressed_address, pressed & ~kButtonX);
       entry.renaming = true;
       for (uint32_t name = REX_LOAD_U32(save + 24), i = 0; name && i < 64; ++i) {

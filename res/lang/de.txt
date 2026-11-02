@@ -1,0 +1,3103 @@
+# German for Kameo: RePowered's own text: the English, the German under it, then a blank line.
+# An entry with nothing under its English shows in English. \n is a line break. Keep {0}, {1}... and
+# {font tags} as they are; they're filled in or read by the game.
+
+# src/crash_dialog/main.cpp:17
+Would you like to send a crash report?
+Möchtest du einen Absturzbericht senden?
+
+# src/crash_dialog/main.cpp:18
+This is completely optional, and nothing is sent unless you choose Send Report. A report shows the developers what went wrong, so crashes can get fixed even when nobody files a bug report.
+Das ist völlig freiwillig, und es wird nichts gesendet, solange du nicht "Bericht senden" wählst. Ein Bericht zeigt den Entwicklern, was schiefgelaufen ist, damit Abstürze behoben werden können, auch wenn niemand einen Fehler meldet.
+
+# src/crash_dialog/main.cpp:21
+It holds the game's log from this session, the crash's call stacks and the game and OS versions. It can show file paths, including your Windows user name if the game is in your user folder. The call stacks hold small pieces of the game's memory, which could rarely include your RexLiveless sign-in.
+Er enthält das Protokoll des Spiels aus dieser Sitzung, die Aufrufstapel des Absturzes sowie die Spiel- und Betriebssystemversion. Er kann Dateipfade zeigen, einschließlich deines Windows-Benutzernamens, falls das Spiel in deinem Benutzerordner liegt. Die Aufrufstapel enthalten kleine Teile des Spielspeichers, die in seltenen Fällen deine RexLiveless-Anmeldung enthalten könnten.
+
+# src/crash_dialog/main.cpp:42
+Kameo has crashed
+Kameo ist abgestürzt
+
+# src/crash_dialog/main.cpp:66
+Don't Send
+Nicht senden
+
+# src/crash_dialog/main.cpp:72
+Send Report
+Bericht senden
+
+# src/crash_dialog/main.cpp:96
+Kameo has crashed.\n\nWould you like to send a crash report? This is completely optional, and nothing is sent unless you choose Yes. A report shows the developers what went wrong, so crashes can get fixed.
+Kameo ist abgestürzt.\n\nMöchtest du einen Absturzbericht senden? Das ist völlig freiwillig, und es wird nichts gesendet, solange du nicht "Ja" wählst. Ein Bericht zeigt den Entwicklern, was schiefgelaufen ist, damit Abstürze behoben werden können.
+
+# src/engine/dlc/dlc_skin_names.cpp:30
+Armored Kameo
+Gepanzerte Kameo
+
+# src/engine/dlc/dlc_skin_names.cpp:30
+Fright Pack Kameo
+Gruselpaket-Kameo
+
+# src/engine/dlc/dlc_skin_names.cpp:31
+Masquerade Kameo #1
+Maskerade-Kameo Nr. 1
+
+# src/engine/dlc/dlc_skin_names.cpp:31
+Masquerade Kameo #2
+Maskerade-Kameo Nr. 2
+
+# src/engine/dlc/dlc_skin_names.cpp:31
+Masquerade Kameo #3
+Maskerade-Kameo Nr. 3
+
+# src/engine/dlc/dlc_skin_names.cpp:31
+Masquerade Kameo #4
+Maskerade-Kameo Nr. 4
+
+# src/engine/dlc/dlc_skin_names.cpp:31
+Masquerade Kameo #5
+Maskerade-Kameo Nr. 5
+
+# src/engine/dlc/dlc_skin_names.cpp:32
+Masquerade Kameo #6
+Maskerade-Kameo Nr. 6
+
+# src/engine/dlc/dlc_skin_names.cpp:32
+Masquerade Kameo #7
+Maskerade-Kameo Nr. 7
+
+# src/engine/dlc/dlc_skin_names.cpp:32
+Masquerade Kameo #8
+Maskerade-Kameo Nr. 8
+
+# src/engine/dlc/dlc_skin_names.cpp:32
+Masquerade Kameo #9
+Maskerade-Kameo Nr. 9
+
+# src/engine/dlc/dlc_skin_names.cpp:32
+Masquerade Kameo #10
+Maskerade-Kameo Nr. 10
+
+# src/engine/dlc/dlc_skin_names.cpp:33
+Winter Warrior Kameo
+Winterkrieger-Kameo
+
+# src/engine/dlc/dlc_skin_names.cpp:33
+Design-A-Skin Kameo
+Design-A-Skin-Kameo
+
+# src/engine/dlc/joiner_skin.cpp:346 (+1)
+Standard
+Standard
+
+# src/input/pad_presets.cpp:53
+Face Bottom
+Aktionstaste unten
+
+# src/input/pad_presets.cpp:54
+Face Right
+Aktionstaste rechts
+
+# src/input/pad_presets.cpp:55
+Face Left
+Aktionstaste links
+
+# src/input/pad_presets.cpp:56
+Face Top
+Aktionstaste oben
+
+# src/input/pad_presets.cpp:57 (+1)
+Left Shoulder
+Linke Schultertaste
+
+# src/input/pad_presets.cpp:58 (+1)
+Right Shoulder
+Rechte Schultertaste
+
+# src/input/pad_presets.cpp:59 (+3)
+Left Trigger
+Linker Trigger
+
+# src/input/pad_presets.cpp:60 (+3)
+Right Trigger
+Rechter Trigger
+
+# src/input/pad_presets.cpp:61 (+1)
+Left Stick Press
+Linken Stick drücken
+
+# src/input/pad_presets.cpp:62 (+1)
+Right Stick Press
+Rechten Stick drücken
+
+# src/input/pad_presets.cpp:63 (+3)
+D-Pad Up
+Steuerkreuz oben
+
+# src/input/pad_presets.cpp:64 (+3)
+D-Pad Down
+Steuerkreuz unten
+
+# src/input/pad_presets.cpp:65 (+3)
+D-Pad Left
+Steuerkreuz links
+
+# src/input/pad_presets.cpp:66 (+3)
+D-Pad Right
+Steuerkreuz rechts
+
+# src/input/pad_presets.cpp:67 (+4)
+Start
+
+
+# src/input/pad_presets.cpp:68 (+4)
+Back
+Zurück
+
+# src/input/pad_presets.cpp:69
+Left Stick Up
+Linker Stick oben
+
+# src/input/pad_presets.cpp:70
+Left Stick Down
+Linker Stick unten
+
+# src/input/pad_presets.cpp:71
+Left Stick Left
+Linker Stick links
+
+# src/input/pad_presets.cpp:72
+Left Stick Right
+Linker Stick rechts
+
+# src/input/pad_presets.cpp:73
+Right Stick Up
+Rechter Stick oben
+
+# src/input/pad_presets.cpp:74
+Right Stick Down
+Rechter Stick unten
+
+# src/input/pad_presets.cpp:75
+Right Stick Left
+Rechter Stick links
+
+# src/input/pad_presets.cpp:76
+Right Stick Right
+Rechter Stick rechts
+
+# src/input/pad_presets.cpp:174
+Unknown
+Unbekannt
+
+# src/input/pad_presets.cpp:175
+Press a control (wait 8s to cancel)
+Taste drücken (Abbruch nach 8 s)
+
+# src/launcher/builds.cpp:232
+Checking GitHub for builds...
+Suche auf GitHub nach Builds...
+
+# src/launcher/builds.cpp:233
+Downloading {0}...
+{0} wird heruntergeladen...
+
+# src/launcher/builds.cpp:234 (+1)
+Switching to {0}...
+Wechsel zu {0}...
+
+# src/launcher/builds.cpp:235
+Removing {0}...
+{0} wird entfernt...
+
+# src/launcher/builds.cpp:240
+Could not check for builds: {0}
+Suche nach Builds fehlgeschlagen: {0}
+
+# src/launcher/builds.cpp:245
+GitHub's answer could not be read: {0}
+Die Antwort von GitHub konnte nicht gelesen werden: {0}
+
+# src/launcher/builds.cpp:245
+not a release list
+keine Release-Liste
+
+# src/launcher/builds.cpp:283
+{0} has no Windows build to download
+{0} hat keinen Windows-Build zum Herunterladen
+
+# src/launcher/builds.cpp:304
+Unpacking {0}...
+{0} wird entpackt...
+
+# src/launcher/builds.cpp:315
+the download holds no kameorepowered.exe
+der Download enthält keine kameorepowered.exe
+
+# src/launcher/builds.cpp:322
+could not move the build into place ({0})
+der Build konnte nicht an seinen Platz verschoben werden ({0})
+
+# src/launcher/builds.cpp:332
+Downloaded {0}.
+{0} heruntergeladen.
+
+# src/launcher/builds.cpp:332 (+1)
+Could not download {0}: {1}
+{0} konnte nicht heruntergeladen werden: {1}
+
+# src/launcher/builds.cpp:354
+Could not find {0} after downloading it.
+{0} wurde nach dem Herunterladen nicht gefunden.
+
+# src/launcher/builds.cpp:365
+Close Kameo before switching builds.
+Vor dem Wechsel des Builds Kameo beenden.
+
+# src/launcher/builds.cpp:385
+Could not keep a copy of the current build before switching, so nothing was changed.
+Vom aktuellen Build konnte vor dem Wechsel keine Kopie angelegt werden, daher wurde nichts geändert.
+
+# src/launcher/builds.cpp:405
+could not copy {0} ({1})
+{0} konnte nicht kopiert werden ({1})
+
+# src/launcher/builds.cpp:414
+could not move the old {0} aside (error {1})
+die bisherige Datei {0} konnte nicht beiseitegelegt werden (Fehler {1})
+
+# src/launcher/builds.cpp:420
+could not put the new {0} in place (error {1})
+die neue Datei {0} konnte nicht an ihren Platz gelegt werden (Fehler {1})
+
+# src/launcher/builds.cpp:433
+Could not switch to {0}: {1}. The previous build is still in place.
+Wechsel zu {0} fehlgeschlagen: {1}. Der bisherige Build ist weiterhin vorhanden.
+
+# src/launcher/builds.cpp:443
+Switched to {0}.
+Zu {0} gewechselt.
+
+# src/launcher/builds.cpp:448
+The build in use cannot be removed; switch to another first.
+Der verwendete Build kann nicht entfernt werden; zuerst zu einem anderen wechseln.
+
+# src/launcher/builds.cpp:456 (+2)
+Could not remove {0}: {1}
+{0} konnte nicht entfernt werden: {1}
+
+# src/launcher/builds.cpp:456
+Removed {0}.
+{0} entfernt.
+
+# src/launcher/dlc_install.cpp:112
+{0} skins, Expert mode, Rune Battle and Time Attack
+{0} Skins, Expertenmodus, Runenschlacht und Angriff mit Limit
+
+# src/launcher/dlc_install.cpp:113
+{0} skins; its new levels need the title update
+{0} Skins; die neuen Level benötigen das Titel-Update
+
+# src/launcher/dlc_install.cpp:114
+{0} skins; its new text needs the title update
+{0} Skins; die neuen Texte benötigen das Titel-Update
+
+# src/launcher/dlc_install.cpp:115 (+1)
+{0} skins
+{0} Skins
+
+# src/launcher/dlc_install.cpp:116
+Nothing this version can use
+Nichts, was diese Version nutzen kann
+
+# src/launcher/dlc_install.cpp:208
+Skipped {0}: not a readable Xbox 360 package.
+{0} übersprungen: kein lesbares Xbox 360-Paket.
+
+# src/launcher/dlc_install.cpp:214
+Skipped {0}: it belongs to title {1}, not Kameo.
+{0} übersprungen: gehört zu Titel {1}, nicht zu Kameo.
+
+# src/launcher/dlc_install.cpp:221
+Skipped {0}: it is not downloadable content.
+{0} übersprungen: keine herunterladbaren Inhalte.
+
+# src/launcher/dlc_install.cpp:227 (+1)
+Could not create {0}: {1}
+{0} konnte nicht erstellt werden: {1}
+
+# src/launcher/dlc_install.cpp:230
+Skipped {0}: the package has no files.
+{0} übersprungen: Das Paket enthält keine Dateien.
+
+# src/launcher/dlc_install.cpp:248 (+1)
+Could not read {0} from {1}.
+{0} konnte nicht aus {1} gelesen werden.
+
+# src/launcher/dlc_install.cpp:252 (+1)
+Could not write {0}.
+{0} konnte nicht geschrieben werden.
+
+# src/launcher/dlc_install.cpp:282
+Unpacked {0} but could not write its header.
+{0} entpackt, aber der Header konnte nicht geschrieben werden.
+
+# src/launcher/dlc_install.cpp:285
+Installed {0}.
+{0} installiert.
+
+# src/launcher/http.cpp:52
+not an https address: {0}
+keine https-Adresse: {0}
+
+# src/launcher/http.cpp:57
+WinHttpOpen failed (error {0})
+WinHttpOpen fehlgeschlagen (Fehler {0})
+
+# src/launcher/http.cpp:62
+connecting to the server failed (error {0})
+Verbindung zum Server fehlgeschlagen (Fehler {0})
+
+# src/launcher/http.cpp:68
+opening the request failed (error {0})
+Öffnen der Anfrage fehlgeschlagen (Fehler {0})
+
+# src/launcher/http.cpp:78
+contacting the server failed (error {0})
+Kontakt zum Server fehlgeschlagen (Fehler {0})
+
+# src/launcher/http.cpp:85
+the server answered {0} (GitHub's hourly limit for unsigned requests may be used up; try again later)
+der Server antwortete mit {0} (das stündliche Limit von GitHub für nicht angemeldete Anfragen ist evtl. aufgebraucht; später erneut versuchen)
+
+# src/launcher/http.cpp:85
+the server answered {0}
+der Server antwortete mit {0}
+
+# src/launcher/http.cpp:102
+downloading failed (error {0})
+Herunterladen fehlgeschlagen (Fehler {0})
+
+# src/launcher/http.cpp:107
+could not write the download to disk
+der Download konnte nicht gespeichert werden
+
+# src/launcher/http.cpp:112
+cancelled
+abgebrochen
+
+# src/launcher/http.cpp:117
+the download ended early ({0} of {1} bytes)
+der Download endete vorzeitig ({0} von {1} Bytes)
+
+# src/launcher/http.cpp:142
+could not create {0}
+{0} konnte nicht erstellt werden
+
+# src/launcher/http.cpp:153
+could not finish writing {0}
+{0} konnte nicht fertig geschrieben werden
+
+# src/launcher/iso_install.cpp:201
+The game is already unpacked in {0}.
+Das Spiel ist bereits in {0} entpackt.
+
+# src/launcher/iso_install.cpp:202
+The assets folder already has files in it. Move them somewhere else, then try again.
+Der Ordner assets enthält bereits Dateien. Diese an einen anderen Ort verschieben und es dann erneut versuchen.
+
+# src/launcher/iso_install.cpp:205
+{0} could not be read. It may be incomplete, or not an Xbox 360 disc image or Games on Demand package.
+{0} konnte nicht gelesen werden. Die Datei ist evtl. unvollständig oder kein Xbox 360-Disc-Image bzw. Games on Demand-Paket.
+
+# src/launcher/iso_install.cpp:208
+{0} has no default.xex, so it is not a game disc.
+{0} enthält keine default.xex und ist daher keine Spiel-Disc.
+
+# src/launcher/iso_install.cpp:214
+{0} is incomplete or damaged: its game program could not be read.
+{0} ist unvollständig oder beschädigt: Das Spielprogramm konnte nicht gelesen werden.
+
+# src/launcher/iso_install.cpp:214
+{0} is a different game (title {1}), not Kameo: Elements of Power.
+{0} ist ein anderes Spiel (Titel {1}), nicht Kameo: Elements of Power.
+
+# src/launcher/iso_install.cpp:219
+{0} looks damaged: it holds a file with an invalid name.
+{0} scheint beschädigt zu sein: Darin liegt eine Datei mit ungültigem Namen.
+
+# src/launcher/iso_install.cpp:224
+Not enough free space: the game needs {0} on this drive, and it has {1}.
+Nicht genug freier Speicherplatz: Das Spiel benötigt {0} auf diesem Laufwerk, verfügbar sind {1}.
+
+# src/launcher/iso_install.cpp:230 (+1)
+Unpacking was cancelled.
+Das Entpacken wurde abgebrochen.
+
+# src/launcher/iso_install.cpp:254
+Could not unpack {0}. The image may be incomplete or damaged, or the drive may be full.
+{0} konnte nicht entpackt werden. Das Image ist evtl. unvollständig oder beschädigt, oder das Laufwerk ist voll.
+
+# src/launcher/iso_install.cpp:260
+Could not move the game into {0}: {1}
+Das Spiel konnte nicht nach {0} verschoben werden: {1}
+
+# src/launcher/iso_install.cpp:261
+Your game is ready to play.
+Das Spiel ist bereit.
+
+# src/launcher/kmod.cpp:34
+not a CAFF archive
+kein CAFF-Archiv
+
+# src/launcher/kmod.cpp:38
+a CAFF header out of range
+ein CAFF-Header außerhalb des gültigen Bereichs
+
+# src/launcher/kmod.cpp:43
+a section runs past the end of the file
+ein Abschnitt reicht über das Dateiende hinaus
+
+# src/launcher/kmod.cpp:44
+a section does not unpack
+ein Abschnitt lässt sich nicht entpacken
+
+# src/launcher/kmod.cpp:45
+a section unpacks to the wrong size
+ein Abschnitt hat entpackt die falsche Größe
+
+# src/launcher/kmod.cpp:115
+the archives have different sections
+die Archive haben unterschiedliche Abschnitte
+
+# src/launcher/kmod.cpp:146
+{0} is not the file the mod was made from
+{0} ist nicht die Datei, aus der die Mod erstellt wurde
+
+# src/launcher/kmod.cpp:147
+the mod's header is damaged
+der Header der Mod ist beschädigt
+
+# src/launcher/kmod.cpp:150
+the mod does not match the archive's sections
+die Mod passt nicht zu den Abschnitten des Archivs
+
+# src/launcher/kmod.cpp:154
+the mod writes past a section
+die Mod schreibt über einen Abschnitt hinaus
+
+# src/launcher/kmod.cpp:158
+the patched archive is not what the mod's author saved
+das gepatchte Archiv entspricht nicht dem, was der Autor der Mod gespeichert hat
+
+# src/launcher/kmod.cpp:192
+not a Kameo mod package
+kein Kameo-Modpaket
+
+# src/launcher/kmod.cpp:194
+a mod package of another version
+ein Modpaket einer anderen Version
+
+# src/launcher/kmod.cpp:197 (+1)
+the mod package is damaged
+das Modpaket ist beschädigt
+
+# src/launcher/kmod.cpp:221
+the mod package names a file outside the game folder
+das Modpaket verweist auf eine Datei außerhalb des Spielordners
+
+# src/launcher/launch.cpp:42
+Close the game first.
+Zuerst das Spiel beenden.
+
+# src/launcher/launch.cpp:55
+kameorepowered.exe was not found next to the launcher.
+kameorepowered.exe wurde nicht neben dem Launcher gefunden.
+
+# src/launcher/launch.cpp:59
+The game files are missing. Choose your game on the Play page first.
+Die Spieldateien fehlen. Zuerst auf der Seite "Spielen" das Spiel auswählen.
+
+# src/launcher/launch.cpp:68
+The level mods could not be applied: {0}
+Die Level-Mods konnten nicht angewendet werden: {0}
+
+# src/launcher/launch.cpp:76
+The game could not be started (error {0}).
+Das Spiel konnte nicht gestartet werden (Fehler {0}).
+
+# src/launcher/launch.cpp:81
+Kameo is starting...
+Kameo wird gestartet...
+
+# src/launcher/level_mods.cpp:66
+could not link {0} (error {1})
+{0} konnte nicht verknüpft werden (Fehler {1})
+
+# src/launcher/level_mods.cpp:70
+could not read the game folder: {0}
+der Spielordner konnte nicht gelesen werden: {0}
+
+# src/launcher/level_mods.cpp:133
+{0} and {1}
+{0} und {1}
+
+# src/launcher/level_mods.cpp:134
+{0} is changed by {1}; only {2} (lowest in the list) is used for it.
+{0} wird von {1} geändert; nur {2} (ganz unten in der Liste) wird dafür verwendet.
+
+# src/launcher/level_mods.cpp:145
+the game folder (assets with default.xex) was not found
+der Spielordner (assets mit default.xex) wurde nicht gefunden
+
+# src/launcher/level_mods.cpp:167
+the game is still running from the mod build; close it first ({0})
+das Spiel läuft noch aus dem Mod-Build; zuerst beenden ({0})
+
+# src/launcher/level_mods.cpp:178 (+3)
+could not write {0}
+{0} konnte nicht geschrieben werden
+
+# src/launcher/main.cpp:32
+Direct3D 11 could not be started.
+Direct3D 11 konnte nicht gestartet werden.
+
+# src/launcher/settings_file.cpp:44
+kameo_settings.toml could not be read: {0}
+kameo_settings.toml konnte nicht gelesen werden: {0}
+
+# src/launcher/settings_file.cpp:57
+Could not write {0}
+{0} konnte nicht geschrieben werden
+
+# src/launcher/settings_file.cpp:65
+Could not replace {0}: {1}
+{0} konnte nicht ersetzt werden: {1}
+
+# src/launcher/title_update.cpp:131
+This version of Kameo: RePowered was released without its title-update build, so the update can't be played with it.
+Diese Version von Kameo: RePowered wurde ohne ihren Titel-Update-Build veröffentlicht, daher kann das Update damit nicht gespielt werden.
+
+# src/launcher/title_update.cpp:134
+The title update's patch could not be read.
+Der Patch des Titel-Updates konnte nicht gelesen werden.
+
+# src/launcher/title_update.cpp:136
+Install the game first: the title update patches its default.xex.
+Zuerst das Spiel installieren: Das Titel-Update patcht dessen default.xex.
+
+# src/launcher/title_update.cpp:137
+This title update is for a different release of the game (another region's), so it can't patch yours.
+Dieses Titel-Update gehört zu einer anderen Fassung des Spiels (einer anderen Region) und kann deine nicht patchen.
+
+# src/launcher/title_update.cpp:141
+This isn't the title update Kameo: RePowered was built for (version 0.0.2.1), so it can't be played.
+Das ist nicht das Titel-Update, für das Kameo: RePowered gebaut wurde (Version 0.0.2.1), daher kann es nicht gespielt werden.
+
+# src/launcher/title_update.cpp:162
+Could not read {0} from the title update.
+{0} konnte nicht aus dem Titel-Update gelesen werden.
+
+# src/launcher/title_update.cpp:169
+Could not copy default.xex into {0}: {1}
+default.xex konnte nicht nach {0} kopiert werden: {1}
+
+# src/launcher/title_update.cpp:170
+Installed the title update: Expert mode, Rune Battle and Time Attack are available.
+Titel-Update installiert: Expertenmodus, Runenschlacht und Angriff mit Limit sind verfügbar.
+
+# src/launcher/zip_extract.cpp:45
+could not open {0}
+{0} konnte nicht geöffnet werden
+
+# src/launcher/zip_extract.cpp:50 (+1)
+the download is not a zip file
+der Download ist keine ZIP-Datei
+
+# src/launcher/zip_extract.cpp:71 (+1)
+the zip's directory is damaged
+das Verzeichnis der ZIP-Datei ist beschädigt
+
+# src/launcher/zip_extract.cpp:88
+{0} is stored as ZIP64, which this launcher does not read
+{0} ist als ZIP64 gespeichert, was dieser Launcher nicht lesen kann
+
+# src/launcher/zip_extract.cpp:93
+the zip names a file outside its folder ({0})
+die ZIP-Datei verweist auf eine Datei außerhalb ihres Ordners ({0})
+
+# src/launcher/zip_extract.cpp:102
+the zip entry {0} is damaged
+der ZIP-Eintrag {0} ist beschädigt
+
+# src/launcher/zip_extract.cpp:107
+the zip entry {0} runs past the end of the file
+der ZIP-Eintrag {0} reicht über das Dateiende hinaus
+
+# src/launcher/zip_extract.cpp:115
+the zip entry {0} could not be unpacked
+der ZIP-Eintrag {0} konnte nicht entpackt werden
+
+# src/launcher/zip_extract.cpp:119
+the zip entry {0} uses compression method {1}, which this launcher does not read
+der ZIP-Eintrag {0} verwendet die Komprimierungsmethode {1}, die dieser Launcher nicht lesen kann
+
+# src/launcher/ui/page_audio.cpp:12 (+2)
+Audio
+
+
+# src/launcher/ui/page_audio.cpp:14
+Volume
+Lautstärke
+
+# src/launcher/ui/page_audio.cpp:15 (+1)
+Master Volume
+Gesamtlautstärke
+
+# src/launcher/ui/page_audio.cpp:16 (+1)
+Music
+Musik
+
+# src/launcher/ui/page_audio.cpp:17 (+1)
+Sound Effects
+Soundeffekte
+
+# src/launcher/ui/page_audio.cpp:18 (+1)
+Ambience
+Umgebung
+
+# src/launcher/ui/page_audio.cpp:19 (+1)
+Speech
+Sprachausgabe
+
+# src/launcher/ui/page_audio.cpp:20 (+1)
+Cutscenes
+Zwischensequenzen
+
+# src/launcher/ui/page_audio.cpp:23 (+3)
+Language
+Sprache
+
+# src/launcher/ui/page_audio.cpp:25 (+1)
+Game Default
+Spielstandard
+
+# src/launcher/ui/page_audio.cpp:25
+Takes effect the next time the game starts.
+Wird beim nächsten Spielstart wirksam.
+
+# src/launcher/ui/page_bindings.cpp:27 (+1)
+Move Forward
+Vorwärts
+
+# src/launcher/ui/page_bindings.cpp:27 (+1)
+Move Back
+Rückwärts
+
+# src/launcher/ui/page_bindings.cpp:27 (+2)
+Move Left
+Nach links
+
+# src/launcher/ui/page_bindings.cpp:27 (+2)
+Move Right
+Nach rechts
+
+# src/launcher/ui/page_bindings.cpp:28
+A (Jump)
+A (Springen)
+
+# src/launcher/ui/page_bindings.cpp:29 (+1)
+Left Bumper
+Linke Schultertaste
+
+# src/launcher/ui/page_bindings.cpp:29 (+1)
+Right Bumper
+Rechte Schultertaste
+
+# src/launcher/ui/page_bindings.cpp:30 (+2)
+Camera Up
+Kamera hoch
+
+# src/launcher/ui/page_bindings.cpp:30 (+2)
+Camera Down
+Kamera runter
+
+# src/launcher/ui/page_bindings.cpp:30 (+2)
+Camera Left
+Kamera links
+
+# src/launcher/ui/page_bindings.cpp:30 (+2)
+Camera Right
+Kamera rechts
+
+# src/launcher/ui/page_bindings.cpp:31 (+1)
+Left Stick Click
+Linker Stick (Klick)
+
+# src/launcher/ui/page_bindings.cpp:31 (+1)
+Right Stick Click
+Rechter Stick (Klick)
+
+# src/launcher/ui/page_bindings.cpp:124 (+2)
+Key Bindings
+Tastenbelegung
+
+# src/launcher/ui/page_bindings.cpp:124
+Click Change, then press the key or mouse button to use. Binding a key another action has swaps the two.
+Auf "Ändern" klicken, dann die gewünschte Taste oder Maustaste drücken. Ist sie bereits einer anderen Aktion zugewiesen, werden die beiden Belegungen getauscht.
+
+# src/launcher/ui/page_bindings.cpp:127 (+3)
+Restore Defaults
+Standardwerte wiederherstellen
+
+# src/launcher/ui/page_bindings.cpp:149
+Press a key... ({0}s)
+Taste drücken... ({0} s)
+
+# src/launcher/ui/page_bindings.cpp:152 (+1)
+Unbound
+Nicht belegt
+
+# src/launcher/ui/page_bindings.cpp:155
+Change
+Ändern
+
+# src/launcher/ui/page_bindings.cpp:160
+Reset
+Zurücksetzen
+
+# src/launcher/ui/page_builds.cpp:44 (+1)
+Builds
+
+
+# src/launcher/ui/page_builds.cpp:44
+Download new versions of the game and switch between them. Your settings, saves and game files stay as they are.
+Neue Versionen des Spiels herunterladen und zwischen ihnen wechseln. Einstellungen, Spielstände und Spieldateien bleiben unverändert.
+
+# src/launcher/ui/page_builds.cpp:52
+In Use
+In Verwendung
+
+# src/launcher/ui/page_builds.cpp:55
+The build in the game folder was installed by hand, so its version is not known. Switching to a build below keeps a copy of it first.
+Der Build im Spielordner wurde manuell installiert, daher ist seine Version unbekannt. Beim Wechsel zu einem der Builds unten wird zuerst eine Kopie davon angelegt.
+
+# src/launcher/ui/page_builds.cpp:58
+{0} is available.
+{0} ist verfügbar.
+
+# src/launcher/ui/page_builds.cpp:61 (+2)
+Download and Switch
+Herunterladen und wechseln
+
+# src/launcher/ui/page_builds.cpp:64
+You have the newest build.
+Der neueste Build ist installiert.
+
+# src/launcher/ui/page_builds.cpp:64
+You have the newest release.
+Das neueste Release ist installiert.
+
+# src/launcher/ui/page_builds.cpp:66
+Include pre-releases in update notices
+Vorabversionen in Update-Hinweisen berücksichtigen
+
+# src/launcher/ui/page_builds.cpp:67
+Pre-releases are test builds with the newest fixes; releases are the ones considered stable. Both are always listed below.
+Vorabversionen sind Test-Builds mit den neuesten Korrekturen; Releases gelten als stabil. Beide werden unten immer aufgeführt.
+
+# src/launcher/ui/page_builds.cpp:68
+Check for new builds when the launcher opens
+Beim Start des Launchers nach neuen Builds suchen
+
+# src/launcher/ui/page_builds.cpp:79 (+6)
+Cancel
+Abbrechen
+
+# src/launcher/ui/page_builds.cpp:84
+Available Builds
+Verfügbare Builds
+
+# src/launcher/ui/page_builds.cpp:85 (+1)
+Refresh
+Aktualisieren
+
+# src/launcher/ui/page_builds.cpp:92
+Looking for builds...
+Suche nach Builds...
+
+# src/launcher/ui/page_builds.cpp:92
+No builds have been published yet.
+Es wurden noch keine Builds veröffentlicht.
+
+# src/launcher/ui/page_builds.cpp:92
+Press Refresh to see the builds published on GitHub.
+Auf "Aktualisieren" klicken, um die auf GitHub veröffentlichten Builds anzuzeigen.
+
+# src/launcher/ui/page_builds.cpp:110
+pre-release
+Vorabversion
+
+# src/launcher/ui/page_builds.cpp:112
+Notes
+Versionshinweise
+
+# src/launcher/ui/page_builds.cpp:116
+Open on GitHub
+Auf GitHub öffnen
+
+# src/launcher/ui/page_builds.cpp:126
+In use
+In Verwendung
+
+# src/launcher/ui/page_builds.cpp:127
+Downloaded
+Heruntergeladen
+
+# src/launcher/ui/page_builds.cpp:128
+No Windows build
+Kein Windows-Build
+
+# src/launcher/ui/page_builds.cpp:134 (+1)
+Switch
+Wechseln
+
+# src/launcher/ui/page_builds.cpp:137
+Download
+Herunterladen
+
+# src/launcher/ui/page_builds.cpp:142 (+2)
+Delete
+Löschen
+
+# src/launcher/ui/page_builds.cpp:157
+Your Previous Builds
+Frühere Builds
+
+# src/launcher/ui/page_builds.cpp:159
+Copies of the build that was in the game folder before the launcher first switched it.
+Kopien des Builds, der im Spielordner lag, bevor der Launcher ihn zum ersten Mal gewechselt hat.
+
+# src/launcher/ui/page_controls.cpp:14 (+2)
+Controls
+Steuerung
+
+# src/launcher/ui/page_controls.cpp:16
+Input
+Eingabe
+
+# src/launcher/ui/page_controls.cpp:17
+Input Mode
+Eingabemodus
+
+# src/launcher/ui/page_controls.cpp:17 (+3)
+Keyboard & Mouse
+Tastatur & Maus
+
+# src/launcher/ui/page_controls.cpp:17 (+3)
+Gamepad
+Controller
+
+# src/launcher/ui/page_controls.cpp:18
+Mouse Camera
+Mauskamera
+
+# src/launcher/ui/page_controls.cpp:18
+The mouse turns the camera in gameplay. Menus always get a pointer.
+Die Maus dreht im Spiel die Kamera. In Menüs gibt es immer einen Mauszeiger.
+
+# src/launcher/ui/page_controls.cpp:19 (+1)
+Mouse Sensitivity
+Mausempfindlichkeit
+
+# src/launcher/ui/page_controls.cpp:25
+Keys are changed on the Key Bindings page.
+Tasten werden auf der Seite "Tastenbelegung" geändert.
+
+# src/launcher/ui/page_dlc.cpp:62
+No Xbox 360 packages were found there. Pick the folder holding the DLC files (for example ...\\4D5307D2\\00000002).
+Dort wurden keine Xbox 360-Pakete gefunden. Den Ordner mit den DLC-Dateien auswählen (zum Beispiel ...\\4D5307D2\\00000002).
+
+# src/launcher/ui/page_dlc.cpp:76
+No Xbox 360 package was found there. The title update is a single file in ...\\4D5307D2\\000B0000.
+Dort wurde kein Xbox 360-Paket gefunden. Das Titel-Update ist eine einzelne Datei in ...\\4D5307D2\\000B0000.
+
+# src/launcher/ui/page_dlc.cpp:86
+Title Update
+Titel-Update
+
+# src/launcher/ui/page_dlc.cpp:89
+Installed. The game starts with the title update: Expert mode, and Rune Battle and Time Attack with the DLC that carries their levels.
+Installiert. Das Spiel startet mit dem Titel-Update: Expertenmodus sowie Runenschlacht und Angriff mit Limit mit dem DLC, das ihre Level enthält.
+
+# src/launcher/ui/page_dlc.cpp:91
+Remove Title Update
+Titel-Update entfernen
+
+# src/launcher/ui/page_dlc.cpp:94
+Remove the title update? The game starts without it.
+Titel-Update entfernen? Das Spiel startet dann ohne.
+
+# src/launcher/ui/page_dlc.cpp:95 (+2)
+Remove
+Entfernen
+
+# src/launcher/ui/page_dlc.cpp:106
+This version was released without its title-update build, so the update can't be installed. Pick a version that has it on the Builds page.
+Diese Version wurde ohne ihren Titel-Update-Build veröffentlicht, daher kann das Update nicht installiert werden. Auf der Seite Builds eine Version wählen, die ihn hat.
+
+# src/launcher/ui/page_dlc.cpp:108
+Not installed. The title update adds Expert mode, and Rune Battle and Time Attack in Multiplayer. Copy it from your console's hard drive (Content\\0000000000000000\\4D5307D2\\000B0000) or from Xenia's content folder (the same 4D5307D2\\000B0000), then install it here.
+Nicht installiert. Das Titel-Update bringt den Expertenmodus sowie Runenschlacht und Angriff mit Limit im Mehrspielermodus. Kopiere es von der Festplatte deiner Konsole (Content\\0000000000000000\\4D5307D2\\000B0000) oder aus dem Content-Ordner von Xenia (ebenfalls 4D5307D2\\000B0000) und installiere es dann hier.
+
+# src/launcher/ui/page_dlc.cpp:110
+Install Title Update...
+Titel-Update installieren...
+
+# src/launcher/ui/page_dlc.cpp:110
+Choose the Kameo title update package
+Kameo-Titel-Update-Paket auswählen
+
+# src/launcher/ui/page_dlc.cpp:112
+From Folder...
+Aus Ordner...
+
+# src/launcher/ui/page_dlc.cpp:112
+Choose the folder with the Kameo title update
+Ordner mit dem Kameo-Titel-Update auswählen
+
+# src/launcher/ui/page_dlc.cpp:127 (+1)
+Downloadable Content
+Herunterladbare Inhalte
+
+# src/launcher/ui/page_dlc.cpp:127
+Install Kameo's Xbox 360 DLC packages so the game can use them.
+Die Xbox 360-DLC-Pakete von Kameo installieren, damit das Spiel sie nutzen kann.
+
+# src/launcher/ui/page_dlc.cpp:130
+Install
+Installieren
+
+# src/launcher/ui/page_dlc.cpp:132
+Choose the folder you downloaded the DLC into, such as the one ending in 4D5307D2\\00000002, or pick the package files themselves. Every Kameo package found is unpacked, the title update included; anything else is skipped.
+Den Ordner auswählen, in den die DLCs heruntergeladen wurden, etwa den auf 4D5307D2\\00000002 endenden, oder direkt die Paketdateien. Jedes gefundene Kameo-Paket wird entpackt, auch das Titel-Update; alles andere wird übersprungen.
+
+# src/launcher/ui/page_dlc.cpp:134
+Install from Folder...
+Aus Ordner installieren...
+
+# src/launcher/ui/page_dlc.cpp:134
+Choose the folder with your Kameo DLC
+Ordner mit den Kameo-DLCs auswählen
+
+# src/launcher/ui/page_dlc.cpp:136
+Install Files...
+Dateien installieren...
+
+# src/launcher/ui/page_dlc.cpp:136
+Choose Kameo DLC package files
+Kameo-DLC-Paketdateien auswählen
+
+# src/launcher/ui/page_dlc.cpp:139
+Unpacking {0}
+{0} wird entpackt
+
+# src/launcher/ui/page_dlc.cpp:148
+Installed
+Installiert
+
+# src/launcher/ui/page_dlc.cpp:150 (+2)
+Open Folder
+Ordner öffnen
+
+# src/launcher/ui/page_dlc.cpp:161
+Nothing installed yet.
+Noch nichts installiert.
+
+# src/launcher/ui/page_dlc.cpp:163
+Name
+
+
+# src/launcher/ui/page_dlc.cpp:164
+In this version
+In dieser Version
+
+# src/launcher/ui/page_dlc.cpp:165 (+1)
+Size
+Größe
+
+# src/launcher/ui/page_dlc.cpp:187
+Remove {0}?
+{0} entfernen?
+
+# src/launcher/ui/page_mods.cpp:27
+Mod Packages
+Modpakete
+
+# src/launcher/ui/page_mods.cpp:37
+No mods yet. Put .kmod files in the mods folder (Open Folder), or make your own with the Blender add-on in the modkit folder.
+Noch keine Mods. .kmod-Dateien in den Ordner mods legen ("Ordner öffnen") oder mit dem Blender-Add-on im Ordner modkit eigene erstellen.
+
+# src/launcher/ui/page_mods.cpp:57
+by {0}
+von {0}
+
+# src/launcher/ui/page_mods.cpp:65
+Changes {0}
+Ändert {0}
+
+# src/launcher/ui/page_mods.cpp:78
+Enabled mods are applied when you press Play, into a copy of the game folder made of links; the game files themselves are never changed.
+Aktivierte Mods werden beim Klick auf "Spielen" in eine aus Verknüpfungen bestehende Kopie des Spielordners übernommen; die Spieldateien selbst werden nie verändert.
+
+# src/launcher/ui/page_mods.cpp:79
+Kameo skins replace her Bonus costumes: pick the costume in the storybook's Bonus pages.
+Kameo-Skins ersetzen ihre Bonuskostüme: Das Kostüm auf den Bonusseiten des Märchenbuchs auswählen.
+
+# src/launcher/ui/page_mods.cpp:103
+Shader Mods
+Shader-Mods
+
+# src/launcher/ui/page_mods.cpp:104
+Shader Editor
+Shader-Editor
+
+# src/launcher/ui/page_mods.cpp:118
+No shader mods yet. Put .kshader files in the shader_mods folder, or make your own with the Shader Editor.
+Noch keine Shader-Mods. .kshader-Dateien in den Ordner shader_mods legen oder mit dem Shader-Editor eigene erstellen.
+
+# src/launcher/ui/page_mods.cpp:136
+Shader mods change how things are drawn, and apply straight away, even with the game running.
+Shader-Mods ändern, wie Dinge gezeichnet werden, und wirken sofort, auch während das Spiel läuft.
+
+# src/launcher/ui/page_mods.cpp:146
+Cheats Were Used
+Cheats wurden verwendet
+
+# src/launcher/ui/page_mods.cpp:149
+Leaderboard scores are off because a cheat was used, and there is no backup of your saves from before it.
+Bestenlisten-Punkte sind deaktiviert, weil ein Cheat verwendet wurde, und es gibt keine Sicherung der Spielstände von davor.
+
+# src/launcher/ui/page_mods.cpp:151
+Leaderboard scores are off because a cheat was used. Your saves were backed up just before that. Restoring them turns the cheats off and lets you post scores again, but any progress since then goes back too. Your current saves are kept in the save_backups folder.
+Bestenlisten-Punkte sind deaktiviert, weil ein Cheat verwendet wurde. Die Spielstände wurden kurz davor gesichert. Werden sie wiederhergestellt, sind die Cheats aus und Punkte können wieder eingetragen werden, aber aller Fortschritt seitdem geht ebenfalls verloren. Die aktuellen Spielstände bleiben im Ordner save_backups erhalten.
+
+# src/launcher/ui/page_mods.cpp:153
+Restore Saves From Before Cheats
+Spielstände von vor den Cheats wiederherstellen
+
+# src/launcher/ui/page_mods.cpp:155
+Yes, Restore My Saves
+Ja, Spielstände wiederherstellen
+
+# src/launcher/ui/page_mods.cpp:158
+Your saves from before cheats are back.
+Die Spielstände von vor den Cheats sind wiederhergestellt.
+
+# src/launcher/ui/page_mods.cpp:172 (+2)
+Mods
+
+
+# src/launcher/ui/page_mods.cpp:177 (+1)
+Textures
+Texturen
+
+# src/launcher/ui/page_mods.cpp:178 (+1)
+Texture Replacements
+Ersatztexturen
+
+# src/launcher/ui/page_mods.cpp:178
+Load replacement textures from the textures folder.
+Ersatztexturen aus dem Ordner textures laden.
+
+# src/launcher/ui/page_mods.cpp:179 (+1)
+Texture Dumping
+Texturexport
+
+# src/launcher/ui/page_mods.cpp:179
+Save the game's textures as they load, for making replacements.
+Die Texturen des Spiels beim Laden speichern, um Ersatztexturen zu erstellen.
+
+# src/launcher/ui/page_mods.cpp:180 (+1)
+Movie Replacements
+Ersatzfilme
+
+# src/launcher/ui/page_mods.cpp:180
+Play movies/<name>.mp4 instead of fmv/<name>.bik, e.g. movies/kameoIntro.mp4. With a soundtrack it plays its own sound for its own length; without one only the picture is replaced.
+movies/<name>.mp4 statt fmv/<name>.bik abspielen, z. B. movies/kameoIntro.mp4. Mit Tonspur läuft das Video mit eigenem Ton in eigener Länge; ohne Tonspur wird nur das Bild ersetzt.
+
+# src/launcher/ui/page_mods.cpp:183 (+1)
+Gameplay
+Spiel
+
+# src/launcher/ui/page_mods.cpp:184 (+1)
+Story Split-screen
+Story im Split-Screen
+
+# src/launcher/ui/page_mods.cpp:185 (+1)
+Unlock All Extras
+Alle Extras freischalten
+
+# src/launcher/ui/page_mods.cpp:186 (+1)
+Skippable Cutscenes
+Überspringbare Zwischensequenzen
+
+# src/launcher/ui/page_mods.cpp:186
+Start skips in-engine cutscenes and every FMV.
+Start überspringt Zwischensequenzen in Spielgrafik und alle Videos.
+
+# src/launcher/ui/page_play.cpp:28
+Choose your copy of Kameo: Elements of Power
+Eigene Kopie von Kameo: Elements of Power auswählen
+
+# src/launcher/ui/page_play.cpp:30
+Xbox 360 disc image (*.iso)
+Xbox 360-Disc-Image (*.iso)
+
+# src/launcher/ui/page_play.cpp:30
+All files, for a Games on Demand package
+Alle Dateien (für ein Games on Demand-Paket)
+
+# src/launcher/ui/page_play.cpp:50
+Set Up Your Game
+Spiel einrichten
+
+# src/launcher/ui/page_play.cpp:53
+Unpacking your game. This can take a few minutes, and Play will be ready as soon as it finishes.
+Das Spiel wird entpackt. Das kann einige Minuten dauern; danach ist "Spielen" sofort bereit.
+
+# src/launcher/ui/page_play.cpp:57
+Kameo: RePowered runs from your own copy of the game. Choose your Xbox 360 disc image (.iso) or Games on Demand package, and the launcher will unpack it for you.
+Kameo: RePowered benötigt eine eigene Kopie des Spiels. Xbox 360-Disc-Image (.iso) oder Games on Demand-Paket auswählen, dann entpackt der Launcher es automatisch.
+
+# src/launcher/ui/page_play.cpp:58
+Choose Your Game...
+Spiel auswählen...
+
+# src/launcher/ui/page_play.cpp:73
+Welcome back
+Willkommen zurück
+
+# src/launcher/ui/page_play.cpp:73
+Choose how you want to play, then press Play.
+Spielweise wählen, dann auf "Spielen" klicken.
+
+# src/launcher/ui/page_play.cpp:79
+Pre-release {0} is available.
+Vorabversion {0} ist verfügbar.
+
+# src/launcher/ui/page_play.cpp:79
+Kameo RePowered {0} is available.
+Kameo RePowered {0} ist verfügbar.
+
+# src/launcher/ui/page_play.cpp:86
+See Builds
+Zu den Builds
+
+# src/launcher/ui/page_play.cpp:95
+WASD to move, the mouse turns the camera and points in menus. Controllers still work.
+WASD zum Bewegen, die Maus dreht die Kamera und zeigt in Menüs. Controller funktionieren weiterhin.
+
+# src/launcher/ui/page_play.cpp:97
+Play with a controller; the keyboard and mouse leave the game alone.
+Mit Controller spielen; Tastatur und Maus haben keinen Einfluss auf das Spiel.
+
+# src/launcher/ui/page_play.cpp:99 (+2)
+Display
+Anzeige
+
+# src/launcher/ui/page_play.cpp:102 (+2)
+Widescreen
+Breitbild
+
+# src/launcher/ui/page_play.cpp:102 (+1)
+A wider view that fills the screen instead of the original 16:9 picture.
+Ein breiteres Sichtfeld, das den Bildschirm füllt, statt des ursprünglichen 16:9-Bilds.
+
+# src/launcher/ui/page_play.cpp:110
+Crash Reports
+Absturzberichte
+
+# src/launcher/ui/page_play.cpp:112
+Completely optional. If the game crashes, it asks whether to send a report so the problem can be fixed, and nothing is sent unless you choose Send Report. Turn this off and it will never ask.
+Völlig freiwillig. Stürzt das Spiel ab, fragt es, ob ein Bericht gesendet werden soll, damit das Problem behoben werden kann. Gesendet wird nur, wenn "Bericht senden" gewählt wird. Ist dies ausgeschaltet, wird nie gefragt.
+
+# src/launcher/ui/page_play.cpp:114
+Offer to Send Crash Reports
+Senden von Absturzberichten anbieten
+
+# src/launcher/ui/page_play.cpp:123
+No DLC installed yet.
+Noch keine DLCs installiert.
+
+# src/launcher/ui/page_play.cpp:123
+{0} package(s) installed.
+{0} Paket(e) installiert.
+
+# src/launcher/ui/page_play.cpp:126
+Manage DLC
+DLCs verwalten
+
+# src/launcher/ui/page_video.cpp:12 (+1)
+Video
+
+
+# src/launcher/ui/page_video.cpp:20 (+2)
+Gamma
+
+
+# src/launcher/ui/page_video.cpp:20
+100% leaves the picture as the game draws it; higher brightens the midtones.
+Bei 100 % bleibt das Bild, wie das Spiel es zeichnet; höhere Werte hellen die Mitteltöne auf.
+
+# src/launcher/ui/page_video.cpp:21 (+1)
+HUD Layout
+HUD-Anordnung
+
+# src/launcher/ui/page_video.cpp:21 (+1)
+Stretched
+Gestreckt
+
+# src/launcher/ui/page_video.cpp:21 (+1)
+Centred 16:9
+Zentriert 16:9
+
+# src/launcher/ui/page_video.cpp:21 (+1)
+Screen Edges
+Bildschirmränder
+
+# src/launcher/ui/page_video.cpp:22 (+1)
+HUD Scale
+HUD-Größe
+
+# src/launcher/ui/page_video.cpp:22
+Each HUD element grows or shrinks toward its own corner or edge.
+Jedes HUD-Element wächst oder schrumpft zu seiner eigenen Ecke oder Kante hin.
+
+# src/launcher/ui/page_video.cpp:25 (+1)
+Graphics
+Grafik
+
+# src/launcher/ui/page_video.cpp:26 (+1)
+Renderer
+
+
+# src/launcher/ui/page_video.cpp:26
+Automatic
+Automatisch
+
+# src/launcher/ui/page_video.cpp:26
+Takes effect the next time the game starts. Automatic uses Direct3D 12 on Windows.
+Wird beim nächsten Spielstart wirksam. "Automatisch" verwendet unter Windows Direct3D 12.
+
+# src/launcher/ui/page_video.cpp:27 (+1)
+Anti-aliasing
+Kantenglättung
+
+# src/launcher/ui/page_video.cpp:27 (+5)
+Off
+Aus
+
+# src/launcher/ui/page_video.cpp:28 (+1)
+Anisotropic Filtering
+Anisotrope Filterung
+
+# src/launcher/ui/page_video.cpp:28 (+1)
+Game
+Spiel
+
+# src/launcher/ui/page_video.cpp:29 (+1)
+Shadows
+Schatten
+
+# src/launcher/ui/page_video.cpp:30 (+1)
+Shadow Edges
+Schattenkanten
+
+# src/launcher/ui/page_video.cpp:30 (+1)
+Pixelated
+Pixelig
+
+# src/launcher/ui/page_video.cpp:30 (+1)
+Smooth
+Weich
+
+# src/launcher/ui/page_video.cpp:31 (+1)
+Shadow Quality
+Schattenqualität
+
+# src/launcher/ui/page_video.cpp:31 (+1)
+Original
+
+
+# src/launcher/ui/page_video.cpp:31 (+1)
+High
+Hoch
+
+# src/launcher/ui/page_video.cpp:31 (+1)
+Ultra
+
+
+# src/launcher/ui/page_video.cpp:34 (+1)
+Effects
+Effekte
+
+# src/launcher/ui/page_video.cpp:35 (+1)
+Particles
+Partikel
+
+# src/launcher/ui/page_video.cpp:36 (+1)
+Grass
+Gras
+
+# src/launcher/ui/page_video.cpp:37 (+1)
+Fur
+Fell
+
+# src/launcher/ui/page_video.cpp:37
+The layered fur on furry characters and costume trim.
+Das mehrlagige Fell pelziger Figuren und Kostümbesätze.
+
+# src/launcher/ui/page_video.cpp:38 (+1)
+Dust Motes
+Schwebestaub
+
+# src/launcher/ui/page_video.cpp:38
+The floating dust and sparkles that hang in the air.
+Schwebender Staub und Funkeln in der Luft.
+
+# src/launcher/ui/page_video.cpp:39 (+1)
+Bloom
+
+
+# src/launcher/ui/page_video.cpp:40 (+1)
+Depth of Field
+Tiefenschärfe
+
+# src/launcher/ui/page_video.cpp:41 (+1)
+Heat Haze
+Hitzeschleier
+
+# src/launcher/ui/page_video.cpp:44
+Performance
+Leistung
+
+# src/launcher/ui/page_video.cpp:45 (+1)
+VSync
+
+
+# src/launcher/ui/page_video.cpp:45
+Wait for the display's refresh. Off uncaps the frame rate but may tear.
+Auf die Bildwiederholung des Monitors warten. "Aus" hebt die Bildratenbegrenzung auf, kann aber Tearing verursachen.
+
+# src/launcher/ui/page_video.cpp:46 (+1)
+FPS Counter
+FPS-Anzeige
+
+# src/launcher/ui/page_video.cpp:47 (+1)
+FPS Limit
+FPS-Limit
+
+# src/launcher/ui/page_video.cpp:50 (+1)
+Camera
+Kamera
+
+# src/launcher/ui/page_video.cpp:51 (+1)
+Camera Follow
+Kameraverfolgung
+
+# src/launcher/ui/page_video.cpp:51 (+1)
+Fixed Distance
+Fester Abstand
+
+# src/launcher/ui/page_video.cpp:51 (+1)
+Original (drifts)
+Original (driftet)
+
+# src/launcher/ui/page_video.cpp:51
+The original camera falls further behind and higher the longer you run.
+Die Originalkamera fällt immer weiter zurück und steigt höher, je länger man läuft.
+
+# src/launcher/ui/page_video.cpp:52 (+1)
+Auto-Level
+Auto-Ausrichtung
+
+# src/launcher/ui/page_video.cpp:52
+Tilt the camera back to its default angle while you move, as the original game did.
+Die Kamera während der Bewegung zurück in ihren Standardwinkel neigen, wie im Originalspiel.
+
+# src/launcher/ui/page_video.cpp:53 (+1)
+Field of View
+Sichtfeld
+
+# src/launcher/ui/page_video.cpp:53
+Degrees added to the gameplay camera's field of view. Cutscenes keep their own.
+Grad, die zum Sichtfeld der Spielkamera addiert werden. Zwischensequenzen behalten ihr eigenes.
+
+# src/launcher/ui/page_video.cpp:56
+Experimental
+Experimentell
+
+# src/launcher/ui/page_video.cpp:57 (+1)
+Normal Maps
+Normal-Maps
+
+# src/launcher/ui/page_video.cpp:58 (+1)
+Bump Maps
+Bump-Maps
+
+# src/launcher/ui/page_video.cpp:59 (+1)
+Specular
+Glanzlichter
+
+# src/launcher/ui/shell.cpp:75
+Play
+Spielen
+
+# src/launcher/ui/shell.cpp:81
+DLC
+
+
+# src/launcher/ui/shell.cpp:101
+PLAY
+SPIELEN
+
+# src/launcher/ui/shell.cpp:106
+Close launcher on Play
+Launcher beim Spielstart schließen
+
+# src/launcher/ui/shell.cpp:123
+Settings are saved as you change them to {0}.
+Einstellungen werden bei jeder Änderung in {0} gespeichert.
+
+# src/launcher/ui/widgets.cpp:152
+Restored the defaults on this page.
+Standardwerte dieser Seite wiederhergestellt.
+
+# src/launcher/ui/widgets.cpp:157 (+1)
+Display Mode
+Anzeigemodus
+
+# src/launcher/ui/widgets.cpp:158 (+1)
+Windowed
+Fenster
+
+# src/launcher/ui/widgets.cpp:158 (+1)
+Borderless
+Rahmenlos
+
+# src/launcher/ui/widgets.cpp:158 (+1)
+Fullscreen
+Vollbild
+
+# src/launcher/ui/widgets.cpp:169 (+1)
+Resolution
+Auflösung
+
+# src/launcher/ui/widgets.cpp:169
+The size the game renders at. A size of another shape than your window is shown with black bars.
+Die Größe, in der das Spiel rendert. Ein anderes Seitenverhältnis als das des Fensters wird mit schwarzen Balken angezeigt.
+
+# src/launcher/ui/widgets.cpp:173
+Match Window
+An Fenster anpassen
+
+# src/launcher/ui/widgets.cpp:174
+{0} x {1}  (Ultrawide)
+
+
+# src/shader_editor/editor.cpp:122
+{0} opened
+{0} geöffnet
+
+# src/shader_editor/editor.cpp:195
+{0} in {1} s, and saved
+{0} in {1} s, und gespeichert
+
+# src/shader_editor/editor.cpp:195
+{0} in {1} s, for this renderer only: Save before sharing it
+{0} in {1} s, nur für diesen Renderer: vor dem Weitergeben speichern
+
+# src/shader_editor/editor.cpp:210
+The mod's name, which is also its file's
+Name der Mod, zugleich ihr Dateiname
+
+# src/shader_editor/editor.cpp:212
+New
+Neu
+
+# src/shader_editor/editor.cpp:214
+Open...
+Öffnen...
+
+# src/shader_editor/editor.cpp:223
+No saved mods yet.
+Noch keine gespeicherten Mods.
+
+# src/shader_editor/editor.cpp:229
+Mods Folder
+Mod-Ordner
+
+# src/shader_editor/editor.cpp:236
+Start from...
+Vorlage wählen...
+
+# src/shader_editor/editor.cpp:243
+Undo
+Rückgängig
+
+# src/shader_editor/editor.cpp:245
+Ctrl+Z
+Strg+Z
+
+# src/shader_editor/editor.cpp:248
+Redo
+Wiederholen
+
+# src/shader_editor/editor.cpp:250
+Ctrl+Y
+Strg+Y
+
+# src/shader_editor/editor.cpp:254
+Frame All
+Alles einpassen
+
+# src/shader_editor/editor.cpp:255
+Home, or F with nothing selected
+Pos1, oder F ohne Auswahl
+
+# src/shader_editor/editor.cpp:257 (+3)
+Comment
+Kommentar
+
+# src/shader_editor/editor.cpp:264
+C on the canvas wraps the selection in a comment
+C auf der Arbeitsfläche umschließt die Auswahl mit einem Kommentar
+
+# src/shader_editor/editor.cpp:268
+Raw HLSL
+HLSL-Code
+
+# src/shader_editor/editor.cpp:276
+Live Update
+Live-Aktualisierung
+
+# src/shader_editor/editor.cpp:277
+Compiles and applies to the running game a moment after each edit
+Kompiliert nach jeder Änderung und wendet sie kurz darauf im laufenden Spiel an
+
+# src/shader_editor/editor.cpp:281
+Save
+Speichern
+
+# src/shader_editor/editor.cpp:283
+Compiles for both renderers and saves the mod; a running game picks it up
+Kompiliert für beide Renderer und speichert die Mod; ein laufendes Spiel übernimmt sie
+
+# src/shader_editor/editor.cpp:285
+Replace graph
+Graph ersetzen
+
+# src/shader_editor/editor.cpp:288
+Replace the graph with {0}?
+Graph durch {0} ersetzen?
+
+# src/shader_editor/editor.cpp:289
+Undo brings yours back.
+Mit "Rückgängig" lässt sich der bisherige wiederherstellen.
+
+# src/shader_editor/editor.cpp:290
+Replace
+Ersetzen
+
+# src/shader_editor/editor.cpp:297
+Keep Mine
+Meinen behalten
+
+# src/shader_editor/editor.cpp:311
+Search nodes
+Knoten suchen
+
+# src/shader_editor/editor.cpp:345
+Hold {0} and click the graph to place one.
+{0} halten und in den Graphen klicken, um einen zu platzieren.
+
+# src/shader_editor/editor.cpp:363 (+8)
+Colour
+Farbe
+
+# src/shader_editor/editor.cpp:369
+Details
+
+
+# src/shader_editor/editor.cpp:370
+Select a node to edit it.
+Einen Knoten zum Bearbeiten auswählen.
+
+# src/shader_editor/editor.cpp:371
+{0} nodes selected.
+{0} Knoten ausgewählt.
+
+# src/shader_editor/editor.cpp:384
+Parameter
+
+
+# src/shader_editor/editor.cpp:385
+Named constants are listed under Parameters, to tune without finding them in the graph
+Benannte Konstanten erscheinen unter "Parameter", um sie anzupassen, ohne sie im Graphen suchen zu müssen
+
+# src/shader_editor/editor.cpp:391
+Channel
+Kanal
+
+# src/shader_editor/editor.cpp:398
+Unwired inputs
+Unverbundene Eingänge
+
+# src/shader_editor/editor.cpp:401
+{0}: the surface's UV
+{0}: UV der Oberfläche
+
+# src/shader_editor/editor.cpp:418
+Parameters
+Parameter
+
+# src/shader_editor/editor.cpp:431
+Name a Number or Colour node to list it here.
+Einen Zahl- oder Farbknoten benennen, um ihn hier aufzuführen.
+
+# src/shader_editor/editor.cpp:445
+Applies to
+Gilt für
+
+# src/shader_editor/editor.cpp:447
+Preparing the game's shaders...
+Shader des Spiels werden vorbereitet...
+
+# src/shader_editor/editor.cpp:452
+Characters
+Figuren
+
+# src/shader_editor/editor.cpp:456
+Surfaces
+Oberflächen
+
+# src/shader_editor/editor.cpp:460
+Levels
+Level
+
+# src/shader_editor/editor.cpp:468 (+1)
+Also surfaces the game doesn't light
+Auch Oberflächen, die das Spiel nicht beleuchtet
+
+# src/shader_editor/editor.cpp:473
+Glows, effects and surfaces lit from within, such as lava. Their Game colour already has fog in it, and Base texture, Light and Normal aren't known.
+Leuchten, Effekte und von innen beleuchtete Oberflächen wie Lava. Ihre Spielfarbe enthält bereits Nebel, und Basistextur, Licht und Normal sind unbekannt.
+
+# src/shader_editor/editor.cpp:476
+{0} shaders. These choose the game's shaders, not objects, so anything else drawn with the same ones changes too.
+{0} Shader. Gewählt werden die Shader des Spiels, nicht Objekte; alles andere, das mit denselben Shadern gezeichnet wird, ändert sich mit.
+
+# src/shader_editor/editor.cpp:477
+{0} shaders, on this model alone: anything else drawn with them keeps the game's look.
+{0} Shader, nur an diesem Modell: Alles andere, das mit ihnen gezeichnet wird, behält die Optik des Spiels.
+
+# src/shader_editor/editor.cpp:482
+Compile log
+Kompilierprotokoll
+
+# src/shader_editor/editor.cpp:484
+Compiling... {0} of {1}
+Kompiliere... {0} von {1}
+
+# src/shader_editor/editor.cpp:485
+Save, or Live Update, compiles the shaders. Run the game to see them.
+"Speichern" oder "Live-Aktualisierung" kompiliert die Shader. Zum Ansehen das Spiel starten.
+
+# src/shader_editor/editor.cpp:527
+float3 Shade(ShadeInputs s) {  ... the body below ...  }   Helpers: ModKeyLight, ModStep, ModBands, ModFresnel, ModOutline, ModHalftone, ModLuminance, ModNoise (docs/modding.md).
+float3 Shade(ShadeInputs s) {  ... der Code unten ...  }   Hilfsfunktionen: ModKeyLight, ModStep, ModBands, ModFresnel, ModOutline, ModHalftone, ModLuminance, ModNoise (docs/modding.md).
+
+# src/shader_editor/model.cpp:58
+{0} is not a game archive
+{0} ist kein Spielarchiv
+
+# src/shader_editor/model.cpp:69
+{0} could not be unpacked
+{0} konnte nicht entpackt werden
+
+# src/shader_editor/model.cpp:522
+{0} could not be read
+{0} konnte nicht gelesen werden
+
+# src/shader_editor/model.cpp:546
+{0} has no model in it
+{0} enthält kein Modell
+
+# src/shader_editor/node_canvas.cpp:59
+Channel {0}
+Kanal {0}
+
+# src/shader_editor/node_canvas.cpp:60
+HLSL (Details panel)
+HLSL (Bereich Details)
+
+# src/shader_editor/node_canvas.cpp:242
+Search nodes...
+Knoten suchen...
+
+# src/shader_editor/node_canvas.cpp:258
+[{0} + click]
+[{0} + Klick]
+
+# src/shader_editor/node_canvas.cpp:430
+(surface UV)
+(UV der Oberfläche)
+
+# src/shader_editor/node_canvas.cpp:481
+right-click to add a node
+Rechtsklick fügt einen Knoten hinzu
+
+# src/shader_editor/preview.cpp:39
+Classic
+Klassisch
+
+# src/shader_editor/preview.cpp:39
+Gothic
+
+
+# src/shader_editor/preview.cpp:39
+Coyote
+Kojote
+
+# src/shader_editor/preview.cpp:39 (+1)
+Armored
+Gepanzert
+
+# src/shader_editor/preview.cpp:39 (+1)
+Fright Pack
+Gruselpaket
+
+# src/shader_editor/preview.cpp:40
+Masquerade #1
+Maskerade Nr. 1
+
+# src/shader_editor/preview.cpp:40
+Masquerade #2
+Maskerade Nr. 2
+
+# src/shader_editor/preview.cpp:40
+Masquerade #3
+Maskerade Nr. 3
+
+# src/shader_editor/preview.cpp:40
+Masquerade #4
+Maskerade Nr. 4
+
+# src/shader_editor/preview.cpp:40
+Masquerade #5
+Maskerade Nr. 5
+
+# src/shader_editor/preview.cpp:41
+Masquerade #6
+Maskerade Nr. 6
+
+# src/shader_editor/preview.cpp:41
+Masquerade #7
+Maskerade Nr. 7
+
+# src/shader_editor/preview.cpp:41
+Masquerade #8
+Maskerade Nr. 8
+
+# src/shader_editor/preview.cpp:41
+Masquerade #9
+Maskerade Nr. 9
+
+# src/shader_editor/preview.cpp:41
+Masquerade #10
+Maskerade Nr. 10
+
+# src/shader_editor/preview.cpp:42 (+1)
+Winter Warrior
+Winterkrieger
+
+# src/shader_editor/preview.cpp:42 (+1)
+Design-A-Skin
+
+
+# src/shader_editor/preview.cpp:57 (+1)
+Pummel Weed
+Kampfkraut
+
+# src/shader_editor/preview.cpp:57 (+1)
+Snare
+Beißer
+
+# src/shader_editor/preview.cpp:57 (+1)
+Rubble
+Trümmerschleuder
+
+# src/shader_editor/preview.cpp:58 (+1)
+Major Ruin
+General Schaden
+
+# src/shader_editor/preview.cpp:58 (+1)
+Deep Blue
+Greifer der Tiefe
+
+# src/shader_editor/preview.cpp:58 (+1)
+Flex
+
+
+# src/shader_editor/preview.cpp:59 (+1)
+40 Below
+Blizzard
+
+# src/shader_editor/preview.cpp:59 (+1)
+Chilla
+
+
+# src/shader_editor/preview.cpp:59 (+1)
+Thermite
+Thermit
+
+# src/shader_editor/preview.cpp:60 (+1)
+Ash
+Feuerechse
+
+# src/shader_editor/preview.cpp:143
+The preview's shader compiler failed.
+Der Shader-Compiler der Vorschau ist fehlgeschlagen.
+
+# src/shader_editor/preview.cpp:205 (+1)
+Kameo
+
+
+# src/shader_editor/preview.cpp:206
+Everyday
+Alltagsoutfit
+
+# src/shader_editor/preview.cpp:212
+Alternate
+Alternativ
+
+# src/shader_editor/preview.cpp:324
+Install the game to preview its characters.
+Das Spiel installieren, um seine Figuren in der Vorschau zu sehen.
+
+# src/shader_editor/preview.cpp:524
+Spin
+Drehen
+
+# src/shader_editor/preview.cpp:549
+Loading...
+Laden...
+
+# src/shader_editor/preview.cpp:552
+Drag to turn, right drag to move, wheel to zoom, double-click to frame.\nThe lighting stands in for a level's.
+Ziehen zum Drehen, mit rechts ziehen zum Verschieben, Mausrad zum Zoomen, Doppelklick zum Einpassen.\nDie Beleuchtung ersetzt die eines Levels.
+
+# src/shader_editor/shader_build.cpp:45
+Lava
+
+
+# src/shader_editor/shader_build.cpp:45
+Fire off the lava
+Feuer über der Lava
+
+# src/shader_editor/shader_build.cpp:98
+The game's shaders are missing from {0}; reinstall the game.
+In {0} fehlen die Shader des Spiels; das Spiel neu installieren.
+
+# src/shader_editor/shader_build.cpp:113
+The game's shader list could not be read.
+Die Shaderliste des Spiels konnte nicht gelesen werden.
+
+# src/shader_editor/shader_build.cpp:155
+{0}: new costume (everyday outfit)
+{0}: neues Kostüm (Alltagsoutfit)
+
+# src/shader_editor/shader_build.cpp:155
+{0}: new costume (standard look)
+{0}: neues Kostüm (Standardaussehen)
+
+# src/shader_editor/shader_build.cpp:161
+Shared objects
+Gemeinsame Objekte
+
+# src/shader_editor/shader_build.cpp:162
+All characters
+Alle Figuren
+
+# src/shader_editor/shader_build.cpp:163
+Everything in the game
+Alles im Spiel
+
+# src/shader_editor/shader_build.cpp:200
+The shader compiler is missing from {0}; reinstall the game.
+In {0} fehlt der Shader-Compiler; das Spiel neu installieren.
+
+# src/shader_editor/shader_build.cpp:204
+Choose something for the mod to apply to.
+Etwas auswählen, für das die Mod gelten soll.
+
+# src/shader_editor/shader_build.cpp:251
+The shader compiler did not start.
+Der Shader-Compiler ist nicht gestartet.
+
+# src/shader_editor/shader_build.cpp:273
+The shader compiler failed.
+Der Shader-Compiler ist fehlgeschlagen.
+
+# src/shader_editor/shader_build.cpp:316
+could not replace {0}: {1}
+{0} konnte nicht ersetzt werden: {1}
+
+# src/shader_editor/shader_build.cpp:319
+{0} shaders written to {1}
+{0} Shader in {1} geschrieben
+
+# src/shader_editor/shader_graph.cpp:29 (+1)
+Output
+Ausgabe
+
+# src/shader_editor/shader_graph.cpp:29
+The colour drawn. Fog and fades still follow where the game has them.
+Die gezeichnete Farbe. Nebel und Ausblendungen bleiben erhalten, wo das Spiel sie verwendet.
+
+# src/shader_editor/shader_graph.cpp:30
+Game colour
+Spielfarbe
+
+# src/shader_editor/shader_graph.cpp:30 (+8)
+Inputs
+Eingänge
+
+# src/shader_editor/shader_graph.cpp:30
+The pixel as the game lit it: its textures, lights and shadows. Wire this to Output to change nothing.
+Das Pixel, wie das Spiel es beleuchtet hat: mit Texturen, Lichtern und Schatten. Direkt mit Ausgabe verbunden, ändert sich nichts.
+
+# src/shader_editor/shader_graph.cpp:31
+Base texture
+Basistextur
+
+# src/shader_editor/shader_graph.cpp:31
+The surface's colour before lighting, with all its layers. Often paler than it looks in game: multiply in Light's colour to keep a level's mood. Using it makes the surface twice the work to draw.
+Die Farbe der Oberfläche vor der Beleuchtung, mit allen Ebenen. Oft blasser als im Spiel: Mit der Farbe von Licht multiplizieren, um die Stimmung eines Levels zu erhalten. Die Verwendung verdoppelt den Zeichenaufwand der Oberfläche.
+
+# src/shader_editor/shader_graph.cpp:32
+Light
+Licht
+
+# src/shader_editor/shader_graph.cpp:32
+The light on this pixel, with its shadows and shine: Game colour over Base texture. Using it makes the surface twice the work to draw.
+Das Licht auf diesem Pixel, mit Schatten und Glanz: Spielfarbe geteilt durch Basistextur. Die Verwendung verdoppelt den Zeichenaufwand der Oberfläche.
+
+# src/shader_editor/shader_graph.cpp:33 (+2)
+UV
+
+
+# src/shader_editor/shader_graph.cpp:33
+The surface's first texture coordinate, (u, v, 0).
+Die erste Texturkoordinate der Oberfläche, (u, v, 0).
+
+# src/shader_editor/shader_graph.cpp:34
+Screen position
+Bildschirmposition
+
+# src/shader_editor/shader_graph.cpp:34
+The pixel's position on screen, (x, y, 0) in pixels.
+Die Position des Pixels auf dem Bildschirm, (x, y, 0) in Pixeln.
+
+# src/shader_editor/shader_graph.cpp:35
+Key light
+Führungslicht
+
+# src/shader_editor/shader_graph.cpp:35 (+6)
+Lighting
+Beleuchtung
+
+# src/shader_editor/shader_graph.cpp:35 (+1)
+Towards camera
+Zur Kamera
+
+# src/shader_editor/shader_graph.cpp:35 (+1)
+Up
+Oben
+
+# src/shader_editor/shader_graph.cpp:35 (+1)
+Side
+Seite
+
+# src/shader_editor/shader_graph.cpp:35
+N.L for one light placed from the camera: 1 facing it, -1 facing away. It looks the same in every scene.
+N.L für ein von der Kamera aus platziertes Licht: 1 zugewandt, -1 abgewandt. Sieht in jeder Szene gleich aus.
+
+# src/shader_editor/shader_graph.cpp:36
+Sun light
+Sonnenlicht
+
+# src/shader_editor/shader_graph.cpp:36
+N.L for the level's own sun or main light: 1 facing it, -1 facing away.
+N.L für die Sonne oder das Hauptlicht des Levels: 1 zugewandt, -1 abgewandt.
+
+# src/shader_editor/shader_graph.cpp:37
+Rim
+Rand
+
+# src/shader_editor/shader_graph.cpp:37
+1 - N.V: 0 facing the camera, 1 at the silhouette (fresnel).
+1 - N.V: 0 zur Kamera gewandt, 1 an der Silhouette (Fresnel).
+
+# src/shader_editor/shader_graph.cpp:38
+Facing up
+Nach oben gewandt
+
+# src/shader_editor/shader_graph.cpp:38
+N.up: 1 facing the sky, -1 the ground.
+N.up: 1 zum Himmel gewandt, -1 zum Boden.
+
+# src/shader_editor/shader_graph.cpp:39
+Number
+Zahl
+
+# src/shader_editor/shader_graph.cpp:39 (+2)
+Constants
+Konstanten
+
+# src/shader_editor/shader_graph.cpp:39
+Value
+Wert
+
+# src/shader_editor/shader_graph.cpp:39
+A constant. Name it to list it on the Parameters panel.
+Eine Konstante. Benennen, um sie im Bereich "Parameter" aufzuführen.
+
+# src/shader_editor/shader_graph.cpp:40
+A constant colour. Name it to list it on the Parameters panel.
+Eine konstante Farbe. Benennen, um sie im Bereich "Parameter" aufzuführen.
+
+# src/shader_editor/shader_graph.cpp:41
+Add
+Addieren
+
+# src/shader_editor/shader_graph.cpp:41 (+23)
+Math
+Mathematik
+
+# src/shader_editor/shader_graph.cpp:42
+Subtract
+Subtrahieren
+
+# src/shader_editor/shader_graph.cpp:43
+Multiply
+Multiplizieren
+
+# src/shader_editor/shader_graph.cpp:44
+Divide
+Dividieren
+
+# src/shader_editor/shader_graph.cpp:45
+Mix
+Mischen
+
+# src/shader_editor/shader_graph.cpp:45 (+2)
+Amount
+Stärke
+
+# src/shader_editor/shader_graph.cpp:45
+A at amount 0, B at 1 (lerp).
+A bei Stärke 0, B bei 1 (lerp).
+
+# src/shader_editor/shader_graph.cpp:46
+One minus
+Eins minus
+
+# src/shader_editor/shader_graph.cpp:47
+Clamp 0..1
+Begrenzen 0..1
+
+# src/shader_editor/shader_graph.cpp:47
+X kept between 0 and 1 (saturate).
+X zwischen 0 und 1 gehalten (saturate).
+
+# src/shader_editor/shader_graph.cpp:48
+Power
+Potenz
+
+# src/shader_editor/shader_graph.cpp:48
+Exponent
+
+
+# src/shader_editor/shader_graph.cpp:48
+X to the power of Exponent.
+X hoch Exponent.
+
+# src/shader_editor/shader_graph.cpp:49 (+1)
+Min
+
+
+# src/shader_editor/shader_graph.cpp:49
+The smaller of A and B.
+Der kleinere Wert von A und B.
+
+# src/shader_editor/shader_graph.cpp:50 (+1)
+Max
+
+
+# src/shader_editor/shader_graph.cpp:50
+The larger of A and B.
+Der größere Wert von A und B.
+
+# src/shader_editor/shader_graph.cpp:51
+Step
+Stufe
+
+# src/shader_editor/shader_graph.cpp:51 (+5)
+Cel
+
+
+# src/shader_editor/shader_graph.cpp:51
+Edge
+Schwelle
+
+# src/shader_editor/shader_graph.cpp:51
+0 below Edge and 1 above, with a hard, antialiased edge.
+0 unter Schwelle und 1 darüber, mit harter, geglätteter Kante.
+
+# src/shader_editor/shader_graph.cpp:52
+Smooth step
+Weiche Stufe
+
+# src/shader_editor/shader_graph.cpp:52
+Edge 0
+Schwelle 0
+
+# src/shader_editor/shader_graph.cpp:52
+Edge 1
+Schwelle 1
+
+# src/shader_editor/shader_graph.cpp:52
+0 below Edge 0, 1 above Edge 1, smooth between.
+0 unter Schwelle 0, 1 über Schwelle 1, dazwischen weicher Übergang.
+
+# src/shader_editor/shader_graph.cpp:53
+Bands
+Bänder
+
+# src/shader_editor/shader_graph.cpp:53
+Count
+Anzahl
+
+# src/shader_editor/shader_graph.cpp:53
+X (0..1) cut into Count flat steps (posterize).
+X (0..1) in Anzahl flache Stufen zerlegt (Posterize).
+
+# src/shader_editor/shader_graph.cpp:54
+Desaturate
+Entsättigen
+
+# src/shader_editor/shader_graph.cpp:54
+Colour turned towards grey by Amount.
+Farbe um Stärke in Richtung Grau verschoben.
+
+# src/shader_editor/shader_graph.cpp:55
+Luminance
+Luminanz
+
+# src/shader_editor/shader_graph.cpp:55
+The colour's brightness.
+Die Helligkeit der Farbe.
+
+# src/shader_editor/shader_graph.cpp:56
+Halftone
+Halbtonraster
+
+# src/shader_editor/shader_graph.cpp:56
+Cell size
+Zellgröße
+
+# src/shader_editor/shader_graph.cpp:56
+1 inside comic dots that grow with Amount (0..1), Cell size pixels apart.
+1 innerhalb von Comic-Punkten, die mit Stärke (0..1) wachsen und Zellgröße Pixel auseinanderliegen.
+
+# src/shader_editor/shader_graph.cpp:57
+Custom HLSL
+Eigenes HLSL
+
+# src/shader_editor/shader_graph.cpp:57
+Advanced
+Erweitert
+
+# src/shader_editor/shader_graph.cpp:57
+Your own HLSL: a function body over ShadeInputs s and float3 a, b, c, d that returns a float3.
+Eigenes HLSL: ein Funktionsrumpf über ShadeInputs s und float3 a, b, c, d, der ein float3 zurückgibt.
+
+# src/shader_editor/shader_graph.cpp:58
+Reroute
+Umleitung
+
+# src/shader_editor/shader_graph.cpp:58 (+1)
+Utility
+Hilfsmittel
+
+# src/shader_editor/shader_graph.cpp:58
+Passes its input on, to tidy wires. Double-click a wire to add one.
+Gibt seinen Eingang weiter, um Verbindungen zu ordnen. Doppelklick auf eine Verbindung fügt eine Umleitung ein.
+
+# src/shader_editor/shader_graph.cpp:59
+Time
+Zeit
+
+# src/shader_editor/shader_graph.cpp:59 (+1)
+Speed
+Geschwindigkeit
+
+# src/shader_editor/shader_graph.cpp:59
+Seconds since the game started, times Speed; wraps every hour.
+Sekunden seit Spielstart, mal Geschwindigkeit; beginnt jede Stunde von vorn.
+
+# src/shader_editor/shader_graph.cpp:60
+Panner
+
+
+# src/shader_editor/shader_graph.cpp:60
+UV moving at Speed (u, v per second). Unwired, UV is the surface's.
+UV, bewegt mit Geschwindigkeit (u, v pro Sekunde). Unverbunden ist UV die der Oberfläche.
+
+# src/shader_editor/shader_graph.cpp:61
+Noise
+Rauschen
+
+# src/shader_editor/shader_graph.cpp:61
+Scale
+Skalierung
+
+# src/shader_editor/shader_graph.cpp:61
+Smooth value noise, 0..1, Scale cells across UV. Unwired, UV is the surface's.
+Weiches Value-Noise, 0..1, Skalierung Zellen über UV. Unverbunden ist UV die der Oberfläche.
+
+# src/shader_editor/shader_graph.cpp:62
+Sine
+Sinus
+
+# src/shader_editor/shader_graph.cpp:62 (+1)
+Period
+Periode
+
+# src/shader_editor/shader_graph.cpp:62
+sin(X), one wave every Period.
+sin(X), eine Welle pro Periode.
+
+# src/shader_editor/shader_graph.cpp:63
+Cosine
+Kosinus
+
+# src/shader_editor/shader_graph.cpp:63
+cos(X), one wave every Period.
+cos(X), eine Welle pro Periode.
+
+# src/shader_editor/shader_graph.cpp:64
+Frac
+
+
+# src/shader_editor/shader_graph.cpp:64
+The part of X after the decimal point.
+Der Teil von X nach dem Komma.
+
+# src/shader_editor/shader_graph.cpp:65
+Floor
+Abrunden
+
+# src/shader_editor/shader_graph.cpp:65
+X rounded down.
+X abgerundet.
+
+# src/shader_editor/shader_graph.cpp:66
+Ceil
+Aufrunden
+
+# src/shader_editor/shader_graph.cpp:66
+X rounded up.
+X aufgerundet.
+
+# src/shader_editor/shader_graph.cpp:67
+Abs
+Betrag
+
+# src/shader_editor/shader_graph.cpp:67
+X without its sign.
+X ohne Vorzeichen.
+
+# src/shader_editor/shader_graph.cpp:68
+Clamp
+Begrenzen
+
+# src/shader_editor/shader_graph.cpp:68
+X kept between Min and Max.
+X zwischen Min und Max gehalten.
+
+# src/shader_editor/shader_graph.cpp:69
+Dot
+Skalarprodukt
+
+# src/shader_editor/shader_graph.cpp:69
+The dot product of A and B.
+Das Skalarprodukt von A und B.
+
+# src/shader_editor/shader_graph.cpp:70
+Cross
+Kreuzprodukt
+
+# src/shader_editor/shader_graph.cpp:70
+The cross product of A and B.
+Das Kreuzprodukt von A und B.
+
+# src/shader_editor/shader_graph.cpp:71
+Normalize
+Normalisieren
+
+# src/shader_editor/shader_graph.cpp:71
+X scaled to length 1.
+X auf Länge 1 skaliert.
+
+# src/shader_editor/shader_graph.cpp:72
+Length
+Länge
+
+# src/shader_editor/shader_graph.cpp:72
+How long X is.
+Wie lang X ist.
+
+# src/shader_editor/shader_graph.cpp:73
+Distance
+Abstand
+
+# src/shader_editor/shader_graph.cpp:73
+How far A is from B.
+Wie weit A von B entfernt ist.
+
+# src/shader_editor/shader_graph.cpp:74
+Remap
+Bereich umrechnen
+
+# src/shader_editor/shader_graph.cpp:74
+In min
+Quelle min
+
+# src/shader_editor/shader_graph.cpp:74
+In max
+Quelle max
+
+# src/shader_editor/shader_graph.cpp:74
+Out min
+Ziel min
+
+# src/shader_editor/shader_graph.cpp:74
+Out max
+Ziel max
+
+# src/shader_editor/shader_graph.cpp:74
+X from In min..In max to Out min..Out max.
+X von Quelle min..Quelle max auf Ziel min..Ziel max umgerechnet.
+
+# src/shader_editor/shader_graph.cpp:75
+If
+Wenn
+
+# src/shader_editor/shader_graph.cpp:75
+Picks by comparing A and B (their first channels).
+Wählt durch Vergleich von A und B (jeweils erster Kanal).
+
+# src/shader_editor/shader_graph.cpp:76
+Component mask
+Komponentenmaske
+
+# src/shader_editor/shader_graph.cpp:76
+Channel (0 R, 1 G, 2 B)
+Kanal (0 R, 1 G, 2 B)
+
+# src/shader_editor/shader_graph.cpp:76
+One channel of X, in all three.
+Ein Kanal von X, in allen dreien.
+
+# src/shader_editor/shader_graph.cpp:77
+Make colour
+Farbe bilden
+
+# src/shader_editor/shader_graph.cpp:77
+A colour from three numbers (append).
+Eine Farbe aus drei Zahlen (append).
+
+# src/shader_editor/shader_graph.cpp:78
+Surface normal
+Oberflächennormale
+
+# src/shader_editor/shader_graph.cpp:78
+The direction the surface faces, in camera space, with normal maps where the game's shader uses them.
+Die Richtung, in die die Oberfläche zeigt, im Kameraraum, mit Normal-Maps, wo der Shader des Spiels sie nutzt.
+
+# src/shader_editor/shader_graph.cpp:79
+Camera vector
+Kameravektor
+
+# src/shader_editor/shader_graph.cpp:79
+The direction to the camera, camera space.
+Die Richtung zur Kamera, Kameraraum.
+
+# src/shader_editor/shader_graph.cpp:80
+Up vector
+Aufwärtsvektor
+
+# src/shader_editor/shader_graph.cpp:80
+The direction to the sky, camera space.
+Die Richtung zum Himmel, Kameraraum.
+
+# src/shader_editor/shader_graph.cpp:81
+Key vector
+Führungslichtvektor
+
+# src/shader_editor/shader_graph.cpp:81
+The direction to the light Key light uses, camera space.
+Die Richtung zu dem Licht, das Führungslicht verwendet, Kameraraum.
+
+# src/shader_editor/shader_graph.cpp:82
+Sun vector
+Sonnenvektor
+
+# src/shader_editor/shader_graph.cpp:82
+The direction to the level's sun or main light, camera space.
+Die Richtung zur Sonne oder zum Hauptlicht des Levels, Kameraraum.
+
+# src/shader_editor/shader_graph.cpp:83
+Sun colour
+Sonnenfarbe
+
+# src/shader_editor/shader_graph.cpp:83
+The colour of the level's sun or main light.
+Die Farbe der Sonne oder des Hauptlichts des Levels.
+
+# src/shader_editor/shader_graph.cpp:84
+Outline
+Kontur
+
+# src/shader_editor/shader_graph.cpp:84
+Width
+Breite
+
+# src/shader_editor/shader_graph.cpp:84
+1 on an inked line Width pixels wide just inside the silhouette, and round any part seen in front of another; 0 elsewhere. It keeps its width at any distance.
+1 auf einer Tuschelinie von Breite Pixeln direkt innerhalb der Silhouette und um jeden Teil, der vor einem anderen zu sehen ist; sonst 0. Die Breite bleibt in jeder Entfernung gleich.
+
+# src/shader_editor/shader_graph.cpp:255
+The game's own look
+Originaloptik des Spiels
+
+# src/shader_editor/shader_graph.cpp:255
+Cel shade
+Cel-Shading
+
+# src/shader_editor/shader_graph.cpp:255
+Toon bands
+Toon-Stufen
+
+# src/shader_editor/shader_graph.cpp:255
+Flat colour
+Einfarbig
+
+# src/shader_editor/shader_graph.cpp:255
+Rim lit
+Randlicht
+
+# src/shader_editor/shader_graph.cpp:255
+Comic halftone
+Comic-Raster
+
+# src/shader_editor/shader_graph.cpp:280
+Shadow tint
+Schattentönung
+
+# src/shader_editor/shader_graph.cpp:310
+Rim colour
+Randfarbe
+
+# src/shader_editor/shader_graph.cpp:343
+Ink width
+Linienbreite
+
+# src/shader_editor/shader_graph.cpp:349
+Ink colour
+Linienfarbe
+
+# src/shader_editor/shader_graph.cpp:432
+could not read {0}
+{0} konnte nicht gelesen werden
+
+# src/shader_editor/shader_graph.cpp:437
+{0} is not valid JSON
+{0} ist kein gültiges JSON
+
+# src/ui/string_overrides.cpp:43
+Rename
+Umbenennen
+
+# src/ui/tribe_shop.cpp:56
+Missed Elemental Fruit ({0}): {1} points
+Verpasste Elementarfrucht ({0}): {1} Punkte
+
+# src/ui/tribe_shop.cpp:57
+Missed Elixir of Life ({0}): {1} points
+Verpasstes Lebenselixier ({0}): {1} Punkte
+
+# src/ui/tribe_shop.cpp:58
+Missed Crystal Eye ({0}): {1} points
+Verpasstes Kristallauge ({0}): {1} Punkte
+
+# src/ui/tribe_shop.cpp:59
+Missed Costume ({0}): {1} points
+Verpasstes Kostüm ({0}): {1} Punkte
+
+# src/ui/tribe_shop.cpp:170
+You'll need a higher score than that.
+Dafür brauchst du einen höheren Punktestand.
+
+# src/ui/tribe_shop.cpp:173
+Buy this item for {0} points?
+Dieses Objekt für {0} Punkte kaufen?
+
+# src/ui/hud/achievement_toast.cpp:150
+Achievement Unlocked\n{0}   {1}G
+Erfolg freigeschaltet\n{0}   {1}G
+
+# src/ui/hud/button_prompts.cpp:39
+Arrows
+Pfeiltasten
+
+# src/ui/hud/button_prompts.cpp:40
+Wheel Down
+Mausrad runter
+
+# src/ui/hud/button_prompts.cpp:45
+Wheel Up
+Mausrad hoch
+
+# src/ui/hud/fps_counter.cpp:113
+{0} FPS
+
+
+# src/ui/hud/loading_overlay.cpp:181
+Gathering the elements: preparing shaders
+Die Elemente werden gesammelt: Shader werden vorbereitet
+
+# src/ui/hud/loading_overlay.cpp:181
+Awakening the kingdom: loading the game
+Das Königreich erwacht: Spiel wird geladen
+
+# src/ui/hud/shader_list_overlay.cpp:35
+Shaders (F7)
+Shader (F7)
+
+# src/ui/hud/shader_list_overlay.cpp:46
+Switch a shader off to see what it draws vanish. Only this switches off everything else listed. A shader's hash is what a shader mod targets.
+Einen Shader ausschalten, damit verschwindet, was er zeichnet. "Nur diesen" schaltet alle anderen aufgelisteten aus. Auf den Hash eines Shaders zielt eine Shader-Mod.
+
+# src/ui/hud/shader_list_overlay.cpp:48
+Filter by shader or texture hash
+Nach Shader- oder Textur-Hash filtern
+
+# src/ui/hud/shader_list_overlay.cpp:50
+On screen only
+Nur auf dem Bildschirm
+
+# src/ui/hud/shader_list_overlay.cpp:51
+Show all
+Alle anzeigen
+
+# src/ui/hud/shader_list_overlay.cpp:53
+Switch off all listed
+Alle aufgelisteten ausschalten
+
+# src/ui/hud/shader_list_overlay.cpp:57
+{0} shaders
+{0} Shader
+
+# src/ui/hud/shader_list_overlay.cpp:62 (+1)
+On
+Ein
+
+# src/ui/hud/shader_list_overlay.cpp:63
+Pixel shader
+Pixel-Shader
+
+# src/ui/hud/shader_list_overlay.cpp:64
+Draws
+Draw-Calls
+
+# src/ui/hud/shader_list_overlay.cpp:77
+off
+aus
+
+# src/ui/hud/shader_list_overlay.cpp:81
+none seen
+keine gesehen
+
+# src/ui/hud/shader_list_overlay.cpp:93
+Only this
+Nur diesen
+
+# src/ui/hud/shader_list_overlay.cpp:97
+Copy
+Kopieren
+
+# src/ui/name_entry/name_entry.cpp:70
+Space
+Leertaste
+
+# src/ui/name_entry/name_entry.cpp:70
+Done
+Fertig
+
+# src/ui/name_entry/name_entry.cpp:221
+Type a name   Bksp Delete   Enter Done   Esc Cancel
+Namen eingeben   Rück Löschen   Enter Fertig   Esc Abbrechen
+
+# src/ui/name_entry/name_entry.cpp:221
+{0} Type   {1} Delete   {2} Case   {3} Done
+{0} Eingabe   {1} Löschen   {2} Groß/Klein   {3} Fertig
+
+# src/ui/name_entry/name_entry.cpp:273
+Rename Saved Game
+Spielstand umbenennen
+
+# src/ui/pause_menu/achievements_page.cpp:63 (+1)
+Achievements
+Erfolge
+
+# src/ui/pause_menu/achievements_page.cpp:67
+No achievement data was found in the game's files.
+In den Spieldateien wurden keine Erfolgsdaten gefunden.
+
+# src/ui/pause_menu/achievements_page.cpp:80
+{0} of {1} unlocked   {2}G of {3}G
+{0} von {1} freigeschaltet   {2}G von {3}G
+
+# src/ui/pause_menu/collectible_tracker.cpp:22
+Fruit in This Area
+Früchte in diesem Gebiet
+
+# src/ui/pause_menu/collectible_tracker.cpp:22
+All Elemental Fruit
+Alle Elementarfrüchte
+
+# src/ui/pause_menu/collectible_tracker.cpp:23
+Elixirs in This Area
+Elixiere in diesem Gebiet
+
+# src/ui/pause_menu/collectible_tracker.cpp:23
+All Elixirs of Life
+Alle Lebenselixiere
+
+# src/ui/pause_menu/collectible_tracker.cpp:24
+Crystal Eye in This Area
+Kristallauge in diesem Gebiet
+
+# src/ui/pause_menu/collectible_tracker.cpp:24
+All Crystal Eyes
+Alle Kristallaugen
+
+# src/ui/pause_menu/collectible_tracker.cpp:25
+Costumes in This Area
+Kostüme in diesem Gebiet
+
+# src/ui/pause_menu/collectible_tracker.cpp:25
+All Costumes
+Alle Kostüme
+
+# src/ui/pause_menu/collectible_tracker.cpp:57 (+1)
+Collectibles
+Sammelobjekte
+
+# src/ui/pause_menu/collectible_tracker.cpp:65
+This Area
+Dieses Gebiet
+
+# src/ui/pause_menu/collectible_tracker.cpp:65
+Nothing to find
+Nichts zu finden
+
+# src/ui/pause_menu/collectible_tracker.cpp:67
+Missed, Sold in Tribe Shops
+Verpasst, in Stammesläden erhältlich
+
+# src/ui/pause_menu/level_select.cpp:32
+Thorn's Castle
+Thorns Burg
+
+# src/ui/pause_menu/level_select.cpp:32
+Enchanted Kingdom
+Verzaubertes Königreich
+
+# src/ui/pause_menu/level_select.cpp:32
+The Badlands
+Das Ödland
+
+# src/ui/pause_menu/level_select.cpp:32
+Forgotten Forest
+Vergessener Wald
+
+# src/ui/pause_menu/level_select.cpp:33
+Forest Temple
+Waldtempel
+
+# src/ui/pause_menu/level_select.cpp:33
+Mountain Falls
+Bergfälle
+
+# src/ui/pause_menu/level_select.cpp:33
+Mountain Rise
+Bergstieg
+
+# src/ui/pause_menu/level_select.cpp:33
+Water Temple
+Wassertempel
+
+# src/ui/pause_menu/level_select.cpp:34
+Snow Top Village
+Schneegipfeldorf
+
+# src/ui/pause_menu/level_select.cpp:34
+Snow Temple
+Schneetempel
+
+# src/ui/pause_menu/level_select.cpp:34
+Ogre's Swamp
+Ogers Sumpf
+
+# src/ui/pause_menu/level_select.cpp:34
+Thorn's Pass
+Thorns Pass
+
+# src/ui/pause_menu/level_select.cpp:35
+Thorn's Airship
+Thorns Luftschiff
+
+# src/ui/pause_menu/level_select.cpp:81 (+1)
+Level Select
+Levelauswahl
+
+# src/ui/pause_menu/level_select.cpp:95
+Start from "{0}"?
+Ab "{0}" beginnen?
+
+# src/ui/pause_menu/level_select.cpp:96
+The story is set to this point;\ncollectibles are kept.
+Die Geschichte wird auf diesen Punkt gesetzt;\nSammelobjekte bleiben erhalten.
+
+# src/ui/pause_menu/line_injection.cpp:34
+Brightness
+Helligkeit
+
+# src/ui/pause_menu/line_injection.cpp:54
+Resume
+Fortsetzen
+
+# src/ui/pause_menu/line_injection.cpp:62 (+1)
+Options
+Optionen
+
+# src/ui/pause_menu/option_values.cpp:97 (+1)
+English
+Englisch
+
+# src/ui/pause_menu/option_values.cpp:97
+Japanese
+Japanisch
+
+# src/ui/pause_menu/option_values.cpp:97
+German
+Deutsch
+
+# src/ui/pause_menu/option_values.cpp:97
+French
+Französisch
+
+# src/ui/pause_menu/option_values.cpp:97
+Spanish
+Spanisch
+
+# src/ui/pause_menu/option_values.cpp:97
+Italian
+Italienisch
+
+# src/ui/pause_menu/option_values.cpp:97
+Korean
+Koreanisch
+
+# src/ui/pause_menu/option_values.cpp:97
+Chinese
+Chinesisch
+
+# src/ui/pause_menu/option_values.cpp:122
+Press a key (wait 5s to cancel)
+Taste drücken (Abbruch nach 5 s)
+
+# src/ui/pause_menu/option_values.cpp:143
+Window
+Fenster
+
+# src/ui/pause_menu/option_values.cpp:144
+Window ({0}x{1})
+Fenster ({0}x{1})
+
+# src/ui/pause_menu/options_table.cpp:69
+Control Display
+Steuerungsanzeige
+
+# src/ui/pause_menu/options_table.cpp:70
+Score Display
+Punktestandanzeige
+
+# src/ui/pause_menu/options_table.cpp:71
+Map Display
+Kartenanzeige
+
+# src/ui/pause_menu/options_table.cpp:72 (+1)
+{0} (restart)
+{0} (Neustart)
+
+# src/ui/pause_menu/options_table.cpp:79
+3D Display
+3D-Anzeige
+
+# src/ui/pause_menu/options_table.cpp:79
+Side by Side
+Nebeneinander
+
+# src/ui/pause_menu/options_table.cpp:79
+Top and Bottom
+Übereinander
+
+# src/ui/pause_menu/options_table.cpp:79
+Red/Cyan Glasses
+Rot/Cyan-Brille
+
+# src/ui/pause_menu/options_table.cpp:80
+3D Depth
+3D-Tiefe
+
+# src/ui/pause_menu/options_table.cpp:81
+3D Focus
+3D-Fokus
+
+# src/ui/pause_menu/options_table.cpp:81
+On Kameo
+Auf Kameo
+
+# src/ui/pause_menu/options_table.cpp:82
+3D Swap Eyes
+3D: Augen tauschen
+
+# src/ui/pause_menu/options_table.cpp:99
+Player 1 Input
+Eingabe Spieler 1
+
+# src/ui/pause_menu/options_table.cpp:100
+Controller Preset
+Controller-Vorgabe
+
+# src/ui/pause_menu/options_table.cpp:100
+Button Position
+Nach Position
+
+# src/ui/pause_menu/options_table.cpp:100
+Button Labels
+Nach Beschriftung
+
+# src/ui/pause_menu/options_table.cpp:100
+Custom
+Benutzerdefiniert
+
+# src/ui/pause_menu/options_table.cpp:101
+Mouse Look
+Mauskamera
+
+# src/ui/pause_menu/options_table.cpp:103
+Player 1 Keyboard
+Tastatur Spieler 1
+
+# src/ui/pause_menu/options_table.cpp:103 (+1)
+Keyboard 2
+Tastatur 2
+
+# src/ui/pause_menu/options_table.cpp:103 (+1)
+Keyboard 1
+Tastatur 1
+
+# src/ui/pause_menu/options_table.cpp:104
+Player 1 Mouse
+Maus Spieler 1
+
+# src/ui/pause_menu/options_table.cpp:104 (+1)
+Mouse 2
+Maus 2
+
+# src/ui/pause_menu/options_table.cpp:104 (+1)
+Mouse 1
+Maus 1
+
+# src/ui/pause_menu/options_table.cpp:105
+Look Left/Right
+Blick links/rechts
+
+# src/ui/pause_menu/options_table.cpp:106
+Look Up/Down
+Blick hoch/runter
+
+# src/ui/pause_menu/options_table.cpp:109
+Default
+Standard
+
+# src/ui/pause_menu/options_table.cpp:111
+Costume
+Kostüm
+
+# src/ui/pause_menu/options_table.cpp:113
+Player 2 Input
+Eingabe Spieler 2
+
+# src/ui/pause_menu/options_table.cpp:114
+Split-Screen Layout
+Split-Screen-Anordnung
+
+# src/ui/pause_menu/options_table.cpp:115
+Player 2 Keyboard
+Tastatur Spieler 2
+
+# src/ui/pause_menu/options_table.cpp:116
+Player 2 Mouse
+Maus Spieler 2
+
+# src/ui/pause_menu/options_table.cpp:117
+Player 2 Aim X
+Zielen X (Spieler 2)
+
+# src/ui/pause_menu/options_table.cpp:117 (+1)
+Inverted
+Umgekehrt
+
+# src/ui/pause_menu/options_table.cpp:117 (+1)
+Normal
+
+
+# src/ui/pause_menu/options_table.cpp:118
+Player 2 Aim Y
+Zielen Y (Spieler 2)
+
+# src/ui/pause_menu/options_table.cpp:119
+Player Pushing
+Push-Partner
+
+# src/ui/pause_menu/options_table.cpp:120
+Friendly Fire
+Attack-Partner
+
+# src/ui/pause_menu/options_table.cpp:122
+Hints
+Hinweise
+
+# src/ui/pause_menu/options_table.cpp:125
+All Warriors & Upgrades
+Alle Krieger & Erweiterungen
+
+# src/ui/pause_menu/options_table.cpp:134
+ Button
+ Taste
+
+# src/ui/pause_menu/options_table.cpp:135
+ Button
+ Taste
+
+# src/ui/pause_menu/options_table.cpp:136
+ Button
+ Taste
+
+# src/ui/pause_menu/options_table.cpp:137
+ Button
+ Taste
+
+# src/ui/pause_menu/options_table.cpp:154
+ Action
+ Aktion
+
+# src/ui/pause_menu/options_table.cpp:155
+ Action
+ Aktion
+
+# src/ui/pause_menu/options_table.cpp:156
+ Action
+ Aktion
+
+# src/ui/pause_menu/options_table.cpp:157
+ Action
+ Aktion
+
+# src/ui/pause_menu/options_table.cpp:170
+Move Up
+Nach oben
+
+# src/ui/pause_menu/options_table.cpp:171
+Move Down
+Nach unten
+
+# src/ui/pause_menu/pages.cpp:29
+Split-screen
+Split-Screen
+
+# src/ui/pause_menu/pages.cpp:33
+HUD
+
+
+# src/ui/pause_menu/pages.cpp:35
+Materials
+Materialien
+
+# src/ui/pause_menu/pages.cpp:38
+Controller Bindings
+Controller-Belegung
+
+# src/ui/pause_menu/pages.cpp:51
+Credits
+Mitwirkende
+
+# src/ui/pause_menu/pages.cpp:52
+Restore All Defaults
+Alle Standardwerte wiederherstellen
+
+# src/ui/pause_menu/pages.cpp:72
+Brightness & Gamma
+Helligkeit & Gamma
+
+# src/ui/pause_menu/quit_prompt.cpp:98
+Quit to Menu
+Zum Hauptmenü
+
+# src/ui/pause_menu/quit_prompt.cpp:99
+Quit Application
+Anwendung beenden
+
+# src/ui/pause_menu/quit_prompt.cpp:100
+Restart Game
+Spiel neu starten
+
+# src/ui/pause_menu/quit_prompt.cpp:110
+Press  to restart the game\n\nPress  to quit the application
+Drücke , um das Spiel neu zu starten\n\nDrücke , um die Anwendung zu beenden
+
+# src/ui/pause_menu/restore_defaults.cpp:75
+Restore all settings to their defaults?
+Alle Einstellungen auf die Standardwerte zurücksetzen?
+
+# src/ui/pause_menu/restore_defaults.cpp:76
+Restore {0} to defaults?
+{0} auf Standardwerte zurücksetzen?

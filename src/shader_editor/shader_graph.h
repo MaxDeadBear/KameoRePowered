@@ -155,6 +155,8 @@ ShaderGraph MakePreset(Preset preset);
 struct ShaderMod {
   ShaderGraph graph;
   std::vector<std::string> targets;
+  // Also surfaces the game doesn't light: glows, effects, lava.
+  bool unlit = false;
 };
 bool SaveMod(const ShaderMod& mod, const std::filesystem::path& path, std::string& error);
 std::optional<ShaderMod> LoadMod(const std::filesystem::path& path, std::string& error);

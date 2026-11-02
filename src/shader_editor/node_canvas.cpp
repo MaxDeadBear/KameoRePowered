@@ -7,7 +7,12 @@
 #include <map>
 #include <string_view>
 
+#include "core/localization.h"
+
 namespace kameo::shader_editor {
+
+using l10n::Tr;
+using l10n::TrFormat;
 
 namespace {
 
@@ -43,7 +48,7 @@ std::string Title(const Node& n) {
   if (n.kind == NodeKind::kFloat) return n.name.empty() ? Number(n.settings[0]) : std::format("{} ({})", n.name, Number(n.settings[0]));
   if (n.kind == NodeKind::kColor && !n.name.empty()) return n.name;
   if (n.kind == NodeKind::kReroute) return "";
-  return Info(n.kind).name;
+  return Tr(Info(n.kind).name);
 }
 
 // The lines under the pins: settings and their values, which the Details panel edits.
@@ -51,9 +56,9 @@ std::vector<std::string> Summary(const Node& n) {
   std::vector<std::string> lines;
   const NodeInfo& info = Info(n.kind);
   if (n.kind == NodeKind::kFloat || n.kind == NodeKind::kColor) return lines;
-  if (n.kind == NodeKind::kComponentMask) return {std::string("Channel ") + "RGB"[std::clamp(int(n.settings[0]), 0, 2)]};
-  if (n.kind == NodeKind::kCustom) return {"HLSL (Details panel)"};
-  for (size_t i = 0; i < info.settings.size() && i < n.settings.size(); ++i) lines.push_back(std::format("{}  {}", info.settings[i], Number(n.settings[i])));
+  if (n.kind == NodeKind::kComponentMask) return {TrFormat("Channel {0}", {std::string(1, "RGB"[std::clamp(int(n.settings[0]), 0, 2)])})};
+  if (n.kind == NodeKind::kCustom) return {Tr("HLSL (Details panel)")};
+  for (size_t i = 0; i < info.settings.size() && i < n.settings.size(); ++i) lines.push_back(std::format("{}  {}", Tr(info.settings[i]), Number(n.settings[i])));
   return lines;
 }
 
@@ -67,7 +72,7 @@ Layout Measure(const Node& n) {
   float w = std::max(kMinWidth, TextWidth(kText, Title(n)) + 40);
   for (size_t i = 0; i < info.inputs.size(); ++i) {
     const std::string value = n.inputs.size() > i ? ValueText(n.inputs[i]) : std::string();
-    w = std::max(w, TextWidth(kText, info.inputs[i]) + TextWidth(kText - 2, value) + 70);
+    w = std::max(w, TextWidth(kText, Tr(info.inputs[i])) + TextWidth(kText - 2, value) + 70);
   }
   const std::vector<std::string> summary = Summary(n);
   for (const std::string& s : summary) w = std::max(w, TextWidth(kText - 2, s) + 30);
@@ -234,7 +239,7 @@ bool NodeCanvas::DrawMenu(ShaderGraph& graph) {
   char buffer[128] = {};
   std::snprintf(buffer, sizeof(buffer), "%s", search_.c_str());
   ImGui::SetNextItemWidth(-1);
-  const bool enter = ImGui::InputTextWithHint("##search", "Search nodes...", buffer, sizeof(buffer), ImGuiInputTextFlags_EnterReturnsTrue);
+  const bool enter = ImGui::InputTextWithHint("##search", Tr("Search nodes..."), buffer, sizeof(buffer), ImGuiInputTextFlags_EnterReturnsTrue);
   search_ = buffer;
   const std::string needle = Lower(search_);
   std::optional<NodeKind> chosen;
@@ -245,14 +250,14 @@ bool NodeCanvas::DrawMenu(ShaderGraph& graph) {
     for (int k = 0; k < int(NodeKind::kCount); ++k) {
       const NodeInfo& info = Info(NodeKind(k));
       if (std::string_view(info.category) != category) continue;
-      if (!needle.empty() && Lower(info.name).find(needle) == std::string::npos && Lower(info.category).find(needle) == std::string::npos) continue;
+      if (!needle.empty() && Lower(Tr(info.name)).find(needle) == std::string::npos && Lower(Tr(info.category)).find(needle) == std::string::npos) continue;
       // A wire from an input wants a node with an output; every node but Output has one.
       if (menu_link_ && menu_link_->input >= 0 && NodeKind(k) == NodeKind::kOutput) continue;
-      if (!header) ImGui::TextDisabled("%s", category), header = true;
+      if (!header) ImGui::TextDisabled("%s", Tr(category)), header = true;
       if (!first) first = NodeKind(k);
-      const std::string label = info.hotkey ? std::format("  {}   [{} + click]", info.name, info.hotkey) : std::format("  {}", info.name);
+      const std::string label = info.hotkey ? std::format("  {}   {}", Tr(info.name), TrFormat("[{0} + click]", {std::string_view(&info.hotkey, 1)})) : std::format("  {}", Tr(info.name));
       if (ImGui::Selectable(label.c_str())) chosen = NodeKind(k);
-      if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", info.help);
+      if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", Tr(info.help));
     }
   }
   ImGui::EndChild();
@@ -420,10 +425,10 @@ bool NodeCanvas::Draw(ShaderGraph& graph) {
       dl->AddCircleFilled(p, kPin * zoom_, wired ? kWire : kBody);
       dl->AddCircle(p, kPin * zoom_, hot ? kSelected : kWire, 12, 1.5f);
       if (!text) continue;
-      dl->AddText(imfont, font, ImVec2(p.x + 10 * zoom_, p.y - font * 0.55f), kLabel, info.inputs[i]);
+      dl->AddText(imfont, font, ImVec2(p.x + 10 * zoom_, p.y - font * 0.55f), kLabel, Tr(info.inputs[i]));
       if (!wired) {
-        const std::string value = i == 0 && info.uv_input ? std::string("(surface UV)") : "(" + ValueText(n.inputs[i]) + ")";
-        dl->AddText(imfont, font * 0.9f, ImVec2(p.x + 16 * zoom_ + TextWidth(font, info.inputs[i]), p.y - font * 0.5f), kFaint, value.c_str());
+        const std::string value = i == 0 && info.uv_input ? std::string(Tr("(surface UV)")) : "(" + ValueText(n.inputs[i]) + ")";
+        dl->AddText(imfont, font * 0.9f, ImVec2(p.x + 16 * zoom_ + TextWidth(font, Tr(info.inputs[i])), p.y - font * 0.5f), kFaint, value.c_str());
       }
     }
     int row = int(info.inputs.size());
@@ -473,7 +478,7 @@ bool NodeCanvas::Draw(ShaderGraph& graph) {
     dl->AddRectFilled(to_map(l.x, l.y), to_map(l.x + l.w, l.y + l.h), Selected(n.id) ? kSelected : CategoryColour(Info(n.kind).category));
   }
   dl->AddRect(to_map(view0.x, view0.y), to_map(view1.x, view1.y), IM_COL32_WHITE);
-  dl->AddText(ImVec2(origin_.x + 10, origin_.y + size_.y - 24), kFaint, std::format("{}%   right-click to add a node", int(std::round(zoom_ * 100))).c_str());
+  dl->AddText(ImVec2(origin_.x + 10, origin_.y + size_.y - 24), kFaint, std::format("{}%   {}", int(std::round(zoom_ * 100)), Tr("right-click to add a node")).c_str());
   dl->PopClipRect();
 
   // Mouse.
@@ -634,6 +639,7 @@ bool NodeCanvas::Draw(ShaderGraph& graph) {
       // A comment around the selection, or at the mouse.
       Comment c;
       c.id = graph.next_id++;
+      c.text = Tr("Comment");
       float x0 = 1e9f, y0 = 1e9f, x1 = -1e9f, y1 = -1e9f;
       for (const int id : selected_)
         if (layouts.count(id)) x0 = std::min(x0, layouts[id].x), y0 = std::min(y0, layouts[id].y), x1 = std::max(x1, layouts[id].x + layouts[id].w), y1 = std::max(y1, layouts[id].y + layouts[id].h);

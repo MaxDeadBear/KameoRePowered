@@ -82,7 +82,15 @@ float kameo::ui::WindowTextScale(uint8_t* base, uint32_t text_object) {
     if (tag == std::u16string::npos || line_height <= 0.0f) return 1.0f;
     int32_t size = 0;
     for (size_t at = tag + 6; at < text.size() && text[at] >= u'0' && text[at] <= u'9'; ++at) size = size * 10 + (text[at] - u'0');
-    return std::clamp(std::round(float(size) * 0.943f / line_height), 1.0f, 4.0f);
+    const float scale = std::clamp(std::round(float(size) * 0.943f / line_height), 1.0f, 4.0f);
+#if KAMEO_TU
+    // The title update's online pages (Quick Match, Custom Match, Join Friend, Host game and the pages under them)
+    // record their lines as one full-size line where the other storybook menus record two half-size ones, though they
+    // draw onto the page exactly alike: the same screen point lands at the same page coordinate on both. Measured from
+    // the line count those read as unscaled, so the pointer fell a line low; they are drawn at the menus' own 2.
+    if (scale == 1.0f && lines == 1 && RenderedOntoBookPage(text_object) && std::abs(LoadFloat(base, item + kItemHeight) - float(size)) < 1.0f) return 2.0f;
+#endif
+    return scale;
   }
   return 1.0f;
 }

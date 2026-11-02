@@ -24,7 +24,8 @@ struct InstalledDlc {
 
 // Where the runtime keeps saves and DLC: user_data_root from kameorepowered.toml, or Documents\kameorepowered.
 std::filesystem::path ContentRoot(const std::filesystem::path& game_folder);
-std::vector<InstalledDlc> ListInstalledDlc(const std::filesystem::path& content_root);
+// title_update says whether the title update is installed, which the packs carrying its levels and text need.
+std::vector<InstalledDlc> ListInstalledDlc(const std::filesystem::path& content_root, bool title_update);
 bool RemoveDlc(const std::filesystem::path& content_root, const std::string& file_name, std::string& error);
 
 // Every LIVE, PIRS or CON package in a folder (searched through its subfolders) or the file itself.
@@ -35,20 +36,25 @@ class DlcInstaller {
  public:
   ~DlcInstaller();
 
-  void Start(std::vector<std::filesystem::path> packages, std::filesystem::path content_root);
+  // game_folder holds assets, where a title-update package goes (title_update.h).
+  void Start(std::vector<std::filesystem::path> packages, std::filesystem::path content_root, std::filesystem::path game_folder);
   bool running() const { return running_.load(); }
   // Fraction of all bytes unpacked so far, 0 to 1.
   float progress() const;
   std::string current() const;
   // One line per package once the run has finished: what was installed and what was skipped and why.
   std::vector<std::string> TakeResults();
+  // How many packages of the last run were skipped or failed, since the result lines are in the player's language.
+  int failures() const { return failures_.load(); }
 
  private:
   void Run(std::vector<std::filesystem::path> packages, std::filesystem::path content_root);
   bool InstallOne(const std::filesystem::path& package, const std::filesystem::path& content_root, std::string& message);
 
+  std::filesystem::path game_folder_;
   std::thread thread_;
   std::atomic<bool> running_{false};
+  std::atomic<int> failures_{0};
   std::atomic<uint64_t> done_bytes_{0};
   std::atomic<uint64_t> total_bytes_{0};
   mutable std::mutex mutex_;

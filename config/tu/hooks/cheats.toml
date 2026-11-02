@@ -1,0 +1,74 @@
+# Translated from config/hooks/cheats.toml for the title-update build by tools/tu/translate.py.
+[[midasm_hook]]
+address = 0x82180F38
+name = "KameoInfiniteEnergy"
+registers = ["r3"]
+
+[[midasm_hook]]
+address = 0x82180DB0
+name = "KameoInfiniteEnergyCurrent"
+registers = ["r3"]
+return = true
+
+[[midasm_hook]]
+address = 0x82181018
+name = "KameoInfiniteEnergyMax"
+registers = ["r3"]
+return = true
+
+[[midasm_hook]]
+address = 0x82180D60
+name = "KameoRefillMeterFloat"
+registers = ["r31", "r28"]
+after_instruction = true
+
+[[midasm_hook]]
+address = 0x82180D9C
+name = "KameoRefillMeterFloat"
+registers = ["r31", "r28"]
+after_instruction = true
+
+[[midasm_hook]]
+address = 0x82180C38
+name = "KameoRefillMeterFloatPlus4"
+registers = ["r31", "r28"]
+after_instruction = true
+
+[[midasm_hook]]
+address = 0x82180C54
+name = "KameoRefillMeterFloatPlus4"
+registers = ["r31", "r28"]
+after_instruction = true
+
+[[midasm_hook]]
+address = 0x821809CC
+name = "KameoRefillHealth"
+registers = ["r29"]
+after_instruction = true
+
+[[midasm_hook]]
+address = 0x821809D8
+name = "KameoRefillHealth"
+registers = ["r29"]
+after_instruction = true
+
+[[midasm_hook]]
+address = 0x821809F8
+name = "KameoRefillHealth"
+registers = ["r29"]
+after_instruction = true
+
+[[midasm_hook]]
+address = 0x8217F938
+name = "KameoAddScore"
+registers = ["r11"]
+after_instruction = true
+
+[[midasm_hook]]
+address = 0x821D98E0
+name = "KameoOneShotDamage"
+registers = ["r28", "f1"]
+after_instruction = true
+
+# DROPPED KameoUnlockAllWarriors at 8217CD20: kaiSackPopulate rewritten; unlock-all-warriors not ported
+

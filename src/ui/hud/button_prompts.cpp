@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <utility>
 
+#include "core/localization.h"
 #include "input/input.h"
 #include "input/input_internal.h"
 #include "ui/hud/key_labels.h"
@@ -35,13 +36,13 @@ std::u16string KeyboardButtonLabel(uint8_t* base, uint32_t tag) {
     case u'Y': return KeyLabel(KameoKeybindForSave("keybind_y"));
     case u'D':
     case u'R':
-      if (name == u"DPAD") return u"Arrows";
-      return menu ? u"Wheel Down" : KeyLabel(KameoKeybindForSave("keybind_right_trigger"));
+      if (name == u"DPAD") return kameo::l10n::Tr(u"Arrows");
+      return menu ? kameo::l10n::Tr(u"Wheel Down") : KeyLabel(KameoKeybindForSave("keybind_right_trigger"));
     case u'G':
     case u'I':
     case u'L':
     case u'S':
-      return menu ? u"Wheel Up" : KeyLabel(KameoKeybindForSave("keybind_left_trigger"));
+      return menu ? kameo::l10n::Tr(u"Wheel Up") : KeyLabel(KameoKeybindForSave("keybind_left_trigger"));
     case u'b':
       if (name == u"black") return KeyLabel(KameoKeybindForSave("keybind_right_shoulder"));
       if (name == u"back") return KeyLabel(KameoKeybindForSave("keybind_back"));

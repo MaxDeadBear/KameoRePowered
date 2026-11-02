@@ -4,6 +4,7 @@
 #include <cmath>
 #include <string>
 
+#include "core/localization.h"
 #include "input/input.h"
 #include "ui/pause_menu/pause_menu_internal.h"
 
@@ -62,7 +63,29 @@ extern "C" REX_FUNC(sub_823F1690) {
       if (!c) break;
       caution.push_back(c);
     }
-    if (const size_t prompt = caution.find(u"\n\nPress"); prompt != std::u16string::npos) caution.resize(prompt);
+    // The warning ends where the button hints start: at the line holding the first button, or in Japanese, which
+    // keeps the hints in the warning's line, after the sentence before it.
+    size_t button = caution.find(u"{button=");
+    for (size_t i = 0; i < caution.size() && i < button; ++i) {
+      if (caution[i] >= 0xE000 && caution[i] <= 0xE0FF) button = i;
+    }
+    size_t text_start = 0;
+    while (text_start < caution.size() && caution[text_start] == u'{') {
+      const size_t close = caution.find(u'}', text_start);
+      if (close == std::u16string::npos) break;
+      text_start = close + 1;
+    }
+    if (button != std::u16string::npos && button > text_start) {
+      size_t cut = caution.rfind(u'\n', button);
+      if (cut == std::u16string::npos || cut < text_start) {
+        cut = caution.find_last_of(u"。.!！", button);
+        if (cut != std::u16string::npos) ++cut;
+      }
+      if (cut != std::u16string::npos && cut > text_start) {
+        caution.resize(cut);
+        while (!caution.empty() && caution.back() == u'\n') caution.pop_back();
+      }
+    }
     PPCContext clear = ctx;
     clear.r3.u64 = text_object;
     sub_82107510(clear, base);
@@ -72,10 +95,10 @@ extern "C" REX_FUNC(sub_823F1690) {
     AddTextItem(ctx, base, window, 0, 0, title, 0, false);
     if (const uint32_t text = GuestWideString(caution + u"\n")) AddTextItem(ctx, base, window, 0, 0, text, 0, false);
     constexpr const char16_t* kLineStyle = u"{alignment='centre' size='35'}";
-    if (const uint32_t text = GuestWideString(std::u16string(kLineStyle) + u"Quit to Menu")) AddTextItem(ctx, base, window, kItemQuitConfirm, 0, text, kReturnToLobbyCallback, true);
-    if (const uint32_t text = GuestWideString(std::u16string(kLineStyle) + u"Quit Application")) AddTextItem(ctx, base, window, kItemQuitApplication, 0, text, kPauseMenuPressACallback, true);
-    if (const uint32_t text = GuestWideString(std::u16string(kLineStyle) + u"Restart Game")) AddTextItem(ctx, base, window, kItemRestartGame, 0, text, kPauseMenuPressACallback, true);
-    if (const uint32_t text = GuestWideString(std::u16string(kLineStyle) + u"Back")) AddTextItem(ctx, base, window, kItemQuitBack, 0, text, kQuitBackCallback, true);
+    if (const uint32_t text = GuestWideString(std::u16string(kLineStyle) + kameo::l10n::Tr(u"Quit to Menu"))) AddTextItem(ctx, base, window, kItemQuitConfirm, 0, text, kReturnToLobbyCallback, true);
+    if (const uint32_t text = GuestWideString(std::u16string(kLineStyle) + kameo::l10n::Tr(u"Quit Application"))) AddTextItem(ctx, base, window, kItemQuitApplication, 0, text, kPauseMenuPressACallback, true);
+    if (const uint32_t text = GuestWideString(std::u16string(kLineStyle) + kameo::l10n::Tr(u"Restart Game"))) AddTextItem(ctx, base, window, kItemRestartGame, 0, text, kPauseMenuPressACallback, true);
+    if (const uint32_t text = GuestWideString(std::u16string(kLineStyle) + kameo::l10n::Tr(u"Back"))) AddTextItem(ctx, base, window, kItemQuitBack, 0, text, kQuitBackCallback, true);
     // The cursor starts on Back so a stray click never quits.
     REX_STORE_U8(REX_LOAD_U32(text_object + kTextMenu) + kMenuSelectedIndex, 3);
     FitQuitWindow(base, text_object);
@@ -84,6 +107,6 @@ extern "C" REX_FUNC(sub_823F1690) {
   uint32_t last = 0;
   for (uint32_t item = REX_LOAD_U32(text_object + kTextFirstItem); item; item = REX_LOAD_U32(item + kItemNext)) last = item;
   // The leading newline repeats the blank line the game puts between its own prompts; U+E002 is the X glyph characterButtonCallback draws after A (E000) and B (E001).
-  if (const uint32_t text = WithLeadingTags(base, last ? REX_LOAD_U32(last + kItemText) : 0, u"\nPress \uE002 to restart the game\n\nPress \uE003 to quit the application")) AddTextItem(ctx, base, window, 0, 0, text, 0, false);
+  if (const uint32_t text = WithLeadingTags(base, last ? REX_LOAD_U32(last + kItemText) : 0, u"\n" + kameo::l10n::Tr(u"Press \uE002 to restart the game\n\nPress \uE003 to quit the application"))) AddTextItem(ctx, base, window, 0, 0, text, 0, false);
   FitQuitWindow(base, text_object);
 }

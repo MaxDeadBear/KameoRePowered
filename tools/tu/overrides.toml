@@ -1,0 +1,54 @@
+# Hand-settled vanilla -> title-update addresses for translate.py, where the automatic maps found no twin or a wrong
+# one. Keys and values are hex addresses without 0x. Each entry says how it was checked.
+
+[functions]
+# The CRT routines rexcrt replaces: found by their bytes (branches masked), identical library code in both builds.
+"82527D00" = "8255D400"  # memcpy
+"825266A0" = "8255BDA0"  # memmove
+"82528270" = "8255D970"  # memset
+"8252A528" = "8255FA08"  # memcpy_s
+"8252A460" = "8255F940"  # memmove_s
+"82528120" = "8255D820"  # XMemCpy
+# objectAlternativeModelFindNext: same walk over the model list, its licence check now takes (model, 1).
+"8224F4D0" = "8225E3B0"
+# levelNameTextWindowReady: its call list matches the title update's 824975F8 call for call but one.
+"824452F8" = "824975F8"
+# j_XamShowKeyboardUI: the one-branch stub to the import thunk whose record names xam ordinal 0x2C1 (XamShowKeyboardUI):
+# 826CEE0C in vanilla, 8270763C in the update, which added imports before it. Called from the profile screen's tick.
+"8251ED98" = "82554408"
+
+[midasm]
+# Before "mr r30,r3" after XGetLanguage (vanilla: "mr r31,r3"); the hook rewrites r3.
+"820B5228" = { address = "820B5F10", registers = ["r3"] }
+# Same stfs as the first KameoRefillMeterFloat in this function, which keeps the meter pointer pair in r31/r28.
+"8217F1AC" = { address = "82180D9C", registers = ["r31", "r28"] }
+# objectAskObject(…, 0xC83E1D4) in PlayerHitsCalcDamageFocus: vanilla returns fmr f1,f31 after it, the title update
+# reloads f1 from the stack, so the damage is overridden in f1 right after that load.
+"821CAA28" = { address = "821D98E0", registers = ["r28", "f1"], after_instruction = true }
+# kaiSackPopulate was rewritten (no twin above 0.35 similarity): the unlock-all-warriors cheat isn't ported yet.
+"8217CD20" = { drop = true, why = "kaiSackPopulate rewritten; unlock-all-warriors not ported" }
+# storybookCurrentGameDisplayCorrupt was split into new functions with the title update's co-op modes.
+"823C1A58" = { drop = true, why = "storybook co-op display rewritten; story split-screen storybook gate not ported" }
+# objectAlternativeModelUnlockedCheck(name): the update's check (8225E158) takes the skin record and notes its unlock
+# event at +236, so KameoUnlockDlc is a function hook there in src/engine/dlc/dlc.cpp instead. The matcher once paired
+# this with 8225EDB0, which is _freeCurrentAlternativeModel; the hook returned from it at once, so a skin change never
+# freed the skin before and the next one never finished loading.
+"8224F458" = { drop = true, why = "the update's unlock check takes the skin record; hooked as a function in dlc.cpp" }
+# databaseLoadLevel call loading a DLC model: checked by hand, the title update makes the same call at 8225F29C.
+"82250540" = { address = "8225F29C", jump_address_on_true = "8225F2A0" }
+
+[data]
+# Per-player arrays (four players) whose code indexes them at runtime, so only their first elements are named in the
+# code the maps were built from: each element keeps its offset from the mapped start.
+"82884F3A" = "828E19A2"  # u16[4] at 82884F38 -> 828E19A0
+"82884F3C" = "828E19A4"
+"82884F3E" = "828E19A6"
+"8288549C" = "828E1C10"  # u32[4] at 82885498 -> 828E1C0C
+"828854A0" = "828E1C14"
+"828854A4" = "828E1C18"
+"8289AED2" = "828F814A"  # u16[4] at 8289AED0 -> 828F8148
+"8289AED4" = "828F814C"
+"8289AED6" = "828F814E"
+"8289BA6E" = "828F8DA6"  # u16 run from 8289BA64 -> 828F8D9C
+"8289BA70" = "828F8DA8"
+"8289BA72" = "828F8DAA"

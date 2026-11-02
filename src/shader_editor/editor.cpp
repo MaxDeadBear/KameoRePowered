@@ -11,9 +11,14 @@
 
 #include <imgui.h>
 
+#include "core/localization.h"
+
 namespace fs = std::filesystem;
 
 namespace kameo::shader_editor {
+
+using l10n::Tr;
+using l10n::TrFormat;
 
 namespace {
 
@@ -114,7 +119,7 @@ void Editor::Open(const fs::path& path) {
   Replaced();
   last_source_.clear();
   live_pending_ = false;
-  log_ = std::format("{} opened", name_);
+  log_ = TrFormat("{0} opened", {name_});
   log_ok_ = true;
   Changed();
 }
@@ -164,6 +169,7 @@ void Editor::Build(bool full) {
   request.shaders = source_.Shaders(mod_.targets);
   request.meshes = source_.Meshes(mod_.targets);
   request.model_type = source_.CostumeModel(mod_.targets);
+  request.unlit = mod_.unlit || source_.NeedsUnlit(mod_.targets);
   request.out = ModsFolder() / (file + kPackageExtension);
   const bool vulkan = GameUsesVulkan();
   request.dxil = full || !vulkan;
@@ -185,7 +191,8 @@ void Editor::Build(bool full) {
     std::string log;
     const bool ok = BuildMod(source_, request, log, &build_done_);
     const double seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - build_started_).count();
-    if (ok) log += std::format(" in {:.1f} s{}", seconds, full ? ", and saved" : ", for this renderer only: Save before sharing it");
+    const std::string took = std::format("{:.1f}", seconds);
+    if (ok) log = full ? TrFormat("{0} in {1} s, and saved", {log, took}) : TrFormat("{0} in {1} s, for this renderer only: Save before sharing it", {log, took});
     return std::pair(ok, log);
   });
 }
@@ -200,11 +207,11 @@ void Editor::Finish() {
 void Editor::DrawToolbar() {
   ImGui::SetNextItemWidth(200);
   InputLine("##name", name_);
-  ImGui::SetItemTooltip("The mod's name, which is also its file's");
+  ImGui::SetItemTooltip("%s", Tr("The mod's name, which is also its file's"));
   ImGui::SameLine();
-  if (ImGui::Button("New")) New();
+  if (ImGui::Button(Tr("New"))) New();
   ImGui::SameLine();
-  if (ImGui::Button("Open...")) {
+  if (ImGui::Button(Tr("Open..."))) {
     saved_.clear();
     std::error_code ec;
     for (const auto& entry : fs::directory_iterator(ModsFolder(), ec))
@@ -213,51 +220,52 @@ void Editor::DrawToolbar() {
     ImGui::OpenPopup("open mod");
   }
   if (ImGui::BeginPopup("open mod")) {
-    if (saved_.empty()) ImGui::TextDisabled("No saved mods yet.");
+    if (saved_.empty()) ImGui::TextDisabled("%s", Tr("No saved mods yet."));
     for (const fs::path& path : saved_)
       if (ImGui::Selectable(path.stem().string().c_str())) Open(path);
     ImGui::EndPopup();
   }
   ImGui::SameLine();
-  if (ImGui::Button("Mods Folder")) {
+  if (ImGui::Button(Tr("Mods Folder"))) {
     std::error_code ec;
     fs::create_directories(ModsFolder(), ec);
     ShellExecuteW(nullptr, L"open", ModsFolder().c_str(), nullptr, nullptr, SW_SHOWNORMAL);
   }
   ImGui::SameLine();
   ImGui::SetNextItemWidth(170);
-  if (ImGui::BeginCombo("##preset", "Start from...")) {
+  if (ImGui::BeginCombo("##preset", Tr("Start from..."))) {
     for (int p = 0; p < int(Preset::kCount); ++p)
-      if (ImGui::Selectable(PresetName(Preset(p)))) pending_preset_ = p;
+      if (ImGui::Selectable(Tr(PresetName(Preset(p))))) pending_preset_ = p;
     ImGui::EndCombo();
   }
   ImGui::SameLine();
   ImGui::BeginDisabled(history_.at == 0);
-  if (ImGui::Button("Undo")) Step(-1);
+  if (ImGui::Button(Tr("Undo"))) Step(-1);
   ImGui::EndDisabled();
-  ImGui::SetItemTooltip("Ctrl+Z");
+  ImGui::SetItemTooltip("%s", Tr("Ctrl+Z"));
   ImGui::SameLine();
   ImGui::BeginDisabled(history_.at + 1 >= history_.states.size());
-  if (ImGui::Button("Redo")) Step(1);
+  if (ImGui::Button(Tr("Redo"))) Step(1);
   ImGui::EndDisabled();
-  ImGui::SetItemTooltip("Ctrl+Y");
+  ImGui::SetItemTooltip("%s", Tr("Ctrl+Y"));
   ShaderGraph& g = mod_.graph;
   ImGui::SameLine();
   ImGui::BeginDisabled(g.raw);
-  if (ImGui::Button("Frame All")) canvas_.FrameAll();
-  ImGui::SetItemTooltip("Home, or F with nothing selected");
+  if (ImGui::Button(Tr("Frame All"))) canvas_.FrameAll();
+  ImGui::SetItemTooltip("%s", Tr("Home, or F with nothing selected"));
   ImGui::SameLine();
-  if (ImGui::Button("Comment")) {
+  if (ImGui::Button(Tr("Comment"))) {
     Comment c;
     c.id = g.next_id++;
+    c.text = Tr("Comment");
     c.x = 0, c.y = -60;
     g.comments.push_back(c);
   }
-  ImGui::SetItemTooltip("C on the canvas wraps the selection in a comment");
+  ImGui::SetItemTooltip("%s", Tr("C on the canvas wraps the selection in a comment"));
   ImGui::EndDisabled();
   ImGui::SameLine();
   bool raw = g.raw;
-  if (ImGui::Checkbox("Raw HLSL", &raw)) {
+  if (ImGui::Checkbox(Tr("Raw HLSL"), &raw)) {
     if (raw && g.raw_code.empty()) {
       g.raw_code = GraphBody(g);
       if (g.raw_code.empty()) g.raw_code = kRawTemplate;
@@ -265,27 +273,28 @@ void Editor::DrawToolbar() {
     g.raw = raw;
   }
   ImGui::SameLine();
-  ImGui::Checkbox("Live Update", &live_);
-  ImGui::SetItemTooltip("Compiles and applies to the running game a moment after each edit");
+  ImGui::Checkbox(Tr("Live Update"), &live_);
+  ImGui::SetItemTooltip("%s", Tr("Compiles and applies to the running game a moment after each edit"));
   ImGui::SameLine();
   const bool building = build_.valid();
   ImGui::BeginDisabled(building || !ready_ || mod_.targets.empty());
-  if (ImGui::Button("Save")) Build(true);
+  if (ImGui::Button(Tr("Save"))) Build(true);
   ImGui::EndDisabled();
-  ImGui::SetItemTooltip("Compiles for both renderers and saves the mod; a running game picks it up");
+  ImGui::SetItemTooltip("%s", Tr("Compiles for both renderers and saves the mod; a running game picks it up"));
 
-  if (pending_preset_ >= 0) ImGui::OpenPopup("replace graph");
-  if (ImGui::BeginPopupModal("replace graph", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-    ImGui::Text("Replace the graph with %s?", PresetName(Preset(std::max(pending_preset_, 0))));
-    ImGui::TextDisabled("Undo brings yours back.");
-    if (ImGui::Button("Replace")) {
+  const std::string replace_title = std::string(Tr("Replace graph")) + "###replace graph";
+  if (pending_preset_ >= 0) ImGui::OpenPopup(replace_title.c_str());
+  if (ImGui::BeginPopupModal(replace_title.c_str(), nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+    ImGui::TextUnformatted(TrFormat("Replace the graph with {0}?", {Tr(PresetName(Preset(std::max(pending_preset_, 0))))}).c_str());
+    ImGui::TextDisabled("%s", Tr("Undo brings yours back."));
+    if (ImGui::Button(Tr("Replace"))) {
       mod_.graph = MakePreset(Preset(pending_preset_));
       canvas_.Reset();
       pending_preset_ = -1;
       ImGui::CloseCurrentPopup();
     }
     ImGui::SameLine();
-    if (ImGui::Button("Keep Mine")) {
+    if (ImGui::Button(Tr("Keep Mine"))) {
       pending_preset_ = -1;
       ImGui::CloseCurrentPopup();
     }
@@ -299,7 +308,7 @@ void Editor::DrawPalette() {
   InputLine("##palette_search", palette_search_);
   if (palette_search_.empty()) {
     const ImVec2 at = ImGui::GetItemRectMin();
-    ImGui::GetWindowDrawList()->AddText(ImVec2(at.x + 6, at.y + 3), ImGui::GetColorU32(ImGuiCol_TextDisabled), "Search nodes");
+    ImGui::GetWindowDrawList()->AddText(ImVec2(at.x + 6, at.y + 3), ImGui::GetColorU32(ImGuiCol_TextDisabled), Tr("Search nodes"));
   }
   const std::string needle = Lower(palette_search_);
   ImGui::BeginChild("##palette_list");
@@ -308,30 +317,34 @@ void Editor::DrawPalette() {
     for (int k = 0; k < int(NodeKind::kCount); ++k) {
       const NodeInfo& info = Info(NodeKind(k));
       if (NodeKind(k) == NodeKind::kOutput || std::string_view(info.category) != category) continue;
-      if (!needle.empty() && Lower(info.name).find(needle) == std::string::npos && Lower(info.help).find(needle) == std::string::npos) continue;
+      if (!needle.empty() && Lower(Tr(info.name)).find(needle) == std::string::npos && Lower(Tr(info.help)).find(needle) == std::string::npos) continue;
       kinds.push_back(k);
     }
     if (kinds.empty()) continue;
     const uint32_t c = CategoryColour(category);
     ImGui::PushStyleColor(ImGuiCol_Header, (c & 0x00FFFFFF) | 0x90000000);
     ImGui::SetNextItemOpen(true, needle.empty() ? ImGuiCond_Once : ImGuiCond_Always);
-    const bool open = ImGui::CollapsingHeader(category);
+    const bool open = ImGui::CollapsingHeader(Tr(category));
     ImGui::PopStyleColor();
     if (!open) continue;
     for (const int k : kinds) {
       const NodeInfo& info = Info(NodeKind(k));
       ImGui::PushID(k);
-      if (ImGui::Selectable(info.name, false, ImGuiSelectableFlags_AllowDoubleClick) && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) canvas_.AddAtCentre(mod_.graph, NodeKind(k));
+      if (ImGui::Selectable(Tr(info.name), false, ImGuiSelectableFlags_AllowDoubleClick) && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) canvas_.AddAtCentre(mod_.graph, NodeKind(k));
       if (info.hotkey) {
         const char key[2] = {info.hotkey, 0};
         ImGui::GetWindowDrawList()->AddText(ImVec2(ImGui::GetItemRectMax().x - ImGui::CalcTextSize(key).x - 4, ImGui::GetItemRectMin().y), ImGui::GetColorU32(ImGuiCol_TextDisabled), key);
       }
       if (ImGui::BeginDragDropSource()) {
         ImGui::SetDragDropPayload("KAMEO_NODE", &k, sizeof(k));
-        ImGui::TextUnformatted(info.name);
+        ImGui::TextUnformatted(Tr(info.name));
         ImGui::EndDragDropSource();
       }
-      if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort)) ImGui::SetTooltip(info.hotkey ? "%s\n\nHold %c and click the graph to place one." : "%s", info.help, info.hotkey);
+      if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort)) {
+        std::string tip = Tr(info.help);
+        if (info.hotkey) tip += "\n\n" + TrFormat("Hold {0} and click the graph to place one.", {std::string_view(&info.hotkey, 1)});
+        ImGui::SetTooltip("%s", tip.c_str());
+      }
       ImGui::PopID();
     }
   }
@@ -344,49 +357,50 @@ void Editor::DrawDetails() {
   if (canvas_.selected_comment()) {
     for (Comment& c : g.comments) {
       if (c.id != canvas_.selected_comment()) continue;
-      ImGui::SeparatorText("Comment");
+      ImGui::SeparatorText(Tr("Comment"));
       ImGui::SetNextItemWidth(-1);
       InputLine("##comment_text", c.text);
-      ImGui::ColorEdit3("Colour", c.colour.data());
-      ImGui::DragFloat2("Size", &c.w, 1.0f, 120.0f, 4000.0f);
+      ImGui::ColorEdit3(Tr("Colour"), c.colour.data());
+      ImGui::DragFloat2(Tr("Size"), &c.w, 1.0f, 120.0f, 4000.0f);
     }
     return;
   }
   if (canvas_.selected().size() != 1) {
-    ImGui::SeparatorText("Details");
-    ImGui::TextDisabled(canvas_.selected().empty() ? "Select a node to edit it." : "%d nodes selected.", int(canvas_.selected().size()));
+    ImGui::SeparatorText(Tr("Details"));
+    if (canvas_.selected().empty()) ImGui::TextDisabled("%s", Tr("Select a node to edit it."));
+    else ImGui::TextDisabled("%s", TrFormat("{0} nodes selected.", {std::to_string(canvas_.selected().size())}).c_str());
     return;
   }
   Node* n = g.Find(canvas_.selected()[0]);
   if (!n) return;
   const NodeInfo& info = Info(n->kind);
-  ImGui::SeparatorText(info.name);
+  ImGui::SeparatorText(Tr(info.name));
   ImGui::PushTextWrapPos(0);
-  ImGui::TextDisabled("%s", info.help);
+  ImGui::TextDisabled("%s", Tr(info.help));
   ImGui::PopTextWrapPos();
   ImGui::PushID(n->id);
   ImGui::PushItemWidth(-90);
   if (n->kind == NodeKind::kFloat || n->kind == NodeKind::kColor) {
-    InputLine("Parameter", n->name);
-    ImGui::SetItemTooltip("Named constants are listed under Parameters, to tune without finding them in the graph");
+    InputLine(Tr("Parameter"), n->name);
+    ImGui::SetItemTooltip("%s", Tr("Named constants are listed under Parameters, to tune without finding them in the graph"));
   }
   if (n->kind == NodeKind::kColor) {
-    ImGui::ColorEdit3("Colour", n->settings.data(), ImGuiColorEditFlags_Float);
+    ImGui::ColorEdit3(Tr("Colour"), n->settings.data(), ImGuiColorEditFlags_Float);
   } else if (n->kind == NodeKind::kComponentMask) {
     int channel = std::clamp(int(n->settings[0]), 0, 2);
-    if (ImGui::Combo("Channel", &channel, "R (X)\0G (Y)\0B (Z)\0")) n->settings[0] = float(channel);
+    if (ImGui::Combo(Tr("Channel"), &channel, "R (X)\0G (Y)\0B (Z)\0")) n->settings[0] = float(channel);
   } else {
-    for (size_t s = 0; s < n->settings.size() && s < info.settings.size(); ++s) ImGui::DragFloat(info.settings[s], &n->settings[s], 0.01f);
+    for (size_t s = 0; s < n->settings.size() && s < info.settings.size(); ++s) ImGui::DragFloat(Tr(info.settings[s]), &n->settings[s], 0.01f);
   }
   bool header = false;
   for (size_t i = 0; i < n->inputs.size() && i < info.inputs.size(); ++i) {
     if (g.Into(n->id, int(i))) continue;
-    if (!header) ImGui::SeparatorText("Unwired inputs"), header = true;
+    if (!header) ImGui::SeparatorText(Tr("Unwired inputs")), header = true;
     ImGui::PushID(int(i));
     if (i == 0 && info.uv_input) {
-      ImGui::TextDisabled("%s: the surface's UV", info.inputs[i]);
+      ImGui::TextDisabled("%s", TrFormat("{0}: the surface's UV", {Tr(info.inputs[i])}).c_str());
     } else {
-      EditValue(info.inputs[i], n->inputs[i], std::string_view(info.inputs[i]) == "Colour");
+      EditValue(Tr(info.inputs[i]), n->inputs[i], std::string_view(info.inputs[i]) == "Colour");
     }
     ImGui::PopID();
   }
@@ -401,7 +415,7 @@ void Editor::DrawDetails() {
 
 // The named constants of the graph, to tune in one place; clicking a name finds it in the graph.
 void Editor::DrawParameters() {
-  ImGui::SeparatorText("Parameters");
+  ImGui::SeparatorText(Tr("Parameters"));
   bool any = false;
   for (Node& n : mod_.graph.nodes) {
     if (n.name.empty() || (n.kind != NodeKind::kFloat && n.kind != NodeKind::kColor)) continue;
@@ -414,7 +428,7 @@ void Editor::DrawParameters() {
     else ImGui::DragFloat("##v", &n.settings[0], 0.01f);
     ImGui::PopID();
   }
-  if (!any) ImGui::TextDisabled("Name a Number or Colour node to list it here.");
+  if (!any) ImGui::TextDisabled("%s", Tr("Name a Number or Colour node to list it here."));
 }
 
 bool Editor::Targeted(const std::string& key) const { return std::find(mod_.targets.begin(), mod_.targets.end(), key) != mod_.targets.end(); }
@@ -428,34 +442,47 @@ void Editor::TargetBox(const Target& target) {
 
 // What the mod applies to, by what a player would call it.
 void Editor::DrawTargets() {
-  ImGui::SeparatorText("Applies to");
+  ImGui::SeparatorText(Tr("Applies to"));
   if (!ready_) {
-    ImGui::TextDisabled("Preparing the game's shaders...");
+    ImGui::TextDisabled("%s", Tr("Preparing the game's shaders..."));
     return;
   }
   TargetBox(source_.all_characters());
   TargetBox(source_.everything());
-  if (ImGui::TreeNodeEx("Characters", ImGuiTreeNodeFlags_DefaultOpen)) {
+  if (ImGui::TreeNodeEx(Tr("Characters"), ImGuiTreeNodeFlags_DefaultOpen)) {
     for (const Target& target : source_.characters()) TargetBox(target);
     ImGui::TreePop();
   }
-  if (ImGui::TreeNode("Levels")) {
+  if (!source_.surfaces().empty() && ImGui::TreeNodeEx(Tr("Surfaces"), ImGuiTreeNodeFlags_DefaultOpen)) {
+    for (const Target& target : source_.surfaces()) TargetBox(target);
+    ImGui::TreePop();
+  }
+  if (ImGui::TreeNode(Tr("Levels"))) {
     for (const Target& target : source_.levels()) TargetBox(target);
     ImGui::TreePop();
   }
   ImGui::Spacing();
+  if (source_.NeedsUnlit(mod_.targets)) {
+    ImGui::BeginDisabled();
+    bool always = true;
+    ImGui::Checkbox(Tr("Also surfaces the game doesn't light"), &always);
+    ImGui::EndDisabled();
+  } else {
+    ImGui::Checkbox(Tr("Also surfaces the game doesn't light"), &mod_.unlit);
+  }
+  ImGui::SetItemTooltip("%s", Tr("Glows, effects and surfaces lit from within, such as lava. Their Game colour already has fog in it, and Base texture, Light and Normal aren't known."));
   ImGui::PushTextWrapPos(0);
-  const size_t shaders = source_.Shaders(mod_.targets).size();
-  if (source_.Meshes(mod_.targets).empty()) ImGui::TextDisabled("%zu shaders. These choose the game's shaders, not objects, so anything else drawn with the same ones changes too.", shaders);
-  else ImGui::TextDisabled("%zu shaders, on this model alone: anything else drawn with them keeps the game's look.", shaders);
+  const std::string shaders = std::to_string(source_.Shaders(mod_.targets).size());
+  if (source_.Meshes(mod_.targets).empty()) ImGui::TextDisabled("%s", TrFormat("{0} shaders. These choose the game's shaders, not objects, so anything else drawn with the same ones changes too.", {shaders}).c_str());
+  else ImGui::TextDisabled("%s", TrFormat("{0} shaders, on this model alone: anything else drawn with them keeps the game's look.", {shaders}).c_str());
   ImGui::PopTextWrapPos();
 }
 
 void Editor::DrawLog() {
-  ImGui::SeparatorText("Compile log");
+  ImGui::SeparatorText(Tr("Compile log"));
   ImGui::PushTextWrapPos(0);
-  if (build_.valid()) ImGui::Text("Compiling... %zu of %zu", build_done_.load(), build_total_);
-  else if (log_.empty()) ImGui::TextDisabled("Save, or Live Update, compiles the shaders. Run the game to see them.");
+  if (build_.valid()) ImGui::TextUnformatted(TrFormat("Compiling... {0} of {1}", {std::to_string(build_done_.load()), std::to_string(build_total_)}).c_str());
+  else if (log_.empty()) ImGui::TextDisabled("%s", Tr("Save, or Live Update, compiles the shaders. Run the game to see them."));
   ImGui::PushStyleColor(ImGuiCol_Text, log_ok_ ? IM_COL32(150, 220, 150, 255) : IM_COL32(255, 120, 110, 255));
   ImGui::TextUnformatted(log_.c_str());
   ImGui::PopTextWrapPos();
@@ -497,7 +524,7 @@ void Editor::Draw(ID3D11Device* device, ID3D11DeviceContext* context) {
   ImGui::SameLine();
   ImGui::BeginChild("graph", ImVec2(ImGui::GetContentRegionAvail().x - kRightWidth, 0), ImGuiChildFlags_Borders, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
   if (g.raw) {
-    ImGui::TextDisabled("float3 Shade(ShadeInputs s) {  ... the body below ...  }   Helpers: ModKeyLight, ModStep, ModBands, ModFresnel, ModOutline, ModHalftone, ModLuminance, ModNoise (docs/modding.md).");
+    ImGui::TextDisabled("%s", Tr("float3 Shade(ShadeInputs s) {  ... the body below ...  }   Helpers: ModKeyLight, ModStep, ModBands, ModFresnel, ModOutline, ModHalftone, ModLuminance, ModNoise (docs/modding.md)."));
     InputMultiline("##hlsl", g.raw_code, ImVec2(-1, -1));
   } else {
     canvas_.Draw(g);

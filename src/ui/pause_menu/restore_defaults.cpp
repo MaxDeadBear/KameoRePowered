@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 
+#include "core/localization.h"
 #include "core/settings.h"
 #include "gpu/textures/texture_pack.h"
 #include "ui/pause_menu/pause_menu_internal.h"
@@ -71,8 +72,8 @@ void RestoreDefaults(Page scope) {
 
 std::u16string ResetQuestion(Page scope) {
   const PageInfo* info = FindPage(scope);
-  if (!info) return u"Restore all settings to their defaults?";
-  return u"Restore " + std::u16string(info->title) + u" to defaults?";
+  if (!info) return kameo::l10n::Tr(u"Restore all settings to their defaults?");
+  return kameo::l10n::TrFormat(u"Restore {0} to defaults?", {kameo::l10n::Tr(info->title)});
 }
 
 }  // namespace
@@ -86,8 +87,8 @@ bool HasDefaults(Page scope) {
 
 void AddConfirmResetRows(PPCContext& ctx, uint8_t* base, uint32_t window) {
   AddPageTitle(ctx, base, window, ResetQuestion(g_resetScope));
-  AddCategoryLine(ctx, base, window, kItemConfirmRestore, u"Restore Defaults");
-  AddCategoryLine(ctx, base, window, kItemCancelRestore, u"Cancel");
+  AddCategoryLine(ctx, base, window, kItemConfirmRestore, kameo::l10n::Tr(u"Restore Defaults"));
+  AddCategoryLine(ctx, base, window, kItemCancelRestore, kameo::l10n::Tr(u"Cancel"));
 }
 
 bool PressRestoreDefaultsItem(PPCContext& ctx, uint8_t* base, uint32_t pause, uint32_t window, uint32_t id, uint32_t index) {

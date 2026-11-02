@@ -8,6 +8,7 @@
 
 #include <rex/logging.h>
 
+#include "core/localization.h"
 #include "engine/collectibles.h"
 #include "engine/guest_addresses.h"
 #include "ui/text_window.h"
@@ -17,6 +18,8 @@ namespace {
 
 using engine::Collectible;
 using engine::CollectibleKind;
+using kameo::l10n::Tr;
+using kameo::l10n::TrFormat;
 
 constexpr uint32_t kShopSelectedSlot = 0x82B715D0;
 constexpr uint32_t kCurrentTribe = 0x82B71584;
@@ -42,17 +45,18 @@ constexpr uint32_t kClearOnlyPage = 99;
 
 struct KindRow {
   CollectibleKind kind;
-  const char16_t* name;
+  // The row's text, with the number missed and the price filled in.
+  const char16_t* label;
   const char* preview;
   double scale;
   double y_offset;
 };
 // The previews are the ones the shops already show for fruit and elixirs.
 constexpr std::array<KindRow, 4> kKindRows = {{
-    {CollectibleKind::Fruit, u"Elemental Fruit", "MonsterFood", 0.9, -0.3},
-    {CollectibleKind::Elixir, u"Elixir of Life", "EnergyBottle", 1.0, 0.0},
-    {CollectibleKind::CrystalEye, u"Crystal Eye", nullptr, 0.0, 0.0},
-    {CollectibleKind::Costume, u"Costume", nullptr, 0.0, 0.0},
+    {CollectibleKind::Fruit, TR_NOOP(u"Missed Elemental Fruit ({0}): {1} points"), "MonsterFood", 0.9, -0.3},
+    {CollectibleKind::Elixir, TR_NOOP(u"Missed Elixir of Life ({0}): {1} points"), "EnergyBottle", 1.0, 0.0},
+    {CollectibleKind::CrystalEye, TR_NOOP(u"Missed Crystal Eye ({0}): {1} points"), nullptr, 0.0, 0.0},
+    {CollectibleKind::Costume, TR_NOOP(u"Missed Costume ({0}): {1} points"), nullptr, 0.0, 0.0},
 }};
 
 struct ExtraRow {
@@ -126,7 +130,7 @@ void AddExtraRows(PPCContext& ctx, uint8_t* base, const std::vector<ExtraRow>& r
     const uint32_t text_object = TextObjectOf(base, window);
     REX_STORE_U32(text_object + kTextColourCallback, kTextDefaultMenuColourCallback);
     REX_STORE_U32(text_object + kTextColourCallbackData, 0);
-    const std::u16string label = std::u16string(u"Missed ") + row.kind->name + u" (" + Number(int32_t(row.missed), u")") + u": " + Number(int32_t(row.price), u" points");
+    const std::u16string label = TrFormat(row.kind->label, {Number(int32_t(row.missed), u""), Number(int32_t(row.price), u"")});
     if (const uint32_t text = GuestWideString(label)) AddTextItem(ctx, base, window, 0, prefix, text, kTribeMenuSelected, true);
   }
 }
@@ -163,10 +167,10 @@ void SetConfirmMenu(uint8_t* base, uint32_t window) {
 
 uint32_t Confirm(PPCContext& ctx, uint8_t* base, uint32_t tribe, const ExtraRow& row) {
   if (engine::BankedScore(base) < row.price) {
-    if (const uint32_t text = GuestWideString(u"You'll need a higher score than that.")) AddSpeech(ctx, base, tribe, text);
+    if (const uint32_t text = GuestWideString(Tr(u"You'll need a higher score than that."))) AddSpeech(ctx, base, tribe, text);
     return 1;
   }
-  const uint32_t text = GuestWideString(u"Buy this item for " + Number(int32_t(row.price), u" points?"));
+  const uint32_t text = GuestWideString(TrFormat(u"Buy this item for {0} points?", {Number(int32_t(row.price), u"")}));
   if (!text) return 1;
   AddSpeech(ctx, base, tribe, text);
   PPCContext game_text = ctx;

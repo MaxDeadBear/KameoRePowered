@@ -1,0 +1,21 @@
+# Translated from config/hooks/audio.toml for the title-update build by tools/tu/translate.py.
+[[midasm_hook]]
+address = 0x82335D38
+name = "KameoOverrideVolume"
+registers = ["r3", "f1"]
+
+[[midasm_hook]]
+address = 0x8270A9B0
+name = "KameoOverrideBinkVolume"
+registers = ["r5"]
+
+[[midasm_hook]]
+address = 0x82273890
+name = "KameoSetBinkLanguageTrackVolume"
+registers = ["r27", "r29"]
+
+[[midasm_hook]]
+address = 0x820B5F10
+name = "KameoOverrideAudioLanguage"
+registers = ["r3"]
+

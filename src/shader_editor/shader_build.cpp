@@ -15,12 +15,16 @@
 
 #include <nlohmann/json.hpp>
 
+#include "core/localization.h"
 #include "gpu/shaders/shader_mods.h"
 #include "launcher/zip_extract.h"
 
 namespace fs = std::filesystem;
 
 namespace kameo::shader_editor {
+
+using l10n::Tr;
+using l10n::TrFormat;
 
 namespace {
 
@@ -34,9 +38,11 @@ struct Character {
   const char* key;
   const char* label;
 };
-constexpr Character kCharacters[] = {{"kameo", "Kameo"},           {"flowerboxer", "Pummel Weed"}, {"rubble", "Rubble"},     {"armadillo", "Major Ruin"},
-                                     {"firedragon", "Ash"},        {"fire_ant", "Thermite"},       {"spitter", "Snare"},     {"watercannon", "Flex"},
-                                     {"watercreature_small", "Deep Blue"}, {"ice_b_yeti", "Chilla"}, {"snow_man", "40 Below"}};
+constexpr Character kCharacters[] = {{"kameo", TR_NOOP("Kameo")},           {"flowerboxer", TR_NOOP("Pummel Weed")}, {"rubble", TR_NOOP("Rubble")},     {"armadillo", TR_NOOP("Major Ruin")},
+                                     {"firedragon", TR_NOOP("Ash")},        {"fire_ant", TR_NOOP("Thermite")},       {"spitter", TR_NOOP("Snare")},     {"watercannon", TR_NOOP("Flex")},
+                                     {"watercreature_small", TR_NOOP("Deep Blue")}, {"ice_b_yeti", TR_NOOP("Chilla")}, {"snow_man", TR_NOOP("40 Below")}};
+// Kinds of surface found by the shaders that draw them (tools/shaders/build_shader_mod_source.py), all of them unlit.
+constexpr Character kSurfaces[] = {{"lava", TR_NOOP("Lava")}, {"fire", TR_NOOP("Fire off the lava")}};
 
 std::vector<uint8_t> ReadAll(const fs::path& path) {
   std::ifstream in(path, std::ios::binary);
@@ -89,7 +95,7 @@ bool ShaderSource::Prepare(std::string& error) {
   std::error_code ec;
   const auto size = fs::file_size(pack, ec);
   if (ec) {
-    error = std::format("The game's shaders are missing from {}; reinstall the game.", pack.parent_path().string());
+    error = TrFormat("The game's shaders are missing from {0}; reinstall the game.", {pack.parent_path().string()});
     return false;
   }
   // By the pack's size and time, so a new build unpacks its own.
@@ -104,7 +110,7 @@ bool ShaderSource::Prepare(std::string& error) {
   std::ifstream in(folder_ / "targets.json");
   const nlohmann::json table = nlohmann::json::parse(in, nullptr, false);
   if (table.is_discarded()) {
-    error = "The game's shader list could not be read.";
+    error = Tr("The game's shader list could not be read.");
     return false;
   }
   std::map<std::string, std::vector<std::string>> shaders = table.get<std::map<std::string, std::vector<std::string>>>();
@@ -130,23 +136,31 @@ bool ShaderSource::Prepare(std::string& error) {
   for (const auto& [key, list] : shaders) all.insert(list.begin(), list.end());
   characters_.clear();
   levels_.clear();
+  surfaces_.clear();
+  for (const Character& c : kSurfaces) {
+    const auto found = shaders.find(c.key);
+    if (found == shaders.end()) continue;
+    surfaces_.push_back({c.key, Tr(c.label), found->second});
+    shaders.erase(found);
+  }
   for (const Character& c : kCharacters) {
     const auto found = shaders.find(c.key);
     if (found == shaders.end()) continue;
-    characters_.push_back({c.key, c.label, found->second});
+    characters_.push_back({c.key, Tr(c.label), found->second});
     models.insert(found->second.begin(), found->second.end());
     shaders.erase(found);
     const std::string costume = c.key == std::string_view("kameo") ? kEveryday : std::string(c.key) + "_standard";
     if (const auto look = shaders.find(costume); look != shaders.end()) {
       if (costume_models_.contains(costume)) {
-        characters_.push_back({costume, std::format("{}: new costume ({})", c.label, c.key == std::string_view("kameo") ? "everyday outfit" : "standard look"), look->second});
+        std::string label = c.key == std::string_view("kameo") ? TrFormat("{0}: new costume (everyday outfit)", {Tr(c.label)}) : TrFormat("{0}: new costume (standard look)", {Tr(c.label)});
+        characters_.push_back({costume, std::move(label), look->second});
       }
       shaders.erase(look);
     }
   }
-  for (const auto& [key, list] : shaders) levels_.push_back({key, key == "LevelRequiredObjects" ? "Shared objects" : key, list});
-  all_characters_ = {"characters", "All characters", {models.begin(), models.end()}};
-  everything_ = {"everything", "Everything in the game", {all.begin(), all.end()}};
+  for (const auto& [key, list] : shaders) levels_.push_back({key, key == "LevelRequiredObjects" ? Tr("Shared objects") : key, list});
+  all_characters_ = {"characters", Tr("All characters"), {models.begin(), models.end()}};
+  everything_ = {"everything", Tr("Everything in the game"), {all.begin(), all.end()}};
   return true;
 }
 
@@ -159,6 +173,7 @@ std::vector<std::string> ShaderSource::Shaders(const std::vector<std::string>& k
   add(all_characters_);
   for (const Target& target : characters_) add(target);
   for (const Target& target : levels_) add(target);
+  for (const Target& target : surfaces_) add(target);
   return {shaders.begin(), shaders.end()};
 }
 
@@ -166,6 +181,10 @@ std::vector<uint64_t> ShaderSource::Meshes(const std::vector<std::string>& keys)
   if (keys.size() != 1 || !costume_models_.contains(keys[0])) return {};
   const auto found = meshes_.find(keys[0]);
   return found == meshes_.end() ? std::vector<uint64_t>{} : found->second;
+}
+
+bool ShaderSource::NeedsUnlit(const std::vector<std::string>& keys) const {
+  return std::any_of(surfaces_.begin(), surfaces_.end(), [&](const Target& t) { return std::find(keys.begin(), keys.end(), t.key) != keys.end(); });
 }
 
 uint32_t ShaderSource::CostumeModel(const std::vector<std::string>& keys) const {
@@ -178,11 +197,11 @@ bool BuildMod(const ShaderSource& source, const BuildRequest& request, std::stri
   const fs::path tools = EditorFolder() / kToolsFolder;
   const fs::path dxc = tools / "dxc.exe";
   if (!fs::exists(dxc)) {
-    log = std::format("The shader compiler is missing from {}; reinstall the game.", tools.string());
+    log = TrFormat("The shader compiler is missing from {0}; reinstall the game.", {tools.string()});
     return false;
   }
   if (request.shaders.empty()) {
-    log = "Choose something for the mod to apply to.";
+    log = Tr("Choose something for the mod to apply to.");
     return false;
   }
   const fs::path work = fs::temp_directory_path() / std::format("KameoShaderBuild_{}", GetCurrentProcessId());
@@ -213,7 +232,7 @@ bool BuildMod(const ShaderSource& source, const BuildRequest& request, std::stri
   // With the flags the game's own shaders are built with, so they share its pipeline layout.
   const auto run = [&](const Job& j) {
     const std::wstring input = (source.folder() / (request.shaders[j.shader] + ".hlsl")).wstring();
-    const std::wstring command = std::format(L"\"{}\" -T ps_6_0 -Fo \"{}\" \"{}\" -I \"{}\" -HV 2021 -all-resources-bound -Qstrip_debug {}", dxc.wstring(), output(j).wstring(), input, work.wstring(), j.spirv ? L"-spirv -fvk-use-dx-layout" : L"-Wno-ignored-attributes -Qstrip_reflect");
+    const std::wstring command = std::format(L"\"{}\" -T ps_6_0 -Fo \"{}\" \"{}\" -I \"{}\" -HV 2021 -all-resources-bound -Qstrip_debug {}{}", dxc.wstring(), output(j).wstring(), input, work.wstring(), request.unlit ? L"-D MOD_INCLUDE_UNLIT=1 " : L"", j.spirv ? L"-spirv -fvk-use-dx-layout" : L"-Wno-ignored-attributes -Qstrip_reflect");
     const int code = RunHidden(command, log_of(j));
     if (done) ++*done;
     return code;
@@ -229,7 +248,7 @@ bool BuildMod(const ShaderSource& source, const BuildRequest& request, std::stri
   // The first one alone, so a mistake in the graph or the HLSL is reported once, not for every shader.
   if (run(jobs[0]) != 0) {
     log = tidy(ReadAll(log_of(jobs[0])));
-    if (log.empty()) log = "The shader compiler did not start.";
+    if (log.empty()) log = Tr("The shader compiler did not start.");
     return false;
   }
   std::atomic<size_t> next = 1;
@@ -251,7 +270,7 @@ bool BuildMod(const ShaderSource& source, const BuildRequest& request, std::stri
       log = std::format("{} ({}): {}", request.shaders[j.shader], j.spirv ? "Vulkan" : "Direct3D 12", tidy(text));
       break;
     }
-    if (log.empty()) log = "The shader compiler failed.";
+    if (log.empty()) log = Tr("The shader compiler failed.");
     return false;
   }
 
@@ -288,16 +307,16 @@ bool BuildMod(const ShaderSource& source, const BuildRequest& request, std::stri
     f.write(reinterpret_cast<const char*>(request.meshes.data()), std::streamsize(request.meshes.size() * sizeof(uint64_t)));
     f.write(reinterpret_cast<const char*>(blobs.data()), std::streamsize(blobs.size()));
     if (!f) {
-      log = std::format("could not write {}", partial.string());
+      log = TrFormat("could not write {0}", {partial.string()});
       return false;
     }
   }
   fs::rename(partial, request.out, ec);
   if (ec) {
-    log = std::format("could not replace {}: {}", request.out.string(), ec.message());
+    log = TrFormat("could not replace {0}: {1}", {request.out.string(), ec.message()});
     return false;
   }
-  log = std::format("{} shaders written to {}", count, request.out.filename().string());
+  log = TrFormat("{0} shaders written to {1}", {std::to_string(count), request.out.filename().string()});
   return true;
 }
 

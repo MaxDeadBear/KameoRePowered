@@ -1,0 +1,3103 @@
+# Japanese for Kameo: RePowered's own text: the English, the Japanese under it, then a blank line.
+# An entry with nothing under its English shows in English. \n is a line break. Keep {0}, {1}... and
+# {font tags} as they are; they're filled in or read by the game.
+
+# src/crash_dialog/main.cpp:17
+Would you like to send a crash report?
+クラッシュレポートを送信しますか？
+
+# src/crash_dialog/main.cpp:18
+This is completely optional, and nothing is sent unless you choose Send Report. A report shows the developers what went wrong, so crashes can get fixed even when nobody files a bug report.
+送信は完全に任意で、「レポートを送信」を選ばない限り何も送信されません。レポートは何が問題だったかを開発者に伝えるもので、誰もバグ報告をしなくてもクラッシュを修正できるようになります。
+
+# src/crash_dialog/main.cpp:21
+It holds the game's log from this session, the crash's call stacks and the game and OS versions. It can show file paths, including your Windows user name if the game is in your user folder. The call stacks hold small pieces of the game's memory, which could rarely include your RexLiveless sign-in.
+レポートには、このセッションのゲームのログ、クラッシュ時のコールスタック、ゲームとOSのバージョンが含まれます。ファイルパスが含まれることがあり、ゲームがユーザーフォルダー内にある場合はWindowsのユーザー名も含まれます。コールスタックにはゲームのメモリの断片が含まれるため、まれにRexLivelessのサインイン情報が含まれる可能性があります。
+
+# src/crash_dialog/main.cpp:42
+Kameo has crashed
+Kameoがクラッシュしました
+
+# src/crash_dialog/main.cpp:66
+Don't Send
+送信しない
+
+# src/crash_dialog/main.cpp:72
+Send Report
+レポートを送信
+
+# src/crash_dialog/main.cpp:96
+Kameo has crashed.\n\nWould you like to send a crash report? This is completely optional, and nothing is sent unless you choose Yes. A report shows the developers what went wrong, so crashes can get fixed.
+Kameoがクラッシュしました。\n\nクラッシュレポートを送信しますか？送信は完全に任意で、「はい」を選ばない限り何も送信されません。レポートは何が問題だったかを開発者に伝え、クラッシュの修正に役立ちます。
+
+# src/engine/dlc/dlc_skin_names.cpp:30
+Armored Kameo
+アーマー
+
+# src/engine/dlc/dlc_skin_names.cpp:30
+Fright Pack Kameo
+ホラーパック
+
+# src/engine/dlc/dlc_skin_names.cpp:31
+Masquerade Kameo #1
+マスカレード #1
+
+# src/engine/dlc/dlc_skin_names.cpp:31
+Masquerade Kameo #2
+マスカレード #2
+
+# src/engine/dlc/dlc_skin_names.cpp:31
+Masquerade Kameo #3
+マスカレード #3
+
+# src/engine/dlc/dlc_skin_names.cpp:31
+Masquerade Kameo #4
+マスカレード #4
+
+# src/engine/dlc/dlc_skin_names.cpp:31
+Masquerade Kameo #5
+マスカレード #5
+
+# src/engine/dlc/dlc_skin_names.cpp:32
+Masquerade Kameo #6
+マスカレード #6
+
+# src/engine/dlc/dlc_skin_names.cpp:32
+Masquerade Kameo #7
+マスカレード #7
+
+# src/engine/dlc/dlc_skin_names.cpp:32
+Masquerade Kameo #8
+マスカレード #8
+
+# src/engine/dlc/dlc_skin_names.cpp:32
+Masquerade Kameo #9
+マスカレード #9
+
+# src/engine/dlc/dlc_skin_names.cpp:32
+Masquerade Kameo #10
+マスカレード #10
+
+# src/engine/dlc/dlc_skin_names.cpp:33
+Winter Warrior Kameo
+ウィンター ウォリアー
+
+# src/engine/dlc/dlc_skin_names.cpp:33
+Design-A-Skin Kameo
+デザイン・ア・スキン
+
+# src/engine/dlc/joiner_skin.cpp:346 (+1)
+Standard
+標準
+
+# src/input/pad_presets.cpp:53
+Face Bottom
+下ボタン
+
+# src/input/pad_presets.cpp:54
+Face Right
+右ボタン
+
+# src/input/pad_presets.cpp:55
+Face Left
+左ボタン
+
+# src/input/pad_presets.cpp:56
+Face Top
+上ボタン
+
+# src/input/pad_presets.cpp:57 (+1)
+Left Shoulder
+左ショルダー
+
+# src/input/pad_presets.cpp:58 (+1)
+Right Shoulder
+右ショルダー
+
+# src/input/pad_presets.cpp:59 (+3)
+Left Trigger
+左トリガー
+
+# src/input/pad_presets.cpp:60 (+3)
+Right Trigger
+右トリガー
+
+# src/input/pad_presets.cpp:61 (+1)
+Left Stick Press
+左スティック押し込み
+
+# src/input/pad_presets.cpp:62 (+1)
+Right Stick Press
+右スティック押し込み
+
+# src/input/pad_presets.cpp:63 (+3)
+D-Pad Up
+方向パッド上
+
+# src/input/pad_presets.cpp:64 (+3)
+D-Pad Down
+方向パッド下
+
+# src/input/pad_presets.cpp:65 (+3)
+D-Pad Left
+方向パッド左
+
+# src/input/pad_presets.cpp:66 (+3)
+D-Pad Right
+方向パッド右
+
+# src/input/pad_presets.cpp:67 (+4)
+Start
+スタート
+
+# src/input/pad_presets.cpp:68 (+4)
+Back
+戻る
+
+# src/input/pad_presets.cpp:69
+Left Stick Up
+左スティック上
+
+# src/input/pad_presets.cpp:70
+Left Stick Down
+左スティック下
+
+# src/input/pad_presets.cpp:71
+Left Stick Left
+左スティック左
+
+# src/input/pad_presets.cpp:72
+Left Stick Right
+左スティック右
+
+# src/input/pad_presets.cpp:73
+Right Stick Up
+右スティック上
+
+# src/input/pad_presets.cpp:74
+Right Stick Down
+右スティック下
+
+# src/input/pad_presets.cpp:75
+Right Stick Left
+右スティック左
+
+# src/input/pad_presets.cpp:76
+Right Stick Right
+右スティック右
+
+# src/input/pad_presets.cpp:174
+Unknown
+不明
+
+# src/input/pad_presets.cpp:175
+Press a control (wait 8s to cancel)
+入力してください（8秒でキャンセル）
+
+# src/launcher/builds.cpp:232
+Checking GitHub for builds...
+GitHubでビルドを確認しています...
+
+# src/launcher/builds.cpp:233
+Downloading {0}...
+{0}をダウンロードしています...
+
+# src/launcher/builds.cpp:234 (+1)
+Switching to {0}...
+{0}に切り替えています...
+
+# src/launcher/builds.cpp:235
+Removing {0}...
+{0}を削除しています...
+
+# src/launcher/builds.cpp:240
+Could not check for builds: {0}
+ビルドを確認できませんでした: {0}
+
+# src/launcher/builds.cpp:245
+GitHub's answer could not be read: {0}
+GitHubからの応答を読み取れませんでした: {0}
+
+# src/launcher/builds.cpp:245
+not a release list
+リリース一覧ではありません
+
+# src/launcher/builds.cpp:283
+{0} has no Windows build to download
+{0}にはダウンロードできるWindows版のビルドがありません
+
+# src/launcher/builds.cpp:304
+Unpacking {0}...
+{0}を展開しています...
+
+# src/launcher/builds.cpp:315
+the download holds no kameorepowered.exe
+ダウンロードしたファイルにkameorepowered.exeが含まれていません
+
+# src/launcher/builds.cpp:322
+could not move the build into place ({0})
+ビルドを所定の場所に移動できませんでした（{0}）
+
+# src/launcher/builds.cpp:332
+Downloaded {0}.
+{0}をダウンロードしました。
+
+# src/launcher/builds.cpp:332 (+1)
+Could not download {0}: {1}
+{0}をダウンロードできませんでした: {1}
+
+# src/launcher/builds.cpp:354
+Could not find {0} after downloading it.
+ダウンロード後に{0}が見つかりませんでした。
+
+# src/launcher/builds.cpp:365
+Close Kameo before switching builds.
+ビルドを切り替える前にKameoを終了してください。
+
+# src/launcher/builds.cpp:385
+Could not keep a copy of the current build before switching, so nothing was changed.
+切り替え前に現在のビルドのコピーを保存できなかったため、何も変更していません。
+
+# src/launcher/builds.cpp:405
+could not copy {0} ({1})
+{0}をコピーできませんでした（{1}）
+
+# src/launcher/builds.cpp:414
+could not move the old {0} aside (error {1})
+古い{0}を退避できませんでした（エラー {1}）
+
+# src/launcher/builds.cpp:420
+could not put the new {0} in place (error {1})
+新しい{0}を配置できませんでした（エラー {1}）
+
+# src/launcher/builds.cpp:433
+Could not switch to {0}: {1}. The previous build is still in place.
+{0}に切り替えられませんでした: {1}。以前のビルドはそのまま残っています。
+
+# src/launcher/builds.cpp:443
+Switched to {0}.
+{0}に切り替えました。
+
+# src/launcher/builds.cpp:448
+The build in use cannot be removed; switch to another first.
+使用中のビルドは削除できません。先に別のビルドに切り替えてください。
+
+# src/launcher/builds.cpp:456 (+2)
+Could not remove {0}: {1}
+{0}を削除できませんでした: {1}
+
+# src/launcher/builds.cpp:456
+Removed {0}.
+{0}を削除しました。
+
+# src/launcher/dlc_install.cpp:112
+{0} skins, Expert mode, Rune Battle and Time Attack
+スキン{0}個、上級モード、ルーンバトル、タイムアタック
+
+# src/launcher/dlc_install.cpp:113
+{0} skins; its new levels need the title update
+スキン{0}個（新しいステージにはタイトルアップデートが必要）
+
+# src/launcher/dlc_install.cpp:114
+{0} skins; its new text needs the title update
+スキン{0}個（新しいテキストにはタイトルアップデートが必要）
+
+# src/launcher/dlc_install.cpp:115 (+1)
+{0} skins
+スキン{0}個
+
+# src/launcher/dlc_install.cpp:116
+Nothing this version can use
+このバージョンで使えるものはありません
+
+# src/launcher/dlc_install.cpp:208
+Skipped {0}: not a readable Xbox 360 package.
+{0}をスキップしました: 読み取り可能なXbox 360パッケージではありません。
+
+# src/launcher/dlc_install.cpp:214
+Skipped {0}: it belongs to title {1}, not Kameo.
+{0}をスキップしました: Kameoではなく、タイトル{1}のものです。
+
+# src/launcher/dlc_install.cpp:221
+Skipped {0}: it is not downloadable content.
+{0}をスキップしました: ダウンロードコンテンツではありません。
+
+# src/launcher/dlc_install.cpp:227 (+1)
+Could not create {0}: {1}
+{0}を作成できませんでした: {1}
+
+# src/launcher/dlc_install.cpp:230
+Skipped {0}: the package has no files.
+{0}をスキップしました: パッケージにファイルがありません。
+
+# src/launcher/dlc_install.cpp:248 (+1)
+Could not read {0} from {1}.
+{1}から{0}を読み取れませんでした。
+
+# src/launcher/dlc_install.cpp:252 (+1)
+Could not write {0}.
+{0}を書き込めませんでした。
+
+# src/launcher/dlc_install.cpp:282
+Unpacked {0} but could not write its header.
+{0}を展開しましたが、ヘッダーを書き込めませんでした。
+
+# src/launcher/dlc_install.cpp:285
+Installed {0}.
+{0}をインストールしました。
+
+# src/launcher/http.cpp:52
+not an https address: {0}
+httpsのアドレスではありません: {0}
+
+# src/launcher/http.cpp:57
+WinHttpOpen failed (error {0})
+WinHttpOpenに失敗しました（エラー {0}）
+
+# src/launcher/http.cpp:62
+connecting to the server failed (error {0})
+サーバーへの接続に失敗しました（エラー {0}）
+
+# src/launcher/http.cpp:68
+opening the request failed (error {0})
+リクエストを開けませんでした（エラー {0}）
+
+# src/launcher/http.cpp:78
+contacting the server failed (error {0})
+サーバーとの通信に失敗しました（エラー {0}）
+
+# src/launcher/http.cpp:85
+the server answered {0} (GitHub's hourly limit for unsigned requests may be used up; try again later)
+サーバーの応答: {0}（GitHubの未認証リクエストの1時間あたりの上限に達した可能性があります。しばらくしてからもう一度お試しください）
+
+# src/launcher/http.cpp:85
+the server answered {0}
+サーバーの応答: {0}
+
+# src/launcher/http.cpp:102
+downloading failed (error {0})
+ダウンロードに失敗しました（エラー {0}）
+
+# src/launcher/http.cpp:107
+could not write the download to disk
+ダウンロードしたデータをディスクに書き込めませんでした
+
+# src/launcher/http.cpp:112
+cancelled
+キャンセルされました
+
+# src/launcher/http.cpp:117
+the download ended early ({0} of {1} bytes)
+ダウンロードが途中で終了しました（{1}バイト中{0}バイト）
+
+# src/launcher/http.cpp:142
+could not create {0}
+{0}を作成できませんでした
+
+# src/launcher/http.cpp:153
+could not finish writing {0}
+{0}の書き込みを完了できませんでした
+
+# src/launcher/iso_install.cpp:201
+The game is already unpacked in {0}.
+ゲームはすでに{0}に展開されています。
+
+# src/launcher/iso_install.cpp:202
+The assets folder already has files in it. Move them somewhere else, then try again.
+assetsフォルダーにはすでにファイルがあります。別の場所に移動してから、もう一度お試しください。
+
+# src/launcher/iso_install.cpp:205
+{0} could not be read. It may be incomplete, or not an Xbox 360 disc image or Games on Demand package.
+{0}を読み取れませんでした。ファイルが不完全か、Xbox 360のディスクイメージまたはGames on Demandパッケージではない可能性があります。
+
+# src/launcher/iso_install.cpp:208
+{0} has no default.xex, so it is not a game disc.
+{0}にはdefault.xexがないため、ゲームディスクではありません。
+
+# src/launcher/iso_install.cpp:214
+{0} is incomplete or damaged: its game program could not be read.
+{0}は不完全か破損しています: ゲームプログラムを読み取れませんでした。
+
+# src/launcher/iso_install.cpp:214
+{0} is a different game (title {1}), not Kameo: Elements of Power.
+{0}はKameo: Elements of Powerではなく、別のゲーム（タイトル{1}）です。
+
+# src/launcher/iso_install.cpp:219
+{0} looks damaged: it holds a file with an invalid name.
+{0}は破損しているようです: 無効な名前のファイルが含まれています。
+
+# src/launcher/iso_install.cpp:224
+Not enough free space: the game needs {0} on this drive, and it has {1}.
+空き容量が足りません: このドライブに{0}必要ですが、空きは{1}です。
+
+# src/launcher/iso_install.cpp:230 (+1)
+Unpacking was cancelled.
+展開がキャンセルされました。
+
+# src/launcher/iso_install.cpp:254
+Could not unpack {0}. The image may be incomplete or damaged, or the drive may be full.
+{0}を展開できませんでした。イメージが不完全か破損しているか、ドライブの空き容量が足りない可能性があります。
+
+# src/launcher/iso_install.cpp:260
+Could not move the game into {0}: {1}
+ゲームを{0}に移動できませんでした: {1}
+
+# src/launcher/iso_install.cpp:261
+Your game is ready to play.
+ゲームをプレイする準備ができました。
+
+# src/launcher/kmod.cpp:34
+not a CAFF archive
+CAFFアーカイブではありません
+
+# src/launcher/kmod.cpp:38
+a CAFF header out of range
+CAFFヘッダーが範囲外です
+
+# src/launcher/kmod.cpp:43
+a section runs past the end of the file
+セクションがファイルの終端を超えています
+
+# src/launcher/kmod.cpp:44
+a section does not unpack
+セクションを展開できません
+
+# src/launcher/kmod.cpp:45
+a section unpacks to the wrong size
+セクションの展開後のサイズが正しくありません
+
+# src/launcher/kmod.cpp:115
+the archives have different sections
+アーカイブのセクション構成が異なります
+
+# src/launcher/kmod.cpp:146
+{0} is not the file the mod was made from
+{0}はMODの作成元のファイルではありません
+
+# src/launcher/kmod.cpp:147
+the mod's header is damaged
+MODのヘッダーが破損しています
+
+# src/launcher/kmod.cpp:150
+the mod does not match the archive's sections
+MODがアーカイブのセクションと一致しません
+
+# src/launcher/kmod.cpp:154
+the mod writes past a section
+MODがセクションの範囲外に書き込もうとしています
+
+# src/launcher/kmod.cpp:158
+the patched archive is not what the mod's author saved
+パッチ適用後のアーカイブがMOD作成者の保存したものと一致しません
+
+# src/launcher/kmod.cpp:192
+not a Kameo mod package
+KameoのMODパッケージではありません
+
+# src/launcher/kmod.cpp:194
+a mod package of another version
+別のバージョンのMODパッケージです
+
+# src/launcher/kmod.cpp:197 (+1)
+the mod package is damaged
+MODパッケージが破損しています
+
+# src/launcher/kmod.cpp:221
+the mod package names a file outside the game folder
+MODパッケージがゲームフォルダー外のファイルを指定しています
+
+# src/launcher/launch.cpp:42
+Close the game first.
+先にゲームを終了してください。
+
+# src/launcher/launch.cpp:55
+kameorepowered.exe was not found next to the launcher.
+ランチャーと同じフォルダーにkameorepowered.exeが見つかりませんでした。
+
+# src/launcher/launch.cpp:59
+The game files are missing. Choose your game on the Play page first.
+ゲームファイルがありません。先に「プレイ」ページでゲームを選んでください。
+
+# src/launcher/launch.cpp:68
+The level mods could not be applied: {0}
+ステージMODを適用できませんでした: {0}
+
+# src/launcher/launch.cpp:76
+The game could not be started (error {0}).
+ゲームを起動できませんでした（エラー {0}）。
+
+# src/launcher/launch.cpp:81
+Kameo is starting...
+Kameoを起動しています...
+
+# src/launcher/level_mods.cpp:66
+could not link {0} (error {1})
+{0}のリンクを作成できませんでした（エラー {1}）
+
+# src/launcher/level_mods.cpp:70
+could not read the game folder: {0}
+ゲームフォルダーを読み取れませんでした: {0}
+
+# src/launcher/level_mods.cpp:133
+{0} and {1}
+{0}と{1}
+
+# src/launcher/level_mods.cpp:134
+{0} is changed by {1}; only {2} (lowest in the list) is used for it.
+{0}は{1}によって変更されます。使用されるのは{2}（リストの一番下）のみです。
+
+# src/launcher/level_mods.cpp:145
+the game folder (assets with default.xex) was not found
+ゲームフォルダー（default.xexのあるassets）が見つかりませんでした
+
+# src/launcher/level_mods.cpp:167
+the game is still running from the mod build; close it first ({0})
+ゲームがまだMOD適用版から実行されています。先に終了してください（{0}）
+
+# src/launcher/level_mods.cpp:178 (+3)
+could not write {0}
+{0}を書き込めませんでした
+
+# src/launcher/main.cpp:32
+Direct3D 11 could not be started.
+Direct3D 11を開始できませんでした。
+
+# src/launcher/settings_file.cpp:44
+kameo_settings.toml could not be read: {0}
+kameo_settings.tomlを読み取れませんでした: {0}
+
+# src/launcher/settings_file.cpp:57
+Could not write {0}
+{0}を書き込めませんでした
+
+# src/launcher/settings_file.cpp:65
+Could not replace {0}: {1}
+{0}を置き換えられませんでした: {1}
+
+# src/launcher/title_update.cpp:131
+This version of Kameo: RePowered was released without its title-update build, so the update can't be played with it.
+このバージョンのKameo: RePoweredはタイトルアップデート用ビルドなしで公開されたため、アップデートを遊ぶことはできません。
+
+# src/launcher/title_update.cpp:134
+The title update's patch could not be read.
+タイトルアップデートのパッチを読み込めませんでした。
+
+# src/launcher/title_update.cpp:136
+Install the game first: the title update patches its default.xex.
+先にゲームをインストールしてください。タイトルアップデートはゲームのdefault.xexを更新します。
+
+# src/launcher/title_update.cpp:137
+This title update is for a different release of the game (another region's), so it can't patch yours.
+このタイトルアップデートは別の地域版のゲーム用のため、お使いのゲームには適用できません。
+
+# src/launcher/title_update.cpp:141
+This isn't the title update Kameo: RePowered was built for (version 0.0.2.1), so it can't be played.
+これはKameo: RePoweredが対応するタイトルアップデート（バージョン0.0.2.1）ではないため、遊ぶことはできません。
+
+# src/launcher/title_update.cpp:162
+Could not read {0} from the title update.
+タイトルアップデートから{0}を読み込めませんでした。
+
+# src/launcher/title_update.cpp:169
+Could not copy default.xex into {0}: {1}
+default.xexを{0}にコピーできませんでした: {1}
+
+# src/launcher/title_update.cpp:170
+Installed the title update: Expert mode, Rune Battle and Time Attack are available.
+タイトルアップデートをインストールしました。上級モード、ルーンバトル、タイムアタックが遊べます。
+
+# src/launcher/zip_extract.cpp:45
+could not open {0}
+{0}を開けませんでした
+
+# src/launcher/zip_extract.cpp:50 (+1)
+the download is not a zip file
+ダウンロードしたファイルはzipファイルではありません
+
+# src/launcher/zip_extract.cpp:71 (+1)
+the zip's directory is damaged
+zipのディレクトリが破損しています
+
+# src/launcher/zip_extract.cpp:88
+{0} is stored as ZIP64, which this launcher does not read
+{0}はZIP64形式で格納されており、このランチャーでは読み取れません
+
+# src/launcher/zip_extract.cpp:93
+the zip names a file outside its folder ({0})
+zipにフォルダー外を指すファイルがあります（{0}）
+
+# src/launcher/zip_extract.cpp:102
+the zip entry {0} is damaged
+zipのエントリ{0}が破損しています
+
+# src/launcher/zip_extract.cpp:107
+the zip entry {0} runs past the end of the file
+zipのエントリ{0}がファイルの終端を超えています
+
+# src/launcher/zip_extract.cpp:115
+the zip entry {0} could not be unpacked
+zipのエントリ{0}を展開できませんでした
+
+# src/launcher/zip_extract.cpp:119
+the zip entry {0} uses compression method {1}, which this launcher does not read
+zipのエントリ{0}は圧縮方式{1}を使用しており、このランチャーでは読み取れません
+
+# src/launcher/ui/page_audio.cpp:12 (+2)
+Audio
+サウンド
+
+# src/launcher/ui/page_audio.cpp:14
+Volume
+音量
+
+# src/launcher/ui/page_audio.cpp:15 (+1)
+Master Volume
+マスター音量
+
+# src/launcher/ui/page_audio.cpp:16 (+1)
+Music
+音楽
+
+# src/launcher/ui/page_audio.cpp:17 (+1)
+Sound Effects
+効果音
+
+# src/launcher/ui/page_audio.cpp:18 (+1)
+Ambience
+環境音
+
+# src/launcher/ui/page_audio.cpp:19 (+1)
+Speech
+音声
+
+# src/launcher/ui/page_audio.cpp:20 (+1)
+Cutscenes
+ムービー
+
+# src/launcher/ui/page_audio.cpp:23 (+3)
+Language
+言語
+
+# src/launcher/ui/page_audio.cpp:25 (+1)
+Game Default
+ゲームの初期設定
+
+# src/launcher/ui/page_audio.cpp:25
+Takes effect the next time the game starts.
+次回のゲーム起動時に反映されます。
+
+# src/launcher/ui/page_bindings.cpp:27 (+1)
+Move Forward
+前進
+
+# src/launcher/ui/page_bindings.cpp:27 (+1)
+Move Back
+後退
+
+# src/launcher/ui/page_bindings.cpp:27 (+2)
+Move Left
+左へ移動
+
+# src/launcher/ui/page_bindings.cpp:27 (+2)
+Move Right
+右へ移動
+
+# src/launcher/ui/page_bindings.cpp:28
+A (Jump)
+A（ジャンプ）
+
+# src/launcher/ui/page_bindings.cpp:29 (+1)
+Left Bumper
+左バンパー
+
+# src/launcher/ui/page_bindings.cpp:29 (+1)
+Right Bumper
+右バンパー
+
+# src/launcher/ui/page_bindings.cpp:30 (+2)
+Camera Up
+カメラ上
+
+# src/launcher/ui/page_bindings.cpp:30 (+2)
+Camera Down
+カメラ下
+
+# src/launcher/ui/page_bindings.cpp:30 (+2)
+Camera Left
+カメラ左
+
+# src/launcher/ui/page_bindings.cpp:30 (+2)
+Camera Right
+カメラ右
+
+# src/launcher/ui/page_bindings.cpp:31 (+1)
+Left Stick Click
+左スティック押し込み
+
+# src/launcher/ui/page_bindings.cpp:31 (+1)
+Right Stick Click
+右スティック押し込み
+
+# src/launcher/ui/page_bindings.cpp:124 (+2)
+Key Bindings
+キー割り当て
+
+# src/launcher/ui/page_bindings.cpp:124
+Click Change, then press the key or mouse button to use. Binding a key another action has swaps the two.
+「変更」をクリックし、使いたいキーまたはマウスボタンを押してください。別の操作に割り当て済みのキーを指定すると、2つが入れ替わります。
+
+# src/launcher/ui/page_bindings.cpp:127 (+3)
+Restore Defaults
+初期設定に戻す
+
+# src/launcher/ui/page_bindings.cpp:149
+Press a key... ({0}s)
+キーを押してください...（{0}秒）
+
+# src/launcher/ui/page_bindings.cpp:152 (+1)
+Unbound
+未割り当て
+
+# src/launcher/ui/page_bindings.cpp:155
+Change
+変更
+
+# src/launcher/ui/page_bindings.cpp:160
+Reset
+リセット
+
+# src/launcher/ui/page_builds.cpp:44 (+1)
+Builds
+ビルド
+
+# src/launcher/ui/page_builds.cpp:44
+Download new versions of the game and switch between them. Your settings, saves and game files stay as they are.
+ゲームの新しいバージョンをダウンロードして切り替えられます。設定、セーブデータ、ゲームファイルはそのまま残ります。
+
+# src/launcher/ui/page_builds.cpp:52
+In Use
+使用中
+
+# src/launcher/ui/page_builds.cpp:55
+The build in the game folder was installed by hand, so its version is not known. Switching to a build below keeps a copy of it first.
+ゲームフォルダー内のビルドは手動でインストールされたため、バージョンが不明です。下のビルドに切り替えると、先にそのコピーが保存されます。
+
+# src/launcher/ui/page_builds.cpp:58
+{0} is available.
+{0}が利用可能です。
+
+# src/launcher/ui/page_builds.cpp:61 (+2)
+Download and Switch
+ダウンロードして切り替え
+
+# src/launcher/ui/page_builds.cpp:64
+You have the newest build.
+最新のビルドを使用しています。
+
+# src/launcher/ui/page_builds.cpp:64
+You have the newest release.
+最新のリリースを使用しています。
+
+# src/launcher/ui/page_builds.cpp:66
+Include pre-releases in update notices
+更新通知にプレリリースを含める
+
+# src/launcher/ui/page_builds.cpp:67
+Pre-releases are test builds with the newest fixes; releases are the ones considered stable. Both are always listed below.
+プレリリースは最新の修正を含むテスト版のビルドで、リリースは安定版とされるビルドです。どちらも常に下に一覧表示されます。
+
+# src/launcher/ui/page_builds.cpp:68
+Check for new builds when the launcher opens
+ランチャー起動時に新しいビルドを確認する
+
+# src/launcher/ui/page_builds.cpp:79 (+6)
+Cancel
+キャンセル
+
+# src/launcher/ui/page_builds.cpp:84
+Available Builds
+利用可能なビルド
+
+# src/launcher/ui/page_builds.cpp:85 (+1)
+Refresh
+更新
+
+# src/launcher/ui/page_builds.cpp:92
+Looking for builds...
+ビルドを検索しています...
+
+# src/launcher/ui/page_builds.cpp:92
+No builds have been published yet.
+公開されているビルドはまだありません。
+
+# src/launcher/ui/page_builds.cpp:92
+Press Refresh to see the builds published on GitHub.
+「更新」を押すと、GitHubで公開されているビルドを表示します。
+
+# src/launcher/ui/page_builds.cpp:110
+pre-release
+プレリリース
+
+# src/launcher/ui/page_builds.cpp:112
+Notes
+リリースノート
+
+# src/launcher/ui/page_builds.cpp:116
+Open on GitHub
+GitHubで開く
+
+# src/launcher/ui/page_builds.cpp:126
+In use
+使用中
+
+# src/launcher/ui/page_builds.cpp:127
+Downloaded
+ダウンロード済み
+
+# src/launcher/ui/page_builds.cpp:128
+No Windows build
+Windows版なし
+
+# src/launcher/ui/page_builds.cpp:134 (+1)
+Switch
+切り替え
+
+# src/launcher/ui/page_builds.cpp:137
+Download
+ダウンロード
+
+# src/launcher/ui/page_builds.cpp:142 (+2)
+Delete
+削除
+
+# src/launcher/ui/page_builds.cpp:157
+Your Previous Builds
+以前のビルド
+
+# src/launcher/ui/page_builds.cpp:159
+Copies of the build that was in the game folder before the launcher first switched it.
+ランチャーが初めて切り替える前に、ゲームフォルダーにあったビルドのコピーです。
+
+# src/launcher/ui/page_controls.cpp:14 (+2)
+Controls
+操作設定
+
+# src/launcher/ui/page_controls.cpp:16
+Input
+入力
+
+# src/launcher/ui/page_controls.cpp:17
+Input Mode
+入力モード
+
+# src/launcher/ui/page_controls.cpp:17 (+3)
+Keyboard & Mouse
+キーボード＆マウス
+
+# src/launcher/ui/page_controls.cpp:17 (+3)
+Gamepad
+コントローラー
+
+# src/launcher/ui/page_controls.cpp:18
+Mouse Camera
+マウスでカメラ操作
+
+# src/launcher/ui/page_controls.cpp:18
+The mouse turns the camera in gameplay. Menus always get a pointer.
+ゲームプレイ中はマウスでカメラを回します。メニューでは常にポインターが表示されます。
+
+# src/launcher/ui/page_controls.cpp:19 (+1)
+Mouse Sensitivity
+マウス感度
+
+# src/launcher/ui/page_controls.cpp:25
+Keys are changed on the Key Bindings page.
+キーは「キー割り当て」ページで変更できます。
+
+# src/launcher/ui/page_dlc.cpp:62
+No Xbox 360 packages were found there. Pick the folder holding the DLC files (for example ...\\4D5307D2\\00000002).
+そこにはXbox 360パッケージが見つかりませんでした。DLCファイルのあるフォルダーを選んでください（例: ...\\4D5307D2\\00000002）。
+
+# src/launcher/ui/page_dlc.cpp:76
+No Xbox 360 package was found there. The title update is a single file in ...\\4D5307D2\\000B0000.
+そこにはXbox 360パッケージが見つかりませんでした。タイトルアップデートは ...\\4D5307D2\\000B0000 にある1つのファイルです。
+
+# src/launcher/ui/page_dlc.cpp:86
+Title Update
+タイトルアップデート
+
+# src/launcher/ui/page_dlc.cpp:89
+Installed. The game starts with the title update: Expert mode, and Rune Battle and Time Attack with the DLC that carries their levels.
+インストール済み。ゲームはタイトルアップデート付きで起動します。上級モードと、ステージを収録したDLCがあればルーンバトルとタイムアタックが遊べます。
+
+# src/launcher/ui/page_dlc.cpp:91
+Remove Title Update
+タイトルアップデートを削除
+
+# src/launcher/ui/page_dlc.cpp:94
+Remove the title update? The game starts without it.
+タイトルアップデートを削除しますか？ゲームはアップデートなしで起動します。
+
+# src/launcher/ui/page_dlc.cpp:95 (+2)
+Remove
+削除
+
+# src/launcher/ui/page_dlc.cpp:106
+This version was released without its title-update build, so the update can't be installed. Pick a version that has it on the Builds page.
+このバージョンはタイトルアップデート用ビルドなしで公開されたため、アップデートをインストールできません。「ビルド」ページで対応するバージョンを選んでください。
+
+# src/launcher/ui/page_dlc.cpp:108
+Not installed. The title update adds Expert mode, and Rune Battle and Time Attack in Multiplayer. Copy it from your console's hard drive (Content\\0000000000000000\\4D5307D2\\000B0000) or from Xenia's content folder (the same 4D5307D2\\000B0000), then install it here.
+インストールされていません。タイトルアップデートでは上級モード、マルチプレイのルーンバトルとタイムアタックが追加されます。本体のハードディスク (Content\\0000000000000000\\4D5307D2\\000B0000) またはXeniaのcontentフォルダー（同じく 4D5307D2\\000B0000）からコピーして、ここでインストールしてください。
+
+# src/launcher/ui/page_dlc.cpp:110
+Install Title Update...
+タイトルアップデートをインストール...
+
+# src/launcher/ui/page_dlc.cpp:110
+Choose the Kameo title update package
+Kameoのタイトルアップデートパッケージを選択
+
+# src/launcher/ui/page_dlc.cpp:112
+From Folder...
+フォルダーから...
+
+# src/launcher/ui/page_dlc.cpp:112
+Choose the folder with the Kameo title update
+Kameoのタイトルアップデートがあるフォルダーを選択
+
+# src/launcher/ui/page_dlc.cpp:127 (+1)
+Downloadable Content
+ダウンロードコンテンツ
+
+# src/launcher/ui/page_dlc.cpp:127
+Install Kameo's Xbox 360 DLC packages so the game can use them.
+KameoのXbox 360用DLCパッケージをインストールして、ゲームで使えるようにします。
+
+# src/launcher/ui/page_dlc.cpp:130
+Install
+インストール
+
+# src/launcher/ui/page_dlc.cpp:132
+Choose the folder you downloaded the DLC into, such as the one ending in 4D5307D2\\00000002, or pick the package files themselves. Every Kameo package found is unpacked, the title update included; anything else is skipped.
+DLCをダウンロードしたフォルダー（4D5307D2\\00000002で終わるフォルダーなど）を選ぶか、パッケージファイルを直接選んでください。見つかったKameoのパッケージはタイトルアップデートも含めてすべて展開され、それ以外はスキップされます。
+
+# src/launcher/ui/page_dlc.cpp:134
+Install from Folder...
+フォルダーからインストール...
+
+# src/launcher/ui/page_dlc.cpp:134
+Choose the folder with your Kameo DLC
+KameoのDLCがあるフォルダーを選択
+
+# src/launcher/ui/page_dlc.cpp:136
+Install Files...
+ファイルをインストール...
+
+# src/launcher/ui/page_dlc.cpp:136
+Choose Kameo DLC package files
+KameoのDLCパッケージファイルを選択
+
+# src/launcher/ui/page_dlc.cpp:139
+Unpacking {0}
+{0}を展開中
+
+# src/launcher/ui/page_dlc.cpp:148
+Installed
+インストール済み
+
+# src/launcher/ui/page_dlc.cpp:150 (+2)
+Open Folder
+フォルダーを開く
+
+# src/launcher/ui/page_dlc.cpp:161
+Nothing installed yet.
+まだ何もインストールされていません。
+
+# src/launcher/ui/page_dlc.cpp:163
+Name
+名前
+
+# src/launcher/ui/page_dlc.cpp:164
+In this version
+このバージョンでの対応
+
+# src/launcher/ui/page_dlc.cpp:165 (+1)
+Size
+サイズ
+
+# src/launcher/ui/page_dlc.cpp:187
+Remove {0}?
+{0}を削除しますか？
+
+# src/launcher/ui/page_mods.cpp:27
+Mod Packages
+MODパッケージ
+
+# src/launcher/ui/page_mods.cpp:37
+No mods yet. Put .kmod files in the mods folder (Open Folder), or make your own with the Blender add-on in the modkit folder.
+MODはまだありません。.kmodファイルをmodsフォルダーに入れる（「フォルダーを開く」）か、modkitフォルダーのBlenderアドオンで自作してください。
+
+# src/launcher/ui/page_mods.cpp:57
+by {0}
+作者: {0}
+
+# src/launcher/ui/page_mods.cpp:65
+Changes {0}
+変更対象: {0}
+
+# src/launcher/ui/page_mods.cpp:78
+Enabled mods are applied when you press Play, into a copy of the game folder made of links; the game files themselves are never changed.
+有効なMODは「プレイ」を押したときに、リンクで作ったゲームフォルダーのコピーに適用されます。ゲームファイル自体が変更されることはありません。
+
+# src/launcher/ui/page_mods.cpp:79
+Kameo skins replace her Bonus costumes: pick the costume in the storybook's Bonus pages.
+カメオのスキンはボーナスのコスチュームを置き換えます。コスチュームはマジックブックのボーナスページで選んでください。
+
+# src/launcher/ui/page_mods.cpp:103
+Shader Mods
+シェーダーMOD
+
+# src/launcher/ui/page_mods.cpp:104
+Shader Editor
+シェーダーエディター
+
+# src/launcher/ui/page_mods.cpp:118
+No shader mods yet. Put .kshader files in the shader_mods folder, or make your own with the Shader Editor.
+シェーダーMODはまだありません。.kshaderファイルをshader_modsフォルダーに入れるか、シェーダーエディターで自作してください。
+
+# src/launcher/ui/page_mods.cpp:136
+Shader mods change how things are drawn, and apply straight away, even with the game running.
+シェーダーMODは描画の見た目を変えます。ゲームの実行中でもすぐに反映されます。
+
+# src/launcher/ui/page_mods.cpp:146
+Cheats Were Used
+チートが使用されました
+
+# src/launcher/ui/page_mods.cpp:149
+Leaderboard scores are off because a cheat was used, and there is no backup of your saves from before it.
+チートが使用されたため、ランキングへのスコア送信はオフになっています。チート使用前のセーブデータのバックアップはありません。
+
+# src/launcher/ui/page_mods.cpp:151
+Leaderboard scores are off because a cheat was used. Your saves were backed up just before that. Restoring them turns the cheats off and lets you post scores again, but any progress since then goes back too. Your current saves are kept in the save_backups folder.
+チートが使用されたため、ランキングへのスコア送信はオフになっています。セーブデータはその直前にバックアップされています。復元するとチートがオフになり、再びスコアを送信できますが、それ以降の進行状況も元に戻ります。現在のセーブデータはsave_backupsフォルダーに保管されます。
+
+# src/launcher/ui/page_mods.cpp:153
+Restore Saves From Before Cheats
+チート使用前のセーブデータを復元
+
+# src/launcher/ui/page_mods.cpp:155
+Yes, Restore My Saves
+はい、復元します
+
+# src/launcher/ui/page_mods.cpp:158
+Your saves from before cheats are back.
+チート使用前のセーブデータを復元しました。
+
+# src/launcher/ui/page_mods.cpp:172 (+2)
+Mods
+MOD
+
+# src/launcher/ui/page_mods.cpp:177 (+1)
+Textures
+テクスチャ
+
+# src/launcher/ui/page_mods.cpp:178 (+1)
+Texture Replacements
+テクスチャ置き換え
+
+# src/launcher/ui/page_mods.cpp:178
+Load replacement textures from the textures folder.
+texturesフォルダーから置き換え用のテクスチャを読み込みます。
+
+# src/launcher/ui/page_mods.cpp:179 (+1)
+Texture Dumping
+テクスチャのダンプ
+
+# src/launcher/ui/page_mods.cpp:179
+Save the game's textures as they load, for making replacements.
+置き換え用のテクスチャを作るために、読み込まれたゲームのテクスチャを保存します。
+
+# src/launcher/ui/page_mods.cpp:180 (+1)
+Movie Replacements
+ムービー置き換え
+
+# src/launcher/ui/page_mods.cpp:180
+Play movies/<name>.mp4 instead of fmv/<name>.bik, e.g. movies/kameoIntro.mp4. With a soundtrack it plays its own sound for its own length; without one only the picture is replaced.
+fmv/<name>.bikの代わりにmovies/<name>.mp4を再生します（例: movies/kameoIntro.mp4）。音声トラックがある場合はその音声と長さで再生され、ない場合は映像だけが置き換えられます。
+
+# src/launcher/ui/page_mods.cpp:183 (+1)
+Gameplay
+ゲームプレイ
+
+# src/launcher/ui/page_mods.cpp:184 (+1)
+Story Split-screen
+ストーリーの分割画面
+
+# src/launcher/ui/page_mods.cpp:185 (+1)
+Unlock All Extras
+全ボーナスをアンロック
+
+# src/launcher/ui/page_mods.cpp:186 (+1)
+Skippable Cutscenes
+ムービーのスキップ
+
+# src/launcher/ui/page_mods.cpp:186
+Start skips in-engine cutscenes and every FMV.
+STARTボタンで、ゲーム内のイベントシーンとすべてのFMVをスキップできます。
+
+# src/launcher/ui/page_play.cpp:28
+Choose your copy of Kameo: Elements of Power
+お持ちのKameo: Elements of Powerを選択
+
+# src/launcher/ui/page_play.cpp:30
+Xbox 360 disc image (*.iso)
+Xbox 360ディスクイメージ (*.iso)
+
+# src/launcher/ui/page_play.cpp:30
+All files, for a Games on Demand package
+すべてのファイル（Games on Demandパッケージ用）
+
+# src/launcher/ui/page_play.cpp:50
+Set Up Your Game
+ゲームのセットアップ
+
+# src/launcher/ui/page_play.cpp:53
+Unpacking your game. This can take a few minutes, and Play will be ready as soon as it finishes.
+ゲームを展開しています。数分かかることがあります。完了するとすぐにプレイできます。
+
+# src/launcher/ui/page_play.cpp:57
+Kameo: RePowered runs from your own copy of the game. Choose your Xbox 360 disc image (.iso) or Games on Demand package, and the launcher will unpack it for you.
+Kameo: RePoweredはお持ちのゲームから起動します。Xbox 360のディスクイメージ（.iso）またはGames on Demandパッケージを選ぶと、ランチャーが展開します。
+
+# src/launcher/ui/page_play.cpp:58
+Choose Your Game...
+ゲームを選択...
+
+# src/launcher/ui/page_play.cpp:73
+Welcome back
+おかえりなさい
+
+# src/launcher/ui/page_play.cpp:73
+Choose how you want to play, then press Play.
+遊び方を選んで「プレイ」を押してください。
+
+# src/launcher/ui/page_play.cpp:79
+Pre-release {0} is available.
+プレリリース{0}が利用可能です。
+
+# src/launcher/ui/page_play.cpp:79
+Kameo RePowered {0} is available.
+Kameo RePowered {0}が利用可能です。
+
+# src/launcher/ui/page_play.cpp:86
+See Builds
+ビルドを見る
+
+# src/launcher/ui/page_play.cpp:95
+WASD to move, the mouse turns the camera and points in menus. Controllers still work.
+WASDで移動、マウスでカメラ操作とメニューの選択を行います。コントローラーも使えます。
+
+# src/launcher/ui/page_play.cpp:97
+Play with a controller; the keyboard and mouse leave the game alone.
+コントローラーでプレイします。キーボードとマウスはゲームに影響しません。
+
+# src/launcher/ui/page_play.cpp:99 (+2)
+Display
+画面
+
+# src/launcher/ui/page_play.cpp:102 (+2)
+Widescreen
+ワイドスクリーン
+
+# src/launcher/ui/page_play.cpp:102 (+1)
+A wider view that fills the screen instead of the original 16:9 picture.
+元の16:9の画面ではなく、画面いっぱいに広がる広い視野で表示します。
+
+# src/launcher/ui/page_play.cpp:110
+Crash Reports
+クラッシュレポート
+
+# src/launcher/ui/page_play.cpp:112
+Completely optional. If the game crashes, it asks whether to send a report so the problem can be fixed, and nothing is sent unless you choose Send Report. Turn this off and it will never ask.
+完全に任意です。ゲームがクラッシュすると、問題を修正できるようにレポートを送信するか尋ねます。「レポートを送信」を選ばない限り何も送信されません。オフにすると、尋ねることはありません。
+
+# src/launcher/ui/page_play.cpp:114
+Offer to Send Crash Reports
+クラッシュレポートの送信を確認する
+
+# src/launcher/ui/page_play.cpp:123
+No DLC installed yet.
+DLCはまだインストールされていません。
+
+# src/launcher/ui/page_play.cpp:123
+{0} package(s) installed.
+{0}個のパッケージがインストール済みです。
+
+# src/launcher/ui/page_play.cpp:126
+Manage DLC
+DLCの管理
+
+# src/launcher/ui/page_video.cpp:12 (+1)
+Video
+映像
+
+# src/launcher/ui/page_video.cpp:20 (+2)
+Gamma
+ガンマ
+
+# src/launcher/ui/page_video.cpp:20
+100% leaves the picture as the game draws it; higher brightens the midtones.
+100%でゲーム本来の画面になります。高くすると中間色が明るくなります。
+
+# src/launcher/ui/page_video.cpp:21 (+1)
+HUD Layout
+HUDの配置
+
+# src/launcher/ui/page_video.cpp:21 (+1)
+Stretched
+引き伸ばし
+
+# src/launcher/ui/page_video.cpp:21 (+1)
+Centred 16:9
+中央16:9
+
+# src/launcher/ui/page_video.cpp:21 (+1)
+Screen Edges
+画面端
+
+# src/launcher/ui/page_video.cpp:22 (+1)
+HUD Scale
+HUDサイズ
+
+# src/launcher/ui/page_video.cpp:22
+Each HUD element grows or shrinks toward its own corner or edge.
+HUDの各要素は、それぞれの隅や端を基準に拡大・縮小します。
+
+# src/launcher/ui/page_video.cpp:25 (+1)
+Graphics
+グラフィック
+
+# src/launcher/ui/page_video.cpp:26 (+1)
+Renderer
+レンダラー
+
+# src/launcher/ui/page_video.cpp:26
+Automatic
+自動
+
+# src/launcher/ui/page_video.cpp:26
+Takes effect the next time the game starts. Automatic uses Direct3D 12 on Windows.
+次回のゲーム起動時に反映されます。「自動」ではWindowsでDirect3D 12を使用します。
+
+# src/launcher/ui/page_video.cpp:27 (+1)
+Anti-aliasing
+アンチエイリアス
+
+# src/launcher/ui/page_video.cpp:27 (+5)
+Off
+オフ
+
+# src/launcher/ui/page_video.cpp:28 (+1)
+Anisotropic Filtering
+異方性フィルタリング
+
+# src/launcher/ui/page_video.cpp:28 (+1)
+Game
+ゲーム標準
+
+# src/launcher/ui/page_video.cpp:29 (+1)
+Shadows
+影
+
+# src/launcher/ui/page_video.cpp:30 (+1)
+Shadow Edges
+影の輪郭
+
+# src/launcher/ui/page_video.cpp:30 (+1)
+Pixelated
+ドット
+
+# src/launcher/ui/page_video.cpp:30 (+1)
+Smooth
+なめらか
+
+# src/launcher/ui/page_video.cpp:31 (+1)
+Shadow Quality
+影の品質
+
+# src/launcher/ui/page_video.cpp:31 (+1)
+Original
+オリジナル
+
+# src/launcher/ui/page_video.cpp:31 (+1)
+High
+高
+
+# src/launcher/ui/page_video.cpp:31 (+1)
+Ultra
+最高
+
+# src/launcher/ui/page_video.cpp:34 (+1)
+Effects
+エフェクト
+
+# src/launcher/ui/page_video.cpp:35 (+1)
+Particles
+パーティクル
+
+# src/launcher/ui/page_video.cpp:36 (+1)
+Grass
+草
+
+# src/launcher/ui/page_video.cpp:37 (+1)
+Fur
+毛並み
+
+# src/launcher/ui/page_video.cpp:37
+The layered fur on furry characters and costume trim.
+毛のあるキャラクターやコスチュームの縁飾りに重ねて描かれる毛並み。
+
+# src/launcher/ui/page_video.cpp:38 (+1)
+Dust Motes
+空中のちり
+
+# src/launcher/ui/page_video.cpp:38
+The floating dust and sparkles that hang in the air.
+空中に漂うちりやきらめき。
+
+# src/launcher/ui/page_video.cpp:39 (+1)
+Bloom
+ブルーム
+
+# src/launcher/ui/page_video.cpp:40 (+1)
+Depth of Field
+被写界深度
+
+# src/launcher/ui/page_video.cpp:41 (+1)
+Heat Haze
+かげろう
+
+# src/launcher/ui/page_video.cpp:44
+Performance
+パフォーマンス
+
+# src/launcher/ui/page_video.cpp:45 (+1)
+VSync
+垂直同期
+
+# src/launcher/ui/page_video.cpp:45
+Wait for the display's refresh. Off uncaps the frame rate but may tear.
+ディスプレイのリフレッシュを待ちます。オフにするとフレームレートの上限がなくなりますが、ティアリングが起こることがあります。
+
+# src/launcher/ui/page_video.cpp:46 (+1)
+FPS Counter
+FPS表示
+
+# src/launcher/ui/page_video.cpp:47 (+1)
+FPS Limit
+FPS上限
+
+# src/launcher/ui/page_video.cpp:50 (+1)
+Camera
+カメラ
+
+# src/launcher/ui/page_video.cpp:51 (+1)
+Camera Follow
+カメラの追従
+
+# src/launcher/ui/page_video.cpp:51 (+1)
+Fixed Distance
+距離固定
+
+# src/launcher/ui/page_video.cpp:51 (+1)
+Original (drifts)
+オリジナル（遠ざかる）
+
+# src/launcher/ui/page_video.cpp:51
+The original camera falls further behind and higher the longer you run.
+オリジナルのカメラは、走り続けるほど後方の高い位置へ離れていきます。
+
+# src/launcher/ui/page_video.cpp:52 (+1)
+Auto-Level
+角度の自動補正
+
+# src/launcher/ui/page_video.cpp:52
+Tilt the camera back to its default angle while you move, as the original game did.
+オリジナル版と同様に、移動中にカメラを標準の角度へ戻します。
+
+# src/launcher/ui/page_video.cpp:53 (+1)
+Field of View
+視野角
+
+# src/launcher/ui/page_video.cpp:53
+Degrees added to the gameplay camera's field of view. Cutscenes keep their own.
+ゲームプレイ中のカメラの視野角に加える角度です。ムービーは元の視野角のままです。
+
+# src/launcher/ui/page_video.cpp:56
+Experimental
+実験的機能
+
+# src/launcher/ui/page_video.cpp:57 (+1)
+Normal Maps
+ノーマルマップ
+
+# src/launcher/ui/page_video.cpp:58 (+1)
+Bump Maps
+バンプマップ
+
+# src/launcher/ui/page_video.cpp:59 (+1)
+Specular
+スペキュラー
+
+# src/launcher/ui/shell.cpp:75
+Play
+プレイ
+
+# src/launcher/ui/shell.cpp:81
+DLC
+
+
+# src/launcher/ui/shell.cpp:101
+PLAY
+プレイ
+
+# src/launcher/ui/shell.cpp:106
+Close launcher on Play
+プレイ時にランチャーを閉じる
+
+# src/launcher/ui/shell.cpp:123
+Settings are saved as you change them to {0}.
+設定は変更するたびに{0}に保存されます。
+
+# src/launcher/ui/widgets.cpp:152
+Restored the defaults on this page.
+このページを初期設定に戻しました。
+
+# src/launcher/ui/widgets.cpp:157 (+1)
+Display Mode
+表示モード
+
+# src/launcher/ui/widgets.cpp:158 (+1)
+Windowed
+ウィンドウ
+
+# src/launcher/ui/widgets.cpp:158 (+1)
+Borderless
+ボーダーレス
+
+# src/launcher/ui/widgets.cpp:158 (+1)
+Fullscreen
+フルスクリーン
+
+# src/launcher/ui/widgets.cpp:169 (+1)
+Resolution
+解像度
+
+# src/launcher/ui/widgets.cpp:169
+The size the game renders at. A size of another shape than your window is shown with black bars.
+ゲームの描画サイズです。ウィンドウと縦横比が異なるサイズでは黒帯が表示されます。
+
+# src/launcher/ui/widgets.cpp:173
+Match Window
+ウィンドウに合わせる
+
+# src/launcher/ui/widgets.cpp:174
+{0} x {1}  (Ultrawide)
+{0} x {1}  (ウルトラワイド)
+
+# src/shader_editor/editor.cpp:122
+{0} opened
+{0}を開きました
+
+# src/shader_editor/editor.cpp:195
+{0} in {1} s, and saved
+{0}（{1}秒）、保存しました
+
+# src/shader_editor/editor.cpp:195
+{0} in {1} s, for this renderer only: Save before sharing it
+{0}（{1}秒）、このレンダラー専用: 共有する前に保存してください
+
+# src/shader_editor/editor.cpp:210
+The mod's name, which is also its file's
+MODの名前（ファイル名にもなります）
+
+# src/shader_editor/editor.cpp:212
+New
+新規
+
+# src/shader_editor/editor.cpp:214
+Open...
+開く...
+
+# src/shader_editor/editor.cpp:223
+No saved mods yet.
+保存されたMODはまだありません。
+
+# src/shader_editor/editor.cpp:229
+Mods Folder
+MODフォルダー
+
+# src/shader_editor/editor.cpp:236
+Start from...
+ひな形から作成...
+
+# src/shader_editor/editor.cpp:243
+Undo
+元に戻す
+
+# src/shader_editor/editor.cpp:245
+Ctrl+Z
+
+
+# src/shader_editor/editor.cpp:248
+Redo
+やり直し
+
+# src/shader_editor/editor.cpp:250
+Ctrl+Y
+
+
+# src/shader_editor/editor.cpp:254
+Frame All
+全体を表示
+
+# src/shader_editor/editor.cpp:255
+Home, or F with nothing selected
+Home、または何も選択せずにF
+
+# src/shader_editor/editor.cpp:257 (+3)
+Comment
+コメント
+
+# src/shader_editor/editor.cpp:264
+C on the canvas wraps the selection in a comment
+キャンバス上でCを押すと、選択範囲をコメントで囲みます
+
+# src/shader_editor/editor.cpp:268
+Raw HLSL
+HLSLを直接編集
+
+# src/shader_editor/editor.cpp:276
+Live Update
+ライブ更新
+
+# src/shader_editor/editor.cpp:277
+Compiles and applies to the running game a moment after each edit
+編集するたびに、少し後でコンパイルして実行中のゲームに適用します
+
+# src/shader_editor/editor.cpp:281
+Save
+保存
+
+# src/shader_editor/editor.cpp:283
+Compiles for both renderers and saves the mod; a running game picks it up
+両方のレンダラー向けにコンパイルしてMODを保存します。実行中のゲームにも反映されます
+
+# src/shader_editor/editor.cpp:285
+Replace graph
+グラフを置き換え
+
+# src/shader_editor/editor.cpp:288
+Replace the graph with {0}?
+グラフを{0}で置き換えますか？
+
+# src/shader_editor/editor.cpp:289
+Undo brings yours back.
+「元に戻す」で現在のグラフに戻せます。
+
+# src/shader_editor/editor.cpp:290
+Replace
+置き換え
+
+# src/shader_editor/editor.cpp:297
+Keep Mine
+現在のものを残す
+
+# src/shader_editor/editor.cpp:311
+Search nodes
+ノードを検索
+
+# src/shader_editor/editor.cpp:345
+Hold {0} and click the graph to place one.
+{0}を押しながらグラフをクリックすると配置できます。
+
+# src/shader_editor/editor.cpp:363 (+8)
+Colour
+カラー
+
+# src/shader_editor/editor.cpp:369
+Details
+詳細
+
+# src/shader_editor/editor.cpp:370
+Select a node to edit it.
+編集するノードを選択してください。
+
+# src/shader_editor/editor.cpp:371
+{0} nodes selected.
+{0}個のノードを選択中。
+
+# src/shader_editor/editor.cpp:384
+Parameter
+パラメーター
+
+# src/shader_editor/editor.cpp:385
+Named constants are listed under Parameters, to tune without finding them in the graph
+名前を付けた定数は「パラメーター」に一覧表示され、グラフ内で探さずに調整できます
+
+# src/shader_editor/editor.cpp:391
+Channel
+チャンネル
+
+# src/shader_editor/editor.cpp:398
+Unwired inputs
+未接続の入力
+
+# src/shader_editor/editor.cpp:401
+{0}: the surface's UV
+{0}: サーフェスのUV
+
+# src/shader_editor/editor.cpp:418
+Parameters
+パラメーター
+
+# src/shader_editor/editor.cpp:431
+Name a Number or Colour node to list it here.
+数値ノードまたはカラーノードに名前を付けると、ここに表示されます。
+
+# src/shader_editor/editor.cpp:445
+Applies to
+適用対象
+
+# src/shader_editor/editor.cpp:447
+Preparing the game's shaders...
+ゲームのシェーダーを準備しています...
+
+# src/shader_editor/editor.cpp:452
+Characters
+キャラクター
+
+# src/shader_editor/editor.cpp:456
+Surfaces
+サーフェス
+
+# src/shader_editor/editor.cpp:460
+Levels
+ステージ
+
+# src/shader_editor/editor.cpp:468 (+1)
+Also surfaces the game doesn't light
+ライティングされないサーフェスも含める
+
+# src/shader_editor/editor.cpp:473
+Glows, effects and surfaces lit from within, such as lava. Their Game colour already has fog in it, and Base texture, Light and Normal aren't known.
+発光、エフェクト、溶岩のように内側から光るサーフェスです。これらの「ゲームカラー」にはすでにフォグが含まれており、「ベーステクスチャ」「ライト」「ノーマル」は取得できません。
+
+# src/shader_editor/editor.cpp:476
+{0} shaders. These choose the game's shaders, not objects, so anything else drawn with the same ones changes too.
+シェーダー{0}個。オブジェクトではなくゲームのシェーダーを選ぶため、同じシェーダーで描画される他のものも変わります。
+
+# src/shader_editor/editor.cpp:477
+{0} shaders, on this model alone: anything else drawn with them keeps the game's look.
+シェーダー{0}個（このモデルのみ）: 同じシェーダーで描画される他のものは元の見た目のままです。
+
+# src/shader_editor/editor.cpp:482
+Compile log
+コンパイルログ
+
+# src/shader_editor/editor.cpp:484
+Compiling... {0} of {1}
+コンパイル中... {0}/{1}
+
+# src/shader_editor/editor.cpp:485
+Save, or Live Update, compiles the shaders. Run the game to see them.
+「保存」または「ライブ更新」でシェーダーがコンパイルされます。結果はゲームを起動して確認してください。
+
+# src/shader_editor/editor.cpp:527
+float3 Shade(ShadeInputs s) {  ... the body below ...  }   Helpers: ModKeyLight, ModStep, ModBands, ModFresnel, ModOutline, ModHalftone, ModLuminance, ModNoise (docs/modding.md).
+float3 Shade(ShadeInputs s) {  ... 下の本体 ...  }   ヘルパー: ModKeyLight, ModStep, ModBands, ModFresnel, ModOutline, ModHalftone, ModLuminance, ModNoise (docs/modding.md)
+
+# src/shader_editor/model.cpp:58
+{0} is not a game archive
+{0}はゲームのアーカイブではありません
+
+# src/shader_editor/model.cpp:69
+{0} could not be unpacked
+{0}を展開できませんでした
+
+# src/shader_editor/model.cpp:522
+{0} could not be read
+{0}を読み取れませんでした
+
+# src/shader_editor/model.cpp:546
+{0} has no model in it
+{0}にモデルが含まれていません
+
+# src/shader_editor/node_canvas.cpp:59
+Channel {0}
+チャンネル{0}
+
+# src/shader_editor/node_canvas.cpp:60
+HLSL (Details panel)
+HLSL（詳細パネル）
+
+# src/shader_editor/node_canvas.cpp:242
+Search nodes...
+ノードを検索...
+
+# src/shader_editor/node_canvas.cpp:258
+[{0} + click]
+[{0} + クリック]
+
+# src/shader_editor/node_canvas.cpp:430
+(surface UV)
+(サーフェスUV)
+
+# src/shader_editor/node_canvas.cpp:481
+right-click to add a node
+右クリックでノードを追加
+
+# src/shader_editor/preview.cpp:39
+Classic
+クラシック
+
+# src/shader_editor/preview.cpp:39
+Gothic
+ゴシック調
+
+# src/shader_editor/preview.cpp:39
+Coyote
+コヨーテ
+
+# src/shader_editor/preview.cpp:39 (+1)
+Armored
+アーマー
+
+# src/shader_editor/preview.cpp:39 (+1)
+Fright Pack
+ホラーパック
+
+# src/shader_editor/preview.cpp:40
+Masquerade #1
+マスカレード #1
+
+# src/shader_editor/preview.cpp:40
+Masquerade #2
+マスカレード #2
+
+# src/shader_editor/preview.cpp:40
+Masquerade #3
+マスカレード #3
+
+# src/shader_editor/preview.cpp:40
+Masquerade #4
+マスカレード #4
+
+# src/shader_editor/preview.cpp:40
+Masquerade #5
+マスカレード #5
+
+# src/shader_editor/preview.cpp:41
+Masquerade #6
+マスカレード #6
+
+# src/shader_editor/preview.cpp:41
+Masquerade #7
+マスカレード #7
+
+# src/shader_editor/preview.cpp:41
+Masquerade #8
+マスカレード #8
+
+# src/shader_editor/preview.cpp:41
+Masquerade #9
+マスカレード #9
+
+# src/shader_editor/preview.cpp:41
+Masquerade #10
+マスカレード #10
+
+# src/shader_editor/preview.cpp:42 (+1)
+Winter Warrior
+ウィンター ウォリアー
+
+# src/shader_editor/preview.cpp:42 (+1)
+Design-A-Skin
+デザイン・ア・スキン
+
+# src/shader_editor/preview.cpp:57 (+1)
+Pummel Weed
+パメルウィード
+
+# src/shader_editor/preview.cpp:57 (+1)
+Snare
+スネアー
+
+# src/shader_editor/preview.cpp:57 (+1)
+Rubble
+ラッブル
+
+# src/shader_editor/preview.cpp:58 (+1)
+Major Ruin
+メイジャー ルイン
+
+# src/shader_editor/preview.cpp:58 (+1)
+Deep Blue
+ディープブルー
+
+# src/shader_editor/preview.cpp:58 (+1)
+Flex
+フレックス
+
+# src/shader_editor/preview.cpp:59 (+1)
+40 Below
+マイナス フォーティ
+
+# src/shader_editor/preview.cpp:59 (+1)
+Chilla
+チラ
+
+# src/shader_editor/preview.cpp:59 (+1)
+Thermite
+テルミット
+
+# src/shader_editor/preview.cpp:60 (+1)
+Ash
+アッシュ
+
+# src/shader_editor/preview.cpp:143
+The preview's shader compiler failed.
+プレビュー用シェーダーのコンパイルに失敗しました。
+
+# src/shader_editor/preview.cpp:205 (+1)
+Kameo
+カメオ
+
+# src/shader_editor/preview.cpp:206
+Everyday
+普段着
+
+# src/shader_editor/preview.cpp:212
+Alternate
+コスチューム
+
+# src/shader_editor/preview.cpp:324
+Install the game to preview its characters.
+キャラクターをプレビューするには、ゲームをインストールしてください。
+
+# src/shader_editor/preview.cpp:524
+Spin
+回転
+
+# src/shader_editor/preview.cpp:549
+Loading...
+読み込み中...
+
+# src/shader_editor/preview.cpp:552
+Drag to turn, right drag to move, wheel to zoom, double-click to frame.\nThe lighting stands in for a level's.
+ドラッグで回転、右ドラッグで移動、ホイールでズーム、ダブルクリックで全体表示。\nライティングはステージの代わりの仮のものです。
+
+# src/shader_editor/shader_build.cpp:45
+Lava
+溶岩
+
+# src/shader_editor/shader_build.cpp:45
+Fire off the lava
+溶岩の炎
+
+# src/shader_editor/shader_build.cpp:98
+The game's shaders are missing from {0}; reinstall the game.
+{0}にゲームのシェーダーがありません。ゲームを再インストールしてください。
+
+# src/shader_editor/shader_build.cpp:113
+The game's shader list could not be read.
+ゲームのシェーダーリストを読み取れませんでした。
+
+# src/shader_editor/shader_build.cpp:155
+{0}: new costume (everyday outfit)
+{0}: 新しいコスチューム（普段着）
+
+# src/shader_editor/shader_build.cpp:155
+{0}: new costume (standard look)
+{0}: 新しいコスチューム（標準）
+
+# src/shader_editor/shader_build.cpp:161
+Shared objects
+共有オブジェクト
+
+# src/shader_editor/shader_build.cpp:162
+All characters
+すべてのキャラクター
+
+# src/shader_editor/shader_build.cpp:163
+Everything in the game
+ゲーム内のすべて
+
+# src/shader_editor/shader_build.cpp:200
+The shader compiler is missing from {0}; reinstall the game.
+{0}にシェーダーコンパイラーがありません。ゲームを再インストールしてください。
+
+# src/shader_editor/shader_build.cpp:204
+Choose something for the mod to apply to.
+MODの適用対象を選んでください。
+
+# src/shader_editor/shader_build.cpp:251
+The shader compiler did not start.
+シェーダーコンパイラーを起動できませんでした。
+
+# src/shader_editor/shader_build.cpp:273
+The shader compiler failed.
+シェーダーのコンパイルに失敗しました。
+
+# src/shader_editor/shader_build.cpp:316
+could not replace {0}: {1}
+{0}を置き換えられませんでした: {1}
+
+# src/shader_editor/shader_build.cpp:319
+{0} shaders written to {1}
+{1}にシェーダーを{0}個書き込みました
+
+# src/shader_editor/shader_graph.cpp:29 (+1)
+Output
+出力
+
+# src/shader_editor/shader_graph.cpp:29
+The colour drawn. Fog and fades still follow where the game has them.
+描画される色です。フォグやフェードはゲームと同じ箇所に適用されます。
+
+# src/shader_editor/shader_graph.cpp:30
+Game colour
+ゲームカラー
+
+# src/shader_editor/shader_graph.cpp:30 (+8)
+Inputs
+入力
+
+# src/shader_editor/shader_graph.cpp:30
+The pixel as the game lit it: its textures, lights and shadows. Wire this to Output to change nothing.
+ゲームがライティングしたピクセル（テクスチャ、ライト、影を含む）です。これを「出力」に接続すると何も変わりません。
+
+# src/shader_editor/shader_graph.cpp:31
+Base texture
+ベーステクスチャ
+
+# src/shader_editor/shader_graph.cpp:31
+The surface's colour before lighting, with all its layers. Often paler than it looks in game: multiply in Light's colour to keep a level's mood. Using it makes the surface twice the work to draw.
+ライティング前のサーフェスの色で、すべてのレイヤーを含みます。ゲーム内の見た目より淡いことが多いため、ステージの雰囲気を保つには「ライト」の色を乗算してください。使うとサーフェスの描画負荷が2倍になります。
+
+# src/shader_editor/shader_graph.cpp:32
+Light
+ライト
+
+# src/shader_editor/shader_graph.cpp:32
+The light on this pixel, with its shadows and shine: Game colour over Base texture. Using it makes the surface twice the work to draw.
+このピクセルに当たる光で、影と光沢を含みます（ゲームカラー÷ベーステクスチャ）。使うとサーフェスの描画負荷が2倍になります。
+
+# src/shader_editor/shader_graph.cpp:33 (+2)
+UV
+
+
+# src/shader_editor/shader_graph.cpp:33
+The surface's first texture coordinate, (u, v, 0).
+サーフェスの1番目のテクスチャ座標 (u, v, 0)。
+
+# src/shader_editor/shader_graph.cpp:34
+Screen position
+スクリーン座標
+
+# src/shader_editor/shader_graph.cpp:34
+The pixel's position on screen, (x, y, 0) in pixels.
+画面上のピクセルの位置 (x, y, 0)。単位はピクセル。
+
+# src/shader_editor/shader_graph.cpp:35
+Key light
+キーライト
+
+# src/shader_editor/shader_graph.cpp:35 (+6)
+Lighting
+ライティング
+
+# src/shader_editor/shader_graph.cpp:35 (+1)
+Towards camera
+カメラ方向
+
+# src/shader_editor/shader_graph.cpp:35 (+1)
+Up
+上
+
+# src/shader_editor/shader_graph.cpp:35 (+1)
+Side
+横
+
+# src/shader_editor/shader_graph.cpp:35
+N.L for one light placed from the camera: 1 facing it, -1 facing away. It looks the same in every scene.
+カメラ側に置いた1つのライトに対するN.L: 向き合うと1、背を向けると-1。どのシーンでも同じ見た目になります。
+
+# src/shader_editor/shader_graph.cpp:36
+Sun light
+太陽光
+
+# src/shader_editor/shader_graph.cpp:36
+N.L for the level's own sun or main light: 1 facing it, -1 facing away.
+ステージ自体の太陽またはメインライトに対するN.L: 向き合うと1、背を向けると-1。
+
+# src/shader_editor/shader_graph.cpp:37
+Rim
+リム
+
+# src/shader_editor/shader_graph.cpp:37
+1 - N.V: 0 facing the camera, 1 at the silhouette (fresnel).
+1 - N.V: カメラ正面で0、輪郭で1（フレネル）。
+
+# src/shader_editor/shader_graph.cpp:38
+Facing up
+上向き
+
+# src/shader_editor/shader_graph.cpp:38
+N.up: 1 facing the sky, -1 the ground.
+N.up: 空を向くと1、地面を向くと-1。
+
+# src/shader_editor/shader_graph.cpp:39
+Number
+数値
+
+# src/shader_editor/shader_graph.cpp:39 (+2)
+Constants
+定数
+
+# src/shader_editor/shader_graph.cpp:39
+Value
+値
+
+# src/shader_editor/shader_graph.cpp:39
+A constant. Name it to list it on the Parameters panel.
+定数です。名前を付けると「パラメーター」パネルに表示されます。
+
+# src/shader_editor/shader_graph.cpp:40
+A constant colour. Name it to list it on the Parameters panel.
+一定の色です。名前を付けると「パラメーター」パネルに表示されます。
+
+# src/shader_editor/shader_graph.cpp:41
+Add
+加算
+
+# src/shader_editor/shader_graph.cpp:41 (+23)
+Math
+演算
+
+# src/shader_editor/shader_graph.cpp:42
+Subtract
+減算
+
+# src/shader_editor/shader_graph.cpp:43
+Multiply
+乗算
+
+# src/shader_editor/shader_graph.cpp:44
+Divide
+除算
+
+# src/shader_editor/shader_graph.cpp:45
+Mix
+ミックス
+
+# src/shader_editor/shader_graph.cpp:45 (+2)
+Amount
+量
+
+# src/shader_editor/shader_graph.cpp:45
+A at amount 0, B at 1 (lerp).
+「量」が0でA、1でB（lerp）。
+
+# src/shader_editor/shader_graph.cpp:46
+One minus
+1から減算
+
+# src/shader_editor/shader_graph.cpp:47
+Clamp 0..1
+0..1にクランプ
+
+# src/shader_editor/shader_graph.cpp:47
+X kept between 0 and 1 (saturate).
+Xを0～1の範囲に収めます（saturate）。
+
+# src/shader_editor/shader_graph.cpp:48
+Power
+べき乗
+
+# src/shader_editor/shader_graph.cpp:48
+Exponent
+指数
+
+# src/shader_editor/shader_graph.cpp:48
+X to the power of Exponent.
+Xの「指数」乗。
+
+# src/shader_editor/shader_graph.cpp:49 (+1)
+Min
+最小
+
+# src/shader_editor/shader_graph.cpp:49
+The smaller of A and B.
+AとBの小さい方。
+
+# src/shader_editor/shader_graph.cpp:50 (+1)
+Max
+最大
+
+# src/shader_editor/shader_graph.cpp:50
+The larger of A and B.
+AとBの大きい方。
+
+# src/shader_editor/shader_graph.cpp:51
+Step
+ステップ
+
+# src/shader_editor/shader_graph.cpp:51 (+5)
+Cel
+セル
+
+# src/shader_editor/shader_graph.cpp:51
+Edge
+エッジ
+
+# src/shader_editor/shader_graph.cpp:51
+0 below Edge and 1 above, with a hard, antialiased edge.
+「エッジ」未満で0、以上で1。境界はくっきりしつつアンチエイリアスされます。
+
+# src/shader_editor/shader_graph.cpp:52
+Smooth step
+スムーズステップ
+
+# src/shader_editor/shader_graph.cpp:52
+Edge 0
+エッジ0
+
+# src/shader_editor/shader_graph.cpp:52
+Edge 1
+エッジ1
+
+# src/shader_editor/shader_graph.cpp:52
+0 below Edge 0, 1 above Edge 1, smooth between.
+「エッジ0」未満で0、「エッジ1」以上で1、その間はなめらかに変化します。
+
+# src/shader_editor/shader_graph.cpp:53
+Bands
+階調
+
+# src/shader_editor/shader_graph.cpp:53
+Count
+数
+
+# src/shader_editor/shader_graph.cpp:53
+X (0..1) cut into Count flat steps (posterize).
+X（0..1）を「数」の段階に分けます（ポスタライズ）。
+
+# src/shader_editor/shader_graph.cpp:54
+Desaturate
+彩度を下げる
+
+# src/shader_editor/shader_graph.cpp:54
+Colour turned towards grey by Amount.
+「カラー」を「量」に応じてグレーに近づけます。
+
+# src/shader_editor/shader_graph.cpp:55
+Luminance
+輝度
+
+# src/shader_editor/shader_graph.cpp:55
+The colour's brightness.
+色の明るさ。
+
+# src/shader_editor/shader_graph.cpp:56
+Halftone
+ハーフトーン
+
+# src/shader_editor/shader_graph.cpp:56
+Cell size
+セルサイズ
+
+# src/shader_editor/shader_graph.cpp:56
+1 inside comic dots that grow with Amount (0..1), Cell size pixels apart.
+「量」（0..1）に応じて大きくなる漫画風のドットの内側で1。ドットの間隔は「セルサイズ」ピクセル。
+
+# src/shader_editor/shader_graph.cpp:57
+Custom HLSL
+カスタムHLSL
+
+# src/shader_editor/shader_graph.cpp:57
+Advanced
+上級
+
+# src/shader_editor/shader_graph.cpp:57
+Your own HLSL: a function body over ShadeInputs s and float3 a, b, c, d that returns a float3.
+独自のHLSL: ShadeInputs sとfloat3 a, b, c, dを受け取り、float3を返す関数の本体です。
+
+# src/shader_editor/shader_graph.cpp:58
+Reroute
+リルート
+
+# src/shader_editor/shader_graph.cpp:58 (+1)
+Utility
+ユーティリティ
+
+# src/shader_editor/shader_graph.cpp:58
+Passes its input on, to tidy wires. Double-click a wire to add one.
+入力をそのまま渡して、ワイヤーを整理します。ワイヤーをダブルクリックすると追加できます。
+
+# src/shader_editor/shader_graph.cpp:59
+Time
+時間
+
+# src/shader_editor/shader_graph.cpp:59 (+1)
+Speed
+速度
+
+# src/shader_editor/shader_graph.cpp:59
+Seconds since the game started, times Speed; wraps every hour.
+ゲーム開始からの秒数×「速度」。1時間ごとに0に戻ります。
+
+# src/shader_editor/shader_graph.cpp:60
+Panner
+パンナー
+
+# src/shader_editor/shader_graph.cpp:60
+UV moving at Speed (u, v per second). Unwired, UV is the surface's.
+「速度」（毎秒のu, v）で移動するUV。未接続の場合、UVはサーフェスのものになります。
+
+# src/shader_editor/shader_graph.cpp:61
+Noise
+ノイズ
+
+# src/shader_editor/shader_graph.cpp:61
+Scale
+スケール
+
+# src/shader_editor/shader_graph.cpp:61
+Smooth value noise, 0..1, Scale cells across UV. Unwired, UV is the surface's.
+なめらかなバリューノイズ（0..1）で、UV全体に「スケール」個のセルが並びます。未接続の場合、UVはサーフェスのものになります。
+
+# src/shader_editor/shader_graph.cpp:62
+Sine
+サイン
+
+# src/shader_editor/shader_graph.cpp:62 (+1)
+Period
+周期
+
+# src/shader_editor/shader_graph.cpp:62
+sin(X), one wave every Period.
+sin(X)、「周期」ごとに1つの波。
+
+# src/shader_editor/shader_graph.cpp:63
+Cosine
+コサイン
+
+# src/shader_editor/shader_graph.cpp:63
+cos(X), one wave every Period.
+cos(X)、「周期」ごとに1つの波。
+
+# src/shader_editor/shader_graph.cpp:64
+Frac
+小数部
+
+# src/shader_editor/shader_graph.cpp:64
+The part of X after the decimal point.
+Xの小数点以下の部分。
+
+# src/shader_editor/shader_graph.cpp:65
+Floor
+切り捨て
+
+# src/shader_editor/shader_graph.cpp:65
+X rounded down.
+Xを切り捨てた値。
+
+# src/shader_editor/shader_graph.cpp:66
+Ceil
+切り上げ
+
+# src/shader_editor/shader_graph.cpp:66
+X rounded up.
+Xを切り上げた値。
+
+# src/shader_editor/shader_graph.cpp:67
+Abs
+絶対値
+
+# src/shader_editor/shader_graph.cpp:67
+X without its sign.
+Xの符号を取り除いた値。
+
+# src/shader_editor/shader_graph.cpp:68
+Clamp
+クランプ
+
+# src/shader_editor/shader_graph.cpp:68
+X kept between Min and Max.
+Xを「最小」と「最大」の間に収めます。
+
+# src/shader_editor/shader_graph.cpp:69
+Dot
+内積
+
+# src/shader_editor/shader_graph.cpp:69
+The dot product of A and B.
+AとBの内積。
+
+# src/shader_editor/shader_graph.cpp:70
+Cross
+外積
+
+# src/shader_editor/shader_graph.cpp:70
+The cross product of A and B.
+AとBの外積。
+
+# src/shader_editor/shader_graph.cpp:71
+Normalize
+正規化
+
+# src/shader_editor/shader_graph.cpp:71
+X scaled to length 1.
+長さ1にスケーリングしたX。
+
+# src/shader_editor/shader_graph.cpp:72
+Length
+長さ
+
+# src/shader_editor/shader_graph.cpp:72
+How long X is.
+Xの長さ。
+
+# src/shader_editor/shader_graph.cpp:73
+Distance
+距離
+
+# src/shader_editor/shader_graph.cpp:73
+How far A is from B.
+AとBの距離。
+
+# src/shader_editor/shader_graph.cpp:74
+Remap
+リマップ
+
+# src/shader_editor/shader_graph.cpp:74
+In min
+入力最小
+
+# src/shader_editor/shader_graph.cpp:74
+In max
+入力最大
+
+# src/shader_editor/shader_graph.cpp:74
+Out min
+出力最小
+
+# src/shader_editor/shader_graph.cpp:74
+Out max
+出力最大
+
+# src/shader_editor/shader_graph.cpp:74
+X from In min..In max to Out min..Out max.
+Xを「入力最小」..「入力最大」から「出力最小」..「出力最大」に変換します。
+
+# src/shader_editor/shader_graph.cpp:75
+If
+条件分岐
+
+# src/shader_editor/shader_graph.cpp:75
+Picks by comparing A and B (their first channels).
+AとB（それぞれの最初のチャンネル）を比較して選びます。
+
+# src/shader_editor/shader_graph.cpp:76
+Component mask
+コンポーネントマスク
+
+# src/shader_editor/shader_graph.cpp:76
+Channel (0 R, 1 G, 2 B)
+チャンネル（0 R、1 G、2 B）
+
+# src/shader_editor/shader_graph.cpp:76
+One channel of X, in all three.
+Xの1つのチャンネルを、3つすべてに入れます。
+
+# src/shader_editor/shader_graph.cpp:77
+Make colour
+カラーを作成
+
+# src/shader_editor/shader_graph.cpp:77
+A colour from three numbers (append).
+3つの数値から作る色（append）。
+
+# src/shader_editor/shader_graph.cpp:78
+Surface normal
+サーフェス法線
+
+# src/shader_editor/shader_graph.cpp:78
+The direction the surface faces, in camera space, with normal maps where the game's shader uses them.
+サーフェスの向き（カメラ空間）。ゲームのシェーダーがノーマルマップを使う箇所ではそれも反映されます。
+
+# src/shader_editor/shader_graph.cpp:79
+Camera vector
+カメラベクトル
+
+# src/shader_editor/shader_graph.cpp:79
+The direction to the camera, camera space.
+カメラへの方向（カメラ空間）。
+
+# src/shader_editor/shader_graph.cpp:80
+Up vector
+上ベクトル
+
+# src/shader_editor/shader_graph.cpp:80
+The direction to the sky, camera space.
+空への方向（カメラ空間）。
+
+# src/shader_editor/shader_graph.cpp:81
+Key vector
+キーベクトル
+
+# src/shader_editor/shader_graph.cpp:81
+The direction to the light Key light uses, camera space.
+「キーライト」が使うライトへの方向（カメラ空間）。
+
+# src/shader_editor/shader_graph.cpp:82
+Sun vector
+太陽ベクトル
+
+# src/shader_editor/shader_graph.cpp:82
+The direction to the level's sun or main light, camera space.
+ステージの太陽またはメインライトへの方向（カメラ空間）。
+
+# src/shader_editor/shader_graph.cpp:83
+Sun colour
+太陽の色
+
+# src/shader_editor/shader_graph.cpp:83
+The colour of the level's sun or main light.
+ステージの太陽またはメインライトの色。
+
+# src/shader_editor/shader_graph.cpp:84
+Outline
+アウトライン
+
+# src/shader_editor/shader_graph.cpp:84
+Width
+幅
+
+# src/shader_editor/shader_graph.cpp:84
+1 on an inked line Width pixels wide just inside the silhouette, and round any part seen in front of another; 0 elsewhere. It keeps its width at any distance.
+輪郭のすぐ内側と、他の部分の手前に見える部分の周りに引かれる「幅」ピクセルの線上で1、それ以外は0。距離に関係なく同じ幅を保ちます。
+
+# src/shader_editor/shader_graph.cpp:255
+The game's own look
+ゲーム本来の見た目
+
+# src/shader_editor/shader_graph.cpp:255
+Cel shade
+セルシェード
+
+# src/shader_editor/shader_graph.cpp:255
+Toon bands
+トゥーン階調
+
+# src/shader_editor/shader_graph.cpp:255
+Flat colour
+フラットカラー
+
+# src/shader_editor/shader_graph.cpp:255
+Rim lit
+リムライト
+
+# src/shader_editor/shader_graph.cpp:255
+Comic halftone
+漫画風ハーフトーン
+
+# src/shader_editor/shader_graph.cpp:280
+Shadow tint
+影の色合い
+
+# src/shader_editor/shader_graph.cpp:310
+Rim colour
+リムの色
+
+# src/shader_editor/shader_graph.cpp:343
+Ink width
+線の幅
+
+# src/shader_editor/shader_graph.cpp:349
+Ink colour
+線の色
+
+# src/shader_editor/shader_graph.cpp:432
+could not read {0}
+{0}を読み取れませんでした
+
+# src/shader_editor/shader_graph.cpp:437
+{0} is not valid JSON
+{0}は有効なJSONではありません
+
+# src/ui/string_overrides.cpp:43
+Rename
+名前変更
+
+# src/ui/tribe_shop.cpp:56
+Missed Elemental Fruit ({0}): {1} points
+未入手のエレメンタルフルーツ（{0}）：{1}ポイント
+
+# src/ui/tribe_shop.cpp:57
+Missed Elixir of Life ({0}): {1} points
+未入手のライフリキッド（{0}）：{1}ポイント
+
+# src/ui/tribe_shop.cpp:58
+Missed Crystal Eye ({0}): {1} points
+未入手のクリスタルアイ（{0}）：{1}ポイント
+
+# src/ui/tribe_shop.cpp:59
+Missed Costume ({0}): {1} points
+未入手のコスチューム（{0}）：{1}ポイント
+
+# src/ui/tribe_shop.cpp:170
+You'll need a higher score than that.
+もっとスコアが必要ですね。
+
+# src/ui/tribe_shop.cpp:173
+Buy this item for {0} points?
+このアイテムを {0} ポイントで買うかい？
+
+# src/ui/hud/achievement_toast.cpp:150
+Achievement Unlocked\n{0}   {1}G
+実績のロック解除\n{0}   {1}G
+
+# src/ui/hud/button_prompts.cpp:39
+Arrows
+方向キー
+
+# src/ui/hud/button_prompts.cpp:40
+Wheel Down
+ホイール下
+
+# src/ui/hud/button_prompts.cpp:45
+Wheel Up
+ホイール上
+
+# src/ui/hud/fps_counter.cpp:113
+{0} FPS
+
+
+# src/ui/hud/loading_overlay.cpp:181
+Gathering the elements: preparing shaders
+エレメントを集めています：シェーダーを準備中
+
+# src/ui/hud/loading_overlay.cpp:181
+Awakening the kingdom: loading the game
+王国が目覚めます：ゲームを読み込み中
+
+# src/ui/hud/shader_list_overlay.cpp:35
+Shaders (F7)
+シェーダー (F7)
+
+# src/ui/hud/shader_list_overlay.cpp:46
+Switch a shader off to see what it draws vanish. Only this switches off everything else listed. A shader's hash is what a shader mod targets.
+シェーダーをオフにすると、それが描画しているものが消えます。「これのみ」は一覧の他のすべてをオフにします。シェーダーMODはシェーダーのハッシュを対象にします。
+
+# src/ui/hud/shader_list_overlay.cpp:48
+Filter by shader or texture hash
+シェーダーまたはテクスチャのハッシュで絞り込み
+
+# src/ui/hud/shader_list_overlay.cpp:50
+On screen only
+画面上のもののみ
+
+# src/ui/hud/shader_list_overlay.cpp:51
+Show all
+すべて表示
+
+# src/ui/hud/shader_list_overlay.cpp:53
+Switch off all listed
+一覧をすべてオフ
+
+# src/ui/hud/shader_list_overlay.cpp:57
+{0} shaders
+シェーダー {0}個
+
+# src/ui/hud/shader_list_overlay.cpp:62 (+1)
+On
+オン
+
+# src/ui/hud/shader_list_overlay.cpp:63
+Pixel shader
+ピクセルシェーダー
+
+# src/ui/hud/shader_list_overlay.cpp:64
+Draws
+描画数
+
+# src/ui/hud/shader_list_overlay.cpp:77
+off
+オフ
+
+# src/ui/hud/shader_list_overlay.cpp:81
+none seen
+未検出
+
+# src/ui/hud/shader_list_overlay.cpp:93
+Only this
+これのみ
+
+# src/ui/hud/shader_list_overlay.cpp:97
+Copy
+コピー
+
+# src/ui/name_entry/name_entry.cpp:70
+Space
+スペース
+
+# src/ui/name_entry/name_entry.cpp:70
+Done
+完了
+
+# src/ui/name_entry/name_entry.cpp:221
+Type a name   Bksp Delete   Enter Done   Esc Cancel
+名前を入力   Bksp 削除   Enter 完了   Esc キャンセル
+
+# src/ui/name_entry/name_entry.cpp:221
+{0} Type   {1} Delete   {2} Case   {3} Done
+{0} 入力   {1} 削除   {2} 大文字/小文字   {3} 完了
+
+# src/ui/name_entry/name_entry.cpp:273
+Rename Saved Game
+セーブデータの名前変更
+
+# src/ui/pause_menu/achievements_page.cpp:63 (+1)
+Achievements
+実績
+
+# src/ui/pause_menu/achievements_page.cpp:67
+No achievement data was found in the game's files.
+ゲームファイルに実績データが見つかりませんでした。
+
+# src/ui/pause_menu/achievements_page.cpp:80
+{0} of {1} unlocked   {2}G of {3}G
+{0}/{1} 解除   {2}G/{3}G
+
+# src/ui/pause_menu/collectible_tracker.cpp:22
+Fruit in This Area
+このエリアのフルーツ
+
+# src/ui/pause_menu/collectible_tracker.cpp:22
+All Elemental Fruit
+すべてのエレメンタルフルーツ
+
+# src/ui/pause_menu/collectible_tracker.cpp:23
+Elixirs in This Area
+このエリアのライフリキッド
+
+# src/ui/pause_menu/collectible_tracker.cpp:23
+All Elixirs of Life
+すべてのライフリキッド
+
+# src/ui/pause_menu/collectible_tracker.cpp:24
+Crystal Eye in This Area
+このエリアのクリスタルアイ
+
+# src/ui/pause_menu/collectible_tracker.cpp:24
+All Crystal Eyes
+すべてのクリスタルアイ
+
+# src/ui/pause_menu/collectible_tracker.cpp:25
+Costumes in This Area
+このエリアのコスチューム
+
+# src/ui/pause_menu/collectible_tracker.cpp:25
+All Costumes
+すべてのコスチューム
+
+# src/ui/pause_menu/collectible_tracker.cpp:57 (+1)
+Collectibles
+収集アイテム
+
+# src/ui/pause_menu/collectible_tracker.cpp:65
+This Area
+このエリア
+
+# src/ui/pause_menu/collectible_tracker.cpp:65
+Nothing to find
+収集アイテムなし
+
+# src/ui/pause_menu/collectible_tracker.cpp:67
+Missed, Sold in Tribe Shops
+未入手（種族の店で販売中）
+
+# src/ui/pause_menu/level_select.cpp:32
+Thorn's Castle
+ソーンの城
+
+# src/ui/pause_menu/level_select.cpp:32
+Enchanted Kingdom
+精霊の国
+
+# src/ui/pause_menu/level_select.cpp:32
+The Badlands
+暗黒の地
+
+# src/ui/pause_menu/level_select.cpp:32
+Forgotten Forest
+失われた森
+
+# src/ui/pause_menu/level_select.cpp:33
+Forest Temple
+森の聖堂
+
+# src/ui/pause_menu/level_select.cpp:33
+Mountain Falls
+マウンテンフォール
+
+# src/ui/pause_menu/level_select.cpp:33
+Mountain Rise
+マウンテンライズ
+
+# src/ui/pause_menu/level_select.cpp:33
+Water Temple
+水の聖堂
+
+# src/ui/pause_menu/level_select.cpp:34
+Snow Top Village
+氷雪の峠
+
+# src/ui/pause_menu/level_select.cpp:34
+Snow Temple
+氷の聖堂
+
+# src/ui/pause_menu/level_select.cpp:34
+Ogre's Swamp
+魂を食らう悪魔の沼
+
+# src/ui/pause_menu/level_select.cpp:34
+Thorn's Pass
+ソーンの峠
+
+# src/ui/pause_menu/level_select.cpp:35
+Thorn's Airship
+ソーンの飛行船
+
+# src/ui/pause_menu/level_select.cpp:81 (+1)
+Level Select
+ステージセレクト
+
+# src/ui/pause_menu/level_select.cpp:95
+Start from "{0}"?
+「{0}」から始めますか？
+
+# src/ui/pause_menu/level_select.cpp:96
+The story is set to this point;\ncollectibles are kept.
+ストーリーがこの時点に設定されます。\n収集アイテムはそのまま残ります。
+
+# src/ui/pause_menu/line_injection.cpp:34
+Brightness
+明るさ調整
+
+# src/ui/pause_menu/line_injection.cpp:54
+Resume
+ゲームを再開
+
+# src/ui/pause_menu/line_injection.cpp:62 (+1)
+Options
+オプション
+
+# src/ui/pause_menu/option_values.cpp:97 (+1)
+English
+英語
+
+# src/ui/pause_menu/option_values.cpp:97
+Japanese
+日本語
+
+# src/ui/pause_menu/option_values.cpp:97
+German
+ドイツ語
+
+# src/ui/pause_menu/option_values.cpp:97
+French
+フランス語
+
+# src/ui/pause_menu/option_values.cpp:97
+Spanish
+スペイン語
+
+# src/ui/pause_menu/option_values.cpp:97
+Italian
+イタリア語
+
+# src/ui/pause_menu/option_values.cpp:97
+Korean
+かんこく語
+
+# src/ui/pause_menu/option_values.cpp:97
+Chinese
+中国語
+
+# src/ui/pause_menu/option_values.cpp:122
+Press a key (wait 5s to cancel)
+キーを押してください（5秒でキャンセル）
+
+# src/ui/pause_menu/option_values.cpp:143
+Window
+ウィンドウ
+
+# src/ui/pause_menu/option_values.cpp:144
+Window ({0}x{1})
+ウィンドウ（{0}x{1}）
+
+# src/ui/pause_menu/options_table.cpp:69
+Control Display
+コントロール表示
+
+# src/ui/pause_menu/options_table.cpp:70
+Score Display
+スコア表示
+
+# src/ui/pause_menu/options_table.cpp:71
+Map Display
+マップ表示
+
+# src/ui/pause_menu/options_table.cpp:72 (+1)
+{0} (restart)
+{0}（再起動後）
+
+# src/ui/pause_menu/options_table.cpp:79
+3D Display
+3D表示
+
+# src/ui/pause_menu/options_table.cpp:79
+Side by Side
+サイドバイサイド
+
+# src/ui/pause_menu/options_table.cpp:79
+Top and Bottom
+トップアンドボトム
+
+# src/ui/pause_menu/options_table.cpp:79
+Red/Cyan Glasses
+赤青メガネ
+
+# src/ui/pause_menu/options_table.cpp:80
+3D Depth
+3Dの奥行き
+
+# src/ui/pause_menu/options_table.cpp:81
+3D Focus
+3Dの焦点
+
+# src/ui/pause_menu/options_table.cpp:81
+On Kameo
+カメオ
+
+# src/ui/pause_menu/options_table.cpp:82
+3D Swap Eyes
+3Dの左右入れ替え
+
+# src/ui/pause_menu/options_table.cpp:99
+Player 1 Input
+プレイヤー1の入力
+
+# src/ui/pause_menu/options_table.cpp:100
+Controller Preset
+コントローラープリセット
+
+# src/ui/pause_menu/options_table.cpp:100
+Button Position
+ボタン位置
+
+# src/ui/pause_menu/options_table.cpp:100
+Button Labels
+ボタン表記
+
+# src/ui/pause_menu/options_table.cpp:100
+Custom
+カスタム
+
+# src/ui/pause_menu/options_table.cpp:101
+Mouse Look
+マウスで視点操作
+
+# src/ui/pause_menu/options_table.cpp:103
+Player 1 Keyboard
+プレイヤー1のキーボード
+
+# src/ui/pause_menu/options_table.cpp:103 (+1)
+Keyboard 2
+キーボード2
+
+# src/ui/pause_menu/options_table.cpp:103 (+1)
+Keyboard 1
+キーボード1
+
+# src/ui/pause_menu/options_table.cpp:104
+Player 1 Mouse
+プレイヤー1のマウス
+
+# src/ui/pause_menu/options_table.cpp:104 (+1)
+Mouse 2
+マウス2
+
+# src/ui/pause_menu/options_table.cpp:104 (+1)
+Mouse 1
+マウス1
+
+# src/ui/pause_menu/options_table.cpp:105
+Look Left/Right
+左右の視点
+
+# src/ui/pause_menu/options_table.cpp:106
+Look Up/Down
+上下の視点
+
+# src/ui/pause_menu/options_table.cpp:109
+Default
+標準
+
+# src/ui/pause_menu/options_table.cpp:111
+Costume
+コスチューム
+
+# src/ui/pause_menu/options_table.cpp:113
+Player 2 Input
+プレイヤー2の入力
+
+# src/ui/pause_menu/options_table.cpp:114
+Split-Screen Layout
+分割画面の配置
+
+# src/ui/pause_menu/options_table.cpp:115
+Player 2 Keyboard
+プレイヤー2のキーボード
+
+# src/ui/pause_menu/options_table.cpp:116
+Player 2 Mouse
+プレイヤー2のマウス
+
+# src/ui/pause_menu/options_table.cpp:117
+Player 2 Aim X
+プレイヤー2の照準（左右）
+
+# src/ui/pause_menu/options_table.cpp:117 (+1)
+Inverted
+反転
+
+# src/ui/pause_menu/options_table.cpp:117 (+1)
+Normal
+標準
+
+# src/ui/pause_menu/options_table.cpp:118
+Player 2 Aim Y
+プレイヤー2の照準（上下）
+
+# src/ui/pause_menu/options_table.cpp:119
+Player Pushing
+パートナーとの接触
+
+# src/ui/pause_menu/options_table.cpp:120
+Friendly Fire
+パートナーへの攻撃
+
+# src/ui/pause_menu/options_table.cpp:122
+Hints
+ヒント
+
+# src/ui/pause_menu/options_table.cpp:125
+All Warriors & Upgrades
+全モンスターとアップグレード
+
+# src/ui/pause_menu/options_table.cpp:134
+ Button
+ ボタン
+
+# src/ui/pause_menu/options_table.cpp:135
+ Button
+ ボタン
+
+# src/ui/pause_menu/options_table.cpp:136
+ Button
+ ボタン
+
+# src/ui/pause_menu/options_table.cpp:137
+ Button
+ ボタン
+
+# src/ui/pause_menu/options_table.cpp:154
+ Action
+ アクション
+
+# src/ui/pause_menu/options_table.cpp:155
+ Action
+ アクション
+
+# src/ui/pause_menu/options_table.cpp:156
+ Action
+ アクション
+
+# src/ui/pause_menu/options_table.cpp:157
+ Action
+ アクション
+
+# src/ui/pause_menu/options_table.cpp:170
+Move Up
+上へ移動
+
+# src/ui/pause_menu/options_table.cpp:171
+Move Down
+下へ移動
+
+# src/ui/pause_menu/pages.cpp:29
+Split-screen
+分割画面
+
+# src/ui/pause_menu/pages.cpp:33
+HUD
+
+
+# src/ui/pause_menu/pages.cpp:35
+Materials
+マテリアル
+
+# src/ui/pause_menu/pages.cpp:38
+Controller Bindings
+コントローラー割り当て
+
+# src/ui/pause_menu/pages.cpp:51
+Credits
+クレジット
+
+# src/ui/pause_menu/pages.cpp:52
+Restore All Defaults
+すべて初期設定に戻す
+
+# src/ui/pause_menu/pages.cpp:72
+Brightness & Gamma
+明るさとガンマ
+
+# src/ui/pause_menu/quit_prompt.cpp:98
+Quit to Menu
+メニューに戻る
+
+# src/ui/pause_menu/quit_prompt.cpp:99
+Quit Application
+アプリケーションを終了
+
+# src/ui/pause_menu/quit_prompt.cpp:100
+Restart Game
+ゲームを再起動
+
+# src/ui/pause_menu/quit_prompt.cpp:110
+Press  to restart the game\n\nPress  to quit the application
+を押してゲームを再起動\n\nを押してアプリケーションを終了
+
+# src/ui/pause_menu/restore_defaults.cpp:75
+Restore all settings to their defaults?
+すべての設定を初期設定に戻しますか？
+
+# src/ui/pause_menu/restore_defaults.cpp:76
+Restore {0} to defaults?
+{0}を初期設定に戻しますか？

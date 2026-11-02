@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstring>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include <fmt/format.h>
@@ -26,6 +27,7 @@
 #include "gpu/scene_resolve_state.h"
 #include "gpu/shaders/embedded_shaders.h"
 #include "gpu/shaders/shader_cache.h"
+#include "gpu/shader_list.h"
 #include "gpu/shaders/shader_mods.h"
 #include "gpu/stereo/stereo.h"  // STEREO:
 #include "gpu/textures/texture_cache.h"
@@ -82,9 +84,31 @@ struct DrawPlacement {
   float vp_height = 0.0f;
 };
 
-// Writes the draw's texture and sampler indices and shared constants into the shared block; true when it samples the storybook page.
 // Whether this frame's draws time their texture, pipeline and upload work; read once per frame.
 bool g_profileDraws = false;
+
+// Logs each pixel shader a watched texture is drawn with, once.
+void FindTextureShader(const DrawCall& call, uint32_t texture_index) {
+  static std::string watched_text;
+  static std::unordered_set<uint64_t> watched;
+  static std::unordered_set<uint64_t> logged;
+  const std::string& text = REXCVAR_GET(kameo_dev_find_texture_shaders);
+  if (text.empty()) return;
+  if (text != watched_text) {
+    watched_text = text;
+    watched.clear();
+    for (size_t at = 0; at < text.size();) {
+      const size_t end = std::min(text.find(',', at), text.size());
+      if (end > at) watched.insert(std::strtoull(text.substr(at, end - at).c_str(), nullptr, 16));
+      at = end + 1;
+    }
+  }
+  const uint64_t texture = TextureContentHashAt(texture_index);
+  if (!texture || !call.ps || !watched.contains(texture)) return;
+  if (logged.insert(texture ^ (call.ps->hash * 0x9E3779B97F4A7C15ull)).second) KGFX_INFO("texture {:016X} is drawn with pixel shader {:016X}", texture, call.ps->hash);
+}
+
+// Writes the draw's texture and sampler indices and shared constants into the shared block; true when it samples the storybook page.
 
 bool BuildSharedBlock(ReplayContext& rc, const DrawCall& call) {
   GraphicsSystem::DrawPathContext& ctx = rc.ctx;
@@ -120,6 +144,8 @@ bool BuildSharedBlock(ReplayContext& rc, const DrawCall& call) {
     if (texture_index == 0) {
       continue;
     }
+    FindTextureShader(call, texture_index);
+    if (call.ps && ShaderListRecording()) ShaderListNoteTexture(call.ps->hash, TextureContentHashAt(texture_index));
     if (book_pick_wanted && want_dimension == 0 && !samples_book_page) samples_book_page = IsBookPageTexture(texture_index);
     // XenosRecomp's layout: 16 Texture2D indices, 16 Texture3D, 16 TextureCube, 16 sampler indices, then the shared constants at c16; a volume sample through a zeroed Texture3D slot read slot 0's 2D view as zero.
     shared_words[want_dimension * 16 + s] = texture_index;
@@ -357,6 +383,12 @@ void ReplayDraw(ReplayContext& rc, const DrawCall& call, uint32_t off_w, uint32_
     if (REXCVAR_GET(kameo_gfx_cull_both)) {
       return;
     }
+  }
+
+  // The shader list overlay (F7): a shader switched off draws nothing, and while it's open each draw is counted.
+  if (call.ps && !call.depth_only && !call.stencil_only) {
+    if (ShaderListHides(call.ps->hash)) return;
+    if (ShaderListRecording()) ShaderListNoteDraw(call.ps->hash, g_sceneFrames);
   }
 
   plume::RenderShader* vs = rc.gfx.ShaderModule(call.vs);

@@ -1,8 +1,11 @@
 // Left and right on a skin line step back and forward through the skins, where A only steps forward: Kameo's costume
 // line on the Bonus pages, and Change Skin on a warrior's page.
 
+#include <rex/logging.h>
+
 #include "engine/dlc/dlc.h"
 #include "input/guest_controls.h"
+#include "ui/hud/fps_counter.h"
 #include "ui/text_window.h"
 
 using namespace kameo::ui;
@@ -68,6 +71,13 @@ extern "C" REX_FUNC(sub_823C62F8) {
     CallGuest(ctx, base, sub_822EA728, kPageSound);
   }
   __imp__sub_823C62F8(ctx, base);
+  // The Bonus page ignores the costume line while this is set; it clears once the skin record stops loading.
+  static uint32_t last_loading = 0;
+  const uint32_t loading = state && KameoGuestRangeReadable(state + kStatusCostumeLoading, 4) ? REX_LOAD_U32(state + kStatusCostumeLoading) : 0;
+  if (loading != last_loading) {
+    last_loading = loading;
+    REXLOG_INFO("[kameo] bonus page costume {}: {}", loading ? "loading" : "loaded", kameo::engine::KameoSkinState(base));
+  }
 }
 
 // _storybookMonsterInfoObj_tick(infoObj) -- a warrior's page.

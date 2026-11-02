@@ -1,6 +1,7 @@
 // The per-frame pump on the game thread, where work queued by the UI and host threads is applied to the guest.
 
 #include "core/hooks.h"
+#include "core/localization.h"
 #include "engine/audio.h"
 #include "engine/dlc/dlc.h"
 #include "engine/guest_addresses.h"
@@ -9,6 +10,7 @@
 #include "input/input.h"
 #include "ui/hud/achievement_toast.h"
 #include "ui/hud/fps_counter.h"
+#include "ui/pause_menu/option_values.h"
 #include "ui/pause_menu/pause_menu.h"
 
 // Hooked at 0x8224F700, once per game tick.
@@ -27,10 +29,13 @@ void KameoGameTick() {
   KameoReplayCachedVolumes(*ctx_ptr, base);
   kameo::engine::ProcessPendingDlcSwap(*ctx_ptr, base);
   kameo::engine::TickKameoSkin(base);
+  kameo::engine::TickJoinerSkin(*ctx_ptr, base);
   kameo::engine::TickWarriorUnlock(*ctx_ptr, base);
   KameoUpdateSuperJumpFloat(*ctx_ptr, base);
   KameoTickInput();
   KameoTickFpsCounter(*ctx_ptr, base);
+  // Our own text follows the game's language option.
+  kameo::l10n::SetLanguage(kameo::ui::ChosenLanguage());
   KameoTickAchievementToast(*ctx_ptr, base);
   KameoTickMenuHotkeys(*ctx_ptr, base);
   KameoDevStartTaskTick(*ctx_ptr, base);

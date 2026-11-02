@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 
+#include "core/localization.h"
 #include "ui/hud/key_labels.h"
 #include "ui/pause_menu/pause_menu_internal.h"
 
@@ -30,7 +31,7 @@ extern "C" REX_FUNC(sub_8210A4C8) {
   if (!t_addingOwnTextItem && t_building_gamma_page && ctx.r4.u32 == kGameItemBrightnessBar) {
     t_building_gamma_page = false;
     const uint32_t label_format = LocalisedString(ctx, base, kLabelFormatString);
-    if (const uint32_t label = GuestWideString(u"Brightness")) AddTextItem(ctx, base, ctx.r3.u32, kItemBrightnessLabel, label_format, label, 0, false);
+    if (const uint32_t label = GuestWideString(kameo::l10n::Tr(u"Brightness"))) AddTextItem(ctx, base, ctx.r3.u32, kItemBrightnessLabel, label_format, label, 0, false);
   }
   if (!t_addingOwnTextItem && t_building_settings_page && ctx.r4.u32 == kGameItemBrightness) {
     ctx.r3.u64 = 0;
@@ -50,7 +51,7 @@ extern "C" REX_FUNC(sub_8210A4C8) {
   }
   // The main page is Resume, Options and Quit: Game Options' remaining settings are reached from Options.
   if (!t_addingOwnTextItem && t_building_main_page && ctx.r4.u32 == kGameItemGameOptions) {
-    if (const uint32_t text = StyledLike(base, ctx.r6.u32, u"Resume")) AddTextItem(ctx, base, ctx.r3.u32, kItemResume, ctx.r5.u32, text, kPauseMenuPressACallback, true);
+    if (const uint32_t text = StyledLike(base, ctx.r6.u32, kameo::l10n::Tr(u"Resume"))) AddTextItem(ctx, base, ctx.r3.u32, kItemResume, ctx.r5.u32, text, kPauseMenuPressACallback, true);
     ctx.r3.u64 = 0;
     return;
   }
@@ -58,7 +59,7 @@ extern "C" REX_FUNC(sub_8210A4C8) {
     t_building_main_page = false;
     const uint32_t window = ctx.r3.u32;
     const uint32_t quit_text = ctx.r6.u32;
-    if (const uint32_t text = StyledLike(base, quit_text, u"Options")) AddTextItem(ctx, base, window, kItemOptionsPage, 0, text, kPauseMenuPressACallback, true);
+    if (const uint32_t text = StyledLike(base, quit_text, kameo::l10n::Tr(u"Options"))) AddTextItem(ctx, base, window, kItemOptionsPage, 0, text, kPauseMenuPressACallback, true);
   }
   __imp__sub_8210A4C8(ctx, base);
 }
@@ -162,7 +163,7 @@ extern "C" REX_FUNC(sub_823F0CC0) {
   // Each bar is about two lines tall, so a spacer follows it; then a Gamma label and an empty selectable line, the same pair the game uses for its own bar.
   const uint32_t label_format = LocalisedString(ctx, base, kLabelFormatString);
   const uint32_t empty = GuestWideString(u"");
-  const uint32_t label = GuestWideString(u"Gamma");
+  const uint32_t label = GuestWideString(kameo::l10n::Tr(u"Gamma"));
   if (!empty || !label) return;
   AddTextItem(ctx, base, window, kItemBarSpacer, label_format, empty, 0, false);
   AddTextItem(ctx, base, window, kItemGammaLabel, label_format, label, 0, false);

@@ -9,6 +9,8 @@
 
 #include <toml++/toml.hpp>
 
+#include "core/localization.h"
+
 namespace kameo::launcher {
 
 namespace {
@@ -39,7 +41,7 @@ void Settings::Load() {
       if (const toml::node* node = table.get(spec.name)) values_[spec.name] = NodeToString(*node);
     }
   } catch (const toml::parse_error& failure) {
-    error_ = std::string("kameo_settings.toml could not be read: ") + std::string(failure.description());
+    error_ = l10n::TrFormat("kameo_settings.toml could not be read: {0}", {failure.description()});
   }
 }
 
@@ -52,7 +54,7 @@ bool Settings::Save() {
   {
     std::ofstream file(temp, std::ios::binary | std::ios::trunc);
     if (!file) {
-      error_ = "Could not write " + temp.string();
+      error_ = l10n::TrFormat("Could not write {0}", {temp.string()});
       return false;
     }
     file << text;
@@ -60,7 +62,7 @@ bool Settings::Save() {
   std::error_code ec;
   std::filesystem::rename(temp, path_, ec);
   if (ec) {
-    error_ = "Could not replace " + path_.string() + ": " + ec.message();
+    error_ = l10n::TrFormat("Could not replace {0}: {1}", {path_.string(), ec.message()});
     return false;
   }
   error_.clear();

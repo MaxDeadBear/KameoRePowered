@@ -7,9 +7,15 @@
 
 namespace {
 
+#if KAMEO_TU
+// The title update's .text spans 0x820B0000-0x82707F1C and its Bink code runs to 0x827181F8.
+constexpr uint32_t kCodeBegin = 0x820B0000u;
+constexpr uint32_t kCodeEnd = 0x82720000u;
+#else
 // .text spans 0x820B0000-0x826CF6BC and Bink code runs to 0x826DF9F8.
 constexpr uint32_t kCodeBegin = 0x820B0000u;
 constexpr uint32_t kCodeEnd = 0x826E0000u;
+#endif
 // A function consisting solely of `blr`.
 constexpr uint32_t kBareReturn = 0x823BB178u;
 

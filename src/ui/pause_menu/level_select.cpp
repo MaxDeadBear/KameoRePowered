@@ -1,10 +1,13 @@
 // Level Select: the story's tasks grouped by region, and starting one the way the storybook's task jump does.
 
+#include <algorithm>
+#include <map>
 #include <string>
 #include <vector>
 
 #include <rex/cvar.h>
 
+#include "core/localization.h"
 #include "engine/current_level.h"
 #include "engine/dlc/dlc_swap.h"
 #include "engine/kept_progress.h"
@@ -26,10 +29,10 @@ struct LevelChapter {
 };
 
 constexpr LevelChapter kLevelChapters[] = {
-    {u"Thorn's Castle", 1, 13},       {u"Enchanted Kingdom", 14, 31}, {u"The Badlands", 32, 36},     {u"Forgotten Forest", 37, 64},
-    {u"Forest Temple", 65, 68},       {u"Mountain Falls", 69, 84},    {u"Mountain Rise", 85, 107},   {u"Water Temple", 108, 125},
-    {u"Snow Top Village", 126, 152},  {u"Snow Temple", 153, 168},     {u"Ogre's Swamp", 169, 184},   {u"Thorn's Pass", 185, 202},
-    {u"Thorn's Airship", 203, 225},
+    {TR_NOOP(u"Thorn's Castle"), 1, 13},       {TR_NOOP(u"Enchanted Kingdom"), 14, 31}, {TR_NOOP(u"The Badlands"), 32, 36},     {TR_NOOP(u"Forgotten Forest"), 37, 64},
+    {TR_NOOP(u"Forest Temple"), 65, 68},       {TR_NOOP(u"Mountain Falls"), 69, 84},    {TR_NOOP(u"Mountain Rise"), 85, 107},   {TR_NOOP(u"Water Temple"), 108, 125},
+    {TR_NOOP(u"Snow Top Village"), 126, 152},  {TR_NOOP(u"Snow Temple"), 153, 168},     {TR_NOOP(u"Ogre's Swamp"), 169, 184},   {TR_NOOP(u"Thorn's Pass"), 185, 202},
+    {TR_NOOP(u"Thorn's Airship"), 203, 225},
 };
 
 uint32_t g_levelChapter = 0;
@@ -55,10 +58,18 @@ std::u16string TaskName(PPCContext& ctx, uint8_t* base, uint32_t task) {
 }
 
 // Most task names end in their area's name, which the chapter page already shows as its title.
-std::u16string WithoutChapter(const std::u16string& name, const std::u16string& chapter) {
-  const std::u16string suffix = u" - " + chapter;
-  if (name.size() > suffix.size() && name.compare(name.size() - suffix.size(), suffix.size(), suffix) == 0) return name.substr(0, name.size() - suffix.size());
-  return name;
+// The names are the game's, in its language, so the area is whichever " - " ending most of the chapter's tasks share.
+std::vector<std::u16string> WithoutChapter(std::vector<std::u16string> names) {
+  std::map<std::u16string, size_t> endings;
+  for (const std::u16string& name : names) {
+    if (const size_t dash = name.rfind(u" - "); dash != std::u16string::npos && dash > 0) ++endings[name.substr(dash)];
+  }
+  const auto common = std::max_element(endings.begin(), endings.end(), [](const auto& a, const auto& b) { return a.second < b.second; });
+  if (common == endings.end() || common->second * 2 < names.size()) return names;
+  for (std::u16string& name : names) {
+    if (name.size() > common->first.size() && name.ends_with(common->first)) name.resize(name.size() - common->first.size());
+  }
+  return names;
 }
 
 uint32_t PickedTaskIndex() { return g_levelPickedTask - kLevelChapters[g_levelChapter].first_task; }
@@ -67,21 +78,24 @@ uint32_t PickedTaskIndex() { return g_levelPickedTask - kLevelChapters[g_levelCh
 
 bool AddLevelSelectRows(PPCContext& ctx, uint8_t* base, uint32_t window, Page page) {
   if (page == Page::LevelSelect) {
-    AddPageTitle(ctx, base, window, u"Level Select");
-    for (uint32_t i = 0; i < std::size(kLevelChapters); ++i) AddCategoryLine(ctx, base, window, kItemLevelChapter + i, kLevelChapters[i].title);
+    AddPageTitle(ctx, base, window, kameo::l10n::Tr(u"Level Select"));
+    for (uint32_t i = 0; i < std::size(kLevelChapters); ++i) AddCategoryLine(ctx, base, window, kItemLevelChapter + i, kameo::l10n::Tr(kLevelChapters[i].title));
     return true;
   }
   if (page == Page::LevelChapter) {
     const LevelChapter& chapter = kLevelChapters[g_levelChapter];
-    AddPageTitle(ctx, base, window, chapter.title);
-    for (uint32_t task = chapter.first_task; task <= chapter.last_task; ++task) AddCategoryLine(ctx, base, window, kItemLevelTask + task, Number(int32_t(task - chapter.first_task + 1), u". ") + WithoutChapter(TaskName(ctx, base, task), chapter.title));
+    AddPageTitle(ctx, base, window, kameo::l10n::Tr(chapter.title));
+    std::vector<std::u16string> names;
+    for (uint32_t task = chapter.first_task; task <= chapter.last_task; ++task) names.push_back(TaskName(ctx, base, task));
+    names = WithoutChapter(std::move(names));
+    for (uint32_t i = 0; i < names.size(); ++i) AddCategoryLine(ctx, base, window, kItemLevelTask + chapter.first_task + i, Number(int32_t(i + 1), u". ") + names[i]);
     return true;
   }
   if (page == Page::ConfirmJump) {
-    AddPageTitle(ctx, base, window, u"Start from \"" + TaskName(ctx, base, g_levelPickedTask) + u"\"?");
-    if (const uint32_t note = GuestWideString(u"The story is set to this point;\ncollectibles are kept.")) AddTextItem(ctx, base, window, 0, GuestWideString(u"{alignment='centre' size='21'}"), note, 0, false);
-    AddCategoryLine(ctx, base, window, kItemJumpStart, u"Start");
-    AddCategoryLine(ctx, base, window, kItemJumpCancel, u"Cancel");
+    AddPageTitle(ctx, base, window, kameo::l10n::TrFormat(u"Start from \"{0}\"?", {TaskName(ctx, base, g_levelPickedTask)}));
+    if (const uint32_t note = GuestWideString(kameo::l10n::Tr(u"The story is set to this point;\ncollectibles are kept."))) AddTextItem(ctx, base, window, 0, GuestWideString(u"{alignment='centre' size='21'}"), note, 0, false);
+    AddCategoryLine(ctx, base, window, kItemJumpStart, kameo::l10n::Tr(u"Start"));
+    AddCategoryLine(ctx, base, window, kItemJumpCancel, kameo::l10n::Tr(u"Cancel"));
     return true;
   }
   return false;

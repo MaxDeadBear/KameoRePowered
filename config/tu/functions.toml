@@ -1,0 +1,24 @@
+# Codegen config for the title-update build (KAMEO_TITLE_UPDATE): what the patched image needs besides the hooks in
+# hooks/, which tools/tu/translate.py writes from config/hooks/.
+
+# The title update moves setjmp/longjmp.
+setjmp_address  = 0x82704060
+longjmp_address = 0x82703F40
+
+[functions]
+# Function starts the analyzer misses in the patched image; ctx.ctr.u32[0] marks indirect-call targets.
+0x82324118 = {}  # backward branch target from 0x82324294
+0x8251F320 = {}  # indirect-call target (present in vanilla; missed in the patched image)
+0x823516E8 = {}  # ctx.ctr.u32[0]
+0x823517C8 = {}  # ctx.ctr.u32[0]
+0x82154B90 = {}  # ctx.ctr.u32[0]
+0x82526D80 = {}
+0x824434E0 = {}  # ctx.ctr.u32[0]
+0x82491768 = {}  # ctx.ctr.u32[0]
+0x82363378 = {}  # ctx.ctr.u32[0]
+0x82413180 = {}  # ctx.ctr.u32[0]
+0x8233B048 = {}  # ctx.ctr.u32[0]
+0x826F4600 = {}  # ctx.ctr.u32[0]
+0x8233F948 = {}  # ctx.ctr.u32[0]
+0x820CF010 = {}  # ctx.ctr.u32[0]
+0x82706C70 = {}  # ctx.ctr.u32[0]

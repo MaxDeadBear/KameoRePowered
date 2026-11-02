@@ -4,9 +4,14 @@
 #include <cstdlib>
 #include <string>
 
+#include "core/localization.h"
 #include "launcher/ui/widgets.h"
 
 namespace kameo::launcher {
+
+using l10n::Tr;
+using l10n::TrFormat;
+
 namespace {
 
 struct Resolution {
@@ -139,31 +144,36 @@ void IntSliderRow(App& app, const char* label, const char* name, int minimum, in
 }
 
 void RestoreButton(App& app, std::initializer_list<const char*> names) {
-  const float width = ImGui::CalcTextSize("Restore Defaults").x + ImGui::GetStyle().FramePadding.x * 2;
+  const char* label = Tr("Restore Defaults");
+  const float width = ImGui::CalcTextSize(label).x + ImGui::GetStyle().FramePadding.x * 2;
   ImGui::SameLine(ImGui::GetContentRegionAvail().x + ImGui::GetCursorPosX() - width);
-  if (ImGui::Button("Restore Defaults")) {
+  if (ImGui::Button(label)) {
     for (const char* name : names) app.settings.Reset(name);
-    app.status = "Restored the defaults on this page.";
+    app.status = Tr("Restored the defaults on this page.");
   }
 }
 
 void DisplayModeRow(App& app) {
-  Row("Display Mode");
-  static const char* kModes[] = {"Windowed", "Borderless", "Fullscreen"};
+  Row(Tr("Display Mode"));
+  static const char* kModes[] = {TR_NOOP("Windowed"), TR_NOOP("Borderless"), TR_NOOP("Fullscreen")};
   const int mode = WindowMode(app);
-  if (ImGui::BeginCombo("##window_mode", kModes[mode])) {
+  if (ImGui::BeginCombo("##window_mode", Tr(kModes[mode]))) {
     for (int i = 0; i < 3; ++i) {
-      if (ImGui::Selectable(kModes[i], i == mode)) app.settings.SetInt("kameo_window_mode", i);
+      if (ImGui::Selectable(Tr(kModes[i]), i == mode)) app.settings.SetInt("kameo_window_mode", i);
     }
     ImGui::EndCombo();
   }
 }
 
 void ResolutionRow(App& app) {
-  Row("Resolution", "The size the game renders at. A size of another shape than your window is shown with black bars.");
+  Row(Tr("Resolution"), Tr("The size the game renders at. A size of another shape than your window is shown with black bars."));
   const int width = app.settings.GetInt("kameo_gfx_render_width");
   const int height = app.settings.GetInt("kameo_gfx_render_height");
-  const auto label = [&](const Resolution& r) { return r.height <= 0 ? std::string("Match Window") : std::to_string(r.width) + " x " + std::to_string(r.height) + (r.width * 9 > r.height * 17 ? "  (Ultrawide)" : ""); };
+  const auto label = [&](const Resolution& r) {
+    if (r.height <= 0) return std::string(Tr("Match Window"));
+    if (r.width * 9 > r.height * 17) return TrFormat("{0} x {1}  (Ultrawide)", {std::to_string(r.width), std::to_string(r.height)});
+    return std::to_string(r.width) + " x " + std::to_string(r.height);
+  };
   size_t current = 0;
   for (size_t i = 1; i < std::size(kResolutions); ++i) {
     if (height > 0 && kResolutions[i].height == height && (kResolutions[i].width == width || width <= 0)) current = i;

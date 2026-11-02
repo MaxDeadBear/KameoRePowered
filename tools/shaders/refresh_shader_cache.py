@@ -61,6 +61,11 @@ def main():
            "--out", os.path.join(ROOT, "res", "shader_cache", "shader_cache.cpp")]
     if os.path.isfile(image_cand):
         cmd.extend(["--image", image_cand])
+    # The title update recompiled its built-in shaders, so the title-update build needs its image's ones as well
+    # (tools/tu/build_images.py writes it). One cache serves both builds: shaders are looked up by content.
+    tu_image = os.path.join(ROOT, "out", "tu", "tu_image.bin")
+    if os.path.isfile(tu_image):
+        cmd.extend(["--image", tu_image])
     return subprocess.call(cmd, cwd=ROOT)
 
 

@@ -4,10 +4,15 @@
 #include <cmath>
 #include <string>
 
+#include "core/localization.h"
 #include "launcher/ui/pages.h"
 #include "launcher/ui/widgets.h"
 
 namespace kameo::launcher {
+
+using l10n::Tr;
+using l10n::TrFormat;
+
 namespace {
 
 void NavButton(App& app, Page page, const char* label) {
@@ -67,14 +72,14 @@ void DrawFrame(App& app) {
   ImGui::Spacing();
   ImGui::Separator();
   ImGui::Spacing();
-  NavButton(app, Page::Play, "Play");
-  NavButton(app, Page::Video, "Video");
-  NavButton(app, Page::Audio, "Audio");
-  NavButton(app, Page::Controls, "Controls");
-  NavButton(app, Page::Bindings, "Key Bindings");
-  NavButton(app, Page::Mods, "Mods");
-  NavButton(app, Page::Dlc, "DLC");
-  NavButton(app, Page::Builds, "Builds");
+  NavButton(app, Page::Play, Tr("Play"));
+  NavButton(app, Page::Video, Tr("Video"));
+  NavButton(app, Page::Audio, Tr("Audio"));
+  NavButton(app, Page::Controls, Tr("Controls"));
+  NavButton(app, Page::Bindings, Tr("Key Bindings"));
+  NavButton(app, Page::Mods, Tr("Mods"));
+  NavButton(app, Page::Dlc, Tr("DLC"));
+  NavButton(app, Page::Builds, Tr("Builds"));
 
   const float play_height = ImGui::GetFontSize() * 3.0f;
   const float footer = play_height + ImGui::GetFrameHeightWithSpacing() * 1.2f + ImGui::GetStyle().WindowPadding.y;
@@ -93,11 +98,12 @@ void DrawFrame(App& app) {
   draw->AddRectFilledMultiColor(at, at + size, busy ? IM_COL32(90, 80, 90, 255) : IM_COL32(255, 214, 120, 255), busy ? IM_COL32(90, 80, 90, 255) : IM_COL32(255, 214, 120, 255), busy ? IM_COL32(60, 50, 60, 255) : IM_COL32(196, 128, 40, 255), busy ? IM_COL32(60, 50, 60, 255) : IM_COL32(196, 128, 40, 255));
   draw->AddRect(at, at + size, IM_COL32(255, 240, 200, hovered ? 255 : 150), 0.0f, 0, 1.5f);
   ImGui::PushFont(app.heading, 34.0f);
-  const ImVec2 label_size = ImGui::CalcTextSize("PLAY");
-  draw->AddText(at + (size - label_size) * 0.5f + ImVec2(0, 1), IM_COL32(40, 20, 10, 255), "PLAY");
+  const char* play_label = Tr("PLAY");
+  const ImVec2 label_size = ImGui::CalcTextSize(play_label);
+  draw->AddText(at + (size - label_size) * 0.5f + ImVec2(0, 1), IM_COL32(40, 20, 10, 255), play_label);
   ImGui::PopFont();
   if (play && LaunchGame(app) && app.close_on_launch) app.quit = true;
-  if (ImGui::Checkbox("Close launcher on Play", &app.close_on_launch)) SavePrefs(app);
+  if (ImGui::Checkbox(Tr("Close launcher on Play"), &app.close_on_launch)) SavePrefs(app);
   ImGui::EndChild();
 
   ImGui::SameLine();
@@ -114,11 +120,20 @@ void DrawFrame(App& app) {
     case Page::Builds: PageBuilds(app); break;
   }
   ImGui::EndChild();
-  const std::string footer_text = !app.settings.error().empty() ? app.settings.error() : !app.status.empty() ? app.status : "Settings are saved as you change them to " + app.settings.path().filename().string() + ".";
+  const std::string footer_text = !app.settings.error().empty() ? app.settings.error() : !app.status.empty() ? app.status : TrFormat("Settings are saved as you change them to {0}.", {app.settings.path().filename().string()});
   ImGui::SetCursorPosX(ImGui::GetStyle().WindowPadding.x);
   ImGui::TextColored(app.settings.error().empty() ? kTextDim : ImVec4(1.0f, 0.5f, 0.45f, 1.0f), "%s", footer_text.c_str());
   ImGui::EndChild();
   ImGui::End();
+
+  // The launcher follows the language chosen on the Play or Audio page. It changes after the frame is drawn, so the
+  // window loads the fonts for it before the next one, and the DLC list is read again for its text in the new language.
+  const int setting = app.settings.GetInt("kameo_language");
+  const int language = setting > 0 && setting < l10n::kLanguageCount ? setting : l10n::kEnglish;
+  if (language != l10n::CurrentLanguage()) {
+    l10n::SetLanguage(language);
+    RefreshDlc(app);
+  }
 }
 
 }  // namespace kameo::launcher

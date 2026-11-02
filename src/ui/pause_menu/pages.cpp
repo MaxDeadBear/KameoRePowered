@@ -2,6 +2,7 @@
 
 #include <algorithm>
 
+#include "core/localization.h"
 #include "core/settings.h"
 #include "core/unlock_codes.h"
 #include "ui/pause_menu/option_values.h"
@@ -21,20 +22,20 @@ Page g_hotkeyPage = Page::None;
 namespace {
 
 const PageInfo kPages[] = {
-    {Page::Video, Page::None, u"Display", kItemVideoPage},
-    {Page::Graphics, Page::None, u"Graphics", 0x7A5E0302},
-    {Page::Audio, Page::None, u"Audio", kItemAudioPage},
-    {Page::Controls, Page::None, u"Controls", kItemControlsPage},
-    {Page::Coop, Page::None, u"Split-screen", 0x7A5E030D},
-    {Page::Gameplay, Page::None, u"Gameplay", 0x7A5E0308},
-    {Page::Mods, Page::None, u"Mods", kItemModsPage},
-    {Page::Achievements, Page::None, u"Achievements", kItemAchievementsPage},
-    {Page::Hud, Page::Video, u"HUD", 0x7A5E030B},
-    {Page::Effects, Page::Graphics, u"Effects", 0x7A5E0303},
-    {Page::Materials, Page::Graphics, u"Materials", 0x7A5E030C},
-    {Page::Camera, Page::Controls, u"Camera", 0x7A5E030A},
-    {Page::Bindings, Page::Controls, u"Key Bindings", 0x7A5E0310},
-    {Page::PadBindings, Page::Controls, u"Controller Bindings", 0x7A5E0311},
+    {Page::Video, Page::None, TR_NOOP(u"Display"), kItemVideoPage},
+    {Page::Graphics, Page::None, TR_NOOP(u"Graphics"), 0x7A5E0302},
+    {Page::Audio, Page::None, TR_NOOP(u"Audio"), kItemAudioPage},
+    {Page::Controls, Page::None, TR_NOOP(u"Controls"), kItemControlsPage},
+    {Page::Coop, Page::None, TR_NOOP(u"Split-screen"), 0x7A5E030D},
+    {Page::Gameplay, Page::None, TR_NOOP(u"Gameplay"), 0x7A5E0308},
+    {Page::Mods, Page::None, TR_NOOP(u"Mods"), kItemModsPage},
+    {Page::Achievements, Page::None, TR_NOOP(u"Achievements"), kItemAchievementsPage},
+    {Page::Hud, Page::Video, TR_NOOP(u"HUD"), 0x7A5E030B},
+    {Page::Effects, Page::Graphics, TR_NOOP(u"Effects"), 0x7A5E0303},
+    {Page::Materials, Page::Graphics, TR_NOOP(u"Materials"), 0x7A5E030C},
+    {Page::Camera, Page::Controls, TR_NOOP(u"Camera"), 0x7A5E030A},
+    {Page::Bindings, Page::Controls, TR_NOOP(u"Key Bindings"), 0x7A5E0310},
+    {Page::PadBindings, Page::Controls, TR_NOOP(u"Controller Bindings"), 0x7A5E0311},
 };
 
 // The Options page, the pause menu's and the main menu's alike: these categories, then Credits in a game, and Restore All Defaults.
@@ -45,10 +46,10 @@ void AddPageRows(PPCContext& ctx, uint8_t* base, uint32_t window, Page page) {
   if (AddCollectibleRows(ctx, base, window, page)) return;
   if (AddAchievementRows(ctx, base, window, page)) return;
   if (page == Page::Options) {
-    AddPageTitle(ctx, base, window, u"Options");
-    for (const Page category : kOptionsCategories) AddCategoryLine(ctx, base, window, FindPage(category)->item, FindPage(category)->title);
-    if (g_levelSelectAvailable) AddCategoryLine(ctx, base, window, kItemPlayCredits, u"Credits");
-    AddCategoryLine(ctx, base, window, kItemRestoreAllDefaults, u"Restore All Defaults");
+    AddPageTitle(ctx, base, window, kameo::l10n::Tr(u"Options"));
+    for (const Page category : kOptionsCategories) AddCategoryLine(ctx, base, window, FindPage(category)->item, kameo::l10n::Tr(FindPage(category)->title));
+    if (g_levelSelectAvailable) AddCategoryLine(ctx, base, window, kItemPlayCredits, kameo::l10n::Tr(u"Credits"));
+    AddCategoryLine(ctx, base, window, kItemRestoreAllDefaults, kameo::l10n::Tr(u"Restore All Defaults"));
     return;
   }
   if (page == Page::ConfirmReset) {
@@ -56,11 +57,11 @@ void AddPageRows(PPCContext& ctx, uint8_t* base, uint32_t window, Page page) {
     return;
   }
   const PageInfo* info = FindPage(page);
-  AddPageTitle(ctx, base, window, info ? info->title : u"");
+  AddPageTitle(ctx, base, window, info ? kameo::l10n::Tr(info->title) : std::u16string());
   // The game's brightness and gamma page opens from the end of Display, and a page's sub-categories follow its own options.
   for (const Option& option : AllOptions()) {
     if (option.page != page || (option.shown && !option.shown())) continue;
-    AddToggleRow(ctx, base, window, option.id, option.label, option.game_value ? LocalisedString(ctx, base, option.game_value()) : GuestWideString(option.value()));
+    AddToggleRow(ctx, base, window, option.id, kameo::l10n::Tr(option.label), option.game_value ? LocalisedString(ctx, base, option.game_value()) : GuestWideString(option.value()));
   }
   // Beside settings, a line that opens another page is a row of the same size marked with an arrow.
   const bool settings_page = VisibleOptionCount(page) > 0;
@@ -68,13 +69,13 @@ void AddPageRows(PPCContext& ctx, uint8_t* base, uint32_t window, Page page) {
     if (settings_page) AddToggleRow(ctx, base, window, id, label, GuestWideString(u">"));
     else AddCategoryLine(ctx, base, window, id, label);
   };
-  if (page == Page::Video) add_link(kItemBrightness, u"Brightness & Gamma");
-  if (page == Page::Gameplay && g_levelSelectAvailable && KameoCodeUnlocked(KameoUnlockCode::LevelSelect)) add_link(kItemLevelSelectPage, u"Level Select");
-  if (page == Page::Gameplay && g_levelSelectAvailable && KameoCodeUnlocked(KameoUnlockCode::CollectibleTracker)) add_link(kItemCollectiblesPage, u"Collectibles");
+  if (page == Page::Video) add_link(kItemBrightness, kameo::l10n::Tr(u"Brightness & Gamma"));
+  if (page == Page::Gameplay && g_levelSelectAvailable && KameoCodeUnlocked(KameoUnlockCode::LevelSelect)) add_link(kItemLevelSelectPage, kameo::l10n::Tr(u"Level Select"));
+  if (page == Page::Gameplay && g_levelSelectAvailable && KameoCodeUnlocked(KameoUnlockCode::CollectibleTracker)) add_link(kItemCollectiblesPage, kameo::l10n::Tr(u"Collectibles"));
   for (const PageInfo& child : kPages) {
-    if (child.parent == page) add_link(child.item, child.title);
+    if (child.parent == page) add_link(child.item, kameo::l10n::Tr(child.title));
   }
-  if (HasDefaults(page)) add_link(kItemRestoreDefaults, u"Restore Defaults");
+  if (HasDefaults(page)) add_link(kItemRestoreDefaults, kameo::l10n::Tr(u"Restore Defaults"));
 }
 
 }  // namespace
@@ -175,8 +176,14 @@ bool IsOptionsObject(uint8_t* base, uint32_t pause) {
   const uint32_t header = pause ? REX_LOAD_U32(pause + 8) : 0;
   if (!header) return false;
   constexpr const char kName[] = "StoryBookSimpleOptionsObj";
+  // The object's name; the title update's object record has four more bytes ahead of it.
+#if KAMEO_TU
+  constexpr uint32_t kObjectName = 196;
+#else
+  constexpr uint32_t kObjectName = 192;
+#endif
   for (uint32_t i = 0; i < sizeof(kName); ++i) {
-    if (REX_LOAD_U8(header + 192 + i) != uint8_t(kName[i])) return false;
+    if (REX_LOAD_U8(header + kObjectName + i) != uint8_t(kName[i])) return false;
   }
   return true;
 }

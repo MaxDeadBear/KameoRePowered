@@ -6,7 +6,7 @@
 	url = https://github.com/hedge-dev/XenosRecomp.git
 [submodule "thirdparty/RexLiveless"]
 	path = thirdparty/RexLiveless
-	url = https://github.com/SolarCookies/RexLiveless.git
+	url = https://github.com/MaxDeadBear/RexLiveless.git
 [submodule "thirdparty/SentryWork"]
 	path = thirdparty/SentryWork
 	url = https://github.com/masterspike52/SentryWork

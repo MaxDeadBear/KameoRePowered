@@ -16,6 +16,7 @@
 #include "ui/hud/achievement_icons.h"
 #include "ui/hud/fps_overlay.h"
 #include "ui/hud/loading_overlay.h"
+#include "ui/hud/shader_list_overlay.h"
 #include "ui/name_entry/name_entry_keys.h"
 
 namespace rex::filesystem { class VirtualFileSystem; }
@@ -48,6 +49,9 @@ class KameoApp : public rex::ReXApp {
   void OnCreateDialogs(rex::ui::ImGuiDrawer* drawer) override;
   void OnPostInitLogging() override;
   void OnConfigurePaths(rex::PathConfig& paths) override;
+#if KAMEO_TU
+  void OnLoadXexImage(std::string& xex_image) override;
+#endif
 
  private:
   void* veh_handle_ = nullptr;
@@ -63,6 +67,7 @@ class KameoApp : public rex::ReXApp {
   std::string kameo_paths_note_;  // what OnConfigurePaths wants said once logging exists
   std::unique_ptr<rex::ui::ImGuiDialog> kameo_console_overlay_;
   std::unique_ptr<rex::ui::ImGuiDialog> kameo_debug_overlay_;
+  std::unique_ptr<rex::ui::ImGuiDialog> kameo_shader_list_overlay_;
   // Unlock notices go to the game's own text box; this is the manager's callback registration.
   uint64_t kameo_achievement_listener_ = 0;
   // The RexLiveless Guide (kameo_rexliveless), installed with the dialogs.

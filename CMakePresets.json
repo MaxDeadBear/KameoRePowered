@@ -28,10 +28,17 @@
                 "CMAKE_BUILD_TYPE": "Release",
                 "CMAKE_MAP_IMPORTED_CONFIG_RELEASE": "Release;RelWithDebInfo"
             }
+        },
+        {
+            "name": "release-tu",
+            "displayName": "Release (title update)",
+            "inherits": "release",
+            "cacheVariables": { "KAMEO_TITLE_UPDATE": "ON" }
         }
     ],
     "buildPresets": [
         { "name": "relwithdebinfo", "configurePreset": "relwithdebinfo" },
-        { "name": "release", "configurePreset": "release" }
+        { "name": "release", "configurePreset": "release" },
+        { "name": "release-tu", "configurePreset": "release-tu" }
     ]
 }

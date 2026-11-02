@@ -6,6 +6,7 @@
 
 #include <rex/system/kernel_state.h>
 
+#include "core/localization.h"
 #include "ui/pause_menu/pause_menu.h"
 #include "ui/pause_menu/pause_menu_internal.h"
 
@@ -59,11 +60,11 @@ std::u16string Widen(const std::string& text) {
 
 bool AddAchievementRows(PPCContext& ctx, uint8_t* base, uint32_t window, Page page) {
   if (page != Page::Achievements) return false;
-  AddPageTitle(ctx, base, window, u"Achievements");
+  AddPageTitle(ctx, base, window, kameo::l10n::Tr(u"Achievements"));
   rex::system::KernelState* kernel = rex::system::kernel_state();
   const std::vector<rex::system::AchievementInfo> achievements = kernel ? kernel->achievements().ListAchievements() : std::vector<rex::system::AchievementInfo>{};
   if (achievements.empty()) {
-    if (const uint32_t note = GuestWideString(u"No achievement data was found in the game's files.")) AddTextItem(ctx, base, window, 0, GuestWideString(kSummaryStyle), note, 0, false);
+    if (const uint32_t note = GuestWideString(kameo::l10n::Tr(u"No achievement data was found in the game's files."))) AddTextItem(ctx, base, window, 0, GuestWideString(kSummaryStyle), note, 0, false);
     return true;
   }
   uint32_t unlocked = 0;
@@ -76,7 +77,7 @@ bool AddAchievementRows(PPCContext& ctx, uint8_t* base, uint32_t window, Page pa
       score += a.gamerscore;
     }
   }
-  const std::u16string summary = Number(int32_t(unlocked), u" of ") + Number(int32_t(achievements.size()), u" unlocked   ") + Number(int32_t(score), u"G of ") + Number(int32_t(total_score), u"G");
+  const std::u16string summary = kameo::l10n::TrFormat(u"{0} of {1} unlocked   {2}G of {3}G", {Number(int32_t(unlocked), u""), Number(int32_t(achievements.size()), u""), Number(int32_t(score), u""), Number(int32_t(total_score), u"")});
   if (const uint32_t note = GuestWideString(summary)) AddTextItem(ctx, base, window, 0, GuestWideString(kSummaryStyle), note, 0, false);
   // Rows are selectable so the list scrolls like any page; the selected index is a byte, so the list is capped where it would wrap.
   std::vector<KameoAchievementIconRow> icon_rows;

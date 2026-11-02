@@ -11,11 +11,14 @@
 
 #include <imgui.h>
 
+#include "core/localization.h"
 #include "shader_editor/shader_build.h"
 
 namespace fs = std::filesystem;
 
 namespace kameo::shader_editor {
+
+using l10n::Tr;
 
 namespace {
 
@@ -33,10 +36,10 @@ struct Skin {
   const char* suffix;
 };
 constexpr Skin kKameoSkins[] = {
-    {"Classic", "00"},          {"Gothic", "01"},          {"Coyote", "02"},          {"Armored", "35"},         {"Fright Pack", "46"},
-    {"Masquerade #1", "57"},    {"Masquerade #2", "58"},   {"Masquerade #3", "59"},   {"Masquerade #4", "60"},   {"Masquerade #5", "61"},
-    {"Masquerade #6", "62"},    {"Masquerade #7", "63"},   {"Masquerade #8", "64"},   {"Masquerade #9", "65"},   {"Masquerade #10", "66"},
-    {"Winter Warrior", "xmas1"}, {"Design-A-Skin", "67"},
+    {TR_NOOP("Classic"), "00"},          {TR_NOOP("Gothic"), "01"},          {TR_NOOP("Coyote"), "02"},          {TR_NOOP("Armored"), "35"},         {TR_NOOP("Fright Pack"), "46"},
+    {TR_NOOP("Masquerade #1"), "57"},    {TR_NOOP("Masquerade #2"), "58"},   {TR_NOOP("Masquerade #3"), "59"},   {TR_NOOP("Masquerade #4"), "60"},   {TR_NOOP("Masquerade #5"), "61"},
+    {TR_NOOP("Masquerade #6"), "62"},    {TR_NOOP("Masquerade #7"), "63"},   {TR_NOOP("Masquerade #8"), "64"},   {TR_NOOP("Masquerade #9"), "65"},   {TR_NOOP("Masquerade #10"), "66"},
+    {TR_NOOP("Winter Warrior"), "xmas1"}, {TR_NOOP("Design-A-Skin"), "67"},
 };
 constexpr int kKameoStandardGraph = 1;
 
@@ -51,10 +54,10 @@ struct Warrior {
   const char* design;
 };
 constexpr Warrior kWarriors[] = {
-    {"Pummel Weed", "0CE65812", 8, "03", "36", "47", "73"}, {"Snare", "0A70BAB2", 36, "10", "44", "55", "74"},     {"Rubble", "079B8925", 27, "07", "37", "48", "69"},
-    {"Major Ruin", "037AABBF", 10, "09", "38", "49", "68"}, {"Deep Blue", "005C444C", 34, "04", "45", "56", "76"}, {"Flex", "08EBDF9E", 43, "08", "39", "50", "75"},
-    {"40 Below", "056D64DE", 48, "12", "41", "52", "77"},   {"Chilla", "05800519", 12, "11", "43", "54", "72"},    {"Thermite", "008B5284", 39, "06", "42", "53", "70"},
-    {"Ash", "0BBEAEDE", 29, "05", "40", "51", "71"},
+    {TR_NOOP("Pummel Weed"), "0CE65812", 8, "03", "36", "47", "73"}, {TR_NOOP("Snare"), "0A70BAB2", 36, "10", "44", "55", "74"},     {TR_NOOP("Rubble"), "079B8925", 27, "07", "37", "48", "69"},
+    {TR_NOOP("Major Ruin"), "037AABBF", 10, "09", "38", "49", "68"}, {TR_NOOP("Deep Blue"), "005C444C", 34, "04", "45", "56", "76"}, {TR_NOOP("Flex"), "08EBDF9E", 43, "08", "39", "50", "75"},
+    {TR_NOOP("40 Below"), "056D64DE", 48, "12", "41", "52", "77"},   {TR_NOOP("Chilla"), "05800519", 12, "11", "43", "54", "72"},    {TR_NOOP("Thermite"), "008B5284", 39, "06", "42", "53", "70"},
+    {TR_NOOP("Ash"), "0BBEAEDE", 29, "05", "40", "51", "71"},
 };
 constexpr char kKameoModel[] = "007183BF";
 constexpr char kDlcFolder[] = "kameorepowered/0000000000000000/4D5307D2/00000002";
@@ -99,31 +102,37 @@ Out main(In v) {
 const char kPrelude[] = R"(
 #define select(c, a, b) ((c) ? (a) : (b))
 #define rsqrt(x) (1.0 / sqrt(x))
-)";
-
-const char kPixelEntry[] = R"(
 cbuffer Scene : register(b0) {
     float4 right_axis, up_axis, forward_axis, eye, projection, sun, sky, part_colour, frame;
 };
 Texture2D base_texture : register(t0);
 SamplerState base_sampler : register(s0);
+// The game's texture read, as a mod's own MOD_FETCH2D calls it; the preview has one texture per part.
+float4 tfetch2D(uint texture_index, uint sampler_index, float2 uv, float2 offset) { return base_texture.Sample(base_sampler, uv); }
+)";
+
+const char kPixelEntry[] = R"(
+#ifndef MOD_FETCH2D
+#define MOD_FETCH2D tfetch2D
+#endif
 float4 main(float4 position : SV_Position, float3 view_position : TEXCOORD1, float3 normal : TEXCOORD2, float2 uv : TEXCOORD0) : SV_Target {
-    const float4 texel = frame.y > 0.5 ? base_texture.Sample(base_sampler, uv) : float4(part_colour.rgb, 1.0);
+    // Named as the game's shaders name it, which a mod's MOD_FETCH2D may read the time from.
+    ModState mod = ModStart(position.xy, frame.x);
+    const float4 texel = frame.y > 0.5 ? MOD_FETCH2D(0, 0, uv, float2(0, 0)) : float4(part_colour.rgb, 1.0);
     clip(texel.a - max(part_colour.a, 0.02));
-    ModState m = ModStart(position.xy, frame.x);
-    m.lit = true;
-    m.s.view = normalize(-view_position);
-    m.s.normal = ModNormalize(normal, m.s.view);
-    if (dot(m.s.normal, m.s.view) < 0.0) m.s.normal = -m.s.normal;
-    m.s.up = sky.xyz;
-    m.s.light_dir = sun.xyz;
-    m.s.uv = uv;
-    m.s.albedo = texel.rgb;
-    m.s.has_albedo = true;
-    m.s.has_normal = true;
-    const float sky_facing = dot(m.s.normal, m.s.up) * 0.5 + 0.5;
-    m.s.light = lerp(float3(0.30, 0.27, 0.33), float3(0.55, 0.58, 0.62), sky_facing) + m.s.light_colour * 0.75 * saturate(dot(m.s.normal, m.s.light_dir));
-    return float4(ModFinish(m, texel.rgb * m.s.light, 1.0), 1.0);
+    mod.lit = true;
+    mod.s.view = normalize(-view_position);
+    mod.s.normal = ModNormalize(normal, mod.s.view);
+    if (dot(mod.s.normal, mod.s.view) < 0.0) mod.s.normal = -mod.s.normal;
+    mod.s.up = sky.xyz;
+    mod.s.light_dir = sun.xyz;
+    mod.s.uv = uv;
+    mod.s.albedo = texel.rgb;
+    mod.s.has_albedo = true;
+    mod.s.has_normal = true;
+    const float sky_facing = dot(mod.s.normal, mod.s.up) * 0.5 + 0.5;
+    mod.s.light = lerp(float3(0.30, 0.27, 0.33), float3(0.55, 0.58, 0.62), sky_facing) + mod.s.light_colour * 0.75 * saturate(dot(mod.s.normal, mod.s.light_dir));
+    return float4(ModFinish(mod, texel.rgb * mod.s.light, 1.0), 1.0);
 }
 )";
 
@@ -131,7 +140,7 @@ ID3DBlob* Compile(const std::string& source, const char* profile, std::string& e
   ID3DBlob* code = nullptr;
   ID3DBlob* messages = nullptr;
   const HRESULT result = D3DCompile(source.data(), source.size(), "shader", nullptr, nullptr, "main", profile, D3DCOMPILE_OPTIMIZATION_LEVEL1, 0, &code, &messages);
-  if (FAILED(result)) error = messages ? std::string(static_cast<const char*>(messages->GetBufferPointer()), messages->GetBufferSize()) : "The preview's shader compiler failed.";
+  if (FAILED(result)) error = messages ? std::string(static_cast<const char*>(messages->GetBufferPointer()), messages->GetBufferSize()) : Tr("The preview's shader compiler failed.");
   if (messages) messages->Release();
   return code;
 }
@@ -193,18 +202,18 @@ void Preview::FindCostumes() {
     if (found != files.end()) character.costumes.push_back({label, found->second, -1});
   };
   const bool shared = fs::exists(assets / kSharedArchive, error);
-  Character kameo{"Kameo", {}};
-  if (shared) kameo.costumes.push_back({"Everyday", assets / kSharedArchive, kKameoStandardGraph});
-  for (const Skin& skin : kKameoSkins) add(kameo, skin.label, kKameoModel, skin.suffix);
+  Character kameo{Tr("Kameo"), {}};
+  if (shared) kameo.costumes.push_back({Tr("Everyday"), assets / kSharedArchive, kKameoStandardGraph});
+  for (const Skin& skin : kKameoSkins) add(kameo, Tr(skin.label), kKameoModel, skin.suffix);
   characters_.push_back(std::move(kameo));
   for (const Warrior& warrior : kWarriors) {
-    Character character{warrior.label, {}};
-    if (shared) character.costumes.push_back({"Standard", assets / kSharedArchive, warrior.standard_graph});
-    add(character, "Alternate", warrior.model, warrior.alternate);
-    add(character, "Armored", warrior.model, warrior.armored);
-    add(character, "Fright Pack", warrior.model, warrior.fright);
-    add(character, "Winter Warrior", warrior.model, "xmas1");
-    add(character, "Design-A-Skin", warrior.model, warrior.design);
+    Character character{Tr(warrior.label), {}};
+    if (shared) character.costumes.push_back({Tr("Standard"), assets / kSharedArchive, warrior.standard_graph});
+    add(character, Tr("Alternate"), warrior.model, warrior.alternate);
+    add(character, Tr("Armored"), warrior.model, warrior.armored);
+    add(character, Tr("Fright Pack"), warrior.model, warrior.fright);
+    add(character, Tr("Winter Warrior"), warrior.model, "xmas1");
+    add(character, Tr("Design-A-Skin"), warrior.model, warrior.design);
     characters_.push_back(std::move(character));
   }
 }
@@ -312,7 +321,7 @@ void Preview::ReleaseModel() {
 void Preview::StartModelLoad() {
   if (loading_.valid()) return;
   if (characters_.empty() || characters_[character_].costumes.empty()) {
-    model_error_ = "Install the game to preview its characters.";
+    model_error_ = Tr("Install the game to preview its characters.");
     return;
   }
   loading_ = std::async(std::launch::async, [costume = characters_[character_].costumes[costume_]] {
@@ -512,7 +521,7 @@ void Preview::Draw() {
     }
     ImGui::SameLine();
   }
-  ImGui::Checkbox("Spin", &spin_);
+  ImGui::Checkbox(Tr("Spin"), &spin_);
 
   const ImVec2 size = ImGui::GetContentRegionAvail();
   const uint32_t width = uint32_t(std::max(size.x, 16.0f)), height = uint32_t(std::max(size.y, 16.0f));
@@ -537,10 +546,10 @@ void Preview::Draw() {
   ImDrawList* list = ImGui::GetWindowDrawList();
   if (shown_) list->AddImage(ImTextureRef(ImTextureID(shown_)), at, ImVec2(at.x + float(width), at.y + float(height)));
   const ImU32 note = ImGui::GetColorU32(ImGuiCol_Text);
-  if (loading_.valid()) list->AddText(ImVec2(at.x + 8, at.y + 6), note, "Loading...");
+  if (loading_.valid()) list->AddText(ImVec2(at.x + 8, at.y + 6), note, Tr("Loading..."));
   else if (!model_error_.empty()) list->AddText(nullptr, 0.0f, ImVec2(at.x + 8, at.y + 6), note, model_error_.c_str(), nullptr, float(width) - 16.0f);
   if (!compile_error_.empty()) list->AddText(nullptr, 0.0f, ImVec2(at.x + 8, at.y + 26), IM_COL32(255, 120, 110, 255), compile_error_.c_str(), nullptr, float(width) - 16.0f);
-  if (hovered) ImGui::SetItemTooltip("Drag to turn, right drag to move, wheel to zoom, double-click to frame.\nThe lighting stands in for a level's.");
+  if (hovered) ImGui::SetItemTooltip("%s", Tr("Drag to turn, right drag to move, wheel to zoom, double-click to frame.\nThe lighting stands in for a level's."));
 }
 
 }  // namespace kameo::shader_editor

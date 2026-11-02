@@ -192,12 +192,21 @@ The nodes to start with:
   they are: 0.5 shows at about 73%, so a shadow colour needs to be far darker than it looks like it should be.
 - **Light is worked out from the other two,** so it holds shine as well as light.
 - **Key light follows the camera,** which keeps the shadow on the same side of a character wherever they turn.
-- **Surfaces the game doesn't light are left alone:** glows, sparks and other effects.
+- **Surfaces the game doesn't light are left alone** (glows, sparks and other effects) unless you tick **Also surfaces
+  the game doesn't light**. Some surfaces lit from within are drawn that way, lava among them; the **Surfaces** targets
+  (such as **Lava**) tick it for you. On those, Game colour is all there is: Base texture, Light and Normal aren't known.
 - **Outlines are drawn on the surface, just inside its edge,** since a shader can only colour its own pixels. They
   keep their width in pixels at any distance. Strongly bumpy surfaces can show specks of line; lower the width or leave
   Outline off there.
 - **The preview's lighting stands in for a level's.** Run the game to see the real thing.
 - **Mods can't read pictures of their own yet.**
+
+### Finding a shader
+
+To find which shader draws something, press **F7** in game for the shader list: every pixel shader on screen, how often
+it draws, and the textures it samples (named as the texture dump names them). Switch one off and what it draws
+vanishes; **Only this** leaves just that one. **Copy** puts its hash on the clipboard. Switching shaders off lasts until
+you switch them back on or close the game.
 
 ### Installing and sharing
 
@@ -225,6 +234,12 @@ of a graph. Both run in the preview as well as in the game.
 Helpers: `ModKeyLight(s, towards, up, side)`, `ModStep(edge, x)`, `ModBands(x, count)`, `ModFresnel(s)`, `ModOutline(s, width)`,
 `ModHalftone(s.screen, amount, cell)`, `ModLuminance(colour)` and `ModNoise(uv)`. If `Shade` returns a value that isn't a
 number, such as after dividing by zero, the game's own colour is drawn for that pixel.
+
+To make a surface move, not just change colour, a Raw HLSL mod can define the whole file (its own `Shade` and more)
+and replace the shaders' texture reads with `#define MOD_FETCH2D(texture, sampler, uv, offset) MyFetch(texture,
+sampler, uv, offset, mod.s.time)`, reading from somewhere else where it means to. `Molten Lava` does that: where a
+texel is lava-coloured it reads again from a drifting, churning place, and every other read, rock, normal maps and
+shadow maps among them, comes back unchanged.
 
 ### From the command line
 

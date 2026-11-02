@@ -131,6 +131,9 @@ bool KameoApp::SetupPresentation() {
       ToggleOverlay(ImGuiKey_F3, kameo_debug_overlay_, [this] {
         return std::make_unique<rex::ui::DebugOverlayDialog>(kameo_imgui_drawer_.get());
       });
+      ToggleOverlay(ImGuiKey_F7, kameo_shader_list_overlay_, [this] {
+        return std::make_unique<KameoShaderListOverlay>(kameo_imgui_drawer_.get());
+      });
       // Options and Achievements are pages of the game's own menu, not ImGui: F4 and F6 open them there.
       if (ImGui::IsKeyPressed(ImGuiKey_F4, false)) KameoRequestMenuPage(KameoMenuHotkey::Options);
       if (ImGui::IsKeyPressed(ImGuiKey_F6, false)) KameoRequestMenuPage(KameoMenuHotkey::Achievements);
@@ -156,6 +159,7 @@ void KameoApp::OnShutdown() {
     kameo_achievement_listener_ = 0;
   }
   kameo_debug_overlay_.reset();
+  kameo_shader_list_overlay_.reset();
   kameo_console_overlay_.reset();
   if (runtime() && runtime()->imgui_drawer() == kameo_imgui_drawer_.get()) runtime()->set_imgui_drawer(nullptr);
   kameo_imgui_drawer_.reset();
@@ -276,4 +280,14 @@ void KameoApp::OnConfigurePaths(rex::PathConfig& paths) {
       paths.game_data_root = nested;
     }
   }
+#if KAMEO_TU
+  // The title update's data partition, which its code reads its new per-language text from (update:\English\...).
+  if (paths.update_data_root.empty()) paths.update_data_root = paths.game_data_root / "TU";
+#endif
 }
+
+#if KAMEO_TU
+// The title-update build loads the game from assets\TU, whose default.xexp the loader applies as the update; the
+// vanilla build's assets\default.xex has no patch beside it, so it never picks the update up.
+void KameoApp::OnLoadXexImage(std::string& xex_image) { xex_image = "game:\\TU\\default.xex"; }
+#endif

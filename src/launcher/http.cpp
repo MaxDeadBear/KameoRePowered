@@ -7,6 +7,8 @@
 #include <fstream>
 #include <vector>
 
+#include "core/localization.h"
+
 namespace kameo::launcher::http {
 namespace {
 
@@ -30,7 +32,8 @@ std::wstring Widen(const std::string& text) {
   return wide;
 }
 
-std::string LastError(const char* what) { return std::string(what) + " failed (error " + std::to_string(::GetLastError()) + ")"; }
+// The message for a failed call, from a format with {0} for its error code.
+std::string LastError(const char* format) { return l10n::TrFormat(format, {std::to_string(::GetLastError())}); }
 
 // Opens the request and reads the status and length; the body is then pulled with WinHttpReadData.
 bool Open(const std::string& url, const char* accept, Handle& session, Handle& connection, Handle& request, uint64_t& length, std::string& error) {
@@ -46,23 +49,23 @@ bool Open(const std::string& url, const char* accept, Handle& session, Handle& c
   parts.lpszExtraInfo = extra;
   parts.dwExtraInfoLength = DWORD(std::size(extra));
   if (!::WinHttpCrackUrl(wide.c_str(), 0, 0, &parts) || parts.nScheme != INTERNET_SCHEME_HTTPS) {
-    error = "not an https address: " + url;
+    error = l10n::TrFormat("not an https address: {0}", {url});
     return false;
   }
   session.value = ::WinHttpOpen(L"KameoLauncher/1.0", WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
   if (!session) {
-    error = LastError("WinHttpOpen");
+    error = LastError(TR_NOOP("WinHttpOpen failed (error {0})"));
     return false;
   }
   connection.value = ::WinHttpConnect(session.value, host, parts.nPort, 0);
   if (!connection) {
-    error = LastError("connecting to the server");
+    error = LastError(TR_NOOP("connecting to the server failed (error {0})"));
     return false;
   }
   const std::wstring object = std::wstring(path) + extra;
   request.value = ::WinHttpOpenRequest(connection.value, L"GET", object.c_str(), nullptr, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE);
   if (!request) {
-    error = LastError("opening the request");
+    error = LastError(TR_NOOP("opening the request failed (error {0})"));
     return false;
   }
   // GitHub's release downloads redirect to its storage host, which WinHTTP follows for https to https.
@@ -72,14 +75,14 @@ bool Open(const std::string& url, const char* accept, Handle& session, Handle& c
   if (accept) headers = L"Accept: " + Widen(accept) + L"\r\n";
   if (!::WinHttpSendRequest(request.value, headers.empty() ? WINHTTP_NO_ADDITIONAL_HEADERS : headers.c_str(), headers.empty() ? 0 : DWORD(-1L), WINHTTP_NO_REQUEST_DATA, 0, 0, 0) ||
       !::WinHttpReceiveResponse(request.value, nullptr)) {
-    error = LastError("contacting the server");
+    error = LastError(TR_NOOP("contacting the server failed (error {0})"));
     return false;
   }
   DWORD status = 0;
   DWORD size = sizeof(status);
   ::WinHttpQueryHeaders(request.value, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, WINHTTP_HEADER_NAME_BY_INDEX, &status, &size, WINHTTP_NO_HEADER_INDEX);
   if (status != 200) {
-    error = "the server answered " + std::to_string(status) + (status == 403 ? " (GitHub's hourly limit for unsigned requests may be used up; try again later)" : "");
+    error = status == 403 ? l10n::TrFormat("the server answered {0} (GitHub's hourly limit for unsigned requests may be used up; try again later)", {std::to_string(status)}) : l10n::TrFormat("the server answered {0}", {std::to_string(status)});
     return false;
   }
   length = 0;
@@ -96,22 +99,22 @@ bool ReadBody(HINTERNET request, uint64_t length, const Progress& progress, Sink
   while (true) {
     DWORD read = 0;
     if (!::WinHttpReadData(request, buffer.data(), DWORD(buffer.size()), &read)) {
-      error = LastError("downloading");
+      error = LastError(TR_NOOP("downloading failed (error {0})"));
       return false;
     }
     if (read == 0) break;
     if (!sink(buffer.data(), read)) {
-      error = "could not write the download to disk";
+      error = l10n::Tr("could not write the download to disk");
       return false;
     }
     done += read;
     if (progress && !progress(done, length)) {
-      error = "cancelled";
+      error = l10n::Tr("cancelled");
       return false;
     }
   }
   if (length && done != length) {
-    error = "the download ended early (" + std::to_string(done) + " of " + std::to_string(length) + " bytes)";
+    error = l10n::TrFormat("the download ended early ({0} of {1} bytes)", {std::to_string(done), std::to_string(length)});
     return false;
   }
   return true;
@@ -136,7 +139,7 @@ bool Download(const std::string& url, const std::filesystem::path& file, const P
   if (!Open(url, nullptr, session, connection, request, length, error)) return false;
   std::ofstream out(file, std::ios::binary | std::ios::trunc);
   if (!out) {
-    error = "could not create " + file.string();
+    error = l10n::TrFormat("could not create {0}", {file.string()});
     return false;
   }
   const bool ok = ReadBody(request.value, length, progress, [&](const char* data, DWORD size) {
@@ -147,7 +150,7 @@ bool Download(const std::string& url, const std::filesystem::path& file, const P
   if (!ok || !out) {
     std::error_code ec;
     std::filesystem::remove(file, ec);
-    if (ok) error = "could not finish writing " + file.string();
+    if (ok) error = l10n::TrFormat("could not finish writing {0}", {file.string()});
     return false;
   }
   return true;

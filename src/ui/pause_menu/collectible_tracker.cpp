@@ -3,6 +3,7 @@
 #include <array>
 #include <string>
 
+#include "core/localization.h"
 #include "core/unlock_codes.h"
 #include "engine/collectibles.h"
 #include "ui/pause_menu/pause_menu_internal.h"
@@ -11,16 +12,17 @@ namespace kameo::ui {
 namespace {
 
 using engine::CollectibleKind;
+using kameo::l10n::Tr;
 
 struct KindNames {
   const char16_t* here;
   const char16_t* all;
 };
 constexpr std::array<KindNames, 4> kKindNames = {{
-    {u"Fruit in This Area", u"All Elemental Fruit"},
-    {u"Elixirs in This Area", u"All Elixirs of Life"},
-    {u"Crystal Eye in This Area", u"All Crystal Eyes"},
-    {u"Costumes in This Area", u"All Costumes"},
+    {TR_NOOP(u"Fruit in This Area"), TR_NOOP(u"All Elemental Fruit")},
+    {TR_NOOP(u"Elixirs in This Area"), TR_NOOP(u"All Elixirs of Life")},
+    {TR_NOOP(u"Crystal Eye in This Area"), TR_NOOP(u"All Crystal Eyes")},
+    {TR_NOOP(u"Costumes in This Area"), TR_NOOP(u"All Costumes")},
 }};
 
 struct Tally {
@@ -52,17 +54,17 @@ bool AddCollectibleRows(PPCContext& ctx, uint8_t* base, uint32_t window, Page pa
     }
     if (engine::CollectibleMissed(ctx, base, item)) ++missed;
   }
-  AddPageTitle(ctx, base, window, u"Collectibles");
+  AddPageTitle(ctx, base, window, Tr(u"Collectibles"));
   uint32_t row = 0;
   bool anything_here = false;
   for (size_t kind = 0; kind < kKindNames.size(); ++kind) {
     if (here[kind].total == 0) continue;
     anything_here = true;
-    AddToggleRow(ctx, base, window, kItemCollectibleRow + row++, kKindNames[kind].here, GuestWideString(OutOf(here[kind])));
+    AddToggleRow(ctx, base, window, kItemCollectibleRow + row++, Tr(kKindNames[kind].here), GuestWideString(OutOf(here[kind])));
   }
-  if (!anything_here) AddToggleRow(ctx, base, window, kItemCollectibleRow + row++, u"This Area", GuestWideString(u"Nothing to find"));
-  for (size_t kind = 0; kind < kKindNames.size(); ++kind) AddToggleRow(ctx, base, window, kItemCollectibleRow + row++, kKindNames[kind].all, GuestWideString(OutOf(all[kind])));
-  AddToggleRow(ctx, base, window, kItemCollectibleRow + row++, u"Missed, Sold in Tribe Shops", GuestWideString(Number(int32_t(missed), u"")));
+  if (!anything_here) AddToggleRow(ctx, base, window, kItemCollectibleRow + row++, Tr(u"This Area"), GuestWideString(Tr(u"Nothing to find")));
+  for (size_t kind = 0; kind < kKindNames.size(); ++kind) AddToggleRow(ctx, base, window, kItemCollectibleRow + row++, Tr(kKindNames[kind].all), GuestWideString(OutOf(all[kind])));
+  AddToggleRow(ctx, base, window, kItemCollectibleRow + row++, Tr(u"Missed, Sold in Tribe Shops"), GuestWideString(Number(int32_t(missed), u"")));
   return true;
 }
 

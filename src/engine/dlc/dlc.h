@@ -20,6 +20,10 @@ void ProcessPendingDlcSwap(PPCContext& ctx, uint8_t* base);
 // Notes which skin Kameo and each warrior is wearing, from the per-frame game tick.
 void TickKameoSkin(uint8_t* base);
 
+// Kameo's skin record for the log: the skin in use, the one before it, and the record's busy and loading words (and,
+// in the title update, whether the other console confirmed the skin in an online game).
+std::string KameoSkinState(uint8_t* base);
+
 // Each shader mod made for a character's standard look (Kameo's everyday outfit) adds a costume of its own after their
 // last skin: that look with the mod's shading. The GPU side lists them, by model type and in file order, whenever the
 // mods change.
@@ -30,6 +34,20 @@ int ShaderSkinChosen(uint32_t model_type);
 bool WearsShaderSkin(uint32_t model_type);
 // While set, a skin line's next-skin call steps back one skin instead. Game thread only.
 void SetCostumeStepBack(bool back);
+bool CostumeStepBack();
+
+// The title update's online co-op: the joiner's Kameo wears a skin of the joiner's own (joiner_skin.cpp). True when the
+// skin-sync message was one of ours and has been handled.
+bool HandleJoinerSkinMessage(uint8_t* base, uint32_t message);
+// The pause menu's Costume line, shown only to the joiner of an online game (the Bonus page isn't theirs to open).
+bool JoinerSkinOptionShown();
+std::u16string JoinerSkinName();
+void StepJoinerSkin(int direction);
+// Sends the joiner's choice and names the skins for the Costume line; from the per-frame game tick.
+void TickJoinerSkin(PPCContext& ctx, uint8_t* base);
+
+// A Kameo skin model's display name ("007183BF_xmas1"), from the game's strings or the update's skins kept here.
+std::u16string KameoSkinDisplayName(PPCContext& ctx, uint8_t* base, const std::string& model);
 // The entry of objectAlternativeSetFileInUse: a costume is saved as its own suffix, which loads as the standard look
 // with the costume chosen, and any other suffix leaves it.
 void SettingSkin(uint8_t* base, uint32_t model_type, PPCRegister& r4, PPCRegister& r1);

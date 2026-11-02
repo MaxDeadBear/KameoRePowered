@@ -10,11 +10,16 @@
 #include <fstream>
 #include <utility>
 
+#include "core/localization.h"
 #include "launcher/http.h"
 #include "launcher/json.h"
 #include "launcher/zip_extract.h"
 
 namespace kameo::launcher {
+
+using l10n::Tr;
+using l10n::TrFormat;
+
 namespace {
 
 namespace fs = std::filesystem;
@@ -224,20 +229,20 @@ void BuildManager::Finish(const std::string& message) {
   task_.clear();
 }
 
-bool BuildManager::Refresh() { return StartJob("Checking GitHub for builds...", &BuildManager::RefreshJob, {}); }
-bool BuildManager::Install(const std::string& tag) { return StartJob("Downloading " + tag + "...", &BuildManager::InstallJob, tag); }
-bool BuildManager::Activate(const std::string& tag) { return StartJob("Switching to " + tag + "...", &BuildManager::ActivateJob, tag); }
-bool BuildManager::Remove(const std::string& tag) { return StartJob("Removing " + tag + "...", &BuildManager::RemoveJob, tag); }
+bool BuildManager::Refresh() { return StartJob(Tr("Checking GitHub for builds..."), &BuildManager::RefreshJob, {}); }
+bool BuildManager::Install(const std::string& tag) { return StartJob(TrFormat("Downloading {0}...", {tag}), &BuildManager::InstallJob, tag); }
+bool BuildManager::Activate(const std::string& tag) { return StartJob(TrFormat("Switching to {0}...", {tag}), &BuildManager::ActivateJob, tag); }
+bool BuildManager::Remove(const std::string& tag) { return StartJob(TrFormat("Removing {0}...", {tag}), &BuildManager::RemoveJob, tag); }
 
 void BuildManager::RefreshJob(std::string) {
   std::string body, error;
   if (!http::Get(std::string("https://api.github.com/repos/") + kRepository + "/releases?per_page=40", body, error, "application/vnd.github+json")) {
-    Finish("Could not check for builds: " + error);
+    Finish(TrFormat("Could not check for builds: {0}", {error}));
     return;
   }
   json::Value document;
   if (!json::Parse(body, document, error) || document.type != json::Value::Type::Array) {
-    Finish("GitHub's answer could not be read: " + (error.empty() ? std::string("not a release list") : error));
+    Finish(TrFormat("GitHub's answer could not be read: {0}", {error.empty() ? std::string(Tr("not a release list")) : error}));
     return;
   }
   std::vector<BuildRelease> list;
@@ -275,7 +280,7 @@ bool BuildManager::InstallLocked(const std::string& tag, std::string& error) {
     std::lock_guard<std::mutex> lock(mutex_);
     const auto found = std::find_if(releases_.begin(), releases_.end(), [&](const BuildRelease& r) { return r.tag == tag; });
     if (found == releases_.end() || found->asset_url.empty()) {
-      error = tag + " has no Windows build to download";
+      error = TrFormat("{0} has no Windows build to download", {tag});
       return false;
     }
     release = *found;
@@ -296,7 +301,7 @@ bool BuildManager::InstallLocked(const std::string& tag, std::string& error) {
   progress_.store(-1.0f);
   {
     std::lock_guard<std::mutex> lock(mutex_);
-    task_ = "Unpacking " + tag + "...";
+    task_ = TrFormat("Unpacking {0}...", {tag});
   }
   fs::remove_all(unpacking, ec);
   const bool extracted = ExtractZip(zip, unpacking, error);
@@ -307,14 +312,14 @@ bool BuildManager::InstallLocked(const std::string& tag, std::string& error) {
   }
   if (!fs::exists(unpacking / kGameExe, ec)) {
     fs::remove_all(unpacking, ec);
-    error = "the download holds no kameorepowered.exe";
+    error = Tr("the download holds no kameorepowered.exe");
     return false;
   }
   std::ofstream(unpacking / kTagFile) << tag;
   fs::remove_all(target, ec);
   fs::rename(unpacking, target, ec);
   if (ec) {
-    error = "could not move the build into place (" + ec.message() + ")";
+    error = TrFormat("could not move the build into place ({0})", {ec.message()});
     return false;
   }
   return true;
@@ -324,7 +329,7 @@ void BuildManager::InstallJob(std::string tag) {
   std::string error;
   const bool ok = InstallLocked(tag, error);
   ScanInstalled();
-  Finish(ok ? "Downloaded " + tag + "." : "Could not download " + tag + ": " + error);
+  Finish(ok ? TrFormat("Downloaded {0}.", {tag}) : TrFormat("Could not download {0}: {1}", {tag, error}));
 }
 
 void BuildManager::ActivateJob(std::string tag) {
@@ -338,7 +343,7 @@ void BuildManager::ActivateJob(std::string tag) {
     std::string error;
     if (!InstallLocked(tag, error)) {
       ScanInstalled();
-      Finish("Could not download " + tag + ": " + error);
+      Finish(TrFormat("Could not download {0}: {1}", {tag, error}));
       return;
     }
     ScanInstalled();
@@ -346,18 +351,18 @@ void BuildManager::ActivateJob(std::string tag) {
       if (build.tag == tag) source = build.folder;
     }
     if (source.empty()) {
-      Finish("Could not find " + tag + " after downloading it.");
+      Finish(TrFormat("Could not find {0} after downloading it.", {tag}));
       return;
     }
   }
   {
     std::lock_guard<std::mutex> lock(mutex_);
-    task_ = "Switching to " + tag + "...";
+    task_ = TrFormat("Switching to {0}...", {tag});
   }
   progress_.store(-1.0f);
   const fs::path game_exe = folder_ / kGameExe;
   if (GameRunning(game_exe)) {
-    Finish("Close Kameo before switching builds.");
+    Finish(Tr("Close Kameo before switching builds."));
     return;
   }
 
@@ -377,7 +382,7 @@ void BuildManager::ActivateJob(std::string tag) {
     }
     if (!saved_all) {
       fs::remove_all(saved, ec);
-      Finish("Could not keep a copy of the current build before switching, so nothing was changed.");
+      Finish(Tr("Could not keep a copy of the current build before switching, so nothing was changed."));
       return;
     }
     std::ofstream(saved / kTagFile) << ("local-" + Today());
@@ -397,7 +402,7 @@ void BuildManager::ActivateJob(std::string tag) {
     const fs::path incoming = folder_ / (name.wstring() + L".incoming");
     fs::copy_file(source / name, incoming, fs::copy_options::overwrite_existing, ec);
     if (ec) {
-      failure = "could not copy " + name.string() + " (" + ec.message() + ")";
+      failure = TrFormat("could not copy {0} ({1})", {name.string(), ec.message()});
       break;
     }
     Replaced step{target, {}};
@@ -405,12 +410,14 @@ void BuildManager::ActivateJob(std::string tag) {
       step.aside = trash / name;
       if (!::MoveFileExW(target.c_str(), step.aside.c_str(), MOVEFILE_COPY_ALLOWED)) {
         fs::remove(incoming, ec);
-        failure = "could not move the old " + name.string() + " aside (error " + std::to_string(::GetLastError()) + ")";
+        const std::string code = std::to_string(::GetLastError());
+        failure = TrFormat("could not move the old {0} aside (error {1})", {name.string(), code});
         break;
       }
     }
     if (!::MoveFileExW(incoming.c_str(), target.c_str(), MOVEFILE_REPLACE_EXISTING)) {
-      failure = "could not put the new " + name.string() + " in place (error " + std::to_string(::GetLastError()) + ")";
+      const std::string code = std::to_string(::GetLastError());
+      failure = TrFormat("could not put the new {0} in place (error {1})", {name.string(), code});
       if (!step.aside.empty()) ::MoveFileExW(step.aside.c_str(), target.c_str(), MOVEFILE_REPLACE_EXISTING);
       fs::remove(incoming, ec);
       break;
@@ -423,7 +430,7 @@ void BuildManager::ActivateJob(std::string tag) {
       else ::MoveFileExW(it->aside.c_str(), it->target.c_str(), MOVEFILE_REPLACE_EXISTING);
     }
     ScanInstalled();
-    Finish("Could not switch to " + tag + ": " + failure + ". The previous build is still in place.");
+    Finish(TrFormat("Could not switch to {0}: {1}. The previous build is still in place.", {tag, failure}));
     return;
   }
   fs::remove_all(trash, ec);
@@ -433,12 +440,12 @@ void BuildManager::ActivateJob(std::string tag) {
     active_changed_ = true;
   }
   ScanInstalled();
-  Finish("Switched to " + tag + ".");
+  Finish(TrFormat("Switched to {0}.", {tag}));
 }
 
 void BuildManager::RemoveJob(std::string tag) {
   if (tag == active()) {
-    Finish("The build in use cannot be removed; switch to another first.");
+    Finish(Tr("The build in use cannot be removed; switch to another first."));
     return;
   }
   std::error_code ec;
@@ -446,7 +453,7 @@ void BuildManager::RemoveJob(std::string tag) {
     if (build.tag == tag) fs::remove_all(build.folder, ec);
   }
   ScanInstalled();
-  Finish(ec ? "Could not remove " + tag + ": " + ec.message() : "Removed " + tag + ".");
+  Finish(ec ? TrFormat("Could not remove {0}: {1}", {tag, ec.message()}) : TrFormat("Removed {0}.", {tag}));
 }
 
 }  // namespace kameo::launcher

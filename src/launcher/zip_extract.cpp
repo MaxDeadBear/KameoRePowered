@@ -5,9 +5,14 @@
 #include <fstream>
 #include <vector>
 
+#include "core/localization.h"
 #include "launcher/kmod.h"
 
 namespace kameo::launcher {
+
+using l10n::Tr;
+using l10n::TrFormat;
+
 namespace {
 
 uint16_t U16(const uint8_t* p) { return uint16_t(p[0] | (p[1] << 8)); }
@@ -37,12 +42,12 @@ bool SafeEntryPath(const std::string& name, std::filesystem::path& out) {
 bool ExtractZip(const std::filesystem::path& zip, const std::filesystem::path& folder, std::string& error) {
   std::ifstream in(zip, std::ios::binary);
   if (!in) {
-    error = "could not open " + zip.string();
+    error = TrFormat("could not open {0}", {zip.string()});
     return false;
   }
   std::vector<uint8_t> data((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
   if (data.size() < 22) {
-    error = "the download is not a zip file";
+    error = Tr("the download is not a zip file");
     return false;
   }
   // The end-of-central-directory record is the last thing in the file, before a comment of up to 64 KB.
@@ -54,7 +59,7 @@ bool ExtractZip(const std::filesystem::path& zip, const std::filesystem::path& f
     }
   }
   if (end == std::string::npos) {
-    error = "the download is not a zip file";
+    error = Tr("the download is not a zip file");
     return false;
   }
   const uint16_t count = U16(&data[end + 10]);
@@ -63,7 +68,7 @@ bool ExtractZip(const std::filesystem::path& zip, const std::filesystem::path& f
   std::filesystem::create_directories(folder, ec);
   for (uint16_t i = 0; i < count; ++i) {
     if (at + 46 > data.size() || U32(&data[at]) != kCentralFileHeader) {
-      error = "the zip's directory is damaged";
+      error = Tr("the zip's directory is damaged");
       return false;
     }
     const uint16_t method = U16(&data[at + 10]);
@@ -74,18 +79,18 @@ bool ExtractZip(const std::filesystem::path& zip, const std::filesystem::path& f
     const uint16_t comment_length = U16(&data[at + 32]);
     const uint32_t local = U32(&data[at + 42]);
     if (at + 46 + name_length > data.size()) {
-      error = "the zip's directory is damaged";
+      error = Tr("the zip's directory is damaged");
       return false;
     }
     const std::string name(reinterpret_cast<const char*>(&data[at + 46]), name_length);
     at += 46 + size_t(name_length) + extra_length + comment_length;
     if (packed_size == 0xFFFFFFFFu || size == 0xFFFFFFFFu) {
-      error = name + " is stored as ZIP64, which this launcher does not read";
+      error = TrFormat("{0} is stored as ZIP64, which this launcher does not read", {name});
       return false;
     }
     std::filesystem::path relative;
     if (!SafeEntryPath(name, relative)) {
-      error = "the zip names a file outside its folder (" + name + ")";
+      error = TrFormat("the zip names a file outside its folder ({0})", {name});
       return false;
     }
     const std::filesystem::path target = folder / relative;
@@ -94,12 +99,12 @@ bool ExtractZip(const std::filesystem::path& zip, const std::filesystem::path& f
       continue;
     }
     if (size_t(local) + 30 > data.size() || U32(&data[local]) != kLocalFileHeader) {
-      error = "the zip entry " + name + " is damaged";
+      error = TrFormat("the zip entry {0} is damaged", {name});
       return false;
     }
     const size_t start = size_t(local) + 30 + U16(&data[local + 26]) + U16(&data[local + 28]);
     if (start + packed_size > data.size()) {
-      error = "the zip entry " + name + " runs past the end of the file";
+      error = TrFormat("the zip entry {0} runs past the end of the file", {name});
       return false;
     }
     std::vector<uint8_t> contents;
@@ -107,18 +112,18 @@ bool ExtractZip(const std::filesystem::path& zip, const std::filesystem::path& f
       contents.assign(data.begin() + std::ptrdiff_t(start), data.begin() + std::ptrdiff_t(start + packed_size));
     } else if (method == 8) {
       if (!kmod::inflate_raw(&data[start], packed_size, size, contents)) {
-        error = "the zip entry " + name + " could not be unpacked";
+        error = TrFormat("the zip entry {0} could not be unpacked", {name});
         return false;
       }
     } else {
-      error = "the zip entry " + name + " uses compression method " + std::to_string(method) + ", which this launcher does not read";
+      error = TrFormat("the zip entry {0} uses compression method {1}, which this launcher does not read", {name, std::to_string(method)});
       return false;
     }
     std::filesystem::create_directories(target.parent_path(), ec);
     std::ofstream out(target, std::ios::binary | std::ios::trunc);
     out.write(reinterpret_cast<const char*>(contents.data()), std::streamsize(contents.size()));
     if (!out) {
-      error = "could not write " + target.string();
+      error = TrFormat("could not write {0}", {target.string()});
       return false;
     }
   }

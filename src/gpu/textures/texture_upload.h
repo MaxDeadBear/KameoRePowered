@@ -18,4 +18,8 @@ extern uint32_t g_textureMemoGeneration;
 
 uint32_t EnsureTexture(uint8_t* base, GraphicsSystem::DrawPathContext& ctx, plume::RenderCommandList* list, const GuestTextureFetch& fetch, uint32_t object, uint32_t object_address, uint32_t want_dimension, bool* volume_out);
 
+// The content hash of the texture in a heap slot, as the texture dump names it, or 0. Render thread only.
+void NoteTextureSlot(uint32_t slot, uint64_t content_hash);
+uint64_t TextureContentHashAt(uint32_t slot);
+
 }  // namespace kameo::gpu::detail

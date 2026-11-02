@@ -5,6 +5,7 @@
 
 #include "imgui_backends/imgui_impl_dx11.h"
 #include "imgui_backends/imgui_impl_win32.h"
+#include "core/localization.h"
 #include "launcher/ui/widgets.h"
 #include "launcher/window.h"
 
@@ -163,6 +164,7 @@ bool RunWindow(HINSTANCE instance, int show, const WindowOptions& options, Windo
       g_resize_width = g_resize_height = 0;
       CreateTarget();
     }
+    if (state.fonts_language != kameo::l10n::CurrentLanguage()) LoadFonts(state);
     ImGui_ImplDX11_NewFrame();
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();

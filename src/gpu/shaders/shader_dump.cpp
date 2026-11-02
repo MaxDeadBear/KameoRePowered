@@ -25,7 +25,11 @@ void DumpGuestImageOnce(uint8_t* base) {
   static std::once_flag once;
   std::call_once(once, [base] {
     constexpr uint32_t kImageBase = 0x82000000;
+#if KAMEO_TU
+    constexpr uint32_t kImageEnd = 0x82C90000;
+#else
     constexpr uint32_t kImageEnd = 0x82BF0000;
+#endif
     FILE* f = std::fopen("guest_image.bin", "wb");
     if (!f) {
       KGFX_WARN("could not open guest_image.bin for writing");

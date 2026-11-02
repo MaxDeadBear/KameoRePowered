@@ -9,25 +9,32 @@
 
 #include <shellapi.h>
 
+#include "core/localization.h"
 #include "core/save_backup.h"
 #include "launcher/ui/pages.h"
 #include "launcher/ui/widgets.h"
 
 namespace kameo::launcher {
+
+using l10n::Tr;
+using l10n::TrFormat;
+
 namespace {
 
 void LevelModsSection(App& app) {
   LevelMods& mods = app.level_mods;
   ImGui::BeginChild("level_mods", ImVec2(0, 0), ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_AlwaysUseWindowPadding);
-  ImGui::TextColored(kGold, "Mod Packages");
-  const float buttons = ImGui::CalcTextSize("Refresh").x + ImGui::CalcTextSize("Open Folder").x + ImGui::GetStyle().FramePadding.x * 4 + ImGui::GetStyle().ItemSpacing.x;
+  ImGui::TextColored(kGold, "%s", Tr("Mod Packages"));
+  const char* refresh = Tr("Refresh");
+  const char* open_folder = Tr("Open Folder");
+  const float buttons = ImGui::CalcTextSize(refresh).x + ImGui::CalcTextSize(open_folder).x + ImGui::GetStyle().FramePadding.x * 4 + ImGui::GetStyle().ItemSpacing.x;
   ImGui::SameLine(ImGui::GetContentRegionAvail().x + ImGui::GetCursorPosX() - buttons);
-  if (ImGui::Button("Refresh")) mods.Load(app.folder);
+  if (ImGui::Button(refresh)) mods.Load(app.folder);
   ImGui::SameLine();
-  if (ImGui::Button("Open Folder")) ::ShellExecuteW(nullptr, L"open", mods.folder().c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  if (ImGui::Button(open_folder)) ::ShellExecuteW(nullptr, L"open", mods.folder().c_str(), nullptr, nullptr, SW_SHOWNORMAL);
   ImGui::Separator();
   if (mods.mods().empty()) {
-    ImGui::TextColored(kTextDim, "No mods yet. Put .kmod files in the mods folder (Open Folder), or make your own with the Blender add-on in the modkit folder.");
+    ImGui::TextColored(kTextDim, "%s", Tr("No mods yet. Put .kmod files in the mods folder (Open Folder), or make your own with the Blender add-on in the modkit folder."));
   } else if (ImGui::BeginTable("level_mod_table", 3, ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingStretchProp)) {
     ImGui::TableSetupColumn("On", ImGuiTableColumnFlags_WidthFixed);
     ImGui::TableSetupColumn("Mod", ImGuiTableColumnFlags_WidthStretch);
@@ -46,14 +53,16 @@ void LevelModsSection(App& app) {
       ImGui::TextUnformatted(mod.name.c_str());
       if (!mod.version.empty() || !mod.author.empty()) {
         ImGui::SameLine();
-        ImGui::TextColored(kTextDim, "%s%s%s", mod.version.empty() ? "" : ("v" + mod.version).c_str(), mod.version.empty() || mod.author.empty() ? "" : "  ", mod.author.empty() ? "" : ("by " + mod.author).c_str());
+        std::string about = mod.version.empty() ? "" : "v" + mod.version;
+        if (!mod.author.empty()) about += (about.empty() ? "" : "  ") + TrFormat("by {0}", {mod.author});
+        ImGui::TextColored(kTextDim, "%s", about.c_str());
       }
       if (!mod.error.empty()) {
         ImGui::TextColored(ImVec4(1.0f, 0.45f, 0.45f, 1.0f), "%s", mod.error.c_str());
       } else {
         std::string levels;
         for (const std::string& level : mod.levels) levels += (levels.empty() ? "" : ", ") + level;
-        ImGui::TextColored(kTextDim, "Changes %s", levels.c_str());
+        ImGui::TextColored(kTextDim, "%s", TrFormat("Changes {0}", {levels}).c_str());
         if (!mod.description.empty()) ImGui::TextWrapped("%s", mod.description.c_str());
       }
       ImGui::TableSetColumnIndex(2);
@@ -66,8 +75,8 @@ void LevelModsSection(App& app) {
     if (changed) mods.Save();
   }
   for (const std::string& conflict : mods.Conflicts()) ImGui::TextColored(kGold, "%s", conflict.c_str());
-  ImGui::TextColored(kTextDim, "Enabled mods are applied when you press Play, into a copy of the game folder made of links; the game files themselves are never changed.");
-  ImGui::TextColored(kTextDim, "Kameo skins replace her Bonus costumes: pick the costume in the storybook's Bonus pages.");
+  ImGui::TextColored(kTextDim, "%s", Tr("Enabled mods are applied when you press Play, into a copy of the game folder made of links; the game files themselves are never changed."));
+  ImGui::TextColored(kTextDim, "%s", Tr("Kameo skins replace her Bonus costumes: pick the costume in the storybook's Bonus pages."));
   ImGui::EndChild();
   ImGui::Spacing();
 }
@@ -91,20 +100,22 @@ void ShaderModsSection(App& app) {
   }
   const bool has_editor = fs::exists(app.folder / "KameoShaderEditor.exe");
   ImGui::BeginChild("shader_mods", ImVec2(0, 0), ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_AlwaysUseWindowPadding);
-  ImGui::TextColored(kGold, "Shader Mods");
-  const float buttons = (has_editor ? ImGui::CalcTextSize("Shader Editor").x + ImGui::GetStyle().FramePadding.x * 2 + ImGui::GetStyle().ItemSpacing.x : 0.0f) + ImGui::CalcTextSize("Open Folder").x + ImGui::GetStyle().FramePadding.x * 2;
+  ImGui::TextColored(kGold, "%s", Tr("Shader Mods"));
+  const char* editor = Tr("Shader Editor");
+  const char* open_folder = Tr("Open Folder");
+  const float buttons = (has_editor ? ImGui::CalcTextSize(editor).x + ImGui::GetStyle().FramePadding.x * 2 + ImGui::GetStyle().ItemSpacing.x : 0.0f) + ImGui::CalcTextSize(open_folder).x + ImGui::GetStyle().FramePadding.x * 2;
   ImGui::SameLine(ImGui::GetContentRegionAvail().x + ImGui::GetCursorPosX() - buttons);
   if (has_editor) {
-    if (ImGui::Button("Shader Editor")) ::ShellExecuteW(nullptr, L"open", (app.folder / "KameoShaderEditor.exe").c_str(), nullptr, app.folder.c_str(), SW_SHOWNORMAL);
+    if (ImGui::Button(editor)) ::ShellExecuteW(nullptr, L"open", (app.folder / "KameoShaderEditor.exe").c_str(), nullptr, app.folder.c_str(), SW_SHOWNORMAL);
     ImGui::SameLine();
   }
-  if (ImGui::Button("Open Folder##shader")) {
+  if (ImGui::Button((std::string(open_folder) + "##shader").c_str())) {
     std::error_code error;
     fs::create_directories(folder, error);
     ::ShellExecuteW(nullptr, L"open", folder.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
   }
   ImGui::Separator();
-  if (files.empty()) ImGui::TextColored(kTextDim, "No shader mods yet. Put .kshader files in the shader_mods folder, or make your own with the Shader Editor.");
+  if (files.empty()) ImGui::TextColored(kTextDim, "%s", Tr("No shader mods yet. Put .kshader files in the shader_mods folder, or make your own with the Shader Editor."));
   for (size_t i = 0; i < files.size(); ++i) {
     const std::string name = files[i].filename().string();
     const bool on = name.ends_with(".kshader");
@@ -122,7 +133,7 @@ void ShaderModsSection(App& app) {
     ImGui::TextUnformatted(name.substr(0, name.find(".kshader")).c_str());
     ImGui::PopID();
   }
-  ImGui::TextColored(kTextDim, "Shader mods change how things are drawn, and apply straight away, even with the game running.");
+  ImGui::TextColored(kTextDim, "%s", Tr("Shader mods change how things are drawn, and apply straight away, even with the game running."));
   ImGui::EndChild();
   ImGui::Spacing();
 }
@@ -132,22 +143,22 @@ void CheatsUsedCard(App& app) {
   static bool confirming = false;
   static std::string error;
   ImGui::BeginChild("mods_cheats_used", ImVec2(0, 0), ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_AlwaysUseWindowPadding);
-  ImGui::TextColored(kGold, "Cheats Were Used");
+  ImGui::TextColored(kGold, "%s", Tr("Cheats Were Used"));
   ImGui::Separator();
   if (!save_backup::Exists(app.content_root)) {
-    ImGui::TextWrapped("Leaderboard scores are off because a cheat was used, and there is no backup of your saves from before it.");
+    ImGui::TextWrapped("%s", Tr("Leaderboard scores are off because a cheat was used, and there is no backup of your saves from before it."));
   } else {
-    ImGui::TextWrapped("Leaderboard scores are off because a cheat was used. Your saves were backed up just before that. Restoring them turns the cheats off and lets you post scores again, but any progress since then goes back too. Your current saves are kept in the save_backups folder.");
+    ImGui::TextWrapped("%s", Tr("Leaderboard scores are off because a cheat was used. Your saves were backed up just before that. Restoring them turns the cheats off and lets you post scores again, but any progress since then goes back too. Your current saves are kept in the save_backups folder."));
     if (!confirming) {
-      if (ImGui::Button("Restore Saves From Before Cheats")) confirming = true;
+      if (ImGui::Button(Tr("Restore Saves From Before Cheats"))) confirming = true;
     } else {
-      if (ImGui::Button("Yes, Restore My Saves")) {
+      if (ImGui::Button(Tr("Yes, Restore My Saves"))) {
         confirming = false;
         error.clear();
-        if (RestoreCheatSaves(app, error)) app.status = "Your saves from before cheats are back.";
+        if (RestoreCheatSaves(app, error)) app.status = Tr("Your saves from before cheats are back.");
       }
       ImGui::SameLine();
-      if (ImGui::Button("Cancel")) confirming = false;
+      if (ImGui::Button(Tr("Cancel"))) confirming = false;
     }
     if (!error.empty()) ImGui::TextColored(kGold, "%s", error.c_str());
   }
@@ -158,21 +169,21 @@ void CheatsUsedCard(App& app) {
 }  // namespace
 
 void PageMods(App& app) {
-  PageTitle(app, "Mods", nullptr);
+  PageTitle(app, Tr("Mods"), nullptr);
   if (app.settings.GetBool("kameo_cheats_used")) CheatsUsedCard(app);
   LevelModsSection(app);
   ShaderModsSection(app);
   RestoreButton(app, {"kameo_gfx_texture_replacements", "kameo_gfx_dump_textures", "kameo_movie_replacements","kameo_story_splitscreen", "kameo_unlock_all_extras", "kameo_skip_cutscenes"});
-  if (BeginSection("textures", "Textures")) {
-    BoolRow(app, "Texture Replacements", "kameo_gfx_texture_replacements", "Load replacement textures from the textures folder.");
-    BoolRow(app, "Texture Dumping", "kameo_gfx_dump_textures", "Save the game's textures as they load, for making replacements.");
-    BoolRow(app, "Movie Replacements", "kameo_movie_replacements", "Play movies/<name>.mp4 instead of fmv/<name>.bik, e.g. movies/kameoIntro.mp4. With a soundtrack it plays its own sound for its own length; without one only the picture is replaced.");
+  if (BeginSection("textures", Tr("Textures"))) {
+    BoolRow(app, Tr("Texture Replacements"), "kameo_gfx_texture_replacements", Tr("Load replacement textures from the textures folder."));
+    BoolRow(app, Tr("Texture Dumping"), "kameo_gfx_dump_textures", Tr("Save the game's textures as they load, for making replacements."));
+    BoolRow(app, Tr("Movie Replacements"), "kameo_movie_replacements", Tr("Play movies/<name>.mp4 instead of fmv/<name>.bik, e.g. movies/kameoIntro.mp4. With a soundtrack it plays its own sound for its own length; without one only the picture is replaced."));
   }
   EndSection();
-  if (BeginSection("gameplay", "Gameplay")) {
-    BoolRow(app, "Story Split-screen", "kameo_story_splitscreen");
-    BoolRow(app, "Unlock All Extras", "kameo_unlock_all_extras");
-    BoolRow(app, "Skippable Cutscenes", "kameo_skip_cutscenes", "Start skips in-engine cutscenes and every FMV.");
+  if (BeginSection("gameplay", Tr("Gameplay"))) {
+    BoolRow(app, Tr("Story Split-screen"), "kameo_story_splitscreen");
+    BoolRow(app, Tr("Unlock All Extras"), "kameo_unlock_all_extras");
+    BoolRow(app, Tr("Skippable Cutscenes"), "kameo_skip_cutscenes", Tr("Start skips in-engine cutscenes and every FMV."));
   }
   EndSection();
 }

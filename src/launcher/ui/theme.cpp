@@ -2,6 +2,9 @@
 
 #include <cmath>
 #include <filesystem>
+#include <vector>
+
+#include "core/localization.h"
 
 #include "launcher/ui/widgets.h"
 
@@ -60,15 +63,38 @@ void LoadFonts(WindowState& window) {
   ImGuiIO& io = ImGui::GetIO();
   io.Fonts->Clear();
   const std::filesystem::path fonts = std::filesystem::path(L"C:\\Windows\\Fonts");
-  const auto load = [&](const wchar_t* file, float size) -> ImFont* {
+  const auto load = [&](const wchar_t* file, float size, const ImFontConfig* config = nullptr) -> ImFont* {
     std::error_code ec;
-    if (std::filesystem::exists(fonts / file, ec)) return io.Fonts->AddFontFromFileTTF((fonts / file).string().c_str(), size);
+    if (std::filesystem::exists(fonts / file, ec)) return io.Fonts->AddFontFromFileTTF((fonts / file).string().c_str(), size, config);
     return nullptr;
+  };
+  // Japanese, Korean and Chinese text needs a font that has it, merged into each one: the one Windows ships for the
+  // language, or the next it might have. Japanese and Korean faces always follow, for the language list's own names
+  // (日本語, 한국어, 繁體中文) in every language; the language's own face comes first, so its letters win.
+  const std::vector<const wchar_t*> japanese = {L"YuGothM.ttc", L"meiryo.ttc", L"msgothic.ttc"};
+  const std::vector<const wchar_t*> korean = {L"malgun.ttf", L"gulim.ttc"};
+  const std::vector<const wchar_t*> chinese = {L"msjh.ttc", L"mingliu.ttc"};
+  std::vector<const std::vector<const wchar_t*>*> asian;
+  if (kameo::l10n::CurrentLanguage() == kameo::l10n::kChinese) asian.push_back(&chinese);
+  if (kameo::l10n::CurrentLanguage() == kameo::l10n::kKorean) asian.push_back(&korean);
+  asian.push_back(&japanese);
+  if (kameo::l10n::CurrentLanguage() != kameo::l10n::kKorean) asian.push_back(&korean);
+  const auto merge_asian = [&](float size) {
+    ImFontConfig config;
+    config.MergeMode = true;
+    for (const std::vector<const wchar_t*>* faces : asian) {
+      for (const wchar_t* file : *faces) {
+        if (load(file, size, &config)) break;
+      }
+    }
   };
   window.body = load(L"segoeui.ttf", 18.0f);
   if (!window.body) window.body = io.Fonts->AddFontDefault();
+  merge_asian(18.0f);
   window.heading = load(L"palab.ttf", 30.0f);
+  if (window.heading) merge_asian(30.0f);
   if (!window.heading) window.heading = window.body;
+  window.fonts_language = kameo::l10n::CurrentLanguage();
   ImGui::GetStyle().FontSizeBase = 18.0f;
 }
 

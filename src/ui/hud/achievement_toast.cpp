@@ -8,6 +8,7 @@
 #include <rex/cvar.h>
 #include <rex/system/kernel_state.h>
 
+#include "core/localization.h"
 #include "input/guest_controls.h"
 #include "ui/hud/fps_counter.h"
 #include "ui/text_window.h"
@@ -17,6 +18,7 @@ REXCVAR_DEFINE_BOOL(kameo_toast_test, false, "Kameo", "Show a sample achievement
 using namespace kameo::ui;
 using kameo::input::kFrameTime;
 using kameo::input::kPlayerList;
+using kameo::l10n::TrFormat;
 
 namespace {
 
@@ -145,7 +147,7 @@ void KameoTickAchievementToast(PPCContext& ctx, uint8_t* base) {
   }
   const uint32_t text_object = REX_LOAD_U32(window + kWindowTextObject);
   CallGuest(ctx, base, sub_8210A470, window);
-  const std::u16string text = std::u16string(kToastStyle) + u"Achievement Unlocked\n" + notice.label + u"   " + Number(int32_t(notice.gamerscore), u"G");
+  const std::u16string text = std::u16string(kToastStyle) + TrFormat(u"Achievement Unlocked\n{0}   {1}G", {notice.label, Number(int32_t(notice.gamerscore), u"")});
   const uint32_t guest_text = GuestWideString(text);
   if (!guest_text) return;
   AddTextItem(ctx, base, window, 0, 0, guest_text, 0, false);

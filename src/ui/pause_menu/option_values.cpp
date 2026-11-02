@@ -7,6 +7,7 @@
 
 #include <rex/cvar.h>
 
+#include "core/localization.h"
 #include "core/settings.h"
 #include "engine/audio.h"
 #include "gpu/config.h"
@@ -51,7 +52,7 @@ size_t CurrentResolution(const std::vector<Resolution>& choices) {
 
 }  // namespace
 
-std::u16string OnOff(bool on) { return on ? u"On" : u"Off"; }
+std::u16string OnOff(bool on) { return on ? kameo::l10n::Tr(u"On") : kameo::l10n::Tr(u"Off"); }
 
 bool RunningVulkan() {
   auto* gfx = kameo::gpu::GraphicsSystem::instance();
@@ -93,8 +94,8 @@ bool ControlDisplayLocked() {
 uint32_t Cycle3(uint32_t value, int direction) { return (value + (direction < 0 ? 2 : 1)) % 3; }
 
 std::u16string LanguageName(int32_t language) {
-  static const char16_t* kNames[] = {u"English", u"English", u"Japanese", u"German", u"French", u"Spanish", u"Italian", u"Korean", u"Chinese"};
-  return kNames[language >= 1 && language <= 8 ? language : 1];
+  static const char16_t* kNames[] = {TR_NOOP(u"English"), TR_NOOP(u"English"), TR_NOOP(u"Japanese"), TR_NOOP(u"German"), TR_NOOP(u"French"), TR_NOOP(u"Spanish"), TR_NOOP(u"Italian"), TR_NOOP(u"Korean"), TR_NOOP(u"Chinese")};
+  return kameo::l10n::Tr(kNames[language >= 1 && language <= 8 ? language : 1]);
 }
 
 int32_t ChosenLanguage() {
@@ -118,9 +119,9 @@ std::atomic<int32_t>* VolumeFor(uint32_t id) {
 }
 
 std::u16string BindingValue(const char* cvar) {
-  if (KameoKeyCaptureTarget() == cvar) return u"Press a key (wait 5s to cancel)";
+  if (KameoKeyCaptureTarget() == cvar) return kameo::l10n::Tr(u"Press a key (wait 5s to cancel)");
   const std::string keys = KameoKeybindForSave(cvar);
-  if (keys.empty()) return u"Unbound";
+  if (keys.empty()) return kameo::l10n::Tr(u"Unbound");
   std::u16string text;
   for (char c : keys) {
     text += char16_t(c);
@@ -139,8 +140,8 @@ std::u16string ResolutionText() {
   int32_t window_height = 0;
   const std::vector<Resolution> choices = ResolutionChoices(&window_width, &window_height);
   const Resolution& choice = choices[CurrentResolution(choices)];
-  if (!window_width || !window_height) return choice.height <= 0 ? std::u16string(u"Window") : Number(choice.height, u"p");
-  if (choice.height <= 0) return u"Window (" + Number(window_width, u"x") + Number(window_height, u")");
+  if (!window_width || !window_height) return choice.height <= 0 ? kameo::l10n::Tr(u"Window") : Number(choice.height, u"p");
+  if (choice.height <= 0) return kameo::l10n::TrFormat(u"Window ({0}x{1})", {Number(window_width, u""), Number(window_height, u"")});
   return Number(choice.width, u"x") + Number(choice.height, u"");
 }
 

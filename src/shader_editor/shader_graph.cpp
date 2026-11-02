@@ -9,7 +9,12 @@
 
 #include <nlohmann/json.hpp>
 
+#include "core/localization.h"
+
 namespace kameo::shader_editor {
+
+using l10n::Tr;
+using l10n::TrFormat;
 
 namespace {
 
@@ -21,62 +26,62 @@ const char* const kKindNames[] = {"output", "game_colour", "albedo", "light", "u
 static_assert(std::size(kKindNames) == size_t(NodeKind::kCount));
 
 const std::vector<NodeInfo> kInfos = {
-    {"Output", "Output", {"Colour"}, {{1, 0, 1}}, {}, {}, "The colour drawn. Fog and fades still follow where the game has them."},
-    {"Game colour", "Inputs", {}, {}, {}, {}, "The pixel as the game lit it: its textures, lights and shadows. Wire this to Output to change nothing."},
-    {"Base texture", "Inputs", {}, {}, {}, {}, "The surface's colour before lighting, with all its layers. Often paler than it looks in game: multiply in Light's colour to keep a level's mood. Using it makes the surface twice the work to draw."},
-    {"Light", "Inputs", {}, {}, {}, {}, "The light on this pixel, with its shadows and shine: Game colour over Base texture. Using it makes the surface twice the work to draw."},
-    {"UV", "Inputs", {}, {}, {}, {}, "The surface's first texture coordinate, (u, v, 0).", 'U'},
-    {"Screen position", "Inputs", {}, {}, {}, {}, "The pixel's position on screen, (x, y, 0) in pixels."},
-    {"Key light", "Lighting", {}, {}, {"Towards camera", "Up", "Side"}, {0.8f, 0.55f, 0.45f}, "N.L for one light placed from the camera: 1 facing it, -1 facing away. It looks the same in every scene.", 'K'},
-    {"Sun light", "Lighting", {}, {}, {}, {}, "N.L for the level's own sun or main light: 1 facing it, -1 facing away."},
-    {"Rim", "Lighting", {}, {}, {}, {}, "1 - N.V: 0 facing the camera, 1 at the silhouette (fresnel).", 'R'},
-    {"Facing up", "Lighting", {}, {}, {}, {}, "N.up: 1 facing the sky, -1 the ground."},
-    {"Number", "Constants", {}, {}, {"Value"}, {1.0f}, "A constant. Name it to list it on the Parameters panel.", '1'},
-    {"Colour", "Constants", {}, {}, {"R", "G", "B"}, {1.0f, 1.0f, 1.0f}, "A constant colour. Name it to list it on the Parameters panel.", '3'},
-    {"Add", "Math", {"A", "B"}, {kZero, kZero}, {}, {}, "A + B", 'A'},
-    {"Subtract", "Math", {"A", "B"}, {kZero, kZero}, {}, {}, "A - B"},
-    {"Multiply", "Math", {"A", "B"}, {kOne, kOne}, {}, {}, "A x B", 'M'},
-    {"Divide", "Math", {"A", "B"}, {kOne, kOne}, {}, {}, "A / B", 'D'},
-    {"Mix", "Math", {"A", "B", "Amount"}, {kZero, kOne, {0.5f, 0.5f, 0.5f}}, {}, {}, "A at amount 0, B at 1 (lerp).", 'L'},
-    {"One minus", "Math", {"X"}, {kZero}, {}, {}, "1 - X", 'O'},
-    {"Clamp 0..1", "Math", {"X"}, {kZero}, {}, {}, "X kept between 0 and 1 (saturate)."},
-    {"Power", "Math", {"X", "Exponent"}, {kOne, {2, 2, 2}}, {}, {}, "X to the power of Exponent.", 'E'},
-    {"Min", "Math", {"A", "B"}, {kZero, kZero}, {}, {}, "The smaller of A and B."},
-    {"Max", "Math", {"A", "B"}, {kZero, kZero}, {}, {}, "The larger of A and B."},
-    {"Step", "Cel", {"Edge", "X"}, {{0.2f, 0.2f, 0.2f}, kZero}, {}, {}, "0 below Edge and 1 above, with a hard, antialiased edge.", 'S'},
-    {"Smooth step", "Cel", {"Edge 0", "Edge 1", "X"}, {kZero, kOne, kZero}, {}, {}, "0 below Edge 0, 1 above Edge 1, smooth between."},
-    {"Bands", "Cel", {"X", "Count"}, {kZero, {3, 3, 3}}, {}, {}, "X (0..1) cut into Count flat steps (posterize).", 'B'},
-    {"Desaturate", "Colour", {"Colour", "Amount"}, {kOne, kOne}, {}, {}, "Colour turned towards grey by Amount."},
-    {"Luminance", "Colour", {"Colour"}, {kOne}, {}, {}, "The colour's brightness."},
-    {"Halftone", "Cel", {"Amount", "Cell size"}, {{0.5f, 0.5f, 0.5f}, {6, 6, 6}}, {}, {}, "1 inside comic dots that grow with Amount (0..1), Cell size pixels apart.", 'H'},
-    {"Custom HLSL", "Advanced", {"a", "b", "c", "d"}, {kZero, kZero, kZero, kZero}, {}, {}, "Your own HLSL: a function body over ShadeInputs s and float3 a, b, c, d that returns a float3."},
-    {"Reroute", "Utility", {""}, {kZero}, {}, {}, "Passes its input on, to tidy wires. Double-click a wire to add one."},
-    {"Time", "Inputs", {}, {}, {"Speed"}, {1.0f}, "Seconds since the game started, times Speed; wraps every hour."},
-    {"Panner", "Utility", {"UV", "Speed"}, {kZero, {0.1f, 0.0f, 0.0f}}, {}, {}, "UV moving at Speed (u, v per second). Unwired, UV is the surface's.", 'P', true},
-    {"Noise", "Cel", {"UV", "Scale"}, {kZero, {8, 8, 8}}, {}, {}, "Smooth value noise, 0..1, Scale cells across UV. Unwired, UV is the surface's.", 'N', true},
-    {"Sine", "Math", {"X"}, {kZero}, {"Period"}, {1.0f}, "sin(X), one wave every Period."},
-    {"Cosine", "Math", {"X"}, {kZero}, {"Period"}, {1.0f}, "cos(X), one wave every Period."},
-    {"Frac", "Math", {"X"}, {kZero}, {}, {}, "The part of X after the decimal point."},
-    {"Floor", "Math", {"X"}, {kZero}, {}, {}, "X rounded down."},
-    {"Ceil", "Math", {"X"}, {kZero}, {}, {}, "X rounded up."},
-    {"Abs", "Math", {"X"}, {kZero}, {}, {}, "X without its sign."},
-    {"Clamp", "Math", {"X", "Min", "Max"}, {kZero, kZero, kOne}, {}, {}, "X kept between Min and Max."},
-    {"Dot", "Math", {"A", "B"}, {kZero, kZero}, {}, {}, "The dot product of A and B."},
-    {"Cross", "Math", {"A", "B"}, {{1, 0, 0}, {0, 1, 0}}, {}, {}, "The cross product of A and B."},
-    {"Normalize", "Math", {"X"}, {{0, 0, 1}}, {}, {}, "X scaled to length 1."},
-    {"Length", "Math", {"X"}, {kZero}, {}, {}, "How long X is."},
-    {"Distance", "Math", {"A", "B"}, {kZero, kZero}, {}, {}, "How far A is from B."},
-    {"Remap", "Math", {"X", "In min", "In max", "Out min", "Out max"}, {kZero, kZero, kOne, kZero, kOne}, {}, {}, "X from In min..In max to Out min..Out max."},
-    {"If", "Math", {"A", "B", "A > B", "A = B", "A < B"}, {kZero, kZero, kOne, {0.5f, 0.5f, 0.5f}, kZero}, {}, {}, "Picks by comparing A and B (their first channels)."},
-    {"Component mask", "Colour", {"X"}, {kZero}, {"Channel (0 R, 1 G, 2 B)"}, {0.0f}, "One channel of X, in all three."},
-    {"Make colour", "Constants", {"R", "G", "B"}, {kZero, kZero, kZero}, {}, {}, "A colour from three numbers (append)."},
-    {"Normal", "Inputs", {}, {}, {}, {}, "The direction the surface faces, in camera space, with normal maps where the game's shader uses them."},
-    {"Camera vector", "Inputs", {}, {}, {}, {}, "The direction to the camera, camera space."},
-    {"Up vector", "Inputs", {}, {}, {}, {}, "The direction to the sky, camera space."},
-    {"Key vector", "Lighting", {}, {}, {"Towards camera", "Up", "Side"}, {0.8f, 0.55f, 0.45f}, "The direction to the light Key light uses, camera space."},
-    {"Sun vector", "Lighting", {}, {}, {}, {}, "The direction to the level's sun or main light, camera space."},
-    {"Sun colour", "Lighting", {}, {}, {}, {}, "The colour of the level's sun or main light."},
-    {"Outline", "Cel", {"Width"}, {{2.5f, 2.5f, 2.5f}}, {}, {}, "1 on an inked line Width pixels wide just inside the silhouette, and round any part seen in front of another; 0 elsewhere. It keeps its width at any distance.", 'I'},
+    {TR_NOOP("Output"), TR_NOOP("Output"), {TR_NOOP("Colour")}, {{1, 0, 1}}, {}, {}, TR_NOOP("The colour drawn. Fog and fades still follow where the game has them.")},
+    {TR_NOOP("Game colour"), TR_NOOP("Inputs"), {}, {}, {}, {}, TR_NOOP("The pixel as the game lit it: its textures, lights and shadows. Wire this to Output to change nothing.")},
+    {TR_NOOP("Base texture"), TR_NOOP("Inputs"), {}, {}, {}, {}, TR_NOOP("The surface's colour before lighting, with all its layers. Often paler than it looks in game: multiply in Light's colour to keep a level's mood. Using it makes the surface twice the work to draw.")},
+    {TR_NOOP("Light"), TR_NOOP("Inputs"), {}, {}, {}, {}, TR_NOOP("The light on this pixel, with its shadows and shine: Game colour over Base texture. Using it makes the surface twice the work to draw.")},
+    {TR_NOOP("UV"), TR_NOOP("Inputs"), {}, {}, {}, {}, TR_NOOP("The surface's first texture coordinate, (u, v, 0)."), 'U'},
+    {TR_NOOP("Screen position"), TR_NOOP("Inputs"), {}, {}, {}, {}, TR_NOOP("The pixel's position on screen, (x, y, 0) in pixels.")},
+    {TR_NOOP("Key light"), TR_NOOP("Lighting"), {}, {}, {TR_NOOP("Towards camera"), TR_NOOP("Up"), TR_NOOP("Side")}, {0.8f, 0.55f, 0.45f}, TR_NOOP("N.L for one light placed from the camera: 1 facing it, -1 facing away. It looks the same in every scene."), 'K'},
+    {TR_NOOP("Sun light"), TR_NOOP("Lighting"), {}, {}, {}, {}, TR_NOOP("N.L for the level's own sun or main light: 1 facing it, -1 facing away.")},
+    {TR_NOOP("Rim"), TR_NOOP("Lighting"), {}, {}, {}, {}, TR_NOOP("1 - N.V: 0 facing the camera, 1 at the silhouette (fresnel)."), 'R'},
+    {TR_NOOP("Facing up"), TR_NOOP("Lighting"), {}, {}, {}, {}, TR_NOOP("N.up: 1 facing the sky, -1 the ground.")},
+    {TR_NOOP("Number"), TR_NOOP("Constants"), {}, {}, {TR_NOOP("Value")}, {1.0f}, TR_NOOP("A constant. Name it to list it on the Parameters panel."), '1'},
+    {TR_NOOP("Colour"), TR_NOOP("Constants"), {}, {}, {"R", "G", "B"}, {1.0f, 1.0f, 1.0f}, TR_NOOP("A constant colour. Name it to list it on the Parameters panel."), '3'},
+    {TR_NOOP("Add"), TR_NOOP("Math"), {"A", "B"}, {kZero, kZero}, {}, {}, "A + B", 'A'},
+    {TR_NOOP("Subtract"), TR_NOOP("Math"), {"A", "B"}, {kZero, kZero}, {}, {}, "A - B"},
+    {TR_NOOP("Multiply"), TR_NOOP("Math"), {"A", "B"}, {kOne, kOne}, {}, {}, "A x B", 'M'},
+    {TR_NOOP("Divide"), TR_NOOP("Math"), {"A", "B"}, {kOne, kOne}, {}, {}, "A / B", 'D'},
+    {TR_NOOP("Mix"), TR_NOOP("Math"), {"A", "B", TR_NOOP("Amount")}, {kZero, kOne, {0.5f, 0.5f, 0.5f}}, {}, {}, TR_NOOP("A at amount 0, B at 1 (lerp)."), 'L'},
+    {TR_NOOP("One minus"), TR_NOOP("Math"), {"X"}, {kZero}, {}, {}, "1 - X", 'O'},
+    {TR_NOOP("Clamp 0..1"), TR_NOOP("Math"), {"X"}, {kZero}, {}, {}, TR_NOOP("X kept between 0 and 1 (saturate).")},
+    {TR_NOOP("Power"), TR_NOOP("Math"), {"X", TR_NOOP("Exponent")}, {kOne, {2, 2, 2}}, {}, {}, TR_NOOP("X to the power of Exponent."), 'E'},
+    {TR_NOOP("Min"), TR_NOOP("Math"), {"A", "B"}, {kZero, kZero}, {}, {}, TR_NOOP("The smaller of A and B.")},
+    {TR_NOOP("Max"), TR_NOOP("Math"), {"A", "B"}, {kZero, kZero}, {}, {}, TR_NOOP("The larger of A and B.")},
+    {TR_NOOP("Step"), TR_NOOP("Cel"), {TR_NOOP("Edge"), "X"}, {{0.2f, 0.2f, 0.2f}, kZero}, {}, {}, TR_NOOP("0 below Edge and 1 above, with a hard, antialiased edge."), 'S'},
+    {TR_NOOP("Smooth step"), TR_NOOP("Cel"), {TR_NOOP("Edge 0"), TR_NOOP("Edge 1"), "X"}, {kZero, kOne, kZero}, {}, {}, TR_NOOP("0 below Edge 0, 1 above Edge 1, smooth between.")},
+    {TR_NOOP("Bands"), TR_NOOP("Cel"), {"X", TR_NOOP("Count")}, {kZero, {3, 3, 3}}, {}, {}, TR_NOOP("X (0..1) cut into Count flat steps (posterize)."), 'B'},
+    {TR_NOOP("Desaturate"), TR_NOOP("Colour"), {TR_NOOP("Colour"), TR_NOOP("Amount")}, {kOne, kOne}, {}, {}, TR_NOOP("Colour turned towards grey by Amount.")},
+    {TR_NOOP("Luminance"), TR_NOOP("Colour"), {TR_NOOP("Colour")}, {kOne}, {}, {}, TR_NOOP("The colour's brightness.")},
+    {TR_NOOP("Halftone"), TR_NOOP("Cel"), {TR_NOOP("Amount"), TR_NOOP("Cell size")}, {{0.5f, 0.5f, 0.5f}, {6, 6, 6}}, {}, {}, TR_NOOP("1 inside comic dots that grow with Amount (0..1), Cell size pixels apart."), 'H'},
+    {TR_NOOP("Custom HLSL"), TR_NOOP("Advanced"), {"a", "b", "c", "d"}, {kZero, kZero, kZero, kZero}, {}, {}, TR_NOOP("Your own HLSL: a function body over ShadeInputs s and float3 a, b, c, d that returns a float3.")},
+    {TR_NOOP("Reroute"), TR_NOOP("Utility"), {""}, {kZero}, {}, {}, TR_NOOP("Passes its input on, to tidy wires. Double-click a wire to add one.")},
+    {TR_NOOP("Time"), TR_NOOP("Inputs"), {}, {}, {TR_NOOP("Speed")}, {1.0f}, TR_NOOP("Seconds since the game started, times Speed; wraps every hour.")},
+    {TR_NOOP("Panner"), TR_NOOP("Utility"), {TR_NOOP("UV"), TR_NOOP("Speed")}, {kZero, {0.1f, 0.0f, 0.0f}}, {}, {}, TR_NOOP("UV moving at Speed (u, v per second). Unwired, UV is the surface's."), 'P', true},
+    {TR_NOOP("Noise"), TR_NOOP("Cel"), {TR_NOOP("UV"), TR_NOOP("Scale")}, {kZero, {8, 8, 8}}, {}, {}, TR_NOOP("Smooth value noise, 0..1, Scale cells across UV. Unwired, UV is the surface's."), 'N', true},
+    {TR_NOOP("Sine"), TR_NOOP("Math"), {"X"}, {kZero}, {TR_NOOP("Period")}, {1.0f}, TR_NOOP("sin(X), one wave every Period.")},
+    {TR_NOOP("Cosine"), TR_NOOP("Math"), {"X"}, {kZero}, {TR_NOOP("Period")}, {1.0f}, TR_NOOP("cos(X), one wave every Period.")},
+    {TR_NOOP("Frac"), TR_NOOP("Math"), {"X"}, {kZero}, {}, {}, TR_NOOP("The part of X after the decimal point.")},
+    {TR_NOOP("Floor"), TR_NOOP("Math"), {"X"}, {kZero}, {}, {}, TR_NOOP("X rounded down.")},
+    {TR_NOOP("Ceil"), TR_NOOP("Math"), {"X"}, {kZero}, {}, {}, TR_NOOP("X rounded up.")},
+    {TR_NOOP("Abs"), TR_NOOP("Math"), {"X"}, {kZero}, {}, {}, TR_NOOP("X without its sign.")},
+    {TR_NOOP("Clamp"), TR_NOOP("Math"), {"X", TR_NOOP("Min"), TR_NOOP("Max")}, {kZero, kZero, kOne}, {}, {}, TR_NOOP("X kept between Min and Max.")},
+    {TR_NOOP("Dot"), TR_NOOP("Math"), {"A", "B"}, {kZero, kZero}, {}, {}, TR_NOOP("The dot product of A and B.")},
+    {TR_NOOP("Cross"), TR_NOOP("Math"), {"A", "B"}, {{1, 0, 0}, {0, 1, 0}}, {}, {}, TR_NOOP("The cross product of A and B.")},
+    {TR_NOOP("Normalize"), TR_NOOP("Math"), {"X"}, {{0, 0, 1}}, {}, {}, TR_NOOP("X scaled to length 1.")},
+    {TR_NOOP("Length"), TR_NOOP("Math"), {"X"}, {kZero}, {}, {}, TR_NOOP("How long X is.")},
+    {TR_NOOP("Distance"), TR_NOOP("Math"), {"A", "B"}, {kZero, kZero}, {}, {}, TR_NOOP("How far A is from B.")},
+    {TR_NOOP("Remap"), TR_NOOP("Math"), {"X", TR_NOOP("In min"), TR_NOOP("In max"), TR_NOOP("Out min"), TR_NOOP("Out max")}, {kZero, kZero, kOne, kZero, kOne}, {}, {}, TR_NOOP("X from In min..In max to Out min..Out max.")},
+    {TR_NOOP("If"), TR_NOOP("Math"), {"A", "B", "A > B", "A = B", "A < B"}, {kZero, kZero, kOne, {0.5f, 0.5f, 0.5f}, kZero}, {}, {}, TR_NOOP("Picks by comparing A and B (their first channels).")},
+    {TR_NOOP("Component mask"), TR_NOOP("Colour"), {"X"}, {kZero}, {TR_NOOP("Channel (0 R, 1 G, 2 B)")}, {0.0f}, TR_NOOP("One channel of X, in all three.")},
+    {TR_NOOP("Make colour"), TR_NOOP("Constants"), {"R", "G", "B"}, {kZero, kZero, kZero}, {}, {}, TR_NOOP("A colour from three numbers (append).")},
+    {TR_NOOP("Surface normal"), TR_NOOP("Inputs"), {}, {}, {}, {}, TR_NOOP("The direction the surface faces, in camera space, with normal maps where the game's shader uses them.")},
+    {TR_NOOP("Camera vector"), TR_NOOP("Inputs"), {}, {}, {}, {}, TR_NOOP("The direction to the camera, camera space.")},
+    {TR_NOOP("Up vector"), TR_NOOP("Inputs"), {}, {}, {}, {}, TR_NOOP("The direction to the sky, camera space.")},
+    {TR_NOOP("Key vector"), TR_NOOP("Lighting"), {}, {}, {TR_NOOP("Towards camera"), TR_NOOP("Up"), TR_NOOP("Side")}, {0.8f, 0.55f, 0.45f}, TR_NOOP("The direction to the light Key light uses, camera space.")},
+    {TR_NOOP("Sun vector"), TR_NOOP("Lighting"), {}, {}, {}, {}, TR_NOOP("The direction to the level's sun or main light, camera space.")},
+    {TR_NOOP("Sun colour"), TR_NOOP("Lighting"), {}, {}, {}, {}, TR_NOOP("The colour of the level's sun or main light.")},
+    {TR_NOOP("Outline"), TR_NOOP("Cel"), {TR_NOOP("Width")}, {{2.5f, 2.5f, 2.5f}}, {}, {}, TR_NOOP("1 on an inked line Width pixels wide just inside the silhouette, and round any part seen in front of another; 0 elsewhere. It keeps its width at any distance."), 'I'},
 };
 
 std::string Hlsl(float v) {
@@ -158,6 +163,9 @@ bool ShaderGraph::Connect(int from, int to, int input) {
 }
 
 std::string GenerateHlsl(const ShaderGraph& graph) {
+  // Raw HLSL is the body of Shade, or a whole file when it defines Shade itself, for code that needs more around it,
+  // such as its own MOD_FETCH2D.
+  if (graph.raw && graph.raw_code.find("Shade(ShadeInputs") != std::string::npos) return graph.raw_code;
   if (graph.raw) return std::format("float3 Shade(ShadeInputs s)\n{{\n{}\n}}\n", graph.raw_code);
   std::string customs, body;
   std::vector<int> emitted;
@@ -244,7 +252,7 @@ std::string GenerateHlsl(const ShaderGraph& graph) {
 }
 
 const char* PresetName(Preset preset) {
-  constexpr const char* kNames[] = {"The game's own look", "Cel shade", "Toon bands", "Flat colour", "Rim lit", "Comic halftone"};
+  constexpr const char* kNames[] = {TR_NOOP("The game's own look"), TR_NOOP("Cel shade"), TR_NOOP("Toon bands"), TR_NOOP("Flat colour"), TR_NOOP("Rim lit"), TR_NOOP("Comic halftone")};
   return kNames[size_t(preset)];
 }
 
@@ -269,7 +277,7 @@ ShaderGraph MakePreset(Preset preset) {
   Node& tint = g.Add(NodeKind::kColor, 250, 260);
   // Dark, as the game lights in linear light and brightens the picture at the end.
   tint.settings = {0.075f, 0.055f, 0.14f};
-  tint.name = "Shadow tint";
+  tint.name = Tr("Shadow tint");
   const int tint_id = tint.id;
   int lit = 0;
   if (preset == Preset::kToonBands) {
@@ -299,7 +307,7 @@ ShaderGraph MakePreset(Preset preset) {
     g.Connect(rim, edge_id, 1);
     Node& colour = g.Add(NodeKind::kColor, 420, 500);
     colour.settings = {0.6f, 0.45f, 0.6f};
-    colour.name = "Rim colour";
+    colour.name = Tr("Rim colour");
     const int colour_id = colour.id;
     const int glow = g.Add(NodeKind::kMultiply, 600, 420).id;
     g.Connect(edge_id, glow, 0);
@@ -332,13 +340,13 @@ ShaderGraph MakePreset(Preset preset) {
   if (preset == Preset::kCelShade || preset == Preset::kComicHalftone) {
     Node& width = g.Add(NodeKind::kFloat, 700, 560);
     width.settings = {2.5f};
-    width.name = "Ink width";
+    width.name = Tr("Ink width");
     const int width_id = width.id;
     const int outline = g.Add(NodeKind::kOutline, 860, 520).id;
     g.Connect(width_id, outline, 0);
     Node& ink = g.Add(NodeKind::kColor, 860, 620);
     ink.settings = {0.012f, 0.01f, 0.02f};
-    ink.name = "Ink colour";
+    ink.name = Tr("Ink colour");
     const int ink_id = ink.id;
     const int inked = g.Add(NodeKind::kLerp, 1050, 300).id;
     g.Connect(result, inked, 0);
@@ -412,27 +420,28 @@ ShaderGraph FromJson(const nlohmann::json& j) {
 
 bool SaveMod(const ShaderMod& mod, const std::filesystem::path& path, std::string& error) {
   std::ofstream out(path, std::ios::trunc);
-  out << nlohmann::json({{"version", 1}, {"targets", mod.targets}, {"graph", ToJson(mod.graph)}}).dump(2);
+  out << nlohmann::json({{"version", 1}, {"targets", mod.targets}, {"unlit", mod.unlit}, {"graph", ToJson(mod.graph)}}).dump(2);
   if (out) return true;
-  error = std::format("could not write {}", path.string());
+  error = TrFormat("could not write {0}", {path.string()});
   return false;
 }
 
 std::optional<ShaderMod> LoadMod(const std::filesystem::path& path, std::string& error) {
   std::ifstream in(path);
   if (!in) {
-    error = std::format("could not read {}", path.string());
+    error = TrFormat("could not read {0}", {path.string()});
     return std::nullopt;
   }
   const nlohmann::json j = nlohmann::json::parse(in, nullptr, false);
   if (j.is_discarded()) {
-    error = std::format("{} is not valid JSON", path.filename().string());
+    error = TrFormat("{0} is not valid JSON", {path.filename().string()});
     return std::nullopt;
   }
   try {
     ShaderMod mod;
     mod.graph = FromJson(j.at("graph"));
     mod.targets = j.value("targets", std::vector<std::string>{});
+    mod.unlit = j.value("unlit", false);
     return mod;
   } catch (const std::exception& e) {
     error = std::format("{}: {}", path.filename().string(), e.what());

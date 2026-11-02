@@ -86,6 +86,18 @@ void KameoUnlockDlc(PPCRegister& r3) {
   r3.s64 = 1;
 }
 
+#if KAMEO_TU
+// objectAlternativeModelUnlockedCheck(record) in the title update: it takes the skin record rather than its name, and
+// notes at +236 the event that unlocks one of the built-in skins (-1 for any other), which the online skin sync reads,
+// so it runs first. As KameoUnlockDlc does on the original, a built-in skin counts as unlocked; a downloadable one keeps
+// the update's own answer, which is whether its pack is installed.
+extern "C" REX_FUNC(sub_8225E158) {
+  const uint32_t record = ctx.r3.u32;
+  __imp__sub_8225E158(ctx, base);
+  if (record && REX_LOAD_U32(record + 236) != 0xFFFFFFFFu) ctx.r3.u64 = 1;
+}
+#endif
+
 namespace {
 
 void OverrideDlcSelector(PPCRegister& r3, PPCRegister& r4, PPCRegister& r1) {

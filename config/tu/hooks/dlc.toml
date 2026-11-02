@@ -1,0 +1,13 @@
+# Translated from config/hooks/dlc.toml for the title-update build by tools/tu/translate.py.
+# DROPPED KameoUnlockDlc at 8224F458: the update's unlock check takes the skin record; hooked as a function in dlc.cpp
+
+[[midasm_hook]]
+address = 0x8225F088
+name = "KameoOverrideDlcSelectorMid"
+registers = ["r3", "r4", "r1"]
+
+[[midasm_hook]]
+address = 0x8225F29C
+name = "KameoShouldSkipNextDlcModelLoad"
+jump_address_on_true = 0x8225F2A0
+

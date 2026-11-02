@@ -13,11 +13,14 @@
 #include <string_view>
 #include <unordered_map>
 
+#include "core/localization.h"
 #include "launcher/kmod.h"
 
 namespace fs = std::filesystem;
 
 namespace kameo::shader_editor {
+
+using l10n::TrFormat;
 
 namespace {
 
@@ -52,7 +55,7 @@ class Archive {
     std::ifstream in(path, std::ios::binary);
     const std::vector<uint8_t> file((std::istreambuf_iterator<char>(in)), {});
     if (file.size() < kHeaderSize || std::memcmp(file.data(), "CAFF", 4) != 0) {
-      error = std::format("{} is not a game archive", path.filename().string());
+      error = TrFormat("{0} is not a game archive", {path.filename().string()});
       return false;
     }
     const uint8_t* header = file.data();
@@ -63,7 +66,7 @@ class Archive {
       const uint32_t size = Be32(item + 8 + 8), packed = Be32(item + 8 + 28);
       if (packed == 0) continue;
       if (cursor + packed > file.size() || !kmod::inflate(file.data() + cursor, packed, size, sections_[i])) {
-        error = std::format("{} could not be unpacked", path.filename().string());
+        error = TrFormat("{0} could not be unpacked", {path.filename().string()});
         return false;
       }
       cursor += packed;
@@ -516,7 +519,7 @@ class Builder {
 bool LoadPreviewModel(const fs::path& file, int graph_index, PreviewModel& model, std::string& error) {
   Archive archive;
   if (!archive.Load(file, error)) {
-    if (error.empty()) error = std::format("{} could not be read", file.filename().string());
+    if (error.empty()) error = TrFormat("{0} could not be read", {file.filename().string()});
     return false;
   }
   const TextureReader reader(archive);
@@ -540,7 +543,7 @@ bool LoadPreviewModel(const fs::path& file, int graph_index, PreviewModel& model
     model = builder.Take(reader);
   }
   if (model.vertices.empty()) {
-    error = std::format("{} has no model in it", file.filename().string());
+    error = TrFormat("{0} has no model in it", {file.filename().string()});
     return false;
   }
   for (int c = 0; c < 3; ++c) model.min[c] = 1e30f, model.max[c] = -1e30f;

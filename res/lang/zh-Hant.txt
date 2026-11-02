@@ -1,0 +1,3103 @@
+# Traditional Chinese for Kameo: RePowered's own text: the English, the Traditional Chinese under it, then a blank line.
+# An entry with nothing under its English shows in English. \n is a line break. Keep {0}, {1}... and
+# {font tags} as they are; they're filled in or read by the game.
+
+# src/crash_dialog/main.cpp:17
+Would you like to send a crash report?
+要傳送當機報告嗎？
+
+# src/crash_dialog/main.cpp:18
+This is completely optional, and nothing is sent unless you choose Send Report. A report shows the developers what went wrong, so crashes can get fixed even when nobody files a bug report.
+這完全是自願的，除非您選擇「傳送報告」，否則不會傳送任何資料。報告能讓開發者了解哪裡出了問題，即使沒有人回報錯誤，當機問題也能獲得修正。
+
+# src/crash_dialog/main.cpp:21
+It holds the game's log from this session, the crash's call stacks and the game and OS versions. It can show file paths, including your Windows user name if the game is in your user folder. The call stacks hold small pieces of the game's memory, which could rarely include your RexLiveless sign-in.
+報告包含本次執行的遊戲記錄檔、當機時的呼叫堆疊，以及遊戲和作業系統的版本。其中可能會顯示檔案路徑；若遊戲位於您的使用者資料夾中，也會包含您的 Windows 使用者名稱。呼叫堆疊含有少量遊戲記憶體內容，在極少數情況下可能包含您的 RexLiveless 登入資訊。
+
+# src/crash_dialog/main.cpp:42
+Kameo has crashed
+Kameo 發生當機
+
+# src/crash_dialog/main.cpp:66
+Don't Send
+不要傳送
+
+# src/crash_dialog/main.cpp:72
+Send Report
+傳送報告
+
+# src/crash_dialog/main.cpp:96
+Kameo has crashed.\n\nWould you like to send a crash report? This is completely optional, and nothing is sent unless you choose Yes. A report shows the developers what went wrong, so crashes can get fixed.
+Kameo 發生當機。\n\n要傳送當機報告嗎？這完全是自願的，除非您選擇「是」，否則不會傳送任何資料。報告能讓開發者了解哪裡出了問題，以便修正當機。
+
+# src/engine/dlc/dlc_skin_names.cpp:30
+Armored Kameo
+裝甲凱蜜歐
+
+# src/engine/dlc/dlc_skin_names.cpp:30
+Fright Pack Kameo
+驚魂凱蜜歐
+
+# src/engine/dlc/dlc_skin_names.cpp:31
+Masquerade Kameo #1
+假面舞會凱蜜歐 (1)
+
+# src/engine/dlc/dlc_skin_names.cpp:31
+Masquerade Kameo #2
+假面舞會凱蜜歐 (2)
+
+# src/engine/dlc/dlc_skin_names.cpp:31
+Masquerade Kameo #3
+假面舞會凱蜜歐 (3)
+
+# src/engine/dlc/dlc_skin_names.cpp:31
+Masquerade Kameo #4
+假面舞會凱蜜歐 (4)
+
+# src/engine/dlc/dlc_skin_names.cpp:31
+Masquerade Kameo #5
+假面舞會凱蜜歐 (5)
+
+# src/engine/dlc/dlc_skin_names.cpp:32
+Masquerade Kameo #6
+假面舞會凱蜜歐 (6)
+
+# src/engine/dlc/dlc_skin_names.cpp:32
+Masquerade Kameo #7
+假面舞會凱蜜歐 (7)
+
+# src/engine/dlc/dlc_skin_names.cpp:32
+Masquerade Kameo #8
+假面舞會凱蜜歐 (8)
+
+# src/engine/dlc/dlc_skin_names.cpp:32
+Masquerade Kameo #9
+假面舞會凱蜜歐 (9)
+
+# src/engine/dlc/dlc_skin_names.cpp:32
+Masquerade Kameo #10
+假面舞會凱蜜歐 (10)
+
+# src/engine/dlc/dlc_skin_names.cpp:33
+Winter Warrior Kameo
+冬日鬥士凱蜜歐
+
+# src/engine/dlc/dlc_skin_names.cpp:33
+Design-A-Skin Kameo
+自訂造型凱蜜歐
+
+# src/engine/dlc/joiner_skin.cpp:346 (+1)
+Standard
+標準
+
+# src/input/pad_presets.cpp:53
+Face Bottom
+下方按鈕
+
+# src/input/pad_presets.cpp:54
+Face Right
+右方按鈕
+
+# src/input/pad_presets.cpp:55
+Face Left
+左方按鈕
+
+# src/input/pad_presets.cpp:56
+Face Top
+上方按鈕
+
+# src/input/pad_presets.cpp:57 (+1)
+Left Shoulder
+左肩鍵
+
+# src/input/pad_presets.cpp:58 (+1)
+Right Shoulder
+右肩鍵
+
+# src/input/pad_presets.cpp:59 (+3)
+Left Trigger
+左觸發鍵
+
+# src/input/pad_presets.cpp:60 (+3)
+Right Trigger
+右觸發鍵
+
+# src/input/pad_presets.cpp:61 (+1)
+Left Stick Press
+按下左搖桿
+
+# src/input/pad_presets.cpp:62 (+1)
+Right Stick Press
+按下右搖桿
+
+# src/input/pad_presets.cpp:63 (+3)
+D-Pad Up
+十字鍵上
+
+# src/input/pad_presets.cpp:64 (+3)
+D-Pad Down
+十字鍵下
+
+# src/input/pad_presets.cpp:65 (+3)
+D-Pad Left
+十字鍵左
+
+# src/input/pad_presets.cpp:66 (+3)
+D-Pad Right
+十字鍵右
+
+# src/input/pad_presets.cpp:67 (+4)
+Start
+開始
+
+# src/input/pad_presets.cpp:68 (+4)
+Back
+返回
+
+# src/input/pad_presets.cpp:69
+Left Stick Up
+左搖桿上
+
+# src/input/pad_presets.cpp:70
+Left Stick Down
+左搖桿下
+
+# src/input/pad_presets.cpp:71
+Left Stick Left
+左搖桿左
+
+# src/input/pad_presets.cpp:72
+Left Stick Right
+左搖桿右
+
+# src/input/pad_presets.cpp:73
+Right Stick Up
+右搖桿上
+
+# src/input/pad_presets.cpp:74
+Right Stick Down
+右搖桿下
+
+# src/input/pad_presets.cpp:75
+Right Stick Left
+右搖桿左
+
+# src/input/pad_presets.cpp:76
+Right Stick Right
+右搖桿右
+
+# src/input/pad_presets.cpp:174
+Unknown
+未知
+
+# src/input/pad_presets.cpp:175
+Press a control (wait 8s to cancel)
+請按下按鍵 (等待 8 秒即取消)
+
+# src/launcher/builds.cpp:232
+Checking GitHub for builds...
+正在從 GitHub 檢查版本...
+
+# src/launcher/builds.cpp:233
+Downloading {0}...
+正在下載 {0}...
+
+# src/launcher/builds.cpp:234 (+1)
+Switching to {0}...
+正在切換至 {0}...
+
+# src/launcher/builds.cpp:235
+Removing {0}...
+正在移除 {0}...
+
+# src/launcher/builds.cpp:240
+Could not check for builds: {0}
+無法檢查版本：{0}
+
+# src/launcher/builds.cpp:245
+GitHub's answer could not be read: {0}
+無法讀取 GitHub 的回應：{0}
+
+# src/launcher/builds.cpp:245
+not a release list
+不是發行版本清單
+
+# src/launcher/builds.cpp:283
+{0} has no Windows build to download
+{0} 沒有可下載的 Windows 版本
+
+# src/launcher/builds.cpp:304
+Unpacking {0}...
+正在解壓縮 {0}...
+
+# src/launcher/builds.cpp:315
+the download holds no kameorepowered.exe
+下載的檔案中沒有 kameorepowered.exe
+
+# src/launcher/builds.cpp:322
+could not move the build into place ({0})
+無法將版本移至定位（{0}）
+
+# src/launcher/builds.cpp:332
+Downloaded {0}.
+已下載 {0}。
+
+# src/launcher/builds.cpp:332 (+1)
+Could not download {0}: {1}
+無法下載 {0}：{1}
+
+# src/launcher/builds.cpp:354
+Could not find {0} after downloading it.
+下載後找不到 {0}。
+
+# src/launcher/builds.cpp:365
+Close Kameo before switching builds.
+切換版本前請先關閉 Kameo。
+
+# src/launcher/builds.cpp:385
+Could not keep a copy of the current build before switching, so nothing was changed.
+切換前無法保留目前版本的副本，因此未做任何變更。
+
+# src/launcher/builds.cpp:405
+could not copy {0} ({1})
+無法複製 {0}（{1}）
+
+# src/launcher/builds.cpp:414
+could not move the old {0} aside (error {1})
+無法移開舊的 {0}（錯誤 {1}）
+
+# src/launcher/builds.cpp:420
+could not put the new {0} in place (error {1})
+無法將新的 {0} 放到定位（錯誤 {1}）
+
+# src/launcher/builds.cpp:433
+Could not switch to {0}: {1}. The previous build is still in place.
+無法切換至 {0}：{1}。先前的版本仍保留不變。
+
+# src/launcher/builds.cpp:443
+Switched to {0}.
+已切換至 {0}。
+
+# src/launcher/builds.cpp:448
+The build in use cannot be removed; switch to another first.
+無法移除使用中的版本，請先切換至其他版本。
+
+# src/launcher/builds.cpp:456 (+2)
+Could not remove {0}: {1}
+無法移除 {0}：{1}
+
+# src/launcher/builds.cpp:456
+Removed {0}.
+已移除 {0}。
+
+# src/launcher/dlc_install.cpp:112
+{0} skins, Expert mode, Rune Battle and Time Attack
+{0} 個造型、專家模式、盧恩石之戰與限時競賽
+
+# src/launcher/dlc_install.cpp:113
+{0} skins; its new levels need the title update
+{0} 個造型；新關卡需要遊戲更新檔
+
+# src/launcher/dlc_install.cpp:114
+{0} skins; its new text needs the title update
+{0} 個造型；新文字需要遊戲更新檔
+
+# src/launcher/dlc_install.cpp:115 (+1)
+{0} skins
+{0} 個造型
+
+# src/launcher/dlc_install.cpp:116
+Nothing this version can use
+沒有此版本可用的內容
+
+# src/launcher/dlc_install.cpp:208
+Skipped {0}: not a readable Xbox 360 package.
+已略過 {0}：不是可讀取的 Xbox 360 套件。
+
+# src/launcher/dlc_install.cpp:214
+Skipped {0}: it belongs to title {1}, not Kameo.
+已略過 {0}：它屬於遊戲 {1}，而不是 Kameo。
+
+# src/launcher/dlc_install.cpp:221
+Skipped {0}: it is not downloadable content.
+已略過 {0}：它不是下載內容。
+
+# src/launcher/dlc_install.cpp:227 (+1)
+Could not create {0}: {1}
+無法建立 {0}：{1}
+
+# src/launcher/dlc_install.cpp:230
+Skipped {0}: the package has no files.
+已略過 {0}：套件中沒有任何檔案。
+
+# src/launcher/dlc_install.cpp:248 (+1)
+Could not read {0} from {1}.
+無法從 {1} 讀取 {0}。
+
+# src/launcher/dlc_install.cpp:252 (+1)
+Could not write {0}.
+無法寫入 {0}。
+
+# src/launcher/dlc_install.cpp:282
+Unpacked {0} but could not write its header.
+已解壓縮 {0}，但無法寫入其標頭。
+
+# src/launcher/dlc_install.cpp:285
+Installed {0}.
+已安裝 {0}。
+
+# src/launcher/http.cpp:52
+not an https address: {0}
+不是 https 位址：{0}
+
+# src/launcher/http.cpp:57
+WinHttpOpen failed (error {0})
+WinHttpOpen 失敗（錯誤 {0}）
+
+# src/launcher/http.cpp:62
+connecting to the server failed (error {0})
+連線至伺服器失敗（錯誤 {0}）
+
+# src/launcher/http.cpp:68
+opening the request failed (error {0})
+開啟要求失敗（錯誤 {0}）
+
+# src/launcher/http.cpp:78
+contacting the server failed (error {0})
+與伺服器通訊失敗（錯誤 {0}）
+
+# src/launcher/http.cpp:85
+the server answered {0} (GitHub's hourly limit for unsigned requests may be used up; try again later)
+伺服器回應 {0}（可能已用完 GitHub 對未登入要求的每小時上限，請稍後再試）
+
+# src/launcher/http.cpp:85
+the server answered {0}
+伺服器回應 {0}
+
+# src/launcher/http.cpp:102
+downloading failed (error {0})
+下載失敗（錯誤 {0}）
+
+# src/launcher/http.cpp:107
+could not write the download to disk
+無法將下載內容寫入磁碟
+
+# src/launcher/http.cpp:112
+cancelled
+已取消
+
+# src/launcher/http.cpp:117
+the download ended early ({0} of {1} bytes)
+下載提前結束（{0} / {1} 位元組）
+
+# src/launcher/http.cpp:142
+could not create {0}
+無法建立 {0}
+
+# src/launcher/http.cpp:153
+could not finish writing {0}
+無法完成寫入 {0}
+
+# src/launcher/iso_install.cpp:201
+The game is already unpacked in {0}.
+遊戲已解壓縮至 {0}。
+
+# src/launcher/iso_install.cpp:202
+The assets folder already has files in it. Move them somewhere else, then try again.
+assets 資料夾中已有檔案。請將它們移到其他位置，然後再試一次。
+
+# src/launcher/iso_install.cpp:205
+{0} could not be read. It may be incomplete, or not an Xbox 360 disc image or Games on Demand package.
+無法讀取 {0}。檔案可能不完整，或不是 Xbox 360 光碟映像檔或 Games on Demand 套件。
+
+# src/launcher/iso_install.cpp:208
+{0} has no default.xex, so it is not a game disc.
+{0} 中沒有 default.xex，因此不是遊戲光碟。
+
+# src/launcher/iso_install.cpp:214
+{0} is incomplete or damaged: its game program could not be read.
+{0} 不完整或已損毀：無法讀取其遊戲程式。
+
+# src/launcher/iso_install.cpp:214
+{0} is a different game (title {1}), not Kameo: Elements of Power.
+{0} 是另一款遊戲（遊戲 ID {1}），不是 Kameo: Elements of Power。
+
+# src/launcher/iso_install.cpp:219
+{0} looks damaged: it holds a file with an invalid name.
+{0} 似乎已損毀：其中有名稱無效的檔案。
+
+# src/launcher/iso_install.cpp:224
+Not enough free space: the game needs {0} on this drive, and it has {1}.
+可用空間不足：遊戲在此磁碟機上需要 {0}，但只有 {1}。
+
+# src/launcher/iso_install.cpp:230 (+1)
+Unpacking was cancelled.
+已取消解壓縮。
+
+# src/launcher/iso_install.cpp:254
+Could not unpack {0}. The image may be incomplete or damaged, or the drive may be full.
+無法解壓縮 {0}。映像檔可能不完整或已損毀，或是磁碟機空間已滿。
+
+# src/launcher/iso_install.cpp:260
+Could not move the game into {0}: {1}
+無法將遊戲移至 {0}：{1}
+
+# src/launcher/iso_install.cpp:261
+Your game is ready to play.
+遊戲已準備就緒，可以開始遊玩。
+
+# src/launcher/kmod.cpp:34
+not a CAFF archive
+不是 CAFF 封存檔
+
+# src/launcher/kmod.cpp:38
+a CAFF header out of range
+CAFF 標頭超出範圍
+
+# src/launcher/kmod.cpp:43
+a section runs past the end of the file
+某個區段超出檔案結尾
+
+# src/launcher/kmod.cpp:44
+a section does not unpack
+某個區段無法解壓縮
+
+# src/launcher/kmod.cpp:45
+a section unpacks to the wrong size
+某個區段解壓縮後的大小不正確
+
+# src/launcher/kmod.cpp:115
+the archives have different sections
+封存檔的區段不同
+
+# src/launcher/kmod.cpp:146
+{0} is not the file the mod was made from
+{0} 不是製作此模組時所用的檔案
+
+# src/launcher/kmod.cpp:147
+the mod's header is damaged
+模組的標頭已損毀
+
+# src/launcher/kmod.cpp:150
+the mod does not match the archive's sections
+模組與封存檔的區段不符
+
+# src/launcher/kmod.cpp:154
+the mod writes past a section
+模組寫入超出區段範圍
+
+# src/launcher/kmod.cpp:158
+the patched archive is not what the mod's author saved
+修補後的封存檔與模組作者儲存的內容不同
+
+# src/launcher/kmod.cpp:192
+not a Kameo mod package
+不是 Kameo 模組套件
+
+# src/launcher/kmod.cpp:194
+a mod package of another version
+其他版本的模組套件
+
+# src/launcher/kmod.cpp:197 (+1)
+the mod package is damaged
+模組套件已損毀
+
+# src/launcher/kmod.cpp:221
+the mod package names a file outside the game folder
+模組套件指向遊戲資料夾以外的檔案
+
+# src/launcher/launch.cpp:42
+Close the game first.
+請先關閉遊戲。
+
+# src/launcher/launch.cpp:55
+kameorepowered.exe was not found next to the launcher.
+在啟動器所在的資料夾中找不到 kameorepowered.exe。
+
+# src/launcher/launch.cpp:59
+The game files are missing. Choose your game on the Play page first.
+找不到遊戲檔案。請先在「遊玩」頁面選擇您的遊戲。
+
+# src/launcher/launch.cpp:68
+The level mods could not be applied: {0}
+無法套用關卡模組：{0}
+
+# src/launcher/launch.cpp:76
+The game could not be started (error {0}).
+無法啟動遊戲（錯誤 {0}）。
+
+# src/launcher/launch.cpp:81
+Kameo is starting...
+Kameo 正在啟動...
+
+# src/launcher/level_mods.cpp:66
+could not link {0} (error {1})
+無法連結 {0}（錯誤 {1}）
+
+# src/launcher/level_mods.cpp:70
+could not read the game folder: {0}
+無法讀取遊戲資料夾：{0}
+
+# src/launcher/level_mods.cpp:133
+{0} and {1}
+{0} 和 {1}
+
+# src/launcher/level_mods.cpp:134
+{0} is changed by {1}; only {2} (lowest in the list) is used for it.
+{0} 被 {1} 修改；只會套用 {2}（清單中最下方者）。
+
+# src/launcher/level_mods.cpp:145
+the game folder (assets with default.xex) was not found
+找不到遊戲資料夾（含有 default.xex 的 assets）
+
+# src/launcher/level_mods.cpp:167
+the game is still running from the mod build; close it first ({0})
+遊戲仍以模組版本執行中，請先關閉（{0}）
+
+# src/launcher/level_mods.cpp:178 (+3)
+could not write {0}
+無法寫入 {0}
+
+# src/launcher/main.cpp:32
+Direct3D 11 could not be started.
+無法啟動 Direct3D 11。
+
+# src/launcher/settings_file.cpp:44
+kameo_settings.toml could not be read: {0}
+無法讀取 kameo_settings.toml：{0}
+
+# src/launcher/settings_file.cpp:57
+Could not write {0}
+無法寫入 {0}
+
+# src/launcher/settings_file.cpp:65
+Could not replace {0}: {1}
+無法取代 {0}：{1}
+
+# src/launcher/title_update.cpp:131
+This version of Kameo: RePowered was released without its title-update build, so the update can't be played with it.
+此版本的 Kameo: RePowered 發行時未附遊戲更新檔專用版本，因此無法搭配更新檔遊玩。
+
+# src/launcher/title_update.cpp:134
+The title update's patch could not be read.
+無法讀取遊戲更新檔的修補檔。
+
+# src/launcher/title_update.cpp:136
+Install the game first: the title update patches its default.xex.
+請先安裝遊戲：遊戲更新檔會修補遊戲的 default.xex。
+
+# src/launcher/title_update.cpp:137
+This title update is for a different release of the game (another region's), so it can't patch yours.
+此遊戲更新檔適用於其他地區版本的遊戲，無法修補您的遊戲。
+
+# src/launcher/title_update.cpp:141
+This isn't the title update Kameo: RePowered was built for (version 0.0.2.1), so it can't be played.
+這不是 Kameo: RePowered 所對應的遊戲更新檔（版本 0.0.2.1），因此無法遊玩。
+
+# src/launcher/title_update.cpp:162
+Could not read {0} from the title update.
+無法從遊戲更新檔讀取 {0}。
+
+# src/launcher/title_update.cpp:169
+Could not copy default.xex into {0}: {1}
+無法將 default.xex 複製到 {0}：{1}
+
+# src/launcher/title_update.cpp:170
+Installed the title update: Expert mode, Rune Battle and Time Attack are available.
+已安裝遊戲更新檔：可以遊玩專家模式、盧恩石之戰與限時競賽。
+
+# src/launcher/zip_extract.cpp:45
+could not open {0}
+無法開啟 {0}
+
+# src/launcher/zip_extract.cpp:50 (+1)
+the download is not a zip file
+下載的檔案不是 zip 檔
+
+# src/launcher/zip_extract.cpp:71 (+1)
+the zip's directory is damaged
+zip 檔的目錄已損毀
+
+# src/launcher/zip_extract.cpp:88
+{0} is stored as ZIP64, which this launcher does not read
+{0} 以 ZIP64 格式儲存，此啟動器無法讀取
+
+# src/launcher/zip_extract.cpp:93
+the zip names a file outside its folder ({0})
+zip 檔指向其資料夾以外的檔案（{0}）
+
+# src/launcher/zip_extract.cpp:102
+the zip entry {0} is damaged
+zip 項目 {0} 已損毀
+
+# src/launcher/zip_extract.cpp:107
+the zip entry {0} runs past the end of the file
+zip 項目 {0} 超出檔案結尾
+
+# src/launcher/zip_extract.cpp:115
+the zip entry {0} could not be unpacked
+無法解壓縮 zip 項目 {0}
+
+# src/launcher/zip_extract.cpp:119
+the zip entry {0} uses compression method {1}, which this launcher does not read
+zip 項目 {0} 使用壓縮方式 {1}，此啟動器無法讀取
+
+# src/launcher/ui/page_audio.cpp:12 (+2)
+Audio
+音訊
+
+# src/launcher/ui/page_audio.cpp:14
+Volume
+音量
+
+# src/launcher/ui/page_audio.cpp:15 (+1)
+Master Volume
+主音量
+
+# src/launcher/ui/page_audio.cpp:16 (+1)
+Music
+音樂
+
+# src/launcher/ui/page_audio.cpp:17 (+1)
+Sound Effects
+音效
+
+# src/launcher/ui/page_audio.cpp:18 (+1)
+Ambience
+環境音
+
+# src/launcher/ui/page_audio.cpp:19 (+1)
+Speech
+語音
+
+# src/launcher/ui/page_audio.cpp:20 (+1)
+Cutscenes
+過場動畫
+
+# src/launcher/ui/page_audio.cpp:23 (+3)
+Language
+語言
+
+# src/launcher/ui/page_audio.cpp:25 (+1)
+Game Default
+遊戲預設
+
+# src/launcher/ui/page_audio.cpp:25
+Takes effect the next time the game starts.
+下次啟動遊戲時生效。
+
+# src/launcher/ui/page_bindings.cpp:27 (+1)
+Move Forward
+向前移動
+
+# src/launcher/ui/page_bindings.cpp:27 (+1)
+Move Back
+向後移動
+
+# src/launcher/ui/page_bindings.cpp:27 (+2)
+Move Left
+向左移動
+
+# src/launcher/ui/page_bindings.cpp:27 (+2)
+Move Right
+向右移動
+
+# src/launcher/ui/page_bindings.cpp:28
+A (Jump)
+A (跳躍)
+
+# src/launcher/ui/page_bindings.cpp:29 (+1)
+Left Bumper
+左肩鍵
+
+# src/launcher/ui/page_bindings.cpp:29 (+1)
+Right Bumper
+右肩鍵
+
+# src/launcher/ui/page_bindings.cpp:30 (+2)
+Camera Up
+視角向上
+
+# src/launcher/ui/page_bindings.cpp:30 (+2)
+Camera Down
+視角向下
+
+# src/launcher/ui/page_bindings.cpp:30 (+2)
+Camera Left
+視角向左
+
+# src/launcher/ui/page_bindings.cpp:30 (+2)
+Camera Right
+視角向右
+
+# src/launcher/ui/page_bindings.cpp:31 (+1)
+Left Stick Click
+按下左搖桿
+
+# src/launcher/ui/page_bindings.cpp:31 (+1)
+Right Stick Click
+按下右搖桿
+
+# src/launcher/ui/page_bindings.cpp:124 (+2)
+Key Bindings
+按鍵設定
+
+# src/launcher/ui/page_bindings.cpp:124
+Click Change, then press the key or mouse button to use. Binding a key another action has swaps the two.
+按一下「變更」，然後按下要使用的按鍵或滑鼠按鈕。若指定的按鍵已用於其他動作，兩者會互換。
+
+# src/launcher/ui/page_bindings.cpp:127 (+3)
+Restore Defaults
+還原預設值
+
+# src/launcher/ui/page_bindings.cpp:149
+Press a key... ({0}s)
+請按下按鍵...（{0} 秒）
+
+# src/launcher/ui/page_bindings.cpp:152 (+1)
+Unbound
+未指定
+
+# src/launcher/ui/page_bindings.cpp:155
+Change
+變更
+
+# src/launcher/ui/page_bindings.cpp:160
+Reset
+重設
+
+# src/launcher/ui/page_builds.cpp:44 (+1)
+Builds
+版本
+
+# src/launcher/ui/page_builds.cpp:44
+Download new versions of the game and switch between them. Your settings, saves and game files stay as they are.
+下載遊戲的新版本並在各版本之間切換。您的設定、存檔和遊戲檔案都會保持不變。
+
+# src/launcher/ui/page_builds.cpp:52
+In Use
+使用中
+
+# src/launcher/ui/page_builds.cpp:55
+The build in the game folder was installed by hand, so its version is not known. Switching to a build below keeps a copy of it first.
+遊戲資料夾中的版本是手動安裝的，因此無法得知其版本。切換至下方的版本時，會先保留它的副本。
+
+# src/launcher/ui/page_builds.cpp:58
+{0} is available.
+{0} 已推出。
+
+# src/launcher/ui/page_builds.cpp:61 (+2)
+Download and Switch
+下載並切換
+
+# src/launcher/ui/page_builds.cpp:64
+You have the newest build.
+您使用的是最新版本。
+
+# src/launcher/ui/page_builds.cpp:64
+You have the newest release.
+您使用的是最新正式版。
+
+# src/launcher/ui/page_builds.cpp:66
+Include pre-releases in update notices
+更新通知包含預覽版
+
+# src/launcher/ui/page_builds.cpp:67
+Pre-releases are test builds with the newest fixes; releases are the ones considered stable. Both are always listed below.
+預覽版是含有最新修正的測試版本；正式版則是被視為穩定的版本。兩者都會列在下方。
+
+# src/launcher/ui/page_builds.cpp:68
+Check for new builds when the launcher opens
+開啟啟動器時檢查新版本
+
+# src/launcher/ui/page_builds.cpp:79 (+6)
+Cancel
+取消
+
+# src/launcher/ui/page_builds.cpp:84
+Available Builds
+可用版本
+
+# src/launcher/ui/page_builds.cpp:85 (+1)
+Refresh
+重新整理
+
+# src/launcher/ui/page_builds.cpp:92
+Looking for builds...
+正在尋找版本...
+
+# src/launcher/ui/page_builds.cpp:92
+No builds have been published yet.
+尚未發佈任何版本。
+
+# src/launcher/ui/page_builds.cpp:92
+Press Refresh to see the builds published on GitHub.
+按「重新整理」以查看 GitHub 上發佈的版本。
+
+# src/launcher/ui/page_builds.cpp:110
+pre-release
+預覽版
+
+# src/launcher/ui/page_builds.cpp:112
+Notes
+版本說明
+
+# src/launcher/ui/page_builds.cpp:116
+Open on GitHub
+在 GitHub 上開啟
+
+# src/launcher/ui/page_builds.cpp:126
+In use
+使用中
+
+# src/launcher/ui/page_builds.cpp:127
+Downloaded
+已下載
+
+# src/launcher/ui/page_builds.cpp:128
+No Windows build
+無 Windows 版本
+
+# src/launcher/ui/page_builds.cpp:134 (+1)
+Switch
+切換
+
+# src/launcher/ui/page_builds.cpp:137
+Download
+下載
+
+# src/launcher/ui/page_builds.cpp:142 (+2)
+Delete
+刪除
+
+# src/launcher/ui/page_builds.cpp:157
+Your Previous Builds
+您先前的版本
+
+# src/launcher/ui/page_builds.cpp:159
+Copies of the build that was in the game folder before the launcher first switched it.
+啟動器第一次切換版本前，遊戲資料夾中原有版本的副本。
+
+# src/launcher/ui/page_controls.cpp:14 (+2)
+Controls
+控制
+
+# src/launcher/ui/page_controls.cpp:16
+Input
+輸入
+
+# src/launcher/ui/page_controls.cpp:17
+Input Mode
+輸入模式
+
+# src/launcher/ui/page_controls.cpp:17 (+3)
+Keyboard & Mouse
+鍵盤與 Mouse
+
+# src/launcher/ui/page_controls.cpp:17 (+3)
+Gamepad
+控制器
+
+# src/launcher/ui/page_controls.cpp:18
+Mouse Camera
+滑鼠控制鏡頭
+
+# src/launcher/ui/page_controls.cpp:18
+The mouse turns the camera in gameplay. Menus always get a pointer.
+遊戲中以滑鼠轉動鏡頭。選單中一律會顯示游標。
+
+# src/launcher/ui/page_controls.cpp:19 (+1)
+Mouse Sensitivity
+Mouse 靈敏度
+
+# src/launcher/ui/page_controls.cpp:25
+Keys are changed on the Key Bindings page.
+按鍵可在「按鍵設定」頁面中變更。
+
+# src/launcher/ui/page_dlc.cpp:62
+No Xbox 360 packages were found there. Pick the folder holding the DLC files (for example ...\\4D5307D2\\00000002).
+該處找不到任何 Xbox 360 套件。請選擇存放 DLC 檔案的資料夾（例如 ...\\4D5307D2\\00000002）。
+
+# src/launcher/ui/page_dlc.cpp:76
+No Xbox 360 package was found there. The title update is a single file in ...\\4D5307D2\\000B0000.
+該處找不到任何 Xbox 360 套件。遊戲更新檔是位於 ...\\4D5307D2\\000B0000 的單一檔案。
+
+# src/launcher/ui/page_dlc.cpp:86
+Title Update
+遊戲更新檔
+
+# src/launcher/ui/page_dlc.cpp:89
+Installed. The game starts with the title update: Expert mode, and Rune Battle and Time Attack with the DLC that carries their levels.
+已安裝。遊戲會搭配遊戲更新檔啟動：專家模式，以及搭配收錄關卡的 DLC 遊玩盧恩石之戰與限時競賽。
+
+# src/launcher/ui/page_dlc.cpp:91
+Remove Title Update
+移除遊戲更新檔
+
+# src/launcher/ui/page_dlc.cpp:94
+Remove the title update? The game starts without it.
+要移除遊戲更新檔嗎？遊戲將不搭配更新檔啟動。
+
+# src/launcher/ui/page_dlc.cpp:95 (+2)
+Remove
+移除
+
+# src/launcher/ui/page_dlc.cpp:106
+This version was released without its title-update build, so the update can't be installed. Pick a version that has it on the Builds page.
+此版本發行時未附遊戲更新檔專用版本，因此無法安裝更新檔。請在「版本」頁面選擇包含它的版本。
+
+# src/launcher/ui/page_dlc.cpp:108
+Not installed. The title update adds Expert mode, and Rune Battle and Time Attack in Multiplayer. Copy it from your console's hard drive (Content\\0000000000000000\\4D5307D2\\000B0000) or from Xenia's content folder (the same 4D5307D2\\000B0000), then install it here.
+尚未安裝。遊戲更新檔會加入專家模式，以及多人遊戲的盧恩石之戰與限時競賽。請從主機硬碟 (Content\\0000000000000000\\4D5307D2\\000B0000) 或 Xenia 的 content 資料夾（同樣是 4D5307D2\\000B0000）複製，再於此處安裝。
+
+# src/launcher/ui/page_dlc.cpp:110
+Install Title Update...
+安裝遊戲更新檔...
+
+# src/launcher/ui/page_dlc.cpp:110
+Choose the Kameo title update package
+選擇 Kameo 遊戲更新檔套件
+
+# src/launcher/ui/page_dlc.cpp:112
+From Folder...
+從資料夾...
+
+# src/launcher/ui/page_dlc.cpp:112
+Choose the folder with the Kameo title update
+選擇存放 Kameo 遊戲更新檔的資料夾
+
+# src/launcher/ui/page_dlc.cpp:127 (+1)
+Downloadable Content
+下載內容
+
+# src/launcher/ui/page_dlc.cpp:127
+Install Kameo's Xbox 360 DLC packages so the game can use them.
+安裝 Kameo 的 Xbox 360 DLC 套件，讓遊戲可以使用。
+
+# src/launcher/ui/page_dlc.cpp:130
+Install
+安裝
+
+# src/launcher/ui/page_dlc.cpp:132
+Choose the folder you downloaded the DLC into, such as the one ending in 4D5307D2\\00000002, or pick the package files themselves. Every Kameo package found is unpacked, the title update included; anything else is skipped.
+選擇您下載 DLC 的資料夾（例如結尾為 4D5307D2\\00000002 的資料夾），或直接選擇套件檔案。找到的每個 Kameo 套件（包括遊戲更新檔）都會解壓縮，其他檔案則會略過。
+
+# src/launcher/ui/page_dlc.cpp:134
+Install from Folder...
+從資料夾安裝...
+
+# src/launcher/ui/page_dlc.cpp:134
+Choose the folder with your Kameo DLC
+選擇存放 Kameo DLC 的資料夾
+
+# src/launcher/ui/page_dlc.cpp:136
+Install Files...
+安裝檔案...
+
+# src/launcher/ui/page_dlc.cpp:136
+Choose Kameo DLC package files
+選擇 Kameo DLC 套件檔案
+
+# src/launcher/ui/page_dlc.cpp:139
+Unpacking {0}
+正在解壓縮 {0}
+
+# src/launcher/ui/page_dlc.cpp:148
+Installed
+已安裝
+
+# src/launcher/ui/page_dlc.cpp:150 (+2)
+Open Folder
+開啟資料夾
+
+# src/launcher/ui/page_dlc.cpp:161
+Nothing installed yet.
+尚未安裝任何內容。
+
+# src/launcher/ui/page_dlc.cpp:163
+Name
+名稱
+
+# src/launcher/ui/page_dlc.cpp:164
+In this version
+此版本可用
+
+# src/launcher/ui/page_dlc.cpp:165 (+1)
+Size
+大小
+
+# src/launcher/ui/page_dlc.cpp:187
+Remove {0}?
+要移除 {0} 嗎？
+
+# src/launcher/ui/page_mods.cpp:27
+Mod Packages
+模組套件
+
+# src/launcher/ui/page_mods.cpp:37
+No mods yet. Put .kmod files in the mods folder (Open Folder), or make your own with the Blender add-on in the modkit folder.
+尚無任何模組。請將 .kmod 檔案放入 mods 資料夾（開啟資料夾），或使用 modkit 資料夾中的 Blender 附加元件自行製作。
+
+# src/launcher/ui/page_mods.cpp:57
+by {0}
+作者：{0}
+
+# src/launcher/ui/page_mods.cpp:65
+Changes {0}
+修改 {0}
+
+# src/launcher/ui/page_mods.cpp:78
+Enabled mods are applied when you press Play, into a copy of the game folder made of links; the game files themselves are never changed.
+啟用的模組會在您按下「遊玩」時，套用至以連結建立的遊戲資料夾副本；遊戲檔案本身永遠不會被修改。
+
+# src/launcher/ui/page_mods.cpp:79
+Kameo skins replace her Bonus costumes: pick the costume in the storybook's Bonus pages.
+凱蜜歐的造型模組會取代她的獎勵造型：請在故事書的「獎勵」頁面中選擇造型。
+
+# src/launcher/ui/page_mods.cpp:103
+Shader Mods
+著色器模組
+
+# src/launcher/ui/page_mods.cpp:104
+Shader Editor
+著色器編輯器
+
+# src/launcher/ui/page_mods.cpp:118
+No shader mods yet. Put .kshader files in the shader_mods folder, or make your own with the Shader Editor.
+尚無任何著色器模組。請將 .kshader 檔案放入 shader_mods 資料夾，或使用著色器編輯器自行製作。
+
+# src/launcher/ui/page_mods.cpp:136
+Shader mods change how things are drawn, and apply straight away, even with the game running.
+著色器模組會改變物件的繪製方式，並會立即套用，即使遊戲正在執行也一樣。
+
+# src/launcher/ui/page_mods.cpp:146
+Cheats Were Used
+已使用密技
+
+# src/launcher/ui/page_mods.cpp:149
+Leaderboard scores are off because a cheat was used, and there is no backup of your saves from before it.
+由於使用了密技，排行榜分數已停用，而且沒有使用密技前的存檔備份。
+
+# src/launcher/ui/page_mods.cpp:151
+Leaderboard scores are off because a cheat was used. Your saves were backed up just before that. Restoring them turns the cheats off and lets you post scores again, but any progress since then goes back too. Your current saves are kept in the save_backups folder.
+由於使用了密技，排行榜分數已停用。您的存檔已在使用密技前備份。還原備份會關閉密技，讓您可以再次上傳分數，但之後的所有進度也會一併回復。您目前的存檔會保留在 save_backups 資料夾中。
+
+# src/launcher/ui/page_mods.cpp:153
+Restore Saves From Before Cheats
+還原使用密技前的存檔
+
+# src/launcher/ui/page_mods.cpp:155
+Yes, Restore My Saves
+是，還原我的存檔
+
+# src/launcher/ui/page_mods.cpp:158
+Your saves from before cheats are back.
+已還原使用密技前的存檔。
+
+# src/launcher/ui/page_mods.cpp:172 (+2)
+Mods
+模組
+
+# src/launcher/ui/page_mods.cpp:177 (+1)
+Textures
+材質
+
+# src/launcher/ui/page_mods.cpp:178 (+1)
+Texture Replacements
+材質替換
+
+# src/launcher/ui/page_mods.cpp:178
+Load replacement textures from the textures folder.
+從 textures 資料夾載入替換材質。
+
+# src/launcher/ui/page_mods.cpp:179 (+1)
+Texture Dumping
+材質傾印
+
+# src/launcher/ui/page_mods.cpp:179
+Save the game's textures as they load, for making replacements.
+在遊戲載入材質時將其儲存下來，以便製作替換材質。
+
+# src/launcher/ui/page_mods.cpp:180 (+1)
+Movie Replacements
+影片替換
+
+# src/launcher/ui/page_mods.cpp:180
+Play movies/<name>.mp4 instead of fmv/<name>.bik, e.g. movies/kameoIntro.mp4. With a soundtrack it plays its own sound for its own length; without one only the picture is replaced.
+以 movies/<name>.mp4 取代 fmv/<name>.bik 播放，例如 movies/kameoIntro.mp4。若影片含有音軌，會依其自身長度播放其聲音；若沒有音軌，則只替換畫面。
+
+# src/launcher/ui/page_mods.cpp:183 (+1)
+Gameplay
+遊戲玩法
+
+# src/launcher/ui/page_mods.cpp:184 (+1)
+Story Split-screen
+故事模式分割畫面
+
+# src/launcher/ui/page_mods.cpp:185 (+1)
+Unlock All Extras
+解除鎖定所有額外內容
+
+# src/launcher/ui/page_mods.cpp:186 (+1)
+Skippable Cutscenes
+可跳過過場動畫
+
+# src/launcher/ui/page_mods.cpp:186
+Start skips in-engine cutscenes and every FMV.
+按 Start 可跳過即時運算的過場動畫及所有 FMV。
+
+# src/launcher/ui/page_play.cpp:28
+Choose your copy of Kameo: Elements of Power
+選擇您的 Kameo: Elements of Power 遊戲
+
+# src/launcher/ui/page_play.cpp:30
+Xbox 360 disc image (*.iso)
+Xbox 360 光碟映像檔 (*.iso)
+
+# src/launcher/ui/page_play.cpp:30
+All files, for a Games on Demand package
+所有檔案（適用於 Games on Demand 套件）
+
+# src/launcher/ui/page_play.cpp:50
+Set Up Your Game
+設定您的遊戲
+
+# src/launcher/ui/page_play.cpp:53
+Unpacking your game. This can take a few minutes, and Play will be ready as soon as it finishes.
+正在解壓縮您的遊戲。這可能需要幾分鐘，完成後即可按「遊玩」。
+
+# src/launcher/ui/page_play.cpp:57
+Kameo: RePowered runs from your own copy of the game. Choose your Xbox 360 disc image (.iso) or Games on Demand package, and the launcher will unpack it for you.
+Kameo: RePowered 需使用您自己擁有的遊戲執行。請選擇您的 Xbox 360 光碟映像檔 (.iso) 或 Games on Demand 套件，啟動器會為您解壓縮。
+
+# src/launcher/ui/page_play.cpp:58
+Choose Your Game...
+選擇您的遊戲...
+
+# src/launcher/ui/page_play.cpp:73
+Welcome back
+歡迎回來
+
+# src/launcher/ui/page_play.cpp:73
+Choose how you want to play, then press Play.
+選擇遊玩方式，然後按「遊玩」。
+
+# src/launcher/ui/page_play.cpp:79
+Pre-release {0} is available.
+預覽版 {0} 已推出。
+
+# src/launcher/ui/page_play.cpp:79
+Kameo RePowered {0} is available.
+Kameo RePowered {0} 已推出。
+
+# src/launcher/ui/page_play.cpp:86
+See Builds
+查看版本
+
+# src/launcher/ui/page_play.cpp:95
+WASD to move, the mouse turns the camera and points in menus. Controllers still work.
+以 WASD 移動，滑鼠可轉動鏡頭並在選單中點選。控制器仍可使用。
+
+# src/launcher/ui/page_play.cpp:97
+Play with a controller; the keyboard and mouse leave the game alone.
+使用控制器遊玩；鍵盤和滑鼠不會影響遊戲。
+
+# src/launcher/ui/page_play.cpp:99 (+2)
+Display
+顯示
+
+# src/launcher/ui/page_play.cpp:102 (+2)
+Widescreen
+廣角畫面
+
+# src/launcher/ui/page_play.cpp:102 (+1)
+A wider view that fills the screen instead of the original 16:9 picture.
+以更寬廣的視野填滿螢幕，而非原本的 16:9 畫面。
+
+# src/launcher/ui/page_play.cpp:110
+Crash Reports
+當機報告
+
+# src/launcher/ui/page_play.cpp:112
+Completely optional. If the game crashes, it asks whether to send a report so the problem can be fixed, and nothing is sent unless you choose Send Report. Turn this off and it will never ask.
+完全自願。遊戲當機時會詢問是否傳送報告以協助修正問題；除非您選擇「傳送報告」，否則不會傳送任何資料。關閉此選項後將不再詢問。
+
+# src/launcher/ui/page_play.cpp:114
+Offer to Send Crash Reports
+詢問是否傳送當機報告
+
+# src/launcher/ui/page_play.cpp:123
+No DLC installed yet.
+尚未安裝任何 DLC。
+
+# src/launcher/ui/page_play.cpp:123
+{0} package(s) installed.
+已安裝 {0} 個套件。
+
+# src/launcher/ui/page_play.cpp:126
+Manage DLC
+管理 DLC
+
+# src/launcher/ui/page_video.cpp:12 (+1)
+Video
+影像
+
+# src/launcher/ui/page_video.cpp:20 (+2)
+Gamma
+Gamma 值
+
+# src/launcher/ui/page_video.cpp:20
+100% leaves the picture as the game draws it; higher brightens the midtones.
+100% 會維持遊戲原本的畫面；數值越高，中間色調越亮。
+
+# src/launcher/ui/page_video.cpp:21 (+1)
+HUD Layout
+HUD 配置
+
+# src/launcher/ui/page_video.cpp:21 (+1)
+Stretched
+延展
+
+# src/launcher/ui/page_video.cpp:21 (+1)
+Centred 16:9
+置中 16:9
+
+# src/launcher/ui/page_video.cpp:21 (+1)
+Screen Edges
+螢幕邊緣
+
+# src/launcher/ui/page_video.cpp:22 (+1)
+HUD Scale
+HUD 縮放
+
+# src/launcher/ui/page_video.cpp:22
+Each HUD element grows or shrinks toward its own corner or edge.
+每個 HUD 元素會朝其所在的角落或邊緣放大或縮小。
+
+# src/launcher/ui/page_video.cpp:25 (+1)
+Graphics
+圖形
+
+# src/launcher/ui/page_video.cpp:26 (+1)
+Renderer
+圖形 API
+
+# src/launcher/ui/page_video.cpp:26
+Automatic
+自動
+
+# src/launcher/ui/page_video.cpp:26
+Takes effect the next time the game starts. Automatic uses Direct3D 12 on Windows.
+下次啟動遊戲時生效。「自動」在 Windows 上會使用 Direct3D 12。
+
+# src/launcher/ui/page_video.cpp:27 (+1)
+Anti-aliasing
+邊緣平滑
+
+# src/launcher/ui/page_video.cpp:27 (+5)
+Off
+關閉
+
+# src/launcher/ui/page_video.cpp:28 (+1)
+Anisotropic Filtering
+各向異性取樣
+
+# src/launcher/ui/page_video.cpp:28 (+1)
+Game
+遊戲預設
+
+# src/launcher/ui/page_video.cpp:29 (+1)
+Shadows
+陰影
+
+# src/launcher/ui/page_video.cpp:30 (+1)
+Shadow Edges
+陰影邊緣
+
+# src/launcher/ui/page_video.cpp:30 (+1)
+Pixelated
+像素化
+
+# src/launcher/ui/page_video.cpp:30 (+1)
+Smooth
+平滑
+
+# src/launcher/ui/page_video.cpp:31 (+1)
+Shadow Quality
+陰影品質
+
+# src/launcher/ui/page_video.cpp:31 (+1)
+Original
+原始
+
+# src/launcher/ui/page_video.cpp:31 (+1)
+High
+高
+
+# src/launcher/ui/page_video.cpp:31 (+1)
+Ultra
+極高
+
+# src/launcher/ui/page_video.cpp:34 (+1)
+Effects
+效果
+
+# src/launcher/ui/page_video.cpp:35 (+1)
+Particles
+火花煙塵
+
+# src/launcher/ui/page_video.cpp:36 (+1)
+Grass
+草叢
+
+# src/launcher/ui/page_video.cpp:37 (+1)
+Fur
+皮草
+
+# src/launcher/ui/page_video.cpp:37
+The layered fur on furry characters and costume trim.
+毛茸茸角色身上與造型飾邊的多層毛皮效果。
+
+# src/launcher/ui/page_video.cpp:38 (+1)
+Dust Motes
+空中浮塵
+
+# src/launcher/ui/page_video.cpp:38
+The floating dust and sparkles that hang in the air.
+飄浮在空中的灰塵與閃光。
+
+# src/launcher/ui/page_video.cpp:39 (+1)
+Bloom
+光暈
+
+# src/launcher/ui/page_video.cpp:40 (+1)
+Depth of Field
+景深
+
+# src/launcher/ui/page_video.cpp:41 (+1)
+Heat Haze
+熱波紋
+
+# src/launcher/ui/page_video.cpp:44
+Performance
+效能
+
+# src/launcher/ui/page_video.cpp:45 (+1)
+VSync
+垂直同步
+
+# src/launcher/ui/page_video.cpp:45
+Wait for the display's refresh. Off uncaps the frame rate but may tear.
+等待顯示器更新畫面。關閉後可解除影格率上限，但畫面可能會撕裂。
+
+# src/launcher/ui/page_video.cpp:46 (+1)
+FPS Counter
+FPS 計數器
+
+# src/launcher/ui/page_video.cpp:47 (+1)
+FPS Limit
+FPS 上限
+
+# src/launcher/ui/page_video.cpp:50 (+1)
+Camera
+鏡頭
+
+# src/launcher/ui/page_video.cpp:51 (+1)
+Camera Follow
+鏡頭跟隨
+
+# src/launcher/ui/page_video.cpp:51 (+1)
+Fixed Distance
+固定距離
+
+# src/launcher/ui/page_video.cpp:51 (+1)
+Original (drifts)
+原始 (會漂移)
+
+# src/launcher/ui/page_video.cpp:51
+The original camera falls further behind and higher the longer you run.
+原始鏡頭會隨著奔跑時間越久，落後得越遠、位置也越高。
+
+# src/launcher/ui/page_video.cpp:52 (+1)
+Auto-Level
+自動水平
+
+# src/launcher/ui/page_video.cpp:52
+Tilt the camera back to its default angle while you move, as the original game did.
+移動時將鏡頭傾斜回預設角度，與原版遊戲相同。
+
+# src/launcher/ui/page_video.cpp:53 (+1)
+Field of View
+視野
+
+# src/launcher/ui/page_video.cpp:53
+Degrees added to the gameplay camera's field of view. Cutscenes keep their own.
+遊戲鏡頭視野所增加的度數。過場動畫維持原本的視野。
+
+# src/launcher/ui/page_video.cpp:56
+Experimental
+實驗性
+
+# src/launcher/ui/page_video.cpp:57 (+1)
+Normal Maps
+法線紋理
+
+# src/launcher/ui/page_video.cpp:58 (+1)
+Bump Maps
+浮雕紋理
+
+# src/launcher/ui/page_video.cpp:59 (+1)
+Specular
+鏡面反光
+
+# src/launcher/ui/shell.cpp:75
+Play
+遊玩
+
+# src/launcher/ui/shell.cpp:81
+DLC
+
+
+# src/launcher/ui/shell.cpp:101
+PLAY
+開始遊戲
+
+# src/launcher/ui/shell.cpp:106
+Close launcher on Play
+開始遊戲時關閉啟動器
+
+# src/launcher/ui/shell.cpp:123
+Settings are saved as you change them to {0}.
+設定變更時會自動儲存至 {0}。
+
+# src/launcher/ui/widgets.cpp:152
+Restored the defaults on this page.
+已還原此頁面的預設值。
+
+# src/launcher/ui/widgets.cpp:157 (+1)
+Display Mode
+顯示模式
+
+# src/launcher/ui/widgets.cpp:158 (+1)
+Windowed
+視窗
+
+# src/launcher/ui/widgets.cpp:158 (+1)
+Borderless
+無邊視窗
+
+# src/launcher/ui/widgets.cpp:158 (+1)
+Fullscreen
+全螢幕
+
+# src/launcher/ui/widgets.cpp:169 (+1)
+Resolution
+解析度
+
+# src/launcher/ui/widgets.cpp:169
+The size the game renders at. A size of another shape than your window is shown with black bars.
+遊戲的算圖尺寸。若比例與視窗不同，會以黑邊顯示。
+
+# src/launcher/ui/widgets.cpp:173
+Match Window
+符合視窗
+
+# src/launcher/ui/widgets.cpp:174
+{0} x {1}  (Ultrawide)
+{0} x {1}  （超寬螢幕）
+
+# src/shader_editor/editor.cpp:122
+{0} opened
+已開啟 {0}
+
+# src/shader_editor/editor.cpp:195
+{0} in {1} s, and saved
+{0}，耗時 {1} 秒，已儲存
+
+# src/shader_editor/editor.cpp:195
+{0} in {1} s, for this renderer only: Save before sharing it
+{0}，耗時 {1} 秒，僅適用於此圖形 API：分享前請先儲存
+
+# src/shader_editor/editor.cpp:210
+The mod's name, which is also its file's
+模組名稱，同時也是其檔案名稱
+
+# src/shader_editor/editor.cpp:212
+New
+新增
+
+# src/shader_editor/editor.cpp:214
+Open...
+開啟...
+
+# src/shader_editor/editor.cpp:223
+No saved mods yet.
+尚無已儲存的模組。
+
+# src/shader_editor/editor.cpp:229
+Mods Folder
+模組資料夾
+
+# src/shader_editor/editor.cpp:236
+Start from...
+從範本開始...
+
+# src/shader_editor/editor.cpp:243
+Undo
+復原
+
+# src/shader_editor/editor.cpp:245
+Ctrl+Z
+
+
+# src/shader_editor/editor.cpp:248
+Redo
+重做
+
+# src/shader_editor/editor.cpp:250
+Ctrl+Y
+
+
+# src/shader_editor/editor.cpp:254
+Frame All
+顯示全部
+
+# src/shader_editor/editor.cpp:255
+Home, or F with nothing selected
+Home，或在未選取任何項目時按 F
+
+# src/shader_editor/editor.cpp:257 (+3)
+Comment
+註解
+
+# src/shader_editor/editor.cpp:264
+C on the canvas wraps the selection in a comment
+在畫布上按 C 可將選取的項目包進註解
+
+# src/shader_editor/editor.cpp:268
+Raw HLSL
+原始 HLSL
+
+# src/shader_editor/editor.cpp:276
+Live Update
+即時更新
+
+# src/shader_editor/editor.cpp:277
+Compiles and applies to the running game a moment after each edit
+每次編輯後稍待片刻，即會編譯並套用至執行中的遊戲
+
+# src/shader_editor/editor.cpp:281
+Save
+儲存
+
+# src/shader_editor/editor.cpp:283
+Compiles for both renderers and saves the mod; a running game picks it up
+為兩種圖形 API 編譯並儲存模組；執行中的遊戲會自動載入
+
+# src/shader_editor/editor.cpp:285
+Replace graph
+取代節點圖
+
+# src/shader_editor/editor.cpp:288
+Replace the graph with {0}?
+要以「{0}」取代節點圖嗎？
+
+# src/shader_editor/editor.cpp:289
+Undo brings yours back.
+按「復原」可找回您原本的節點圖。
+
+# src/shader_editor/editor.cpp:290
+Replace
+取代
+
+# src/shader_editor/editor.cpp:297
+Keep Mine
+保留我的
+
+# src/shader_editor/editor.cpp:311
+Search nodes
+搜尋節點
+
+# src/shader_editor/editor.cpp:345
+Hold {0} and click the graph to place one.
+按住 {0} 並在節點圖上按一下即可放置。
+
+# src/shader_editor/editor.cpp:363 (+8)
+Colour
+顏色
+
+# src/shader_editor/editor.cpp:369
+Details
+詳細資料
+
+# src/shader_editor/editor.cpp:370
+Select a node to edit it.
+選取節點即可編輯。
+
+# src/shader_editor/editor.cpp:371
+{0} nodes selected.
+已選取 {0} 個節點。
+
+# src/shader_editor/editor.cpp:384
+Parameter
+參數
+
+# src/shader_editor/editor.cpp:385
+Named constants are listed under Parameters, to tune without finding them in the graph
+已命名的常數會列在「參數」下，無須在節點圖中尋找即可調整
+
+# src/shader_editor/editor.cpp:391
+Channel
+通道
+
+# src/shader_editor/editor.cpp:398
+Unwired inputs
+未連接的輸入
+
+# src/shader_editor/editor.cpp:401
+{0}: the surface's UV
+{0}：表面的 UV
+
+# src/shader_editor/editor.cpp:418
+Parameters
+參數
+
+# src/shader_editor/editor.cpp:431
+Name a Number or Colour node to list it here.
+為「數值」或「顏色」節點命名，即可列在這裡。
+
+# src/shader_editor/editor.cpp:445
+Applies to
+套用至
+
+# src/shader_editor/editor.cpp:447
+Preparing the game's shaders...
+正在準備遊戲的著色器...
+
+# src/shader_editor/editor.cpp:452
+Characters
+角色
+
+# src/shader_editor/editor.cpp:456
+Surfaces
+表面
+
+# src/shader_editor/editor.cpp:460
+Levels
+關卡
+
+# src/shader_editor/editor.cpp:468 (+1)
+Also surfaces the game doesn't light
+也包含遊戲未打光的表面
+
+# src/shader_editor/editor.cpp:473
+Glows, effects and surfaces lit from within, such as lava. Their Game colour already has fog in it, and Base texture, Light and Normal aren't known.
+發光體、特效及自體發光的表面，例如熔岩。它們的「遊戲顏色」已包含霧氣，且無法取得「基礎材質」、「光照」和法線 (Normal)。
+
+# src/shader_editor/editor.cpp:476
+{0} shaders. These choose the game's shaders, not objects, so anything else drawn with the same ones changes too.
+{0}的著色器。這裡選擇的是遊戲的著色器而非物件，因此使用相同著色器繪製的其他東西也會跟著改變。
+
+# src/shader_editor/editor.cpp:477
+{0} shaders, on this model alone: anything else drawn with them keeps the game's look.
+{0}的著色器，僅限此模型：其他使用這些著色器繪製的東西會維持遊戲原本的外觀。
+
+# src/shader_editor/editor.cpp:482
+Compile log
+編譯記錄
+
+# src/shader_editor/editor.cpp:484
+Compiling... {0} of {1}
+正在編譯... {0} / {1}
+
+# src/shader_editor/editor.cpp:485
+Save, or Live Update, compiles the shaders. Run the game to see them.
+「儲存」或「即時更新」會編譯著色器。執行遊戲即可看到效果。
+
+# src/shader_editor/editor.cpp:527
+float3 Shade(ShadeInputs s) {  ... the body below ...  }   Helpers: ModKeyLight, ModStep, ModBands, ModFresnel, ModOutline, ModHalftone, ModLuminance, ModNoise (docs/modding.md).
+float3 Shade(ShadeInputs s) {  ... 下方的函式主體 ...  }   輔助函式：ModKeyLight, ModStep, ModBands, ModFresnel, ModOutline, ModHalftone, ModLuminance, ModNoise (docs/modding.md)。
+
+# src/shader_editor/model.cpp:58
+{0} is not a game archive
+{0} 不是遊戲封存檔
+
+# src/shader_editor/model.cpp:69
+{0} could not be unpacked
+無法解壓縮 {0}
+
+# src/shader_editor/model.cpp:522
+{0} could not be read
+無法讀取 {0}
+
+# src/shader_editor/model.cpp:546
+{0} has no model in it
+{0} 中沒有模型
+
+# src/shader_editor/node_canvas.cpp:59
+Channel {0}
+通道 {0}
+
+# src/shader_editor/node_canvas.cpp:60
+HLSL (Details panel)
+HLSL（詳細資料面板）
+
+# src/shader_editor/node_canvas.cpp:242
+Search nodes...
+搜尋節點...
+
+# src/shader_editor/node_canvas.cpp:258
+[{0} + click]
+[{0} + 按一下]
+
+# src/shader_editor/node_canvas.cpp:430
+(surface UV)
+（表面 UV）
+
+# src/shader_editor/node_canvas.cpp:481
+right-click to add a node
+按右鍵新增節點
+
+# src/shader_editor/preview.cpp:39
+Classic
+典型
+
+# src/shader_editor/preview.cpp:39
+Gothic
+歌德
+
+# src/shader_editor/preview.cpp:39
+Coyote
+土狼
+
+# src/shader_editor/preview.cpp:39 (+1)
+Armored
+裝甲
+
+# src/shader_editor/preview.cpp:39 (+1)
+Fright Pack
+驚魂
+
+# src/shader_editor/preview.cpp:40
+Masquerade #1
+假面舞會 (1)
+
+# src/shader_editor/preview.cpp:40
+Masquerade #2
+假面舞會 (2)
+
+# src/shader_editor/preview.cpp:40
+Masquerade #3
+假面舞會 (3)
+
+# src/shader_editor/preview.cpp:40
+Masquerade #4
+假面舞會 (4)
+
+# src/shader_editor/preview.cpp:40
+Masquerade #5
+假面舞會 (5)
+
+# src/shader_editor/preview.cpp:41
+Masquerade #6
+假面舞會 (6)
+
+# src/shader_editor/preview.cpp:41
+Masquerade #7
+假面舞會 (7)
+
+# src/shader_editor/preview.cpp:41
+Masquerade #8
+假面舞會 (8)
+
+# src/shader_editor/preview.cpp:41
+Masquerade #9
+假面舞會 (9)
+
+# src/shader_editor/preview.cpp:41
+Masquerade #10
+假面舞會 (10)
+
+# src/shader_editor/preview.cpp:42 (+1)
+Winter Warrior
+冬日鬥士
+
+# src/shader_editor/preview.cpp:42 (+1)
+Design-A-Skin
+自訂造型
+
+# src/shader_editor/preview.cpp:57 (+1)
+Pummel Weed
+拳擊草人
+
+# src/shader_editor/preview.cpp:57 (+1)
+Snare
+巨顎人
+
+# src/shader_editor/preview.cpp:57 (+1)
+Rubble
+岩石人
+
+# src/shader_editor/preview.cpp:58 (+1)
+Major Ruin
+破壞王
+
+# src/shader_editor/preview.cpp:58 (+1)
+Deep Blue
+深海怪
+
+# src/shader_editor/preview.cpp:58 (+1)
+Flex
+鬼靈精
+
+# src/shader_editor/preview.cpp:59 (+1)
+40 Below
+急凍人
+
+# src/shader_editor/preview.cpp:59 (+1)
+Chilla
+冰人
+
+# src/shader_editor/preview.cpp:59 (+1)
+Thermite
+火砲浪蟻
+
+# src/shader_editor/preview.cpp:60 (+1)
+Ash
+火龍
+
+# src/shader_editor/preview.cpp:143
+The preview's shader compiler failed.
+預覽的著色器編譯器執行失敗。
+
+# src/shader_editor/preview.cpp:205 (+1)
+Kameo
+凱蜜歐
+
+# src/shader_editor/preview.cpp:206
+Everyday
+日常
+
+# src/shader_editor/preview.cpp:212
+Alternate
+另選
+
+# src/shader_editor/preview.cpp:324
+Install the game to preview its characters.
+請先安裝遊戲才能預覽角色。
+
+# src/shader_editor/preview.cpp:524
+Spin
+旋轉
+
+# src/shader_editor/preview.cpp:549
+Loading...
+載入中...
+
+# src/shader_editor/preview.cpp:552
+Drag to turn, right drag to move, wheel to zoom, double-click to frame.\nThe lighting stands in for a level's.
+拖曳以旋轉，按右鍵拖曳以移動，滾輪可縮放，按兩下可置中顯示。\n此處光照僅用來模擬關卡的光照。
+
+# src/shader_editor/shader_build.cpp:45
+Lava
+熔岩
+
+# src/shader_editor/shader_build.cpp:45
+Fire off the lava
+熔岩以外的火焰
+
+# src/shader_editor/shader_build.cpp:98
+The game's shaders are missing from {0}; reinstall the game.
+{0} 中缺少遊戲的著色器，請重新安裝遊戲。
+
+# src/shader_editor/shader_build.cpp:113
+The game's shader list could not be read.
+無法讀取遊戲的著色器清單。
+
+# src/shader_editor/shader_build.cpp:155
+{0}: new costume (everyday outfit)
+{0}：新造型（日常服裝）
+
+# src/shader_editor/shader_build.cpp:155
+{0}: new costume (standard look)
+{0}：新造型（標準外觀）
+
+# src/shader_editor/shader_build.cpp:161
+Shared objects
+共用物件
+
+# src/shader_editor/shader_build.cpp:162
+All characters
+所有角色
+
+# src/shader_editor/shader_build.cpp:163
+Everything in the game
+遊戲中的一切
+
+# src/shader_editor/shader_build.cpp:200
+The shader compiler is missing from {0}; reinstall the game.
+{0} 中缺少著色器編譯器，請重新安裝遊戲。
+
+# src/shader_editor/shader_build.cpp:204
+Choose something for the mod to apply to.
+請選擇模組要套用的對象。
+
+# src/shader_editor/shader_build.cpp:251
+The shader compiler did not start.
+著色器編譯器無法啟動。
+
+# src/shader_editor/shader_build.cpp:273
+The shader compiler failed.
+著色器編譯器執行失敗。
+
+# src/shader_editor/shader_build.cpp:316
+could not replace {0}: {1}
+無法取代 {0}：{1}
+
+# src/shader_editor/shader_build.cpp:319
+{0} shaders written to {1}
+已將 {0} 個著色器寫入 {1}
+
+# src/shader_editor/shader_graph.cpp:29 (+1)
+Output
+輸出
+
+# src/shader_editor/shader_graph.cpp:29
+The colour drawn. Fog and fades still follow where the game has them.
+繪製出的顏色。遊戲原有的霧氣與淡入淡出仍會照常套用。
+
+# src/shader_editor/shader_graph.cpp:30
+Game colour
+遊戲顏色
+
+# src/shader_editor/shader_graph.cpp:30 (+8)
+Inputs
+輸入
+
+# src/shader_editor/shader_graph.cpp:30
+The pixel as the game lit it: its textures, lights and shadows. Wire this to Output to change nothing.
+遊戲打光後的像素，包含其材質、光線和陰影。將此連接至「輸出」即維持原樣。
+
+# src/shader_editor/shader_graph.cpp:31
+Base texture
+基礎材質
+
+# src/shader_editor/shader_graph.cpp:31
+The surface's colour before lighting, with all its layers. Often paler than it looks in game: multiply in Light's colour to keep a level's mood. Using it makes the surface twice the work to draw.
+表面在打光前的顏色，包含所有圖層。通常比遊戲中看起來更淡：乘上「光照」的顏色即可保留關卡的氛圍。使用它會讓該表面的繪製工作量加倍。
+
+# src/shader_editor/shader_graph.cpp:32
+Light
+光照
+
+# src/shader_editor/shader_graph.cpp:32
+The light on this pixel, with its shadows and shine: Game colour over Base texture. Using it makes the surface twice the work to draw.
+此像素上的光線，包含其陰影與光澤：即「遊戲顏色」除以「基礎材質」。使用它會讓該表面的繪製工作量加倍。
+
+# src/shader_editor/shader_graph.cpp:33 (+2)
+UV
+
+
+# src/shader_editor/shader_graph.cpp:33
+The surface's first texture coordinate, (u, v, 0).
+表面的第一組材質座標 (u, v, 0)。
+
+# src/shader_editor/shader_graph.cpp:34
+Screen position
+螢幕位置
+
+# src/shader_editor/shader_graph.cpp:34
+The pixel's position on screen, (x, y, 0) in pixels.
+像素在螢幕上的位置 (x, y, 0)，以像素為單位。
+
+# src/shader_editor/shader_graph.cpp:35
+Key light
+主光源
+
+# src/shader_editor/shader_graph.cpp:35 (+6)
+Lighting
+照明
+
+# src/shader_editor/shader_graph.cpp:35 (+1)
+Towards camera
+朝向鏡頭
+
+# src/shader_editor/shader_graph.cpp:35 (+1)
+Up
+上方
+
+# src/shader_editor/shader_graph.cpp:35 (+1)
+Side
+側面
+
+# src/shader_editor/shader_graph.cpp:35
+N.L for one light placed from the camera: 1 facing it, -1 facing away. It looks the same in every scene.
+從鏡頭方向照射的單一光源的 N.L：面向光源為 1，背向為 -1。在每個場景中看起來都相同。
+
+# src/shader_editor/shader_graph.cpp:36
+Sun light
+太陽光
+
+# src/shader_editor/shader_graph.cpp:36
+N.L for the level's own sun or main light: 1 facing it, -1 facing away.
+關卡本身的太陽或主光源的 N.L：面向光源為 1，背向為 -1。
+
+# src/shader_editor/shader_graph.cpp:37
+Rim
+邊緣光
+
+# src/shader_editor/shader_graph.cpp:37
+1 - N.V: 0 facing the camera, 1 at the silhouette (fresnel).
+1 - N.V：面向鏡頭為 0，輪廓處為 1 (菲涅耳)。
+
+# src/shader_editor/shader_graph.cpp:38
+Facing up
+朝上
+
+# src/shader_editor/shader_graph.cpp:38
+N.up: 1 facing the sky, -1 the ground.
+N.up：朝向天空為 1，朝向地面為 -1。
+
+# src/shader_editor/shader_graph.cpp:39
+Number
+數值
+
+# src/shader_editor/shader_graph.cpp:39 (+2)
+Constants
+常數
+
+# src/shader_editor/shader_graph.cpp:39
+Value
+值
+
+# src/shader_editor/shader_graph.cpp:39
+A constant. Name it to list it on the Parameters panel.
+常數。為其命名即可列在「參數」面板中。
+
+# src/shader_editor/shader_graph.cpp:40
+A constant colour. Name it to list it on the Parameters panel.
+固定的顏色。為其命名即可列在「參數」面板中。
+
+# src/shader_editor/shader_graph.cpp:41
+Add
+加
+
+# src/shader_editor/shader_graph.cpp:41 (+23)
+Math
+數學
+
+# src/shader_editor/shader_graph.cpp:42
+Subtract
+減
+
+# src/shader_editor/shader_graph.cpp:43
+Multiply
+乘
+
+# src/shader_editor/shader_graph.cpp:44
+Divide
+除
+
+# src/shader_editor/shader_graph.cpp:45
+Mix
+混合
+
+# src/shader_editor/shader_graph.cpp:45 (+2)
+Amount
+程度
+
+# src/shader_editor/shader_graph.cpp:45
+A at amount 0, B at 1 (lerp).
+「程度」為 0 時為 A，為 1 時為 B (lerp)。
+
+# src/shader_editor/shader_graph.cpp:46
+One minus
+1 減
+
+# src/shader_editor/shader_graph.cpp:47
+Clamp 0..1
+限制於 0..1
+
+# src/shader_editor/shader_graph.cpp:47
+X kept between 0 and 1 (saturate).
+將 X 限制在 0 到 1 之間 (saturate)。
+
+# src/shader_editor/shader_graph.cpp:48
+Power
+次方
+
+# src/shader_editor/shader_graph.cpp:48
+Exponent
+指數
+
+# src/shader_editor/shader_graph.cpp:48
+X to the power of Exponent.
+X 的「指數」次方。
+
+# src/shader_editor/shader_graph.cpp:49 (+1)
+Min
+最小值
+
+# src/shader_editor/shader_graph.cpp:49
+The smaller of A and B.
+A 與 B 中較小者。
+
+# src/shader_editor/shader_graph.cpp:50 (+1)
+Max
+最大值
+
+# src/shader_editor/shader_graph.cpp:50
+The larger of A and B.
+A 與 B 中較大者。
+
+# src/shader_editor/shader_graph.cpp:51
+Step
+階梯
+
+# src/shader_editor/shader_graph.cpp:51 (+5)
+Cel
+卡通
+
+# src/shader_editor/shader_graph.cpp:51
+Edge
+邊界
+
+# src/shader_editor/shader_graph.cpp:51
+0 below Edge and 1 above, with a hard, antialiased edge.
+低於「邊界」為 0，高於則為 1，邊緣銳利且經過反鋸齒處理。
+
+# src/shader_editor/shader_graph.cpp:52
+Smooth step
+平滑階梯
+
+# src/shader_editor/shader_graph.cpp:52
+Edge 0
+邊界 0
+
+# src/shader_editor/shader_graph.cpp:52
+Edge 1
+邊界 1
+
+# src/shader_editor/shader_graph.cpp:52
+0 below Edge 0, 1 above Edge 1, smooth between.
+低於「邊界 0」為 0，高於「邊界 1」為 1，兩者之間平滑過渡。
+
+# src/shader_editor/shader_graph.cpp:53
+Bands
+色階
+
+# src/shader_editor/shader_graph.cpp:53
+Count
+數量
+
+# src/shader_editor/shader_graph.cpp:53
+X (0..1) cut into Count flat steps (posterize).
+將 X (0..1) 切分為「數量」個平坦色階 (posterize)。
+
+# src/shader_editor/shader_graph.cpp:54
+Desaturate
+去飽和
+
+# src/shader_editor/shader_graph.cpp:54
+Colour turned towards grey by Amount.
+依「程度」讓顏色趨向灰色。
+
+# src/shader_editor/shader_graph.cpp:55
+Luminance
+明度
+
+# src/shader_editor/shader_graph.cpp:55
+The colour's brightness.
+顏色的明亮程度。
+
+# src/shader_editor/shader_graph.cpp:56
+Halftone
+網點
+
+# src/shader_editor/shader_graph.cpp:56
+Cell size
+網格大小
+
+# src/shader_editor/shader_graph.cpp:56
+1 inside comic dots that grow with Amount (0..1), Cell size pixels apart.
+在漫畫網點內為 1；網點隨「程度」(0..1) 變大，間距為「網格大小」像素。
+
+# src/shader_editor/shader_graph.cpp:57
+Custom HLSL
+自訂 HLSL
+
+# src/shader_editor/shader_graph.cpp:57
+Advanced
+進階
+
+# src/shader_editor/shader_graph.cpp:57
+Your own HLSL: a function body over ShadeInputs s and float3 a, b, c, d that returns a float3.
+您自己的 HLSL：以 ShadeInputs s 及 float3 a, b, c, d 為輸入、傳回 float3 的函式主體。
+
+# src/shader_editor/shader_graph.cpp:58
+Reroute
+轉接點
+
+# src/shader_editor/shader_graph.cpp:58 (+1)
+Utility
+工具
+
+# src/shader_editor/shader_graph.cpp:58
+Passes its input on, to tidy wires. Double-click a wire to add one.
+原樣傳遞輸入，用來整理連線。在連線上按兩下即可新增。
+
+# src/shader_editor/shader_graph.cpp:59
+Time
+時間
+
+# src/shader_editor/shader_graph.cpp:59 (+1)
+Speed
+速度
+
+# src/shader_editor/shader_graph.cpp:59
+Seconds since the game started, times Speed; wraps every hour.
+遊戲啟動後經過的秒數乘以「速度」；每小時重新循環。
+
+# src/shader_editor/shader_graph.cpp:60
+Panner
+平移器
+
+# src/shader_editor/shader_graph.cpp:60
+UV moving at Speed (u, v per second). Unwired, UV is the surface's.
+以「速度」移動的 UV（每秒 u, v）。未連接時，UV 為表面的 UV。
+
+# src/shader_editor/shader_graph.cpp:61
+Noise
+雜訊
+
+# src/shader_editor/shader_graph.cpp:61
+Scale
+縮放
+
+# src/shader_editor/shader_graph.cpp:61
+Smooth value noise, 0..1, Scale cells across UV. Unwired, UV is the surface's.
+平滑的值雜訊，0..1，在 UV 範圍內有「縮放」個格子。未連接時，UV 為表面的 UV。
+
+# src/shader_editor/shader_graph.cpp:62
+Sine
+正弦
+
+# src/shader_editor/shader_graph.cpp:62 (+1)
+Period
+週期
+
+# src/shader_editor/shader_graph.cpp:62
+sin(X), one wave every Period.
+sin(X)，每個「週期」一個波。
+
+# src/shader_editor/shader_graph.cpp:63
+Cosine
+餘弦
+
+# src/shader_editor/shader_graph.cpp:63
+cos(X), one wave every Period.
+cos(X)，每個「週期」一個波。
+
+# src/shader_editor/shader_graph.cpp:64
+Frac
+小數部分
+
+# src/shader_editor/shader_graph.cpp:64
+The part of X after the decimal point.
+X 小數點後的部分。
+
+# src/shader_editor/shader_graph.cpp:65
+Floor
+向下取整
+
+# src/shader_editor/shader_graph.cpp:65
+X rounded down.
+將 X 無條件捨去。
+
+# src/shader_editor/shader_graph.cpp:66
+Ceil
+向上取整
+
+# src/shader_editor/shader_graph.cpp:66
+X rounded up.
+將 X 無條件進位。
+
+# src/shader_editor/shader_graph.cpp:67
+Abs
+絕對值
+
+# src/shader_editor/shader_graph.cpp:67
+X without its sign.
+去掉正負號的 X。
+
+# src/shader_editor/shader_graph.cpp:68
+Clamp
+限制範圍
+
+# src/shader_editor/shader_graph.cpp:68
+X kept between Min and Max.
+將 X 限制在「最小值」與「最大值」之間。
+
+# src/shader_editor/shader_graph.cpp:69
+Dot
+內積
+
+# src/shader_editor/shader_graph.cpp:69
+The dot product of A and B.
+A 與 B 的內積。
+
+# src/shader_editor/shader_graph.cpp:70
+Cross
+外積
+
+# src/shader_editor/shader_graph.cpp:70
+The cross product of A and B.
+A 與 B 的外積。
+
+# src/shader_editor/shader_graph.cpp:71
+Normalize
+正規化
+
+# src/shader_editor/shader_graph.cpp:71
+X scaled to length 1.
+將 X 縮放至長度 1。
+
+# src/shader_editor/shader_graph.cpp:72
+Length
+長度
+
+# src/shader_editor/shader_graph.cpp:72
+How long X is.
+X 的長度。
+
+# src/shader_editor/shader_graph.cpp:73
+Distance
+距離
+
+# src/shader_editor/shader_graph.cpp:73
+How far A is from B.
+A 與 B 之間的距離。
+
+# src/shader_editor/shader_graph.cpp:74
+Remap
+重新對應
+
+# src/shader_editor/shader_graph.cpp:74
+In min
+輸入最小值
+
+# src/shader_editor/shader_graph.cpp:74
+In max
+輸入最大值
+
+# src/shader_editor/shader_graph.cpp:74
+Out min
+輸出最小值
+
+# src/shader_editor/shader_graph.cpp:74
+Out max
+輸出最大值
+
+# src/shader_editor/shader_graph.cpp:74
+X from In min..In max to Out min..Out max.
+將 X 從「輸入最小值..輸入最大值」對應至「輸出最小值..輸出最大值」。
+
+# src/shader_editor/shader_graph.cpp:75
+If
+條件
+
+# src/shader_editor/shader_graph.cpp:75
+Picks by comparing A and B (their first channels).
+比較 A 與 B（其第一個通道）來選擇。
+
+# src/shader_editor/shader_graph.cpp:76
+Component mask
+分量遮罩
+
+# src/shader_editor/shader_graph.cpp:76
+Channel (0 R, 1 G, 2 B)
+通道 (0 R, 1 G, 2 B)
+
+# src/shader_editor/shader_graph.cpp:76
+One channel of X, in all three.
+取 X 的單一通道，填入全部三個通道。
+
+# src/shader_editor/shader_graph.cpp:77
+Make colour
+組合顏色
+
+# src/shader_editor/shader_graph.cpp:77
+A colour from three numbers (append).
+由三個數值組成的顏色 (append)。
+
+# src/shader_editor/shader_graph.cpp:78
+Surface normal
+表面法線
+
+# src/shader_editor/shader_graph.cpp:78
+The direction the surface faces, in camera space, with normal maps where the game's shader uses them.
+表面朝向的方向 (法線)，位於鏡頭空間；遊戲著色器有使用法線紋理之處會套用法線紋理。
+
+# src/shader_editor/shader_graph.cpp:79
+Camera vector
+鏡頭向量
+
+# src/shader_editor/shader_graph.cpp:79
+The direction to the camera, camera space.
+指向鏡頭的方向，鏡頭空間。
+
+# src/shader_editor/shader_graph.cpp:80
+Up vector
+上方向量
+
+# src/shader_editor/shader_graph.cpp:80
+The direction to the sky, camera space.
+指向天空的方向，鏡頭空間。
+
+# src/shader_editor/shader_graph.cpp:81
+Key vector
+主光源向量
+
+# src/shader_editor/shader_graph.cpp:81
+The direction to the light Key light uses, camera space.
+指向「主光源」所用光源的方向，鏡頭空間。
+
+# src/shader_editor/shader_graph.cpp:82
+Sun vector
+太陽向量
+
+# src/shader_editor/shader_graph.cpp:82
+The direction to the level's sun or main light, camera space.
+指向關卡太陽或主光源的方向，鏡頭空間。
+
+# src/shader_editor/shader_graph.cpp:83
+Sun colour
+太陽顏色
+
+# src/shader_editor/shader_graph.cpp:83
+The colour of the level's sun or main light.
+關卡太陽或主光源的顏色。
+
+# src/shader_editor/shader_graph.cpp:84
+Outline
+輪廓線
+
+# src/shader_editor/shader_graph.cpp:84
+Width
+寬度
+
+# src/shader_editor/shader_graph.cpp:84
+1 on an inked line Width pixels wide just inside the silhouette, and round any part seen in front of another; 0 elsewhere. It keeps its width at any distance.
+在輪廓內側一條「寬度」像素寬的墨線上為 1，任何位於其他部位前方的部分周圍也是如此；其他地方為 0。無論距離遠近都保持相同寬度。
+
+# src/shader_editor/shader_graph.cpp:255
+The game's own look
+遊戲原本的外觀
+
+# src/shader_editor/shader_graph.cpp:255
+Cel shade
+卡通著色
+
+# src/shader_editor/shader_graph.cpp:255
+Toon bands
+卡通色階
+
+# src/shader_editor/shader_graph.cpp:255
+Flat colour
+純色
+
+# src/shader_editor/shader_graph.cpp:255
+Rim lit
+邊緣打光
+
+# src/shader_editor/shader_graph.cpp:255
+Comic halftone
+漫畫網點
+
+# src/shader_editor/shader_graph.cpp:280
+Shadow tint
+陰影色調
+
+# src/shader_editor/shader_graph.cpp:310
+Rim colour
+邊緣光顏色
+
+# src/shader_editor/shader_graph.cpp:343
+Ink width
+墨線寬度
+
+# src/shader_editor/shader_graph.cpp:349
+Ink colour
+墨線顏色
+
+# src/shader_editor/shader_graph.cpp:432
+could not read {0}
+無法讀取 {0}
+
+# src/shader_editor/shader_graph.cpp:437
+{0} is not valid JSON
+{0} 不是有效的 JSON
+
+# src/ui/string_overrides.cpp:43
+Rename
+重新命名
+
+# src/ui/tribe_shop.cpp:56
+Missed Elemental Fruit ({0}): {1} points
+錯過的元素果子 ({0}): {1} 分
+
+# src/ui/tribe_shop.cpp:57
+Missed Elixir of Life ({0}): {1} points
+錯過的生命仙丹 ({0}): {1} 分
+
+# src/ui/tribe_shop.cpp:58
+Missed Crystal Eye ({0}): {1} points
+錯過的水晶眼 ({0}): {1} 分
+
+# src/ui/tribe_shop.cpp:59
+Missed Costume ({0}): {1} points
+錯過的造型 ({0}): {1} 分
+
+# src/ui/tribe_shop.cpp:170
+You'll need a higher score than that.
+你需要更高的分數才行。
+
+# src/ui/tribe_shop.cpp:173
+Buy this item for {0} points?
+用 {0} 分購買此物件？
+
+# src/ui/hud/achievement_toast.cpp:150
+Achievement Unlocked\n{0}   {1}G
+成就已解除\n{0}   {1}G
+
+# src/ui/hud/button_prompts.cpp:39
+Arrows
+方向鍵
+
+# src/ui/hud/button_prompts.cpp:40
+Wheel Down
+滾輪向下
+
+# src/ui/hud/button_prompts.cpp:45
+Wheel Up
+滾輪向上
+
+# src/ui/hud/fps_counter.cpp:113
+{0} FPS
+
+
+# src/ui/hud/loading_overlay.cpp:181
+Gathering the elements: preparing shaders
+匯聚元素：正在準備著色器
+
+# src/ui/hud/loading_overlay.cpp:181
+Awakening the kingdom: loading the game
+喚醒王國：正在載入遊戲
+
+# src/ui/hud/shader_list_overlay.cpp:35
+Shaders (F7)
+著色器 (F7)
+
+# src/ui/hud/shader_list_overlay.cpp:46
+Switch a shader off to see what it draws vanish. Only this switches off everything else listed. A shader's hash is what a shader mod targets.
+關閉某個著色器，即可看到它所畫的東西消失。「僅此項」會關閉清單中的其他所有項目。著色器模組是以著色器的雜湊值為目標。
+
+# src/ui/hud/shader_list_overlay.cpp:48
+Filter by shader or texture hash
+依著色器或材質雜湊值搜尋
+
+# src/ui/hud/shader_list_overlay.cpp:50
+On screen only
+僅限畫面上
+
+# src/ui/hud/shader_list_overlay.cpp:51
+Show all
+顯示全部
+
+# src/ui/hud/shader_list_overlay.cpp:53
+Switch off all listed
+關閉所有列出項目
+
+# src/ui/hud/shader_list_overlay.cpp:57
+{0} shaders
+{0} 個著色器
+
+# src/ui/hud/shader_list_overlay.cpp:62 (+1)
+On
+開啟
+
+# src/ui/hud/shader_list_overlay.cpp:63
+Pixel shader
+像素著色器
+
+# src/ui/hud/shader_list_overlay.cpp:64
+Draws
+畫出次數
+
+# src/ui/hud/shader_list_overlay.cpp:77
+off
+關閉
+
+# src/ui/hud/shader_list_overlay.cpp:81
+none seen
+未出現
+
+# src/ui/hud/shader_list_overlay.cpp:93
+Only this
+僅此項
+
+# src/ui/hud/shader_list_overlay.cpp:97
+Copy
+複製
+
+# src/ui/name_entry/name_entry.cpp:70
+Space
+空白鍵
+
+# src/ui/name_entry/name_entry.cpp:70
+Done
+完成
+
+# src/ui/name_entry/name_entry.cpp:221
+Type a name   Bksp Delete   Enter Done   Esc Cancel
+輸入名稱   Bksp 刪除   Enter 完成   Esc 取消
+
+# src/ui/name_entry/name_entry.cpp:221
+{0} Type   {1} Delete   {2} Case   {3} Done
+{0} 輸入   {1} 刪除   {2} 大小寫   {3} 完成
+
+# src/ui/name_entry/name_entry.cpp:273
+Rename Saved Game
+重新命名儲存遊戲
+
+# src/ui/pause_menu/achievements_page.cpp:63 (+1)
+Achievements
+成就
+
+# src/ui/pause_menu/achievements_page.cpp:67
+No achievement data was found in the game's files.
+在遊戲檔案中找不到成就資料。
+
+# src/ui/pause_menu/achievements_page.cpp:80
+{0} of {1} unlocked   {2}G of {3}G
+已解除 {0} / {1}   {2}G / {3}G
+
+# src/ui/pause_menu/collectible_tracker.cpp:22
+Fruit in This Area
+此區域的元素果子
+
+# src/ui/pause_menu/collectible_tracker.cpp:22
+All Elemental Fruit
+所有元素果子
+
+# src/ui/pause_menu/collectible_tracker.cpp:23
+Elixirs in This Area
+此區域的生命仙丹
+
+# src/ui/pause_menu/collectible_tracker.cpp:23
+All Elixirs of Life
+所有生命仙丹
+
+# src/ui/pause_menu/collectible_tracker.cpp:24
+Crystal Eye in This Area
+此區域的水晶眼
+
+# src/ui/pause_menu/collectible_tracker.cpp:24
+All Crystal Eyes
+所有水晶眼
+
+# src/ui/pause_menu/collectible_tracker.cpp:25
+Costumes in This Area
+此區域的造型
+
+# src/ui/pause_menu/collectible_tracker.cpp:25
+All Costumes
+所有造型
+
+# src/ui/pause_menu/collectible_tracker.cpp:57 (+1)
+Collectibles
+收集品
+
+# src/ui/pause_menu/collectible_tracker.cpp:65
+This Area
+此區域
+
+# src/ui/pause_menu/collectible_tracker.cpp:65
+Nothing to find
+沒有收集品
+
+# src/ui/pause_menu/collectible_tracker.cpp:67
+Missed, Sold in Tribe Shops
+已錯過，可在部落商店購買
+
+# src/ui/pause_menu/level_select.cpp:32
+Thorn's Castle
+荊棘魔王的城堡
+
+# src/ui/pause_menu/level_select.cpp:32
+Enchanted Kingdom
+魔法國
+
+# src/ui/pause_menu/level_select.cpp:32
+The Badlands
+荒野地
+
+# src/ui/pause_menu/level_select.cpp:32
+Forgotten Forest
+神秘森林
+
+# src/ui/pause_menu/level_select.cpp:33
+Forest Temple
+森林殿堂
+
+# src/ui/pause_menu/level_select.cpp:33
+Mountain Falls
+高山瀑布
+
+# src/ui/pause_menu/level_select.cpp:33
+Mountain Rise
+山崗
+
+# src/ui/pause_menu/level_select.cpp:33
+Water Temple
+聖水殿堂
+
+# src/ui/pause_menu/level_select.cpp:34
+Snow Top Village
+雪嶺村
+
+# src/ui/pause_menu/level_select.cpp:34
+Snow Temple
+白雪殿堂
+
+# src/ui/pause_menu/level_select.cpp:34
+Ogre's Swamp
+食人怪沼澤
+
+# src/ui/pause_menu/level_select.cpp:34
+Thorn's Pass
+荊棘魔王的關口
+
+# src/ui/pause_menu/level_select.cpp:35
+Thorn's Airship
+荊棘魔王的飛船
+
+# src/ui/pause_menu/level_select.cpp:81 (+1)
+Level Select
+選擇關卡
+
+# src/ui/pause_menu/level_select.cpp:95
+Start from "{0}"?
+要從「{0}」開始嗎？
+
+# src/ui/pause_menu/level_select.cpp:96
+The story is set to this point;\ncollectibles are kept.
+故事進度會設定至此處；\n收集品會保留。
+
+# src/ui/pause_menu/line_injection.cpp:34
+Brightness
+亮度
+
+# src/ui/pause_menu/line_injection.cpp:54
+Resume
+繼續遊戲
+
+# src/ui/pause_menu/line_injection.cpp:62 (+1)
+Options
+選項
+
+# src/ui/pause_menu/option_values.cpp:97 (+1)
+English
+英文
+
+# src/ui/pause_menu/option_values.cpp:97
+Japanese
+日文
+
+# src/ui/pause_menu/option_values.cpp:97
+German
+德文
+
+# src/ui/pause_menu/option_values.cpp:97
+French
+法文
+
+# src/ui/pause_menu/option_values.cpp:97
+Spanish
+西班牙文
+
+# src/ui/pause_menu/option_values.cpp:97
+Italian
+義大利文
+
+# src/ui/pause_menu/option_values.cpp:97
+Korean
+
+
+# src/ui/pause_menu/option_values.cpp:97
+Chinese
+中文
+
+# src/ui/pause_menu/option_values.cpp:122
+Press a key (wait 5s to cancel)
+請按下按鍵 (等待 5 秒即取消)
+
+# src/ui/pause_menu/option_values.cpp:143
+Window
+視窗
+
+# src/ui/pause_menu/option_values.cpp:144
+Window ({0}x{1})
+視窗 ({0}x{1})
+
+# src/ui/pause_menu/options_table.cpp:69
+Control Display
+控制顯示
+
+# src/ui/pause_menu/options_table.cpp:70
+Score Display
+分數顯示
+
+# src/ui/pause_menu/options_table.cpp:71
+Map Display
+地圖顯示
+
+# src/ui/pause_menu/options_table.cpp:72 (+1)
+{0} (restart)
+{0} (需重新啟動)
+
+# src/ui/pause_menu/options_table.cpp:79
+3D Display
+3D 顯示
+
+# src/ui/pause_menu/options_table.cpp:79
+Side by Side
+左右並排
+
+# src/ui/pause_menu/options_table.cpp:79
+Top and Bottom
+上下並排
+
+# src/ui/pause_menu/options_table.cpp:79
+Red/Cyan Glasses
+紅藍眼鏡
+
+# src/ui/pause_menu/options_table.cpp:80
+3D Depth
+3D 深度
+
+# src/ui/pause_menu/options_table.cpp:81
+3D Focus
+3D 焦點
+
+# src/ui/pause_menu/options_table.cpp:81
+On Kameo
+對準凱蜜歐
+
+# src/ui/pause_menu/options_table.cpp:82
+3D Swap Eyes
+3D 左右眼互換
+
+# src/ui/pause_menu/options_table.cpp:99
+Player 1 Input
+玩家 1 輸入
+
+# src/ui/pause_menu/options_table.cpp:100
+Controller Preset
+控制器預設配置
+
+# src/ui/pause_menu/options_table.cpp:100
+Button Position
+按鈕位置
+
+# src/ui/pause_menu/options_table.cpp:100
+Button Labels
+按鈕標示
+
+# src/ui/pause_menu/options_table.cpp:100
+Custom
+自訂
+
+# src/ui/pause_menu/options_table.cpp:101
+Mouse Look
+Mouse 視角
+
+# src/ui/pause_menu/options_table.cpp:103
+Player 1 Keyboard
+玩家 1 鍵盤
+
+# src/ui/pause_menu/options_table.cpp:103 (+1)
+Keyboard 2
+鍵盤 2
+
+# src/ui/pause_menu/options_table.cpp:103 (+1)
+Keyboard 1
+鍵盤 1
+
+# src/ui/pause_menu/options_table.cpp:104
+Player 1 Mouse
+玩家 1 Mouse
+
+# src/ui/pause_menu/options_table.cpp:104 (+1)
+Mouse 2
+
+
+# src/ui/pause_menu/options_table.cpp:104 (+1)
+Mouse 1
+
+
+# src/ui/pause_menu/options_table.cpp:105
+Look Left/Right
+左右視角
+
+# src/ui/pause_menu/options_table.cpp:106
+Look Up/Down
+上下視角
+
+# src/ui/pause_menu/options_table.cpp:109
+Default
+預設值
+
+# src/ui/pause_menu/options_table.cpp:111
+Costume
+服裝
+
+# src/ui/pause_menu/options_table.cpp:113
+Player 2 Input
+玩家 2 輸入
+
+# src/ui/pause_menu/options_table.cpp:114
+Split-Screen Layout
+分割畫面配置
+
+# src/ui/pause_menu/options_table.cpp:115
+Player 2 Keyboard
+玩家 2 鍵盤
+
+# src/ui/pause_menu/options_table.cpp:116
+Player 2 Mouse
+玩家 2 Mouse
+
+# src/ui/pause_menu/options_table.cpp:117
+Player 2 Aim X
+玩家 2 瞄準 X 軸
+
+# src/ui/pause_menu/options_table.cpp:117 (+1)
+Inverted
+反轉
+
+# src/ui/pause_menu/options_table.cpp:117 (+1)
+Normal
+一般
+
+# src/ui/pause_menu/options_table.cpp:118
+Player 2 Aim Y
+玩家 2 瞄準 Y 軸
+
+# src/ui/pause_menu/options_table.cpp:119
+Player Pushing
+玩家推擠
+
+# src/ui/pause_menu/options_table.cpp:120
+Friendly Fire
+誤傷隊友
+
+# src/ui/pause_menu/options_table.cpp:122
+Hints
+提示
+
+# src/ui/pause_menu/options_table.cpp:125
+All Warriors & Upgrades
+所有鬥士與升級
+
+# src/ui/pause_menu/options_table.cpp:134
+ Button
+ 按鈕
+
+# src/ui/pause_menu/options_table.cpp:135
+ Button
+ 按鈕
+
+# src/ui/pause_menu/options_table.cpp:136
+ Button
+ 按鈕
+
+# src/ui/pause_menu/options_table.cpp:137
+ Button
+ 按鈕
+
+# src/ui/pause_menu/options_table.cpp:154
+ Action
+ 動作
+
+# src/ui/pause_menu/options_table.cpp:155
+ Action
+ 動作
+
+# src/ui/pause_menu/options_table.cpp:156
+ Action
+ 動作
+
+# src/ui/pause_menu/options_table.cpp:157
+ Action
+ 動作
+
+# src/ui/pause_menu/options_table.cpp:170
+Move Up
+向上移動
+
+# src/ui/pause_menu/options_table.cpp:171
+Move Down
+向下移動
+
+# src/ui/pause_menu/pages.cpp:29
+Split-screen
+分割畫面
+
+# src/ui/pause_menu/pages.cpp:33
+HUD
+
+
+# src/ui/pause_menu/pages.cpp:35
+Materials
+質感
+
+# src/ui/pause_menu/pages.cpp:38
+Controller Bindings
+控制器設定
+
+# src/ui/pause_menu/pages.cpp:51
+Credits
+製作群
+
+# src/ui/pause_menu/pages.cpp:52
+Restore All Defaults
+全部還原為預設值
+
+# src/ui/pause_menu/pages.cpp:72
+Brightness & Gamma
+亮度與 Gamma 值
+
+# src/ui/pause_menu/quit_prompt.cpp:98
+Quit to Menu
+回到主選單
+
+# src/ui/pause_menu/quit_prompt.cpp:99
+Quit Application
+結束應用程式
+
+# src/ui/pause_menu/quit_prompt.cpp:100
+Restart Game
+重新開始遊戲
+
+# src/ui/pause_menu/quit_prompt.cpp:110
+Press  to restart the game\n\nPress  to quit the application
+按  重新開始遊戲\n\n按  結束應用程式
+
+# src/ui/pause_menu/restore_defaults.cpp:75
+Restore all settings to their defaults?
+要將所有設定還原為預設值嗎？
+
+# src/ui/pause_menu/restore_defaults.cpp:76
+Restore {0} to defaults?
+要將「{0}」還原為預設值嗎？

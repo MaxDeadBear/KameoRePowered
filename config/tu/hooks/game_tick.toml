@@ -1,0 +1,5 @@
+# Translated from config/hooks/game_tick.toml for the title-update build by tools/tu/translate.py.
+[[midasm_hook]]
+address = 0x8225E550
+name = "KameoGameTick"
+

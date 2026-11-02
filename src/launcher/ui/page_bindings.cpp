@@ -7,10 +7,15 @@
 #include <string>
 #include <vector>
 
+#include "core/localization.h"
 #include "launcher/ui/pages.h"
 #include "launcher/ui/widgets.h"
 
 namespace kameo::launcher {
+
+using l10n::Tr;
+using l10n::TrFormat;
+
 namespace {
 
 struct BindRow {
@@ -19,13 +24,13 @@ struct BindRow {
 };
 
 constexpr BindRow kBindRows[] = {
-    {"Move Forward", "keybind_lstick_up"}, {"Move Back", "keybind_lstick_down"}, {"Move Left", "keybind_lstick_left"}, {"Move Right", "keybind_lstick_right"},
-    {"A (Jump)", "keybind_a"}, {"B", "keybind_b"}, {"X", "keybind_x"}, {"Y", "keybind_y"},
-    {"Left Trigger", "keybind_left_trigger"}, {"Right Trigger", "keybind_right_trigger"}, {"Left Bumper", "keybind_left_shoulder"}, {"Right Bumper", "keybind_right_shoulder"},
-    {"Camera Up", "keybind_rstick_up"}, {"Camera Down", "keybind_rstick_down"}, {"Camera Left", "keybind_rstick_left"}, {"Camera Right", "keybind_rstick_right"},
-    {"Left Stick Click", "keybind_lstick_press"}, {"Right Stick Click", "keybind_rstick_press"},
-    {"D-Pad Up", "keybind_dpad_up"}, {"D-Pad Down", "keybind_dpad_down"}, {"D-Pad Left", "keybind_dpad_left"}, {"D-Pad Right", "keybind_dpad_right"},
-    {"Start", "keybind_start"}, {"Back", "keybind_back"},
+    {TR_NOOP("Move Forward"), "keybind_lstick_up"}, {TR_NOOP("Move Back"), "keybind_lstick_down"}, {TR_NOOP("Move Left"), "keybind_lstick_left"}, {TR_NOOP("Move Right"), "keybind_lstick_right"},
+    {TR_NOOP("A (Jump)"), "keybind_a"}, {"B", "keybind_b"}, {"X", "keybind_x"}, {"Y", "keybind_y"},
+    {TR_NOOP("Left Trigger"), "keybind_left_trigger"}, {TR_NOOP("Right Trigger"), "keybind_right_trigger"}, {TR_NOOP("Left Bumper"), "keybind_left_shoulder"}, {TR_NOOP("Right Bumper"), "keybind_right_shoulder"},
+    {TR_NOOP("Camera Up"), "keybind_rstick_up"}, {TR_NOOP("Camera Down"), "keybind_rstick_down"}, {TR_NOOP("Camera Left"), "keybind_rstick_left"}, {TR_NOOP("Camera Right"), "keybind_rstick_right"},
+    {TR_NOOP("Left Stick Click"), "keybind_lstick_press"}, {TR_NOOP("Right Stick Click"), "keybind_rstick_press"},
+    {TR_NOOP("D-Pad Up"), "keybind_dpad_up"}, {TR_NOOP("D-Pad Down"), "keybind_dpad_down"}, {TR_NOOP("D-Pad Left"), "keybind_dpad_left"}, {TR_NOOP("D-Pad Right"), "keybind_dpad_right"},
+    {TR_NOOP("Start"), "keybind_start"}, {TR_NOOP("Back"), "keybind_back"},
 };
 
 constexpr std::chrono::milliseconds kCaptureArmDelay(300);
@@ -116,12 +121,13 @@ void PollCapture(App& app) {
 }
 
 void PageBindings(App& app) {
-  PageTitle(app, "Key Bindings", "Click Change, then press the key or mouse button to use. Binding a key another action has swaps the two.");
+  PageTitle(app, Tr("Key Bindings"), Tr("Click Change, then press the key or mouse button to use. Binding a key another action has swaps the two."));
   std::vector<const char*> names;
   for (const BindRow& row : kBindRows) names.push_back(row.name);
-  const float width = ImGui::CalcTextSize("Restore Defaults").x + ImGui::GetStyle().FramePadding.x * 2;
+  const char* restore = Tr("Restore Defaults");
+  const float width = ImGui::CalcTextSize(restore).x + ImGui::GetStyle().FramePadding.x * 2;
   ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - width);
-  if (ImGui::Button("Restore Defaults")) {
+  if (ImGui::Button(restore)) {
     for (const char* name : names) app.settings.Reset(name);
     app.capture_target.clear();
   }
@@ -135,23 +141,23 @@ void PageBindings(App& app) {
       ImGui::TableNextRow();
       ImGui::TableSetColumnIndex(0);
       ImGui::AlignTextToFramePadding();
-      ImGui::TextUnformatted(row.label);
+      ImGui::TextUnformatted(Tr(row.label));
       ImGui::TableSetColumnIndex(1);
       ImGui::AlignTextToFramePadding();
       if (app.capture_target == row.name) {
         const int left = int(std::ceil(std::chrono::duration<float>(kCaptureTimeout - (std::chrono::steady_clock::now() - app.capture_started)).count()));
-        ImGui::TextColored(kGold, "Press a key... (%ds)", std::max(left, 0));
+        ImGui::TextColored(kGold, "%s", TrFormat("Press a key... ({0}s)", {std::to_string(std::max(left, 0))}).c_str());
       } else {
         const std::string keys = app.settings.Get(row.name);
-        ImGui::TextUnformatted(keys.empty() ? "Unbound" : keys.c_str());
+        ImGui::TextUnformatted(keys.empty() ? Tr("Unbound") : keys.c_str());
       }
       ImGui::TableSetColumnIndex(2);
-      if (ImGui::Button("Change")) {
+      if (ImGui::Button(Tr("Change"))) {
         app.capture_target = row.name;
         app.capture_started = std::chrono::steady_clock::now();
       }
       ImGui::SameLine();
-      if (ImGui::Button("Reset")) app.settings.Reset(row.name);
+      if (ImGui::Button(Tr("Reset"))) app.settings.Reset(row.name);
       ImGui::PopID();
     }
     ImGui::EndTable();

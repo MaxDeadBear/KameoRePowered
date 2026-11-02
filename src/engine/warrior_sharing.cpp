@@ -26,7 +26,11 @@ std::atomic<uint32_t> g_sack_p2{0};
 
 // Sacks live in the image's static data (0x82804058, 0x82806358); a looser check let the float 1.0 (0x3F800000) through during the battlefield transition.
 bool PlausibleSackPtr(uint32_t v) {
+#if KAMEO_TU
+  return v >= 0x82000000u && v < 0x82C90000u;
+#else
   return v >= 0x82000000u && v < 0x82C00000u;
+#endif
 }
 
 }  // namespace

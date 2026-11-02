@@ -1,0 +1,30 @@
+# Translated from config/hooks/splitscreen.toml for the title-update build by tools/tu/translate.py.
+[[midasm_hook]]
+address = 0x820B7D58
+name = "KameoSplitScreenTick"
+
+[[midasm_hook]]
+address = 0x820BD8BC
+name = "KameoSaveGameSplitGate"
+registers = ["r11"]
+after_instruction = true
+
+# DROPPED KameoStorybookSplitGate at 823C1A58: storybook co-op display rewritten; story split-screen storybook gate not ported
+
+[[midasm_hook]]
+address = 0x8227C81C
+name = "KameoOverridePlayer2Type"
+registers = ["r4"]
+after_instruction = true
+
+[[midasm_hook]]
+address = 0x821AEB90
+name = "KameoCaptureWarriorSack"
+registers = ["r3"]
+
+[[midasm_hook]]
+address = 0x820B7DF8
+name = "KameoViewportGate"
+registers = ["r10", "r11"]
+after_instruction = true
+

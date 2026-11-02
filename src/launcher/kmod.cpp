@@ -3,7 +3,13 @@
 #include <algorithm>
 #include <cstring>
 
+#include "core/localization.h"
+
 namespace kmod {
+
+using kameo::l10n::Tr;
+using kameo::l10n::TrFormat;
+
 namespace {
 
 constexpr uint32_t kHeaderSize = 0x180;
@@ -25,18 +31,18 @@ uint32_t headerChecksum(const uint8_t* header) {
 
 // A CAFF archive's header and its sections unpacked.
 bool unpack(const std::vector<uint8_t>& file, std::vector<std::vector<uint8_t>>& sections, std::string& error) {
-  if (file.size() < kHeaderSize || memcmp(file.data(), "CAFF", 4) != 0) return error = "not a CAFF archive", false;
+  if (file.size() < kHeaderSize || memcmp(file.data(), "CAFF", 4) != 0) return error = Tr("not a CAFF archive"), false;
   const uint8_t* h = file.data();
   size_t cursor = be32(h + 0x38);
   const uint32_t count = h[0x3D];
-  if (cursor < kHeaderSize || count < 1 || count > (kHeaderSize - 0x40) / 40) return error = "a CAFF header out of range", false;
+  if (cursor < kHeaderSize || count < 1 || count > (kHeaderSize - 0x40) / 40) return error = Tr("a CAFF header out of range"), false;
   sections.assign(count, {});
   for (uint32_t i = 0; i < count; i++) {
     const uint8_t* s = h + 0x40 + 40 * i;
     const uint32_t size = be32(s + 16), packed = be32(s + 36);
-    if (cursor + packed > file.size()) return error = "a section runs past the end of the file", false;
-    if (size && !inflate(file.data() + cursor, packed, size, sections[i])) return error = "a section does not unpack", false;
-    if (sections[i].size() != size) return error = "a section unpacks to the wrong size", false;
+    if (cursor + packed > file.size()) return error = Tr("a section runs past the end of the file"), false;
+    if (size && !inflate(file.data() + cursor, packed, size, sections[i])) return error = Tr("a section does not unpack"), false;
+    if (sections[i].size() != size) return error = Tr("a section unpacks to the wrong size"), false;
     cursor += packed;
   }
   return true;
@@ -106,7 +112,7 @@ uint64_t hash(const uint8_t* data, size_t size) {
 bool diff(const std::string& name, const std::vector<uint8_t>& original, const std::vector<uint8_t>& edited, FilePatch& out, std::string& error) {
   std::vector<std::vector<uint8_t>> before, after;
   if (!unpack(original, before, error) || !unpack(edited, after, error)) return false;
-  if (before.size() != after.size()) return error = "the archives have different sections", false;
+  if (before.size() != after.size()) return error = Tr("the archives have different sections"), false;
   out = {};
   out.name = name, out.baseSize = original.size(), out.baseHash = hash(original.data(), original.size()), out.resultHash = hashSections(after);
   out.header.assign(edited.begin(), edited.begin() + kHeaderSize);
@@ -137,19 +143,19 @@ bool diff(const std::string& name, const std::vector<uint8_t>& original, const s
 }
 
 bool apply(const FilePatch& patch, const std::vector<uint8_t>& original, std::vector<uint8_t>& out, std::string& error) {
-  if (original.size() != patch.baseSize || hash(original.data(), original.size()) != patch.baseHash) return error = patch.name + " is not the file the mod was made from", false;
-  if (patch.header.size() != kHeaderSize) return error = "the mod's header is damaged", false;
+  if (original.size() != patch.baseSize || hash(original.data(), original.size()) != patch.baseHash) return error = TrFormat("{0} is not the file the mod was made from", {patch.name}), false;
+  if (patch.header.size() != kHeaderSize) return error = Tr("the mod's header is damaged"), false;
   std::vector<std::vector<uint8_t>> sections;
   if (!unpack(original, sections, error)) return false;
-  if (sections.size() != patch.sections.size() || patch.header[0x3D] != sections.size()) return error = "the mod does not match the archive's sections", false;
+  if (sections.size() != patch.sections.size() || patch.header[0x3D] != sections.size()) return error = Tr("the mod does not match the archive's sections"), false;
   for (size_t s = 0; s < sections.size(); s++) {
     sections[s].resize(patch.sections[s].size, 0);
     for (const Run& r : patch.sections[s].runs) {
-      if (size_t(r.offset) + r.bytes.size() > sections[s].size()) return error = "the mod writes past a section", false;
+      if (size_t(r.offset) + r.bytes.size() > sections[s].size()) return error = Tr("the mod writes past a section"), false;
       memcpy(sections[s].data() + r.offset, r.bytes.data(), r.bytes.size());
     }
   }
-  if (hashSections(sections) != patch.resultHash) return error = "the patched archive is not what the mod's author saved", false;
+  if (hashSections(sections) != patch.resultHash) return error = Tr("the patched archive is not what the mod's author saved"), false;
   out.assign(patch.header.begin(), patch.header.end());
   out.resize(be32(out.data() + 0x38), 0);
   for (size_t s = 0; s < sections.size(); s++) {
@@ -183,12 +189,12 @@ std::vector<uint8_t> write(const Package& package) {
 }
 
 bool read(const std::vector<uint8_t>& bytes, Package& out, std::string& error) {
-  if (bytes.size() < 12 || memcmp(bytes.data(), "KMOD", 4) != 0) return error = "not a Kameo mod package", false;
+  if (bytes.size() < 12 || memcmp(bytes.data(), "KMOD", 4) != 0) return error = Tr("not a Kameo mod package"), false;
   Reader head{bytes.data(), bytes.size(), 4};
-  if (head.u32() != kVersion) return error = "a mod package of another version", false;
+  if (head.u32() != kVersion) return error = Tr("a mod package of another version"), false;
   const uint32_t size = head.u32();
   std::vector<uint8_t> body;
-  if (!inflate(bytes.data() + 12, bytes.size() - 12, size, body) || body.size() != size) return error = "the mod package is damaged", false;
+  if (!inflate(bytes.data() + 12, bytes.size() - 12, size, body) || body.size() != size) return error = Tr("the mod package is damaged"), false;
   Reader r{body.data(), body.size()};
   out = {};
   out.manifest.name = r.text(), out.manifest.author = r.text(), out.manifest.version = r.text(), out.manifest.description = r.text();
@@ -210,9 +216,9 @@ bool read(const std::vector<uint8_t>& bytes, Package& out, std::string& error) {
     }
     out.files.push_back(std::move(f));
   }
-  if (!r.ok) return error = "the mod package is damaged", false;
+  if (!r.ok) return error = Tr("the mod package is damaged"), false;
   for (const FilePatch& f : out.files)
-    if (f.name.empty() || f.name.find_first_of("/\\:") != std::string::npos || f.name.find("..") != std::string::npos) return error = "the mod package names a file outside the game folder", false;
+    if (f.name.empty() || f.name.find_first_of("/\\:") != std::string::npos || f.name.find("..") != std::string::npos) return error = Tr("the mod package names a file outside the game folder"), false;
   return true;
 }
 

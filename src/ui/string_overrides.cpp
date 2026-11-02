@@ -4,9 +4,11 @@
 #include <string>
 #include <unordered_map>
 
+#include "core/localization.h"
 #include "engine/dlc/dlc.h"
 #include "ui/text_window.h"
 
+using kameo::l10n::Tr;
 using kameo::ui::GuestWideString;
 
 // LocString_GetString(table, id) -- the save list's "A Select (B Back) Y Delete" hints (2142, 8142) gain the X Rename button ahead of Delete, and the downloadable skin names the vanilla table lacks come from the title update's list, as does the shader mod costume's.
@@ -22,9 +24,11 @@ extern "C" REX_FUNC(sub_8251DCE8) {
   }
   if ((id != 2142 && id != 8142) || !ctx.r3.u32) return;
   static std::mutex mutex;
-  static std::unordered_map<uint32_t, uint32_t> renamed;
+  // Keyed by the game's text and our language, so switching language mid-game gets a fresh "Rename".
+  static std::unordered_map<uint64_t, uint32_t> renamed;
   std::lock_guard<std::mutex> lock(mutex);
-  if (const auto found = renamed.find(ctx.r3.u32); found != renamed.end()) {
+  const uint64_t key = uint64_t(ctx.r3.u32) | uint64_t(kameo::l10n::CurrentLanguage()) << 32;
+  if (const auto found = renamed.find(key); found != renamed.end()) {
     ctx.r3.u64 = found->second;
     return;
   }
@@ -36,9 +40,9 @@ extern "C" REX_FUNC(sub_8251DCE8) {
   }
   const size_t delete_button = text.find(u"{button='Y'}");
   if (delete_button == std::u16string::npos) return;
-  text.insert(delete_button, u"{button='X'} Rename ");
+  text.insert(delete_button, u"{button='X'} " + Tr(u"Rename") + u" ");
   if (const uint32_t address = GuestWideString(text)) {
-    renamed.emplace(ctx.r3.u32, address);
+    renamed.emplace(key, address);
     ctx.r3.u64 = address;
   }
 }

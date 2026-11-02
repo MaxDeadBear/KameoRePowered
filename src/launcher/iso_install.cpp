@@ -21,10 +21,15 @@
 #include <rex/filesystem/file.h>
 #include <rex/system/xcontent.h>
 
+#include "core/localization.h"
 #include "launcher/dlc_install.h"
 #include "launcher/settings_file.h"
 
 namespace kameo::launcher {
+
+using l10n::Tr;
+using l10n::TrFormat;
+
 namespace {
 
 namespace fs = std::filesystem;
@@ -193,36 +198,36 @@ void IsoInstaller::Run(fs::path source, fs::path assets) {
 bool IsoInstaller::Unpack(const fs::path& source, const fs::path& assets, std::string& message) {
   std::error_code ec;
   const std::string file_name = source.filename().string();
-  if (fs::exists(assets / "default.xex", ec)) return message = "The game is already unpacked in " + assets.string() + ".", false;
-  if (fs::exists(assets, ec) && !fs::is_empty(assets, ec)) return message = "The assets folder already has files in it. Move them somewhere else, then try again.", false;
+  if (fs::exists(assets / "default.xex", ec)) return message = TrFormat("The game is already unpacked in {0}.", {assets.string()}), false;
+  if (fs::exists(assets, ec) && !fs::is_empty(assets, ec)) return message = Tr("The assets folder already has files in it. Move them somewhere else, then try again."), false;
 
   const std::unique_ptr<rex::filesystem::Device> device = OpenGame(source);
-  if (!device) return message = file_name + " could not be read. It may be incomplete, or not an Xbox 360 disc image or Games on Demand package.", false;
+  if (!device) return message = TrFormat("{0} could not be read. It may be incomplete, or not an Xbox 360 disc image or Games on Demand package.", {file_name}), false;
   Entry* root = device->ResolvePath("");
   Entry* xex = root ? root->ResolvePath("default.xex") : nullptr;
-  if (!xex) return message = file_name + " has no default.xex, so it is not a game disc.", false;
+  if (!xex) return message = TrFormat("{0} has no default.xex, so it is not a game disc.", {file_name}), false;
   const auto buffer = std::make_unique<uint8_t[]>(kChunkBytes);
   const uint32_t title_id = XexTitleId(*xex, buffer.get());
   if (title_id != kKameoTitleId) {
     char text[16];
     std::snprintf(text, sizeof(text), "%08X", title_id);
-    return message = title_id == 0 ? file_name + " is incomplete or damaged: its game program could not be read." : file_name + " is a different game (title " + text + "), not Kameo: Elements of Power.", false;
+    return message = title_id == 0 ? TrFormat("{0} is incomplete or damaged: its game program could not be read.", {file_name}) : TrFormat("{0} is a different game (title {1}), not Kameo: Elements of Power.", {file_name, text}), false;
   }
 
   std::vector<std::pair<fs::path, Entry*>> files;
   uint64_t total = 0;
-  if (!Collect(*root, {}, true, files, total)) return message = file_name + " looks damaged: it holds a file with an invalid name.", false;
+  if (!Collect(*root, {}, true, files, total)) return message = TrFormat("{0} looks damaged: it holds a file with an invalid name.", {file_name}), false;
   total_bytes_.store(total);
 
   const fs::path parent = assets.parent_path();
   const fs::space_info space = fs::space(parent, ec);
-  if (!ec && space.available < total + kSpareBytes) return message = "Not enough free space: the game needs " + SizeText(total + kSpareBytes) + " on this drive, and it has " + SizeText(space.available) + ".", false;
+  if (!ec && space.available < total + kSpareBytes) return message = TrFormat("Not enough free space: the game needs {0} on this drive, and it has {1}.", {SizeText(total + kSpareBytes), SizeText(space.available)}), false;
 
   const fs::path staging = parent / L"assets.unpacking";
   fs::remove_all(staging, ec);
   uint64_t written = 0;
   for (const auto& [relative, entry] : files) {
-    if (cancel_.load()) return message = "Unpacking was cancelled.", false;
+    if (cancel_.load()) return message = Tr("Unpacking was cancelled."), false;
     {
       std::lock_guard<std::mutex> lock(mutex_);
       current_ = relative.filename().string();
@@ -230,7 +235,7 @@ bool IsoInstaller::Unpack(const fs::path& source, const fs::path& assets, std::s
     const fs::path destination = staging / relative;
     fs::create_directories(destination.parent_path(), ec);
     rex::filesystem::File* in_file = nullptr;
-    if (entry->Open(rex::filesystem::FileAccess::kFileReadData, &in_file) != 0 || !in_file) return message = "Could not read " + relative.string() + " from " + file_name + ".", false;
+    if (entry->Open(rex::filesystem::FileAccess::kFileReadData, &in_file) != 0 || !in_file) return message = TrFormat("Could not read {0} from {1}.", {relative.string(), file_name}), false;
     std::ofstream out(destination, std::ios::binary | std::ios::trunc);
     size_t offset = 0;
     size_t remaining = entry->size();
@@ -245,15 +250,15 @@ bool IsoInstaller::Unpack(const fs::path& source, const fs::path& assets, std::s
     }
     in_file->Destroy();
     out.close();
-    if (cancel_.load()) return message = "Unpacking was cancelled.", false;
-    if (remaining > 0 || !out) return message = "Could not unpack " + relative.string() + ". The image may be incomplete or damaged, or the drive may be full.", false;
+    if (cancel_.load()) return message = Tr("Unpacking was cancelled."), false;
+    if (remaining > 0 || !out) return message = TrFormat("Could not unpack {0}. The image may be incomplete or damaged, or the drive may be full.", {relative.string()}), false;
   }
 
   // An empty assets folder is in the way of the rename, and is all that can be there by now.
   fs::remove(assets, ec);
   fs::rename(staging, assets, ec);
-  if (ec) return message = "Could not move the game into " + assets.string() + ": " + ec.message(), false;
-  message = "Your game is ready to play.";
+  if (ec) return message = TrFormat("Could not move the game into {0}: {1}", {assets.string(), ec.message()}), false;
+  message = Tr("Your game is ready to play.");
   return true;
 }
 

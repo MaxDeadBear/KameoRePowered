@@ -11,24 +11,33 @@ inline constexpr uint32_t kD3DDevicePtr = 0x82766ABC;
 
 namespace dev {
 
+// The title update's newer XDK grew the device by 16 bytes between its render-target block (to 0x32A0) and its
+// vertex and command-buffer fields (0x34D8 on): everything here past that point sits 16 bytes further on. Checked
+// against the update's D3DDevice_BeginVertices, SetRingBufferParameters and SetVertexShader. [V]
+#if KAMEO_TU
+inline constexpr uint32_t kDeviceTail = 16;
+#else
+inline constexpr uint32_t kDeviceTail = 0;
+#endif
+
 // Command-buffer cursor: DrawIndexedVertices calls D3D::CDevice::KickOff when +0x0 would pass +0x8. [V]
 inline constexpr uint32_t kCmdWritePtr = 0x000;
 inline constexpr uint32_t kCmdEndPtr = 0x008;
 // D3D::CDevice::StartNewSegment lays out a segment: +0x4 its hard end, +0x8 that less 160, and zeroes +0x36A0 and +0x36B0. [V]
 inline constexpr uint32_t kCmdHardEndPtr = 0x004;
-inline constexpr uint32_t kCmdSegmentStart = 0x36AC;
-inline constexpr uint32_t kCmdSegmentPredication = 0x36A0;
+inline constexpr uint32_t kCmdSegmentStart = 0x36AC + kDeviceTail;
+inline constexpr uint32_t kCmdSegmentPredication = 0x36A0 + kDeviceTail;
 // Vertex-data bytes BeginRingAlloc has taken in this segment; past its threshold it pulls the command limit down to force a KickOff. [V]
-inline constexpr uint32_t kCmdSegmentDataBytes = 0x36B0;
+inline constexpr uint32_t kCmdSegmentDataBytes = 0x36B0 + kDeviceTail;
 // (PrimarySize >> 2) - 1, set by D3DDevice_SetRingBufferParameters and read by BlockOnPrimaryRange. [V]
-inline constexpr uint32_t kPrimaryRingMask = 0x3690;
+inline constexpr uint32_t kPrimaryRingMask = 0x3690 + kDeviceTail;
 // D3DDevice_BeginVertices stores the write pointer the inlined EndVertices restores, then the vertex pointer and its dword count. [V]
-inline constexpr uint32_t kBeginVerticesResume = 0x3534;
-inline constexpr uint32_t kBeginVerticesData = 0x3538;
-inline constexpr uint32_t kBeginVerticesDwords = 0x3540;
+inline constexpr uint32_t kBeginVerticesResume = 0x3534 + kDeviceTail;
+inline constexpr uint32_t kBeginVerticesData = 0x3538 + kDeviceTail;
+inline constexpr uint32_t kBeginVerticesDwords = 0x3540 + kDeviceTail;
 // The indexed form (drawTube's inlined BeginIndexedVertices) adds the index pointer and its dword count. [V]
-inline constexpr uint32_t kBeginIndicesData = 0x353C;
-inline constexpr uint32_t kBeginIndicesDwords = 0x3544;
+inline constexpr uint32_t kBeginIndicesData = 0x353C + kDeviceTail;
+inline constexpr uint32_t kBeginIndicesDwords = 0x3544 + kDeviceTail;
 
 // Guest pointer to the GPU read-back block, whose first word is the last fence the GPU finished (BlockOnFence, D3DQuery_GetData). [V]
 inline constexpr uint32_t kGpuReadback = 0x2890;
@@ -119,7 +128,7 @@ inline constexpr uint32_t kWindowScissorTL = 0x2D04;
 inline constexpr uint32_t kWindowScissorBR = 0x2D08;
 
 // Back-buffer surface, fetched when no render target is passed. [V]
-inline constexpr uint32_t kBackBufferSurface = 0x367C;
+inline constexpr uint32_t kBackBufferSurface = 0x367C + kDeviceTail;
 
 }  // namespace dev
 
