@@ -79,7 +79,9 @@ source_group(TREE "${KAMEO_SRC_DIR}" PREFIX src FILES ${KAMEO_SOURCES})
 list(APPEND KAMEO_SOURCES
     "${KAMEO_SHADER_CACHE}"
     # XenosRecomp smol-v encodes the cache's SPIR-V, so the Vulkan backend decodes it before use.
-    thirdparty/XenosRecomp/thirdparty/smol-v/source/smolv.cpp)
+    thirdparty/XenosRecomp/thirdparty/smol-v/source/smolv.cpp
+    # zlib for reading the game's archives (core/game_archive.cpp), which shader mods take textures from.
+    src/launcher/kmod_zlib.cpp)
 
 if(WIN32)
     add_executable(kameorepowered WIN32 ${KAMEO_SOURCES} res/windows/kameo.rc)
@@ -92,6 +94,16 @@ add_custom_target(kameo_lang ALL
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/res/lang ${CMAKE_CURRENT_BINARY_DIR}/lang
     VERBATIM)
 add_dependencies(kameorepowered kameo_lang)
+# The storybook faces the pause book is set in (IM FELL, SIL Open Font License, OFL.txt beside them).
+add_custom_target(kameo_fonts ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/res/fonts ${CMAKE_CURRENT_BINARY_DIR}/fonts
+    VERBATIM)
+add_dependencies(kameorepowered kameo_fonts)
+# Interface art of our own, made for these menus (the pause card's main page, res/ui).
+add_custom_target(kameo_ui ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/res/ui ${CMAKE_CURRENT_BINARY_DIR}/ui
+    VERBATIM)
+add_dependencies(kameorepowered kameo_ui)
 
 target_include_directories(kameorepowered PRIVATE
     "${KAMEO_SRC_DIR}"
@@ -141,7 +153,7 @@ string(REGEX REPLACE "^v" "" _kameo_build_name "${KAMEO_VERSION}")
 target_compile_definitions(kameorepowered PRIVATE KAMEO_BUILD_NAME="Kameo: RePowered ${_kameo_build_name}")
 
 # SentryWork: crash reports to the project's Sentry, sent by the sentry-crash helper staged next to the executable
-# (src/app/app.cpp starts it). Only builds given a DSN report, which CI takes from the SENTRY_DSN repository variable for
+# (src/app/app.cpp starts it), which Windows builds name KameoBugReporter.exe. Only builds given a DSN report, which CI takes from the SENTRY_DSN repository variable for
 # Windows, so forks and local builds send nothing. Linux gets no DSN: its minidumps carry the player's environment
 # variables. The debug files go to Sentry with kameorepowered_upload_symbols, never into a release.
 set(KAMEO_SENTRY_DSN "" CACHE STRING "Sentry DSN crash reports go to; empty builds without reporting")
@@ -159,6 +171,14 @@ if(KAMEO_SENTRY_ORG AND KAMEO_SENTRY_PROJECT)
 endif()
 include(thirdparty/SentryWork/CMakeLists.txt)
 sentrywork_attach(kameorepowered ${_kameo_sentry_args})
+# On Windows the helper ships under the game's name with the game's version details, since antivirus scanners treat an
+# unknown exe with no publisher details more harshly; src/core/sentry_setup.cpp points Sentry at it.
+if(WIN32 AND TARGET sentry-crash)
+    set_target_properties(sentry-crash PROPERTIES OUTPUT_NAME KameoBugReporter)
+    target_sources(sentry-crash PRIVATE res/windows/kameo.rc)
+    target_include_directories(sentry-crash PRIVATE $<$<COMPILE_LANGUAGE:RC>:${CMAKE_CURRENT_SOURCE_DIR};${CMAKE_CURRENT_BINARY_DIR}/res>)
+    target_compile_definitions(sentry-crash PRIVATE $<$<COMPILE_LANGUAGE:RC>:KAMEO_RC_BUG_REPORTER>)
+endif()
 # SentryWork builds Sentry's options itself; this sends its sentry_init call through src/core/sentry_setup.cpp first.
 set_property(SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/SentryWork/src/sentrywork.cpp" APPEND PROPERTY COMPILE_DEFINITIONS "sentry_init=kameo_sentry_init")
 
@@ -227,6 +247,7 @@ if(WIN32)
     add_executable(KameoShaderEditor WIN32
         ${KAMEO_SHADER_EDITOR_SOURCES}
         src/core/localization.cpp
+        src/core/game_archive.cpp
         src/launcher/window_d3d11.cpp
         src/launcher/ui/theme.cpp
         src/launcher/zip_extract.cpp

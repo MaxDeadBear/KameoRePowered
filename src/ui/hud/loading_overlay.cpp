@@ -33,6 +33,10 @@ constexpr ImVec4 kElements[] = {{1.0f, 0.42f, 0.12f, 1.0f}, {0.62f, 0.88f, 1.0f,
 
 ImFont* g_wordmarkFont = nullptr;
 ImFont* g_textFont = nullptr;
+// The pause book's faces (IM FELL English, from the fonts folder beside the game), at the sizes it draws most.
+ImFont* g_bookCapsFont = nullptr;
+ImFont* g_bookTextFont = nullptr;
+ImFont* g_bookItalicFont = nullptr;
 
 ImU32 Colour(const ImVec4& colour, float alpha) { return ImGui::GetColorU32(ImVec4(colour.x, colour.y, colour.z, colour.w * alpha)); }
 
@@ -106,10 +110,25 @@ void KameoLoadingOverlay::ConfigureFonts(ImFontAtlas* atlas) {
   if (g_wordmarkFont) merge_asian(36.0f);
   g_textFont = load(L"segoeui.ttf", 20.0f);
   if (g_textFont) merge_asian(20.0f);
+  const auto book = [&](const char* file, float size) -> ImFont* {
+    std::error_code ec;
+    const std::filesystem::path path = kameo::l10n::ProgramFolder() / "fonts" / file;
+    ImFont* font = std::filesystem::exists(path, ec) ? atlas->AddFontFromFileTTF(path.string().c_str(), size) : nullptr;
+    if (font) merge_asian(size);
+    return font;
+  };
+  // Rasterised large, as the pause card sets them up to 60 pixels tall on a 1440-line screen.
+  g_bookCapsFont = book("IMFeENsc28P.ttf", 60.0f);
+  g_bookTextFont = book("IMFeENrm28P.ttf", 60.0f);
+  g_bookItalicFont = book("IMFeENit28P.ttf", 52.0f);
 #else
   (void)atlas;
 #endif
 }
+
+ImFont* KameoBookCapsFont() { return g_bookCapsFont; }
+ImFont* KameoBookTextFont() { return g_bookTextFont; }
+ImFont* KameoBookItalicFont() { return g_bookItalicFont; }
 
 void KameoLoadingOverlay::OnDraw(ImGuiIO& io) {
   if (finished_) return;

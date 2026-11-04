@@ -15,6 +15,8 @@
 
 namespace kameo::gpu {
 
+struct ShaderModTextureSet;  // gpu/shaders/shader_mods.h
+
 // Arena offset meaning "this draw carries none of that data".
 constexpr uint32_t kNoData = 0xFFFFFFFFu;
 constexpr uint32_t kSamplerCount = 16;  // XenosRecomp's kSamplerRegisterCount
@@ -88,6 +90,10 @@ struct DeferredVertexSource {
   } streams[kDeferredStreams];
 };
 
+// The loading screen's draws on a screen wider than 16:9: its book and text keep their 16:9 shape about the centre, and
+// its smoke backdrop covers the whole width (cut at the top and bottom), so the sides fade with it.
+enum LoadingLayer : uint8_t { kLoadingNone = 0, kLoadingPicture = 1, kLoadingBackdrop = 2 };
+
 struct DrawCall {
   CommandKind kind = CommandKind::Draw;
   // QueryBegin/QueryEnd: the guest D3DQuery, and for an END the sequence number GetData waits for.
@@ -158,6 +164,8 @@ struct DrawCall {
   uint32_t stream0_object = 0;
   // The stand-in a shader mod costume worn now gives this mesh, or null for the pixel shader's usual one.
   plume::RenderShader* shader_mod_costume = nullptr;
+  // The game's textures the shader mod drawing this (a costume, or every draw's stand-in) reads, or null.
+  const ShaderModTextureSet* shader_mod_textures = nullptr;
   uint32_t stream0_address = 0;
   uint32_t stream0_fetch1 = 0;
   uint32_t stream0_offset = 0;
@@ -203,6 +211,8 @@ struct DrawCall {
   uint32_t guest_pass = 0;  // entry address of the effect pass that issued it
   // Drawn with one of the game's 2D vertex shaders (the fixed-function set or the font's), which transform by the WVP matrix UpdateMatrices or fontResetGraphics writes to c0-c3.
   bool hud_2d = false;
+  // Made by the loading screen (the level fade model), one of LoadingLayer.
+  uint8_t loading_layer = 0;
   // Nonzero for draws made while one text window rendered (g_hudGroup), which are placed together.
   uint32_t hud_group = 0;
   uint32_t half_pixel = 0;

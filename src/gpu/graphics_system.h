@@ -88,11 +88,8 @@ class GraphicsSystem final : public rex::system::IGraphicsSystem {
   rex::ui::GraphicsProvider* provider() const override { return nullptr; }
   rex::ui::Presenter* presenter() const override { return nullptr; }
 
-  plume::RenderDevice* device() const { return device_.get(); }
   // The draw path's device-removal and info-queue diagnostics are D3D12-only and cast RenderDevice* to plume::D3D12Device*.
   bool using_vulkan() const { return using_vulkan_; }
-  plume::RenderCommandQueue* queue() const { return queue_.get(); }
-  plume::RenderSwapChain* swap_chain() const { return swap_chain_.get(); }
   // Exclusive fullscreen on D3D12: the render thread enters it once the swap chain matches the window, and leaves it before any swap chain rebuild.
   void SetExclusiveFullscreen(bool wanted) { exclusive_wanted_.store(wanted); }
   bool ExclusiveFullscreenActive() const { return exclusive_active_.load(); }
@@ -133,7 +130,9 @@ class GraphicsSystem final : public rex::system::IGraphicsSystem {
   // Hands over a decoded Bink frame; drawn by the next PresentClear.
   void SubmitBinkFrame(const BinkFrame& frame);
   // Draws the pending Bink frame into an already-recording list at the point the guest blitted it; the present-time fallback then does nothing.
-  void DrawPendingBink(plume::RenderCommandList* list, uint32_t samples);
+  // `screen_width` x `screen_height`: the video is going to the screen of that size; 0 for an offscreen target (a video
+  // shown on a model), which keeps the viewport the game drew it with.
+  void DrawPendingBink(plume::RenderCommandList* list, uint32_t samples, uint32_t screen_width = 0, uint32_t screen_height = 0);
   // STEREO: between the two eyes of a stereo frame, copies the scene as the first eye drew it aside and clears the scene target for the second; called by the draw path.
   void StashStereoEye(plume::RenderCommandList* list, plume::RenderTexture* scene_texture, const plume::RenderFramebuffer* scene_framebuffer, uint32_t scene_width, uint32_t scene_height);
   uint32_t SceneSamples() const { return SceneSampleCount(); }
@@ -154,7 +153,8 @@ class GraphicsSystem final : public rex::system::IGraphicsSystem {
     std::vector<UiDraw> draws;
   };
   // Takes RGBA8 and keeps all four channels, since the achievement icons carry their own colour; callable from any thread, uploaded at present.
-  uint32_t CreateUiTexture(uint32_t width, uint32_t height, const uint8_t* rgba);
+  // `repeated` wraps coordinates outside 0 to 1 around the texture, for patterns drawn scrolling.
+  uint32_t CreateUiTexture(uint32_t width, uint32_t height, const uint8_t* rgba, bool repeated = false);
   void SubmitUi(UiFrame&& frame);
   // Called once per presented frame with the render target size, just before the UI geometry is consumed; the app runs the ImGui drawer here.
   void SetUiFrameCallback(std::function<void(uint32_t, uint32_t)> callback);
@@ -215,6 +215,7 @@ class GraphicsSystem final : public rex::system::IGraphicsSystem {
     uint32_t width = 0;
     uint32_t height = 0;
     std::vector<uint8_t> pixels;  // RGBA, non-empty until uploaded
+    bool repeated = false;
     std::unique_ptr<plume::RenderTexture> texture;
     std::unique_ptr<plume::RenderTextureView> view;
     std::unique_ptr<plume::RenderDescriptorSet> descriptors;
@@ -268,7 +269,7 @@ class GraphicsSystem final : public rex::system::IGraphicsSystem {
   bool EnsureBinkResources();
   bool UploadBinkPlanes(const BinkFrame& frame);
   // hold_last redraws the previous video frame on a present the guest produced no new one for, and belongs only to the ordered marker path: the present-time fallback runs after the UI, where a redraw would cover it.
-  void DrawBink(plume::RenderCommandList* list, bool hold_last, uint32_t samples = 1);
+  void DrawBink(plume::RenderCommandList* list, bool hold_last, uint32_t samples = 1, uint32_t screen_width = 0, uint32_t screen_height = 0);
 
   // ui/ui_renderer.cpp
   bool EnsureUiPipeline();
@@ -439,6 +440,7 @@ class GraphicsSystem final : public rex::system::IGraphicsSystem {
   std::unique_ptr<plume::RenderPipelineLayout> ui_layout_;
   std::unique_ptr<plume::RenderPipeline> ui_pipeline_;
   std::unique_ptr<plume::RenderSampler> ui_sampler_;
+  std::unique_ptr<plume::RenderSampler> ui_sampler_repeat_;
   bool ui_pipeline_failed_ = false;
   // The ImGui drawer runs on whichever thread ReXApp pumps the UI on, so the frame geometry and the texture registry cross a thread boundary.
   std::mutex ui_mutex_;

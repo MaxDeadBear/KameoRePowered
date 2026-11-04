@@ -75,6 +75,9 @@ void ProcessPendingDlcSwap(PPCContext& ctx, uint8_t* base) {
   const uint32_t guest_str = call_ctx.r1.u32 - 64;
   WriteGuestStringAt(base, guest_str, suffix);
   call_ctx.r4.u64 = guest_str;
+  // The title update's version also takes (have, flag), which the save's own calls pass as 0; the original ignores them.
+  call_ctx.r5.u64 = 0;
+  call_ctx.r6.u64 = 0;
   ObjectAlternativeSetFileInUse(call_ctx, base);
 }
 

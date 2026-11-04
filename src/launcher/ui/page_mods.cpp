@@ -75,6 +75,7 @@ void LevelModsSection(App& app) {
     if (changed) mods.Save();
   }
   for (const std::string& conflict : mods.Conflicts()) ImGui::TextColored(kGold, "%s", conflict.c_str());
+  for (const std::string& skipped : mods.Skipped()) ImGui::TextColored(kGold, "%s", skipped.c_str());
   ImGui::TextColored(kTextDim, "%s", Tr("Enabled mods are applied when you press Play, into a copy of the game folder made of links; the game files themselves are never changed."));
   ImGui::TextColored(kTextDim, "%s", Tr("Kameo skins replace her Bonus costumes: pick the costume in the storybook's Bonus pages."));
   ImGui::EndChild();

@@ -17,9 +17,16 @@ struct ShadeInputs {
     float time;           // seconds since the game started, wrapping hourly
     bool has_albedo;
     bool has_normal;
+    uint4 game_textures;  // the bindless slots of the game's textures the mod draws with (ModGameTexture)
+    uint game_sampler;
 };
 
 float3 Shade(ShadeInputs s);
+// How much of the surface shows, 0..1 (the editor writes 1.0 when a mod doesn't say). How it shows through depends on
+// how the game draws the surface (ModFinish): a draw it blends fades by its own alpha; a solid one, drawn with the
+// scenery, covers that share of each pixel's samples while the scene is multisampled; otherwise pixels are left out in
+// a fine pattern (ModDither).
+float ShadeOpacity(ShadeInputs s);
 
 // Every 2D texture read in the game's shaders goes through MOD_FETCH2D(texture, sampler, uv, offset), which is the
 // game's tfetch2D unless a mod's shade.hlsl defines it first. A mod can read from somewhere else there, to make a
@@ -93,6 +100,25 @@ float ModOutline(ShadeInputs s, float width) {
     return 1.0 - smoothstep(width - 0.5, width + 0.5, pixels);
 }
 
+// One of the game's textures a mod draws with (the editor's Game texture node), slot 0 to 3, read linear and repeating,
+// wherever the ShadeInputs are called s. The package names it and the game reads it from its own archives
+// (gpu/shaders/shader_mods.cpp); until it has, and for a slot the mod doesn't use, it reads transparent black. The
+// preview defines its own.
+#ifndef MOD_PREVIEW
+float4 ModGameTextureOf(ShadeInputs s, uint slot, float2 uv) {
+    const uint index = slot == 0u ? s.game_textures.x : slot == 1u ? s.game_textures.y : slot == 2u ? s.game_textures.z : s.game_textures.w;
+    return g_Texture2DDescriptorHeap[index].Sample(g_SamplerDescriptorHeap[s.game_sampler], uv);
+}
+#define ModGameTexture(slot, uv) ModGameTextureOf(s, slot, uv)
+#endif
+
+// A 4x4 ordered dither: the opacity, in (0, 1), below which this pixel is left out.
+float ModDither(float2 screen) {
+    const uint bayer[16] = {0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5};
+    const uint2 p = uint2(screen) & 3u;
+    return (float(bayer[p.y * 4u + p.x]) + 0.5) / 16.0;
+}
+
 float ModLuminance(float3 c) {
     return dot(c, float3(0.2126, 0.7152, 0.0722));
 }
@@ -117,8 +143,17 @@ static const float4 MOD_BLACK = float4(0.0, 0.0, 0.0, 0.0);
 static const float4 MOD_NO_FOG = float4(0.0, 1.0, 0.0, 0.0);
 static const float4 MOD_NO_SHADE = float4(0.0, 1.0, 0.0, 1.0);
 
+// How a see-through mod's opacity reaches the picture, which the game sets for each draw (c20.y): by the pattern, by
+// the draw's own blended alpha, by multisample coverage, or by colour and alpha both for an additive blend.
+static const uint MOD_SHOW_DITHER = 0u;
+static const uint MOD_SHOW_ALPHA = 1u;
+static const uint MOD_SHOW_COVERAGE = 2u;
+static const uint MOD_SHOW_ADDITIVE = 3u;
+
 struct ModState {
     ShadeInputs s;
+    uint show;          // MOD_SHOW_*
+    float alpha_threshold;  // the draw's alpha test, 0 for none
     bool lit;           // whether the game lights this surface at all; effects and glows it doesn't aren't passed to Shade
     bool derive_light;  // s.light is the lit colour over the albedo
     bool has_fog;
@@ -126,8 +161,12 @@ struct ModState {
     float fog_amount;   // how much of the surface shows through the fog
 };
 
-ModState ModStart(float2 screen, float time) {
+ModState ModStartWith(float2 screen, float time, uint4 game_textures, uint game_sampler, uint show, float alpha_threshold) {
     ModState m = (ModState)0;
+    m.s.game_textures = game_textures;
+    m.s.game_sampler = game_sampler;
+    m.show = show;
+    m.alpha_threshold = alpha_threshold;
     m.s.alpha = 1.0;
     m.s.light = float3(1.0, 1.0, 1.0);
     m.s.normal = float3(0.0, 0.0, 1.0);
@@ -140,6 +179,14 @@ ModState ModStart(float2 screen, float time) {
     return m;
 }
 
+// Called at the top of each shader's body as ModStart(screen, g_ModTime); a macro, so that it reads the game textures'
+// slots from the shared constants there, as the shader declares their buffer after this file and the mod's.
+#ifdef MOD_PREVIEW
+#define ModStart(screen, time) ModStartWith(screen, time, uint4(0, 0, 0, 0), 0u, MOD_SHOW_COVERAGE, 0.0)
+#else
+#define ModStart(screen, time) ModStartWith(screen, time, g_ModTextures, g_ModSampler, g_ModShow, g_AlphaThreshold)
+#endif
+
 float3 ModNormalize(float3 v, float3 fallback) {
     const float length_squared = dot(v, v);
     return length_squared > 1e-8 ? v * rsqrt(length_squared) : fallback;
@@ -150,7 +197,12 @@ float3 ModNormalize(float3 v, float3 fallback) {
 // Surfaces the game doesn't light (glows, effects, and some surfaces lit from within, such as lava) are left alone
 // unless the mod is built with MOD_INCLUDE_UNLIT; for those, colour is the finished pixel with any fog already in it,
 // and there's no albedo, light or normal.
-float3 ModFinish(inout ModState m, float3 colour, float alpha) {
+// alpha is the shader's: with coverage it becomes the share of samples covered, the draw's alpha test done here first.
+float3 ModFinish(inout ModState m, float3 colour, inout float alpha) {
+    if (m.show == MOD_SHOW_COVERAGE) {
+        if (m.alpha_threshold > 0.0 && alpha < m.alpha_threshold) discard;
+        alpha = 1.0;
+    }
 #ifndef MOD_INCLUDE_UNLIT
     if (!m.lit) return colour;
 #endif
@@ -163,9 +215,17 @@ float3 ModFinish(inout ModState m, float3 colour, float alpha) {
     }
     if (!m.s.has_albedo) m.s.albedo = clear;
     m.s.colour = clear;
-    m.s.alpha = alpha;
+    m.s.alpha = m.show == MOD_SHOW_COVERAGE ? 1.0 : alpha;
     if (m.derive_light) m.s.light = min(clear / max(m.s.albedo, 1.0 / 255.0), 8.0);
-    const float3 result = Shade(m.s);
+    float3 result = Shade(m.s);
     if (!all(isfinite(result))) return colour;
+    const float opacity = saturate(ShadeOpacity(m.s));
+    if (m.show == MOD_SHOW_COVERAGE) {
+        alpha = max(opacity, m.alpha_threshold);
+    } else if (opacity < 1.0) {
+        if (m.show == MOD_SHOW_ALPHA) alpha *= opacity;
+        else if (m.show == MOD_SHOW_ADDITIVE) alpha *= opacity, result *= opacity;
+        else clip(opacity - ModDither(m.s.screen));
+    }
     return m.has_fog ? lerp(m.fog_colour, max(result, 0.0), m.fog_amount) : max(result, 0.0);
 }

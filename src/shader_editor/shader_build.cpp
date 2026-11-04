@@ -41,8 +41,10 @@ struct Character {
 constexpr Character kCharacters[] = {{"kameo", TR_NOOP("Kameo")},           {"flowerboxer", TR_NOOP("Pummel Weed")}, {"rubble", TR_NOOP("Rubble")},     {"armadillo", TR_NOOP("Major Ruin")},
                                      {"firedragon", TR_NOOP("Ash")},        {"fire_ant", TR_NOOP("Thermite")},       {"spitter", TR_NOOP("Snare")},     {"watercannon", TR_NOOP("Flex")},
                                      {"watercreature_small", TR_NOOP("Deep Blue")}, {"ice_b_yeti", TR_NOOP("Chilla")}, {"snow_man", TR_NOOP("40 Below")}};
-// Kinds of surface found by the shaders that draw them (tools/shaders/build_shader_mod_source.py), all of them unlit.
-constexpr Character kSurfaces[] = {{"lava", TR_NOOP("Lava")}, {"fire", TR_NOOP("Fire off the lava")}};
+// Kinds of surface found by the shaders that draw them (tools/shaders/build_shader_mod_source.py). Lava and its fire
+// are unlit; grass, the levels' grass, ferns and leaves, is lit.
+constexpr Character kSurfaces[] = {{"lava", TR_NOOP("Lava")}, {"fire", TR_NOOP("Fire off the lava")}, {"grass", TR_NOOP("Grass and plants")}};
+constexpr std::string_view kLitSurfaces[] = {"grass"};
 
 std::vector<uint8_t> ReadAll(const fs::path& path) {
   std::ifstream in(path, std::ios::binary);
@@ -184,13 +186,26 @@ std::vector<uint64_t> ShaderSource::Meshes(const std::vector<std::string>& keys)
 }
 
 bool ShaderSource::NeedsUnlit(const std::vector<std::string>& keys) const {
-  return std::any_of(surfaces_.begin(), surfaces_.end(), [&](const Target& t) { return std::find(keys.begin(), keys.end(), t.key) != keys.end(); });
+  return std::any_of(surfaces_.begin(), surfaces_.end(), [&](const Target& t) {
+    return std::find(std::begin(kLitSurfaces), std::end(kLitSurfaces), t.key) == std::end(kLitSurfaces) && std::find(keys.begin(), keys.end(), t.key) != keys.end();
+  });
 }
 
 uint32_t ShaderSource::CostumeModel(const std::vector<std::string>& keys) const {
   if (keys.size() != 1) return 0;
   const auto found = costume_models_.find(keys[0]);
   return found == costume_models_.end() ? 0 : found->second;
+}
+
+std::vector<gpu::ShaderModTexture> PackageTextures(const std::vector<GameTextureRef>& textures) {
+  std::vector<gpu::ShaderModTexture> out;
+  for (const GameTextureRef& t : textures) {
+    gpu::ShaderModTexture item{};
+    std::memcpy(item.archive, t.archive.data(), std::min(t.archive.size(), sizeof(item.archive) - 1));
+    item.entry = t.entry, item.width = t.width, item.height = t.height;
+    out.push_back(item);
+  }
+  return out;
 }
 
 bool BuildMod(const ShaderSource& source, const BuildRequest& request, std::string& log, std::atomic<size_t>* done) {
@@ -277,7 +292,12 @@ bool BuildMod(const ShaderSource& source, const BuildRequest& request, std::stri
   const size_t count = request.shaders.size();
   std::vector<gpu::ShaderModEntry> entries(count);
   std::vector<uint8_t> blobs;
-  const size_t base = sizeof(gpu::ShaderModHeader) + count * sizeof(gpu::ShaderModEntry) + request.meshes.size() * sizeof(uint64_t);
+  // The oldest version that holds what it needs, which older builds of the game still read: 3, or 4 with game textures,
+  // or 5 when it's see-through.
+  const bool textured = !request.textures.empty();
+  const uint32_t version = request.see_through ? 5 : textured ? 4 : 3;
+  const size_t header_bytes = version == 5 ? sizeof(gpu::ShaderModHeader) : version == 4 ? gpu::kShaderModHeaderV4Bytes : gpu::kShaderModHeaderV3Bytes;
+  const size_t base = header_bytes + count * sizeof(gpu::ShaderModEntry) + request.meshes.size() * sizeof(uint64_t) + request.textures.size() * sizeof(gpu::ShaderModTexture);
   const auto append = [&](const Job& j, uint32_t& offset, uint32_t& size) {
     const std::vector<uint8_t> blob = ReadAll(output(j));
     offset = uint32_t(base + blobs.size());
@@ -291,10 +311,12 @@ bool BuildMod(const ShaderSource& source, const BuildRequest& request, std::stri
   }
   gpu::ShaderModHeader header{};
   std::memcpy(header.magic, "KSHD", sizeof(header.magic));
-  header.version = 3;
+  header.version = version;
   header.count = uint32_t(count);
   header.mesh_count = uint32_t(request.meshes.size());
   header.model_type = request.meshes.empty() ? 0 : request.model_type;
+  header.texture_count = uint32_t(request.textures.size());
+  header.flags = request.see_through ? gpu::kShaderModSeeThrough : 0;
 
   fs::create_directories(request.out.parent_path(), ec);
   // Written beside and moved over, so the game's reload never reads half a file.
@@ -302,9 +324,10 @@ bool BuildMod(const ShaderSource& source, const BuildRequest& request, std::stri
   partial += ".partial";
   {
     std::ofstream f(partial, std::ios::binary | std::ios::trunc);
-    f.write(reinterpret_cast<const char*>(&header), sizeof(header));
+    f.write(reinterpret_cast<const char*>(&header), std::streamsize(header_bytes));
     f.write(reinterpret_cast<const char*>(entries.data()), std::streamsize(count * sizeof(gpu::ShaderModEntry)));
     f.write(reinterpret_cast<const char*>(request.meshes.data()), std::streamsize(request.meshes.size() * sizeof(uint64_t)));
+    f.write(reinterpret_cast<const char*>(request.textures.data()), std::streamsize(request.textures.size() * sizeof(gpu::ShaderModTexture)));
     f.write(reinterpret_cast<const char*>(blobs.data()), std::streamsize(blobs.size()));
     if (!f) {
       log = TrFormat("could not write {0}", {partial.string()});

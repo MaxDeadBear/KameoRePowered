@@ -229,7 +229,8 @@ def collect_meshes(resolver: Resolver, roots: list[Node]) -> list[Mesh]:
                 owner_material = node
             elif node.type == "ndRigidSkinIdx":
                 owner_skin = node
-            elif node.type == "ndPushBuffer" and current is not None:
+            # A level's background geometry draws through ndBGPushBuffer (under ndBGGroup), laid out as ndPushBuffer.
+            elif node.type in ("ndPushBuffer", "ndBGPushBuffer") and current is not None:
                 palette = read_palette(resolver, skin) if skin is not None else []
                 for slot, draw in enumerate(read_push_buffer(resolver, node)):
                     draw.material = material

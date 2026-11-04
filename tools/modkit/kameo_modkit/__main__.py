@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 from collections import Counter
 
@@ -13,7 +14,9 @@ from .caff import Caff
 from .graph import Ref, Resolver, rendergraph_roots
 from .material import read_material, texture_palette
 from .mesh import NORMAL, TEXCOORD, collect_meshes
-from .texture import read_texture, to_pixels, write_png
+from .texture import KIND_2D, game_hashes, read_texture, to_pixels, write_png
+
+MANIFEST = "kameo_textures.json"
 
 
 def info(path: str) -> None:
@@ -41,6 +44,8 @@ class TextureWriter:
         self.folder = folder
         self.relative = relative
         self.written: dict[tuple[int, int], tuple[str, bool]] = {}
+        # Per PNG, what the game knows the texture as, for an edited image to replace it in game (textures/replace).
+        self.game_textures: dict[str, dict] = {}
         os.makedirs(folder, exist_ok=True)
 
     def write(self, ref: Ref, mask: bool = False) -> tuple[str, bool]:
@@ -60,7 +65,15 @@ class TextureWriter:
                 pixels = np.stack([np.full_like(pixels[:, :, 0], 255)] * 3 + [luma.astype(np.uint8)], axis=2)
             write_png(os.path.join(self.folder, name), pixels)
             self.written[key] = (f"{self.relative}/{name}", normal)
+            if texture.kind == KIND_2D:
+                self.game_textures[name] = {"hashes": [f"{h:016X}" for h in game_hashes(self.resolver, texture)], "entry": ref.entry.index, "width": texture.width, "height": texture.height,
+                                            "format": texture.gpu_format, "kind": "normal" if normal else "mask" if mask else "colour"}
         return self.written[key]
+
+    def write_manifest(self) -> None:
+        """kameo_textures.json beside the PNGs: each one's game hashes, size, format and kind."""
+        with open(os.path.join(self.folder, MANIFEST), "w", encoding="utf-8") as handle:
+            json.dump(self.game_textures, handle, indent=1)
 
 
 def export_obj(path: str, out: str) -> None:

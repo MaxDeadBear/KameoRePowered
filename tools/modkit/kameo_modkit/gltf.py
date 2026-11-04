@@ -228,6 +228,7 @@ def export_gltf(path: str, out: str) -> None:
         handle.write(build.blob)
     with open(out, "w", encoding="utf-8") as handle:
         json.dump(document, handle, indent=1)
+    textures.write_manifest()
     joints = sum(len(s["joints"]) for s in skins)
     print(f"wrote {out}: {len(meshes)} meshes, {sum(len(m['primitives']) for m in meshes)} primitives, {len(materials)} materials, {len(images)} textures, {joints} joints")
 

@@ -44,8 +44,6 @@ void Calibrate() {
 
 }  // namespace
 
-double ProfileNsPerTick() { return g_nsPerTick; }
-
 bool FrameProfileDetailed() { return REXCVAR_GET(kameo_gfx_frame_profile); }
 
 void ReportFrameProfile() {

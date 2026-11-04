@@ -9,6 +9,9 @@ MAINICON ICON "res/windows/kameo.ico"
 #elif defined(KAMEO_RC_CRASH_DIALOG)
 #define KAMEO_RC_DESCRIPTION "Kameo: RePowered crash dialog"
 #define KAMEO_RC_NAME "KameoCrashDialog"
+#elif defined(KAMEO_RC_BUG_REPORTER)
+#define KAMEO_RC_DESCRIPTION "Kameo: RePowered bug reporter"
+#define KAMEO_RC_NAME "KameoBugReporter"
 #elif defined(KAMEO_RC_SHADER_EDITOR)
 #define KAMEO_RC_DESCRIPTION "Kameo: RePowered shader editor"
 #define KAMEO_RC_NAME "KameoShaderEditor"

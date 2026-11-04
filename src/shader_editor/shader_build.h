@@ -9,6 +9,9 @@
 #include <string>
 #include <vector>
 
+#include "gpu/shaders/shader_mods.h"
+#include "shader_editor/shader_graph.h"
+
 namespace kameo::shader_editor {
 
 // Something a mod can apply to. It stands for shaders, not objects: whatever else draws with them changes too.
@@ -53,10 +56,17 @@ struct BuildRequest {
   uint32_t model_type = 0;
   // Reach surfaces the game doesn't light too (MOD_INCLUDE_UNLIT in shader_mod.hlsli).
   bool unlit = false;
+  // The game's textures it draws with, by slot (GameTextures in shader_graph.h); named, never copied in.
+  std::vector<gpu::ShaderModTexture> textures;
+  // Its Opacity can be below 1 (SeeThrough in shader_graph.h), so the game shows it by coverage where it can.
+  bool see_through = false;
   std::filesystem::path out;
   bool dxil = true;
   bool spirv = true;
 };
+
+// A graph's game textures as the package names them.
+std::vector<gpu::ShaderModTexture> PackageTextures(const std::vector<GameTextureRef>& textures);
 
 // Compiles and writes the package, which a running game picks up by itself; false with the compiler's message in `log`.
 bool BuildMod(const ShaderSource& source, const BuildRequest& request, std::string& log, std::atomic<size_t>* done = nullptr);

@@ -110,6 +110,8 @@ opens, and the Play page offers the newest release, or pre-release when
   the game folder to it; the exit code is 0 when it is in use afterwards.
 - `KameoLauncher --build-mods` prepares the mod data folder and prints the
   `--game_data_root` argument the game would get.
+- `KameoLauncher --play` starts the game as the Play button does, enabled mods
+  included, without opening the window; the Blender add-ons' Play button runs it.
 
 DLC is installed under the content root (`user_data_root` from
 `kameorepowered.toml`, or `Documents\kameorepowered`) in

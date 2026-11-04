@@ -6,6 +6,7 @@
 #include <rex/logging.h>
 
 #include "gpu/config.h"
+#include "gpu/draw/capture.h"
 #include "gpu/log.h"
 #include "ui/hud/fps_counter.h"
 
@@ -113,8 +114,15 @@ KAMEO_PASS_HOOK_UNLESS(824DCA18, !REXCVAR_GET(kameo_gfx_grass))  // _grass_coreR
 #undef KAMEO_PASS_HOOK
 #undef KAMEO_PASS_HOOK_UNLESS
 
-// modelRender(model, tag) -- skips the text box's shadow model where KameoSkipTextBoxShadow asks.
+// modelRender(model, tag) -- skips the text box's shadow model where KameoSkipTextBoxShadow asks, and marks the loading
+// screen's backdrop, which levelDrawLevelFadeModel renders by these two tags.
 extern "C" REX_FUNC(sub_8224C028) {
   if (KameoSkipTextBoxShadow()) return;
+  using namespace kameo::gpu;
+  using kameo::gpu::detail::g_capturingLoadingLayer;
+  constexpr uint32_t kBackdropTags[] = {0x05446695, 0x00596633};
+  const uint8_t layer = g_capturingLoadingLayer;
+  if (layer != kLoadingNone && (ctx.r4.u32 == kBackdropTags[0] || ctx.r4.u32 == kBackdropTags[1])) g_capturingLoadingLayer = kLoadingBackdrop;
   __imp__sub_8224C028(ctx, base);
+  g_capturingLoadingLayer = layer;
 }

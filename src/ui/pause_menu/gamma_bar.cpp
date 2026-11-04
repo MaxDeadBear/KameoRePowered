@@ -6,6 +6,7 @@
 
 #include <rex/system/kernel_state.h>
 
+#include "ui/pause_menu/pause_card.h"
 #include "ui/pause_menu/pause_menu_internal.h"
 
 using namespace kameo::ui;
@@ -48,6 +49,11 @@ uint32_t BarYSlot(uint8_t* base, uint32_t matrix) {
 
 // storybookSimplePauseObj_renderbuffer(pauseObj) -- on the brightness page, moves the game's bar to its line and hands the render thread a second bar for gamma.
 extern "C" REX_FUNC(sub_823EFAF8) {
+  // The parchment card draws in its place while it is up.
+  if (KameoPauseCardOpen()) {
+    g_gammaBar.ready = false;
+    return;
+  }
   const uint32_t pause = ctx.r3.u32;
   const uint32_t record = pause ? REX_LOAD_U32(pause + 512) : 0;
   const uint32_t window = record ? REX_LOAD_U32(record + 68) : 0;

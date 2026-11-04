@@ -22,8 +22,6 @@ inline uint64_t ProfileTicks() {
   return uint64_t(std::chrono::steady_clock::now().time_since_epoch().count());
 #endif
 }
-// Nanoseconds per tick, from the calibration ReportFrameProfile maintains; 0 until the first report window has passed.
-double ProfileNsPerTick();
 
 struct FrameProfile {
   // Written by the render thread only.

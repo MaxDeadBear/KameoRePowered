@@ -88,8 +88,6 @@ void KameoPushAchievementToast(const rex::system::AchievementEvent& event) {
   g_queue.push_back({Widen(event.achievement.label), event.achievement.gamerscore});
 }
 
-bool KameoAchievementToastPending() { return g_toast.pending; }
-
 void KameoTickAchievementToast(PPCContext& ctx, uint8_t* base) {
   if (REXCVAR_GET(kameo_toast_test)) {
     REXCVAR_SET(kameo_toast_test, false);

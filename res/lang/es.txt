@@ -2,6 +2,14 @@
 # An entry with nothing under its English shows in English. \n is a line break. Keep {0}, {1}... and
 # {font tags} as they are; they're filled in or read by the game.
 
+# src/core/game_archive.cpp:86
+{0} is not a game archive
+{0} no es un archivo del juego
+
+# src/core/game_archive.cpp:97
+{0} could not be unpacked
+No se ha podido descomprimir {0}
+
 # src/crash_dialog/main.cpp:17
 Would you like to send a crash report?
 ¿Quieres enviar un informe de error?
@@ -30,63 +38,63 @@ Enviar informe
 Kameo has crashed.\n\nWould you like to send a crash report? This is completely optional, and nothing is sent unless you choose Yes. A report shows the developers what went wrong, so crashes can get fixed.
 Kameo se ha cerrado inesperadamente.\n\n¿Quieres enviar un informe de error? Es totalmente opcional y no se envía nada a menos que elijas Sí. Un informe muestra a los desarrolladores qué ha fallado, para que los cierres inesperados puedan corregirse.
 
-# src/engine/dlc/dlc_skin_names.cpp:30
+# src/engine/dlc/dlc_skin_names.cpp:31
 Armored Kameo
 Kameo con armadura
 
-# src/engine/dlc/dlc_skin_names.cpp:30
+# src/engine/dlc/dlc_skin_names.cpp:31
 Fright Pack Kameo
 Kameo Pack de miedo
 
-# src/engine/dlc/dlc_skin_names.cpp:31
+# src/engine/dlc/dlc_skin_names.cpp:32
 Masquerade Kameo #1
 Kameo Mascarada nº 1
 
-# src/engine/dlc/dlc_skin_names.cpp:31
+# src/engine/dlc/dlc_skin_names.cpp:32
 Masquerade Kameo #2
 Kameo Mascarada nº 2
 
-# src/engine/dlc/dlc_skin_names.cpp:31
+# src/engine/dlc/dlc_skin_names.cpp:32
 Masquerade Kameo #3
 Kameo Mascarada nº 3
 
-# src/engine/dlc/dlc_skin_names.cpp:31
+# src/engine/dlc/dlc_skin_names.cpp:32
 Masquerade Kameo #4
 Kameo Mascarada nº 4
 
-# src/engine/dlc/dlc_skin_names.cpp:31
+# src/engine/dlc/dlc_skin_names.cpp:32
 Masquerade Kameo #5
 Kameo Mascarada nº 5
 
-# src/engine/dlc/dlc_skin_names.cpp:32
+# src/engine/dlc/dlc_skin_names.cpp:33
 Masquerade Kameo #6
 Kameo Mascarada nº 6
 
-# src/engine/dlc/dlc_skin_names.cpp:32
+# src/engine/dlc/dlc_skin_names.cpp:33
 Masquerade Kameo #7
 Kameo Mascarada nº 7
 
-# src/engine/dlc/dlc_skin_names.cpp:32
+# src/engine/dlc/dlc_skin_names.cpp:33
 Masquerade Kameo #8
 Kameo Mascarada nº 8
 
-# src/engine/dlc/dlc_skin_names.cpp:32
+# src/engine/dlc/dlc_skin_names.cpp:33
 Masquerade Kameo #9
 Kameo Mascarada nº 9
 
-# src/engine/dlc/dlc_skin_names.cpp:32
+# src/engine/dlc/dlc_skin_names.cpp:33
 Masquerade Kameo #10
 Kameo Mascarada nº 10
 
-# src/engine/dlc/dlc_skin_names.cpp:33
+# src/engine/dlc/dlc_skin_names.cpp:34
 Winter Warrior Kameo
 Kameo Guerrera invernal
 
-# src/engine/dlc/dlc_skin_names.cpp:33
+# src/engine/dlc/dlc_skin_names.cpp:34
 Design-A-Skin Kameo
 Kameo Diseña tu apariencia
 
-# src/engine/dlc/joiner_skin.cpp:346 (+1)
+# src/engine/dlc/joiner_skin.cpp:410 (+1)
 Standard
 Estándar
 
@@ -146,11 +154,11 @@ Cruceta: izquierda
 D-Pad Right
 Cruceta: derecha
 
-# src/input/pad_presets.cpp:67 (+4)
+# src/input/pad_presets.cpp:67 (+5)
 Start
 
 
-# src/input/pad_presets.cpp:68 (+4)
+# src/input/pad_presets.cpp:68 (+7)
 Back
 Atrás
 
@@ -522,39 +530,43 @@ Faltan los archivos del juego. Elige primero tu juego en la página Jugar.
 The level mods could not be applied: {0}
 No se han podido aplicar los mods de niveles: {0}
 
-# src/launcher/launch.cpp:76
+# src/launcher/launch.cpp:77
 The game could not be started (error {0}).
 No se ha podido iniciar el juego (error {0}).
 
-# src/launcher/launch.cpp:81
+# src/launcher/launch.cpp:82
 Kameo is starting...
 Kameo se está iniciando...
 
-# src/launcher/level_mods.cpp:66
+# src/launcher/level_mods.cpp:70
 could not link {0} (error {1})
 no se ha podido enlazar {0} (error {1})
 
-# src/launcher/level_mods.cpp:70
+# src/launcher/level_mods.cpp:74
 could not read the game folder: {0}
 no se ha podido leer la carpeta del juego: {0}
 
-# src/launcher/level_mods.cpp:133
+# src/launcher/level_mods.cpp:137
 {0} and {1}
 {0} y {1}
 
-# src/launcher/level_mods.cpp:134
+# src/launcher/level_mods.cpp:138
 {0} is changed by {1}; only {2} (lowest in the list) is used for it.
 {1} modifican {0}; solo se usa {2} (el más bajo de la lista).
 
-# src/launcher/level_mods.cpp:145
+# src/launcher/level_mods.cpp:150
 the game folder (assets with default.xex) was not found
 no se ha encontrado la carpeta del juego (assets con default.xex)
 
 # src/launcher/level_mods.cpp:167
+{0}: {1} isn't one of the game's files (a downloadable costume?), so it was left out.
+
+
+# src/launcher/level_mods.cpp:183
 the game is still running from the mod build; close it first ({0})
 el juego sigue ejecutándose desde la compilación con mods; ciérralo primero ({0})
 
-# src/launcher/level_mods.cpp:178 (+3)
+# src/launcher/level_mods.cpp:200 (+3)
 could not write {0}
 no se ha podido escribir {0}
 
@@ -810,7 +822,7 @@ Las versiones preliminares son compilaciones de prueba con las correcciones más
 Check for new builds when the launcher opens
 Buscar nuevas compilaciones al abrir el launcher
 
-# src/launcher/ui/page_builds.cpp:79 (+6)
+# src/launcher/ui/page_builds.cpp:79 (+7)
 Cancel
 Cancelar
 
@@ -1046,103 +1058,103 @@ por {0}
 Changes {0}
 Modifica {0}
 
-# src/launcher/ui/page_mods.cpp:78
+# src/launcher/ui/page_mods.cpp:79
 Enabled mods are applied when you press Play, into a copy of the game folder made of links; the game files themselves are never changed.
 Los mods activados se aplican al pulsar Jugar, sobre una copia de la carpeta del juego hecha de enlaces; los archivos del juego nunca se modifican.
 
-# src/launcher/ui/page_mods.cpp:79
+# src/launcher/ui/page_mods.cpp:80
 Kameo skins replace her Bonus costumes: pick the costume in the storybook's Bonus pages.
 Las apariencias de Kameo sustituyen a sus disfraces extra: elige el disfraz en las páginas de extras del libro.
 
-# src/launcher/ui/page_mods.cpp:103
+# src/launcher/ui/page_mods.cpp:104
 Shader Mods
 Mods de shaders
 
-# src/launcher/ui/page_mods.cpp:104
+# src/launcher/ui/page_mods.cpp:105
 Shader Editor
 Editor de shaders
 
-# src/launcher/ui/page_mods.cpp:118
+# src/launcher/ui/page_mods.cpp:119
 No shader mods yet. Put .kshader files in the shader_mods folder, or make your own with the Shader Editor.
 Todavía no hay mods de shaders. Coloca archivos .kshader en la carpeta shader_mods o crea los tuyos con el Editor de shaders.
 
-# src/launcher/ui/page_mods.cpp:136
+# src/launcher/ui/page_mods.cpp:137
 Shader mods change how things are drawn, and apply straight away, even with the game running.
 Los mods de shaders cambian cómo se dibujan las cosas y se aplican al momento, incluso con el juego en marcha.
 
-# src/launcher/ui/page_mods.cpp:146
+# src/launcher/ui/page_mods.cpp:147
 Cheats Were Used
 Se han usado trucos
 
-# src/launcher/ui/page_mods.cpp:149
+# src/launcher/ui/page_mods.cpp:150
 Leaderboard scores are off because a cheat was used, and there is no backup of your saves from before it.
 Las puntuaciones de la clasificación están desactivadas porque se ha usado un truco y no hay copia de seguridad de tus partidas guardadas de antes.
 
-# src/launcher/ui/page_mods.cpp:151
+# src/launcher/ui/page_mods.cpp:152
 Leaderboard scores are off because a cheat was used. Your saves were backed up just before that. Restoring them turns the cheats off and lets you post scores again, but any progress since then goes back too. Your current saves are kept in the save_backups folder.
 Las puntuaciones de la clasificación están desactivadas porque se ha usado un truco. Se hizo una copia de seguridad de tus partidas guardadas justo antes. Al restaurarlas se desactivan los trucos y puedes volver a publicar puntuaciones, pero también se pierde el progreso posterior. Tus partidas guardadas actuales se conservan en la carpeta save_backups.
 
-# src/launcher/ui/page_mods.cpp:153
+# src/launcher/ui/page_mods.cpp:154
 Restore Saves From Before Cheats
 Restaurar partidas de antes de los trucos
 
-# src/launcher/ui/page_mods.cpp:155
+# src/launcher/ui/page_mods.cpp:156
 Yes, Restore My Saves
 Sí, restaurar mis partidas
 
-# src/launcher/ui/page_mods.cpp:158
+# src/launcher/ui/page_mods.cpp:159
 Your saves from before cheats are back.
 Se han recuperado tus partidas guardadas de antes de los trucos.
 
-# src/launcher/ui/page_mods.cpp:172 (+2)
+# src/launcher/ui/page_mods.cpp:173 (+2)
 Mods
 
 
-# src/launcher/ui/page_mods.cpp:177 (+1)
+# src/launcher/ui/page_mods.cpp:178 (+1)
 Textures
 Texturas
 
-# src/launcher/ui/page_mods.cpp:178 (+1)
+# src/launcher/ui/page_mods.cpp:179 (+1)
 Texture Replacements
 Sustitución de texturas
 
-# src/launcher/ui/page_mods.cpp:178
+# src/launcher/ui/page_mods.cpp:179
 Load replacement textures from the textures folder.
 Carga texturas de sustitución de la carpeta textures.
 
-# src/launcher/ui/page_mods.cpp:179 (+1)
+# src/launcher/ui/page_mods.cpp:180 (+1)
 Texture Dumping
 Volcado de texturas
 
-# src/launcher/ui/page_mods.cpp:179
+# src/launcher/ui/page_mods.cpp:180
 Save the game's textures as they load, for making replacements.
 Guarda las texturas del juego a medida que se cargan, para crear sustituciones.
 
-# src/launcher/ui/page_mods.cpp:180 (+1)
+# src/launcher/ui/page_mods.cpp:181 (+1)
 Movie Replacements
 Sustitución de vídeos
 
-# src/launcher/ui/page_mods.cpp:180
+# src/launcher/ui/page_mods.cpp:181
 Play movies/<name>.mp4 instead of fmv/<name>.bik, e.g. movies/kameoIntro.mp4. With a soundtrack it plays its own sound for its own length; without one only the picture is replaced.
 Reproduce movies/<nombre>.mp4 en lugar de fmv/<nombre>.bik, p. ej., movies/kameoIntro.mp4. Si tiene pista de sonido, reproduce su propio sonido durante toda su duración; si no, solo se sustituye la imagen.
 
-# src/launcher/ui/page_mods.cpp:183 (+1)
+# src/launcher/ui/page_mods.cpp:184 (+1)
 Gameplay
 Jugabilidad
 
-# src/launcher/ui/page_mods.cpp:184 (+1)
+# src/launcher/ui/page_mods.cpp:185 (+1)
 Story Split-screen
 Historia a pantalla dividida
 
-# src/launcher/ui/page_mods.cpp:185 (+1)
+# src/launcher/ui/page_mods.cpp:186 (+1)
 Unlock All Extras
 Desbloquear todos los extras
 
-# src/launcher/ui/page_mods.cpp:186 (+1)
+# src/launcher/ui/page_mods.cpp:187 (+1)
 Skippable Cutscenes
 Escenas que se pueden saltar
 
-# src/launcher/ui/page_mods.cpp:186
+# src/launcher/ui/page_mods.cpp:187
 Start skips in-engine cutscenes and every FMV.
 Start salta las escenas del motor y todos los vídeos FMV.
 
@@ -1470,267 +1482,331 @@ Cerrar el launcher al jugar
 Settings are saved as you change them to {0}.
 Los ajustes se guardan en {0} a medida que los cambias.
 
-# src/launcher/ui/widgets.cpp:152
+# src/launcher/ui/widgets.cpp:153
 Restored the defaults on this page.
 Se han restablecido los valores predeterminados de esta página.
 
-# src/launcher/ui/widgets.cpp:157 (+1)
+# src/launcher/ui/widgets.cpp:158 (+1)
 Display Mode
 Modo de pantalla
 
-# src/launcher/ui/widgets.cpp:158 (+1)
+# src/launcher/ui/widgets.cpp:159 (+1)
 Windowed
 En ventana
 
-# src/launcher/ui/widgets.cpp:158 (+1)
+# src/launcher/ui/widgets.cpp:159 (+1)
 Borderless
 Sin bordes
 
-# src/launcher/ui/widgets.cpp:158 (+1)
+# src/launcher/ui/widgets.cpp:159 (+1)
 Fullscreen
 Pantalla completa
 
-# src/launcher/ui/widgets.cpp:169 (+1)
+# src/launcher/ui/widgets.cpp:170 (+1)
 Resolution
 Resolución
 
-# src/launcher/ui/widgets.cpp:169
+# src/launcher/ui/widgets.cpp:170
 The size the game renders at. A size of another shape than your window is shown with black bars.
 El tamaño al que se renderiza el juego. Si tiene otra proporción que la ventana, se muestra con franjas negras.
 
-# src/launcher/ui/widgets.cpp:173
+# src/launcher/ui/widgets.cpp:174
 Match Window
 Igual que la ventana
 
-# src/launcher/ui/widgets.cpp:174
+# src/launcher/ui/widgets.cpp:175
 {0} x {1}  (Ultrawide)
 {0} x {1}  (ultrapanorámica)
 
-# src/shader_editor/editor.cpp:122
+# src/launcher/ui/widgets.cpp:186
+Custom ({0} x {1})
+
+
+# src/launcher/ui/widgets.cpp:195
+Custom...
+
+
+# src/launcher/ui/widgets.cpp:212
+width x height
+
+
+# src/shader_editor/editor.cpp:123
 {0} opened
 {0} abierto
 
-# src/shader_editor/editor.cpp:195
+# src/shader_editor/editor.cpp:197
 {0} in {1} s, and saved
 {0} en {1} s, y guardado
 
-# src/shader_editor/editor.cpp:195
+# src/shader_editor/editor.cpp:197
 {0} in {1} s, for this renderer only: Save before sharing it
 {0} en {1} s, solo para este renderizador: guárdalo antes de compartirlo
 
-# src/shader_editor/editor.cpp:210
+# src/shader_editor/editor.cpp:212
 The mod's name, which is also its file's
 El nombre del mod, que también es el de su archivo
 
-# src/shader_editor/editor.cpp:212
+# src/shader_editor/editor.cpp:214
 New
 Nuevo
 
-# src/shader_editor/editor.cpp:214
+# src/shader_editor/editor.cpp:216
 Open...
 Abrir...
 
-# src/shader_editor/editor.cpp:223
+# src/shader_editor/editor.cpp:225
 No saved mods yet.
 Todavía no hay mods guardados.
 
-# src/shader_editor/editor.cpp:229
+# src/shader_editor/editor.cpp:231
 Mods Folder
 Carpeta de mods
 
-# src/shader_editor/editor.cpp:236
+# src/shader_editor/editor.cpp:238
 Start from...
 Empezar desde...
 
-# src/shader_editor/editor.cpp:243
+# src/shader_editor/editor.cpp:245
 Undo
 Deshacer
 
-# src/shader_editor/editor.cpp:245
+# src/shader_editor/editor.cpp:247
 Ctrl+Z
 
 
-# src/shader_editor/editor.cpp:248
+# src/shader_editor/editor.cpp:250
 Redo
 Rehacer
 
-# src/shader_editor/editor.cpp:250
+# src/shader_editor/editor.cpp:252
 Ctrl+Y
 
 
-# src/shader_editor/editor.cpp:254
+# src/shader_editor/editor.cpp:256
 Frame All
 Encuadrar todo
 
-# src/shader_editor/editor.cpp:255
+# src/shader_editor/editor.cpp:257
 Home, or F with nothing selected
 Inicio, o F sin nada seleccionado
 
-# src/shader_editor/editor.cpp:257 (+3)
+# src/shader_editor/editor.cpp:259 (+3)
 Comment
 Comentario
 
-# src/shader_editor/editor.cpp:264
+# src/shader_editor/editor.cpp:266
 C on the canvas wraps the selection in a comment
 C en el lienzo envuelve la selección en un comentario
 
-# src/shader_editor/editor.cpp:268
+# src/shader_editor/editor.cpp:270
 Raw HLSL
 HLSL sin procesar
 
-# src/shader_editor/editor.cpp:276
+# src/shader_editor/editor.cpp:278
 Live Update
 Actualización en directo
 
-# src/shader_editor/editor.cpp:277
+# src/shader_editor/editor.cpp:279
 Compiles and applies to the running game a moment after each edit
 Compila y aplica al juego en marcha un momento después de cada cambio
 
-# src/shader_editor/editor.cpp:281
+# src/shader_editor/editor.cpp:283
 Save
 Guardar
 
-# src/shader_editor/editor.cpp:283
+# src/shader_editor/editor.cpp:285
 Compiles for both renderers and saves the mod; a running game picks it up
 Compila para ambos renderizadores y guarda el mod; si el juego está en marcha, lo carga
 
-# src/shader_editor/editor.cpp:285
+# src/shader_editor/editor.cpp:287
 Replace graph
 Sustituir grafo
 
-# src/shader_editor/editor.cpp:288
+# src/shader_editor/editor.cpp:290
 Replace the graph with {0}?
 ¿Sustituir el grafo por {0}?
 
-# src/shader_editor/editor.cpp:289
+# src/shader_editor/editor.cpp:291
 Undo brings yours back.
 Deshacer recupera el tuyo.
 
-# src/shader_editor/editor.cpp:290
+# src/shader_editor/editor.cpp:292
 Replace
 Sustituir
 
-# src/shader_editor/editor.cpp:297
+# src/shader_editor/editor.cpp:301
 Keep Mine
 Conservar el mío
 
-# src/shader_editor/editor.cpp:311
+# src/shader_editor/editor.cpp:315
 Search nodes
 Buscar nodos
 
-# src/shader_editor/editor.cpp:345
+# src/shader_editor/editor.cpp:349
 Hold {0} and click the graph to place one.
 Mantén {0} y haz clic en el grafo para colocar uno.
 
-# src/shader_editor/editor.cpp:363 (+8)
+# src/shader_editor/editor.cpp:367 (+8)
 Colour
 Color
 
-# src/shader_editor/editor.cpp:369
+# src/shader_editor/editor.cpp:373
 Details
 Detalles
 
-# src/shader_editor/editor.cpp:370
+# src/shader_editor/editor.cpp:374
 Select a node to edit it.
 Selecciona un nodo para editarlo.
 
-# src/shader_editor/editor.cpp:371
+# src/shader_editor/editor.cpp:375
 {0} nodes selected.
 {0} nodos seleccionados.
 
-# src/shader_editor/editor.cpp:384
+# src/shader_editor/editor.cpp:388
 Parameter
 Parámetro
 
-# src/shader_editor/editor.cpp:385
+# src/shader_editor/editor.cpp:389
 Named constants are listed under Parameters, to tune without finding them in the graph
 Las constantes con nombre aparecen en Parámetros, para ajustarlas sin buscarlas en el grafo
 
-# src/shader_editor/editor.cpp:391
+# src/shader_editor/editor.cpp:395
 Channel
 Canal
 
-# src/shader_editor/editor.cpp:398
+# src/shader_editor/editor.cpp:407
+{0}, {1} x {2}
+{0}, {1} x {2}
+
+# src/shader_editor/editor.cpp:410
+A mod can draw with four of the game's textures; this fifth one reads nothing.
+Un mod puede dibujar con cuatro texturas del juego; esta quinta no lee nada.
+
+# src/shader_editor/editor.cpp:412
+No texture chosen yet.
+Aún no se ha elegido ninguna textura.
+
+# src/shader_editor/editor.cpp:414
+Choose a texture...
+Elegir una textura...
+
+# src/shader_editor/editor.cpp:416 (+1)
+Its colour
+Su color
+
+# src/shader_editor/editor.cpp:416 (+1)
+Its alpha
+Su alfa
+
+# src/shader_editor/editor.cpp:417
+Reads
+Lee
+
+# src/shader_editor/editor.cpp:424
 Unwired inputs
 Entradas sin conectar
 
-# src/shader_editor/editor.cpp:401
+# src/shader_editor/editor.cpp:427
 {0}: the surface's UV
 {0}: la UV de la superficie
 
-# src/shader_editor/editor.cpp:418
+# src/shader_editor/editor.cpp:454
+Choose a game texture
+Elegir una textura del juego
+
+# src/shader_editor/editor.cpp:456
+Find what wears it: an enemy, a character, a prop. The mod names the texture, and the game reads it from your own files, so the mod holds none of the game's pictures.
+Busca lo que la lleva: un enemigo, un personaje, un objeto. El mod nombra la textura y el juego la lee de tus propios archivos, así que el mod no contiene imágenes del juego.
+
+# src/shader_editor/editor.cpp:459
+Search, such as ShadowTroll
+Buscar, por ejemplo ShadowTroll
+
+# src/shader_editor/editor.cpp:460
+Reading the game's levels... {0} of {1} (once only)
+Leyendo los niveles del juego... {0} de {1} (solo una vez)
+
+# src/shader_editor/editor.cpp:471
+Choose something on the left.
+Elige algo a la izquierda.
+
+# src/shader_editor/editor.cpp:473
+Reading...
+Leyendo...
+
+# src/shader_editor/editor.cpp:475
+It has no textures a mod can draw with.
+No tiene texturas con las que un mod pueda dibujar.
+
+# src/shader_editor/editor.cpp:487
+{0} x {1}, entry {2} of {3}
+{0} x {1}, entrada {2} de {3}
+
+# src/shader_editor/editor.cpp:503
 Parameters
 Parámetros
 
-# src/shader_editor/editor.cpp:431
+# src/shader_editor/editor.cpp:516
 Name a Number or Colour node to list it here.
 Pon nombre a un nodo Número o Color para que aparezca aquí.
 
-# src/shader_editor/editor.cpp:445
+# src/shader_editor/editor.cpp:530
 Applies to
 Se aplica a
 
-# src/shader_editor/editor.cpp:447
+# src/shader_editor/editor.cpp:532
 Preparing the game's shaders...
 Preparando los shaders del juego...
 
-# src/shader_editor/editor.cpp:452
+# src/shader_editor/editor.cpp:537
 Characters
 Personajes
 
-# src/shader_editor/editor.cpp:456
+# src/shader_editor/editor.cpp:541
 Surfaces
 Superficies
 
-# src/shader_editor/editor.cpp:460
+# src/shader_editor/editor.cpp:545
 Levels
 Niveles
 
-# src/shader_editor/editor.cpp:468 (+1)
+# src/shader_editor/editor.cpp:553 (+1)
 Also surfaces the game doesn't light
 También superficies que el juego no ilumina
 
-# src/shader_editor/editor.cpp:473
+# src/shader_editor/editor.cpp:558
 Glows, effects and surfaces lit from within, such as lava. Their Game colour already has fog in it, and Base texture, Light and Normal aren't known.
 Brillos, efectos y superficies iluminadas desde dentro, como la lava. Su Color del juego ya lleva niebla, y se desconocen Textura base, Luz y Normal.
 
-# src/shader_editor/editor.cpp:476
+# src/shader_editor/editor.cpp:561
 {0} shaders. These choose the game's shaders, not objects, so anything else drawn with the same ones changes too.
 {0} shaders. Se eligen shaders del juego, no objetos, así que todo lo demás que se dibuje con ellos también cambia.
 
-# src/shader_editor/editor.cpp:477
+# src/shader_editor/editor.cpp:562
 {0} shaders, on this model alone: anything else drawn with them keeps the game's look.
 {0} shaders, solo en este modelo: todo lo demás que se dibuje con ellos conserva el aspecto del juego.
 
-# src/shader_editor/editor.cpp:482
+# src/shader_editor/editor.cpp:567
 Compile log
 Registro de compilación
 
-# src/shader_editor/editor.cpp:484
+# src/shader_editor/editor.cpp:569
 Compiling... {0} of {1}
 Compilando... {0} de {1}
 
-# src/shader_editor/editor.cpp:485
+# src/shader_editor/editor.cpp:570
 Save, or Live Update, compiles the shaders. Run the game to see them.
 Guardar o Actualización en directo compilan los shaders. Ejecuta el juego para verlos.
 
-# src/shader_editor/editor.cpp:527
+# src/shader_editor/editor.cpp:613
 float3 Shade(ShadeInputs s) {  ... the body below ...  }   Helpers: ModKeyLight, ModStep, ModBands, ModFresnel, ModOutline, ModHalftone, ModLuminance, ModNoise (docs/modding.md).
 float3 Shade(ShadeInputs s) {  ... el cuerpo de abajo ...  }   Funciones auxiliares: ModKeyLight, ModStep, ModBands, ModFresnel, ModOutline, ModHalftone, ModLuminance, ModNoise (docs/modding.md).
 
-# src/shader_editor/model.cpp:58
-{0} is not a game archive
-{0} no es un archivo del juego
-
-# src/shader_editor/model.cpp:69
-{0} could not be unpacked
-No se ha podido descomprimir {0}
-
-# src/shader_editor/model.cpp:522
+# src/shader_editor/model.cpp:277
 {0} could not be read
 No se ha podido leer {0}
 
-# src/shader_editor/model.cpp:546
+# src/shader_editor/model.cpp:300
 {0} has no model in it
 {0} no contiene ningún modelo
 
@@ -1742,19 +1818,23 @@ Canal {0}
 HLSL (Details panel)
 HLSL (panel Detalles)
 
-# src/shader_editor/node_canvas.cpp:242
+# src/shader_editor/node_canvas.cpp:63
+Choose in Details
+Elegir en Detalles
+
+# src/shader_editor/node_canvas.cpp:236
 Search nodes...
 Buscar nodos...
 
-# src/shader_editor/node_canvas.cpp:258
+# src/shader_editor/node_canvas.cpp:252
 [{0} + click]
 [{0} + clic]
 
-# src/shader_editor/node_canvas.cpp:430
+# src/shader_editor/node_canvas.cpp:424
 (surface UV)
 (UV de la superficie)
 
-# src/shader_editor/node_canvas.cpp:481
+# src/shader_editor/node_canvas.cpp:475
 right-click to add a node
 clic derecho para añadir un nodo
 
@@ -1866,95 +1946,99 @@ Térmico
 Ash
 Cenizas
 
-# src/shader_editor/preview.cpp:143
+# src/shader_editor/preview.cpp:155
 The preview's shader compiler failed.
 Ha fallado el compilador de shaders de la vista previa.
 
-# src/shader_editor/preview.cpp:205 (+1)
+# src/shader_editor/preview.cpp:217 (+1)
 Kameo
 
 
-# src/shader_editor/preview.cpp:206
+# src/shader_editor/preview.cpp:218
 Everyday
 De diario
 
-# src/shader_editor/preview.cpp:212
+# src/shader_editor/preview.cpp:224
 Alternate
 Alternativa
 
-# src/shader_editor/preview.cpp:324
+# src/shader_editor/preview.cpp:336
 Install the game to preview its characters.
 Instala el juego para ver una vista previa de sus personajes.
 
-# src/shader_editor/preview.cpp:524
+# src/shader_editor/preview.cpp:537
 Spin
 Girar
 
-# src/shader_editor/preview.cpp:549
+# src/shader_editor/preview.cpp:562
 Loading...
 Cargando...
 
-# src/shader_editor/preview.cpp:552
+# src/shader_editor/preview.cpp:565
 Drag to turn, right drag to move, wheel to zoom, double-click to frame.\nThe lighting stands in for a level's.
 Arrastra para girar, arrastra con el botón derecho para mover, rueda para zoom, doble clic para encuadrar.\nLa iluminación sustituye a la de un nivel.
 
-# src/shader_editor/shader_build.cpp:45
+# src/shader_editor/shader_build.cpp:46
 Lava
 Lava
 
-# src/shader_editor/shader_build.cpp:45
+# src/shader_editor/shader_build.cpp:46
 Fire off the lava
 Fuego de la lava
 
-# src/shader_editor/shader_build.cpp:98
+# src/shader_editor/shader_build.cpp:46
+Grass and plants
+Hierba y plantas
+
+# src/shader_editor/shader_build.cpp:100
 The game's shaders are missing from {0}; reinstall the game.
 Faltan los shaders del juego en {0}; vuelve a instalar el juego.
 
-# src/shader_editor/shader_build.cpp:113
+# src/shader_editor/shader_build.cpp:115
 The game's shader list could not be read.
 No se ha podido leer la lista de shaders del juego.
 
-# src/shader_editor/shader_build.cpp:155
+# src/shader_editor/shader_build.cpp:157
 {0}: new costume (everyday outfit)
 {0}: nuevo disfraz (ropa de diario)
 
-# src/shader_editor/shader_build.cpp:155
+# src/shader_editor/shader_build.cpp:157
 {0}: new costume (standard look)
 {0}: nuevo disfraz (aspecto estándar)
 
-# src/shader_editor/shader_build.cpp:161
+# src/shader_editor/shader_build.cpp:163
 Shared objects
 Objetos compartidos
 
-# src/shader_editor/shader_build.cpp:162
+# src/shader_editor/shader_build.cpp:164
 All characters
 Todos los personajes
 
-# src/shader_editor/shader_build.cpp:163
+# src/shader_editor/shader_build.cpp:165
 Everything in the game
 Todo el juego
 
-# src/shader_editor/shader_build.cpp:200
+# src/shader_editor/shader_build.cpp:215
 The shader compiler is missing from {0}; reinstall the game.
 Falta el compilador de shaders en {0}; vuelve a instalar el juego.
 
-# src/shader_editor/shader_build.cpp:204
+# src/shader_editor/shader_build.cpp:219
 Choose something for the mod to apply to.
 Elige algo a lo que aplicar el mod.
 
-# src/shader_editor/shader_build.cpp:251
+# src/shader_editor/shader_build.cpp:266
 The shader compiler did not start.
 El compilador de shaders no se ha iniciado.
 
-# src/shader_editor/shader_build.cpp:273
+# src/shader_editor/shader_build.cpp:288
 The shader compiler failed.
 Ha fallado el compilador de shaders.
 
-# src/shader_editor/shader_build.cpp:316
+# src/shader_editor/shader_build.cpp:336
 could not replace {0}: {1}
 no se ha podido sustituir {0}: {1}
 
-# src/shader_editor/shader_build.cpp:319
+# src/shader_editor/shader_build.cpp:339
 {0} shaders written to {1}
 {0} shaders escritos en {1}
 
@@ -1962,15 +2046,19 @@ no se ha podido sustituir {0}: {1}
 Output
 Salida
 
+# src/shader_editor/shader_graph.cpp:29 (+2)
+Opacity
+Opacidad
+
 # src/shader_editor/shader_graph.cpp:29
-The colour drawn. Fog and fades still follow where the game has them.
-El color que se dibuja. La niebla y los fundidos siguen aplicándose donde el juego los tiene.
+The colour drawn. Fog and fades still follow where the game has them. Opacity below 1 lets the scene show through in a fine dither (a hologram, a ghost).
+El color que se dibuja. La niebla y los fundidos siguen aplicándose donde el juego los tiene. Una opacidad menor que 1 deja ver la escena a través de una trama fina (un holograma, un fantasma).
 
 # src/shader_editor/shader_graph.cpp:30
 Game colour
 Color del juego
 
-# src/shader_editor/shader_graph.cpp:30 (+8)
+# src/shader_editor/shader_graph.cpp:30 (+9)
 Inputs
 Entradas
 
@@ -1994,7 +2082,7 @@ Luz
 The light on this pixel, with its shadows and shine: Game colour over Base texture. Using it makes the surface twice the work to draw.
 La luz sobre este píxel, con sus sombras y brillos: Color del juego entre Textura base. Usarlo duplica el trabajo de dibujar la superficie.
 
-# src/shader_editor/shader_graph.cpp:33 (+2)
+# src/shader_editor/shader_graph.cpp:33 (+3)
 UV
 
 
@@ -2490,55 +2578,164 @@ Ancho
 1 on an inked line Width pixels wide just inside the silhouette, and round any part seen in front of another; 0 elsewhere. It keeps its width at any distance.
 1 sobre una línea entintada de Ancho píxeles justo dentro de la silueta y alrededor de cualquier parte que se vea delante de otra; 0 en el resto. Mantiene su ancho a cualquier distancia.
 
-# src/shader_editor/shader_graph.cpp:255
+# src/shader_editor/shader_graph.cpp:85
+Game texture
+Textura del juego
+
+# src/shader_editor/shader_graph.cpp:85
+Read alpha
+Leer alfa
+
+# src/shader_editor/shader_graph.cpp:85
+One of the game's own textures, such as an enemy's or another character's, read at UV (the surface's while unwired) and repeating. Choose it in the Details panel. A mod names the texture rather than carrying it, so it holds none of the game's pictures; up to four in a mod.
+Una de las texturas del propio juego, como la de un enemigo u otro personaje, leída en las UV (las de la superficie si no hay nada conectado) y repetida. Elígela en el panel Detalles. Un mod nombra la textura en vez de llevarla, así que no contiene imágenes del juego; hasta cuatro por mod.
+
+# src/shader_editor/shader_graph.cpp:300
+Hologram colour
+Color del holograma
+
+# src/shader_editor/shader_graph.cpp:301 (+1)
+Brightness
+Brillo
+
+# src/shader_editor/shader_graph.cpp:306
+Own colours
+Colores propios
+
+# src/shader_editor/shader_graph.cpp:315
+Edge glow
+Brillo del borde
+
+# src/shader_editor/shader_graph.cpp:327
+Line spacing
+Separación de líneas
+
+# src/shader_editor/shader_graph.cpp:330
+Line speed
+Velocidad de las líneas
+
+# src/shader_editor/shader_graph.cpp:351
+Flicker speed
+Velocidad del parpadeo
+
+# src/shader_editor/shader_graph.cpp:391
+Swirl strength
+Fuerza del remolino
+
+# src/shader_editor/shader_graph.cpp:397
+Face tiling
+Repetición de caras
+
+# src/shader_editor/shader_graph.cpp:401
+Scroll speed
+Velocidad de desplazamiento
+
+# src/shader_editor/shader_graph.cpp:418
+Shadow colour
+Color de la sombra
+
+# src/shader_editor/shader_graph.cpp:455
+Grass detection
+Detección de hierba
+
+# src/shader_editor/shader_graph.cpp:462
+Sunny grass
+Hierba soleada
+
+# src/shader_editor/shader_graph.cpp:463 (+1)
+Lush grass
+Hierba exuberante
+
+# src/shader_editor/shader_graph.cpp:472
+Richness
+Riqueza
+
+# src/shader_editor/shader_graph.cpp:485
+Wind sheen
+Brillo del viento
+
+# src/shader_editor/shader_graph.cpp:505
+Backlight
+Contraluz
+
+# src/shader_editor/shader_graph.cpp:515
+Blade depth
+Profundidad de las briznas
+
+# src/shader_editor/shader_graph.cpp:516
+Relief
+Relieve
+
+# src/shader_editor/shader_graph.cpp:517
+Cavities
+Huecos
+
+# src/shader_editor/shader_graph.cpp:539
+Strength
+Intensidad
+
+# src/shader_editor/shader_graph.cpp:546
+Root fade
+Fundido de raíces
+
+
+# src/shader_editor/shader_graph.cpp:596
 The game's own look
 El aspecto original del juego
 
-# src/shader_editor/shader_graph.cpp:255
+# src/shader_editor/shader_graph.cpp:596
 Cel shade
 Cel shading
 
-# src/shader_editor/shader_graph.cpp:255
+# src/shader_editor/shader_graph.cpp:596
 Toon bands
 Bandas de dibujo animado
 
-# src/shader_editor/shader_graph.cpp:255
+# src/shader_editor/shader_graph.cpp:596
 Flat colour
 Color plano
 
-# src/shader_editor/shader_graph.cpp:255
+# src/shader_editor/shader_graph.cpp:596
 Rim lit
 Luz de borde
 
-# src/shader_editor/shader_graph.cpp:255
+# src/shader_editor/shader_graph.cpp:596
 Comic halftone
 Semitono de cómic
 
-# src/shader_editor/shader_graph.cpp:280
+# src/shader_editor/shader_graph.cpp:596
+Hologram
+Holograma
+
+# src/shader_editor/shader_graph.cpp:596
+Shadow troll
+Trol de las sombras
+
+# src/shader_editor/shader_graph.cpp:624
 Shadow tint
 Tinte de sombra
 
-# src/shader_editor/shader_graph.cpp:310
+# src/shader_editor/shader_graph.cpp:654
 Rim colour
 Color de borde
 
-# src/shader_editor/shader_graph.cpp:343
+# src/shader_editor/shader_graph.cpp:687
 Ink width
 Grosor de tinta
 
-# src/shader_editor/shader_graph.cpp:349
+# src/shader_editor/shader_graph.cpp:693
 Ink colour
 Color de tinta
 
-# src/shader_editor/shader_graph.cpp:432
+# src/shader_editor/shader_graph.cpp:776
 could not read {0}
 no se ha podido leer {0}
 
-# src/shader_editor/shader_graph.cpp:437
+# src/shader_editor/shader_graph.cpp:781
 {0} is not valid JSON
 {0} no es un JSON válido
 
-# src/ui/string_overrides.cpp:43
+# src/ui/string_overrides.cpp:46
 Rename
 Renombrar
 
@@ -2566,7 +2763,7 @@ Para eso necesitas una puntuación más alta.
 Buy this item for {0} points?
 ¿Comprar este artículo por {0} puntos?
 
-# src/ui/hud/achievement_toast.cpp:150
+# src/ui/hud/achievement_toast.cpp:148
 Achievement Unlocked\n{0}   {1}G
 Logro desbloqueado\n{0}   {1}G
 
@@ -2586,11 +2783,11 @@ Rueda arriba
 {0} FPS
 
 
-# src/ui/hud/loading_overlay.cpp:181
+# src/ui/hud/loading_overlay.cpp:200
 Gathering the elements: preparing shaders
 Reuniendo los elementos: preparando shaders
 
-# src/ui/hud/loading_overlay.cpp:181
+# src/ui/hud/loading_overlay.cpp:200
 Awakening the kingdom: loading the game
 Despertando el reino: cargando el juego
 
@@ -2670,15 +2867,15 @@ Escribe un nombre   Retroceso Borrar   Intro Listo   Esc Cancelar
 Rename Saved Game
 Renombrar partida guardada
 
-# src/ui/pause_menu/achievements_page.cpp:63 (+1)
+# src/ui/pause_menu/achievements_page.cpp:63 (+3)
 Achievements
 Logros
 
-# src/ui/pause_menu/achievements_page.cpp:67
+# src/ui/pause_menu/achievements_page.cpp:67 (+1)
 No achievement data was found in the game's files.
 No se han encontrado datos de logros en los archivos del juego.
 
-# src/ui/pause_menu/achievements_page.cpp:80
+# src/ui/pause_menu/achievements_page.cpp:80 (+1)
 {0} of {1} unlocked   {2}G of {3}G
 {0} de {1} desbloqueados   {2}G de {3}G
 
@@ -2714,7 +2911,7 @@ Disfraces en esta zona
 All Costumes
 Todos los disfraces
 
-# src/ui/pause_menu/collectible_tracker.cpp:57 (+1)
+# src/ui/pause_menu/collectible_tracker.cpp:57 (+2)
 Collectibles
 Coleccionables
 
@@ -2730,323 +2927,343 @@ Nada que encontrar
 Missed, Sold in Tribe Shops
 Perdidos: a la venta en las tiendas de las tribus
 
-# src/ui/pause_menu/level_select.cpp:32
+# src/ui/pause_menu/level_select.cpp:40
 Thorn's Castle
 Castillo de Thorn
 
-# src/ui/pause_menu/level_select.cpp:32
+# src/ui/pause_menu/level_select.cpp:40
 Enchanted Kingdom
 Reino Encantado
 
-# src/ui/pause_menu/level_select.cpp:32
+# src/ui/pause_menu/level_select.cpp:40
 The Badlands
 Tierras Baldías
 
-# src/ui/pause_menu/level_select.cpp:32
+# src/ui/pause_menu/level_select.cpp:40
 Forgotten Forest
 Bosque Olvidado
 
-# src/ui/pause_menu/level_select.cpp:33
+# src/ui/pause_menu/level_select.cpp:41
 Forest Temple
 Templo del Bosque
 
-# src/ui/pause_menu/level_select.cpp:33
+# src/ui/pause_menu/level_select.cpp:41
 Mountain Falls
 Cascadas de la Montaña
 
-# src/ui/pause_menu/level_select.cpp:33
+# src/ui/pause_menu/level_select.cpp:41
 Mountain Rise
 Subida a la Montaña
 
-# src/ui/pause_menu/level_select.cpp:33
+# src/ui/pause_menu/level_select.cpp:41
 Water Temple
 Templo de Agua
 
-# src/ui/pause_menu/level_select.cpp:34
+# src/ui/pause_menu/level_select.cpp:42
 Snow Top Village
 Pueblo Cumbre Nevada
 
-# src/ui/pause_menu/level_select.cpp:34
+# src/ui/pause_menu/level_select.cpp:42
 Snow Temple
 Templo de Nieve
 
-# src/ui/pause_menu/level_select.cpp:34
+# src/ui/pause_menu/level_select.cpp:42
 Ogre's Swamp
 Pantano del Ogro
 
-# src/ui/pause_menu/level_select.cpp:34
+# src/ui/pause_menu/level_select.cpp:42
 Thorn's Pass
 Paso de Thorn
 
-# src/ui/pause_menu/level_select.cpp:35
+# src/ui/pause_menu/level_select.cpp:43
 Thorn's Airship
 Dirigible de Thorn
 
-# src/ui/pause_menu/level_select.cpp:81 (+1)
+# src/ui/pause_menu/level_select.cpp:99 (+2)
 Level Select
 Selección de nivel
 
-# src/ui/pause_menu/level_select.cpp:95
+# src/ui/pause_menu/level_select.cpp:101 (+1)
+Custom Levels
+
+
+# src/ui/pause_menu/level_select.cpp:120
+Start "{0}"?
+
+
+# src/ui/pause_menu/level_select.cpp:121
+A custom level;\nthe story stays where it is.
+
+
+# src/ui/pause_menu/level_select.cpp:127
 Start from "{0}"?
 ¿Empezar desde "{0}"?
 
-# src/ui/pause_menu/level_select.cpp:96
+# src/ui/pause_menu/level_select.cpp:128
 The story is set to this point;\ncollectibles are kept.
 La historia se sitúa en este punto;\nlos coleccionables se conservan.
 
-# src/ui/pause_menu/line_injection.cpp:34
-Brightness
-Brillo
-
-# src/ui/pause_menu/line_injection.cpp:54
+# src/ui/pause_menu/line_injection.cpp:54 (+2)
 Resume
 Reanudar
 
-# src/ui/pause_menu/line_injection.cpp:62 (+1)
+# src/ui/pause_menu/line_injection.cpp:62 (+3)
 Options
 Opciones
 
-# src/ui/pause_menu/option_values.cpp:97 (+1)
+# src/ui/pause_menu/option_values.cpp:105 (+1)
 English
 Inglés
 
-# src/ui/pause_menu/option_values.cpp:97
+# src/ui/pause_menu/option_values.cpp:105
 Japanese
 Japonés
 
-# src/ui/pause_menu/option_values.cpp:97
+# src/ui/pause_menu/option_values.cpp:105
 German
 Alemán
 
-# src/ui/pause_menu/option_values.cpp:97
+# src/ui/pause_menu/option_values.cpp:105
 French
 Francés
 
-# src/ui/pause_menu/option_values.cpp:97
+# src/ui/pause_menu/option_values.cpp:105
 Spanish
 Español
 
-# src/ui/pause_menu/option_values.cpp:97
+# src/ui/pause_menu/option_values.cpp:105
 Italian
 Italiano
 
-# src/ui/pause_menu/option_values.cpp:97
+# src/ui/pause_menu/option_values.cpp:105
 Korean
 Coreano
 
-# src/ui/pause_menu/option_values.cpp:97
+# src/ui/pause_menu/option_values.cpp:105
 Chinese
 Chino
 
-# src/ui/pause_menu/option_values.cpp:122
+# src/ui/pause_menu/option_values.cpp:130
 Press a key (wait 5s to cancel)
 Pulsa una tecla (espera 5 s para cancelar)
 
-# src/ui/pause_menu/option_values.cpp:143
+# src/ui/pause_menu/option_values.cpp:151
 Window
 Ventana
 
-# src/ui/pause_menu/option_values.cpp:144
+# src/ui/pause_menu/option_values.cpp:152
 Window ({0}x{1})
 Ventana ({0}x{1})
 
-# src/ui/pause_menu/options_table.cpp:69
+# src/ui/pause_menu/options_table.cpp:70
 Control Display
 Pantalla de control
 
-# src/ui/pause_menu/options_table.cpp:70
+# src/ui/pause_menu/options_table.cpp:71
 Score Display
 Pantalla de puntuación
 
-# src/ui/pause_menu/options_table.cpp:71
+# src/ui/pause_menu/options_table.cpp:72
 Map Display
 Mostrar mapa
 
-# src/ui/pause_menu/options_table.cpp:72 (+1)
+# src/ui/pause_menu/options_table.cpp:73 (+1)
 {0} (restart)
 {0} (reiniciar)
 
-# src/ui/pause_menu/options_table.cpp:79
+# src/ui/pause_menu/options_table.cpp:80
 3D Display
 Modo 3D
 
-# src/ui/pause_menu/options_table.cpp:79
+# src/ui/pause_menu/options_table.cpp:80
 Side by Side
 En paralelo
 
-# src/ui/pause_menu/options_table.cpp:79
+# src/ui/pause_menu/options_table.cpp:80
 Top and Bottom
 Arriba y abajo
 
-# src/ui/pause_menu/options_table.cpp:79
+# src/ui/pause_menu/options_table.cpp:80
 Red/Cyan Glasses
 Gafas rojo/cian
 
-# src/ui/pause_menu/options_table.cpp:80
+# src/ui/pause_menu/options_table.cpp:81
 3D Depth
 Profundidad 3D
 
-# src/ui/pause_menu/options_table.cpp:81
+# src/ui/pause_menu/options_table.cpp:82
 3D Focus
 Enfoque 3D
 
-# src/ui/pause_menu/options_table.cpp:81
+# src/ui/pause_menu/options_table.cpp:82
 On Kameo
 En Kameo
 
-# src/ui/pause_menu/options_table.cpp:82
+# src/ui/pause_menu/options_table.cpp:83
 3D Swap Eyes
 3D: invertir ojos
 
-# src/ui/pause_menu/options_table.cpp:99
+# src/ui/pause_menu/options_table.cpp:100
 Player 1 Input
 Entrada del Jugador 1
 
-# src/ui/pause_menu/options_table.cpp:100
+# src/ui/pause_menu/options_table.cpp:101
 Controller Preset
 Preajuste del mando
 
-# src/ui/pause_menu/options_table.cpp:100
+# src/ui/pause_menu/options_table.cpp:101
 Button Position
 Posición de botones
 
-# src/ui/pause_menu/options_table.cpp:100
+# src/ui/pause_menu/options_table.cpp:101
 Button Labels
 Nombres de botones
 
-# src/ui/pause_menu/options_table.cpp:100
+# src/ui/pause_menu/options_table.cpp:101
 Custom
 Personalizado
 
-# src/ui/pause_menu/options_table.cpp:101
+# src/ui/pause_menu/options_table.cpp:102
 Mouse Look
 Vista con ratón
 
-# src/ui/pause_menu/options_table.cpp:103
+# src/ui/pause_menu/options_table.cpp:104
 Player 1 Keyboard
 Teclado del Jugador 1
 
-# src/ui/pause_menu/options_table.cpp:103 (+1)
+# src/ui/pause_menu/options_table.cpp:104 (+1)
 Keyboard 2
 Teclado 2
 
-# src/ui/pause_menu/options_table.cpp:103 (+1)
+# src/ui/pause_menu/options_table.cpp:104 (+1)
 Keyboard 1
 Teclado 1
 
-# src/ui/pause_menu/options_table.cpp:104
+# src/ui/pause_menu/options_table.cpp:105
 Player 1 Mouse
 Ratón del Jugador 1
 
-# src/ui/pause_menu/options_table.cpp:104 (+1)
+# src/ui/pause_menu/options_table.cpp:105 (+1)
 Mouse 2
 Ratón 2
 
-# src/ui/pause_menu/options_table.cpp:104 (+1)
+# src/ui/pause_menu/options_table.cpp:105 (+1)
 Mouse 1
 Ratón 1
 
-# src/ui/pause_menu/options_table.cpp:105
+# src/ui/pause_menu/options_table.cpp:106
 Look Left/Right
 Mirar izq./der.
 
-# src/ui/pause_menu/options_table.cpp:106
+# src/ui/pause_menu/options_table.cpp:107
 Look Up/Down
 Mirar arriba/abajo
 
-# src/ui/pause_menu/options_table.cpp:109
+# src/ui/pause_menu/options_table.cpp:110
 Default
 Predeterminado
 
-# src/ui/pause_menu/options_table.cpp:111
+# src/ui/pause_menu/options_table.cpp:112
 Costume
 Traje
 
-# src/ui/pause_menu/options_table.cpp:113
+# src/ui/pause_menu/options_table.cpp:114
 Player 2 Input
 Entrada del Jugador 2
 
-# src/ui/pause_menu/options_table.cpp:114
+# src/ui/pause_menu/options_table.cpp:115
 Split-Screen Layout
 Diseño de pantalla dividida
 
-# src/ui/pause_menu/options_table.cpp:115
+# src/ui/pause_menu/options_table.cpp:116
 Player 2 Keyboard
 Teclado del Jugador 2
 
-# src/ui/pause_menu/options_table.cpp:116
+# src/ui/pause_menu/options_table.cpp:117
 Player 2 Mouse
 Ratón del Jugador 2
 
-# src/ui/pause_menu/options_table.cpp:117
+# src/ui/pause_menu/options_table.cpp:118
 Player 2 Aim X
 Apuntado X del Jugador 2
 
-# src/ui/pause_menu/options_table.cpp:117 (+1)
+# src/ui/pause_menu/options_table.cpp:118 (+1)
 Inverted
 Invertida
 
-# src/ui/pause_menu/options_table.cpp:117 (+1)
+# src/ui/pause_menu/options_table.cpp:118 (+1)
 Normal
 
 
-# src/ui/pause_menu/options_table.cpp:118
+# src/ui/pause_menu/options_table.cpp:119
 Player 2 Aim Y
 Apuntado Y del Jugador 2
 
-# src/ui/pause_menu/options_table.cpp:119
+# src/ui/pause_menu/options_table.cpp:120
 Player Pushing
 Empujar jugadores
 
-# src/ui/pause_menu/options_table.cpp:120
+# src/ui/pause_menu/options_table.cpp:121
 Friendly Fire
 Fuego amigo
 
-# src/ui/pause_menu/options_table.cpp:122
+# src/ui/pause_menu/options_table.cpp:123
+Pause Menu
+
+
+# src/ui/pause_menu/options_table.cpp:123
+Parchment Card
+
+
+# src/ui/pause_menu/options_table.cpp:123
+Storybook
+
+
+# src/ui/pause_menu/options_table.cpp:124
 Hints
 Pistas
 
-# src/ui/pause_menu/options_table.cpp:125
+# src/ui/pause_menu/options_table.cpp:127
 All Warriors & Upgrades
 Todos los guerreros y mejoras
 
-# src/ui/pause_menu/options_table.cpp:134
+# src/ui/pause_menu/options_table.cpp:136
  Button
 Botón 
 
-# src/ui/pause_menu/options_table.cpp:135
+# src/ui/pause_menu/options_table.cpp:137
  Button
 Botón 
 
-# src/ui/pause_menu/options_table.cpp:136
+# src/ui/pause_menu/options_table.cpp:138
  Button
 Botón 
 
-# src/ui/pause_menu/options_table.cpp:137
+# src/ui/pause_menu/options_table.cpp:139
  Button
 Botón 
 
-# src/ui/pause_menu/options_table.cpp:154
+# src/ui/pause_menu/options_table.cpp:156
  Action
 Acción 
 
-# src/ui/pause_menu/options_table.cpp:155
+# src/ui/pause_menu/options_table.cpp:157
  Action
 Acción 
 
-# src/ui/pause_menu/options_table.cpp:156
+# src/ui/pause_menu/options_table.cpp:158
  Action
 Acción 
 
-# src/ui/pause_menu/options_table.cpp:157
+# src/ui/pause_menu/options_table.cpp:159
  Action
 Acción 
 
-# src/ui/pause_menu/options_table.cpp:170
+# src/ui/pause_menu/options_table.cpp:172
 Move Up
 Mover arriba
 
-# src/ui/pause_menu/options_table.cpp:171
+# src/ui/pause_menu/options_table.cpp:173
 Move Down
 Mover abajo
 
@@ -3078,17 +3295,37 @@ Restablecer todo
 Brightness & Gamma
 Brillo y gamma
 
-# src/ui/pause_menu/quit_prompt.cpp:98
+# src/ui/pause_menu/pause_card.cpp:208 (+1)
+Quit
+Salir
+
+# src/ui/pause_menu/pause_card.cpp:209 (+1)
 Quit to Menu
 Salir al menú
 
-# src/ui/pause_menu/quit_prompt.cpp:99
+# src/ui/pause_menu/pause_card.cpp:209 (+1)
 Quit Application
 Salir de la aplicación
 
-# src/ui/pause_menu/quit_prompt.cpp:100
+# src/ui/pause_menu/pause_card.cpp:209 (+1)
 Restart Game
 Reiniciar juego
+
+# src/ui/pause_menu/pause_card.cpp:209
+Back to Game
+Volver al juego
+
+# src/ui/pause_menu/pause_card.cpp:884 (+2)
+Select
+Seleccionar
+
+# src/ui/pause_menu/pause_card.cpp:979
+Category
+Categoría
+
+# src/ui/pause_menu/pause_card.cpp:984
+Any progress since you last saved will be lost.
+Se perderá el progreso no guardado.
 
 # src/ui/pause_menu/quit_prompt.cpp:110
 Press  to restart the game\n\nPress  to quit the application

@@ -1,6 +1,7 @@
 // Skippable cutscenes: Start runs an in-engine scene to its end, and every Bink movie takes the game's own skip.
 
 #include <algorithm>
+#include <vector>
 
 #include <rex/cvar.h>
 
@@ -53,28 +54,44 @@ bool StartPressed(uint8_t* base) {
 
 }  // namespace
 
-// _movieUpdate(movie, dt) -- advances the scene clock at +136 and runs every event whose millisecond time at +4 it passes, in order, until one (mxmlEndMovie sets the end state 6 and returns 0) stops it; Start stretches this step to the last event, so the scene's flags, fades, actor placement and end callback all still happen and only the waiting is skipped.
+// _movieUpdate(movie, dt) -- advances the scene clock at +136 and runs every event whose millisecond time at +4 it passes,
+// in order, handing each how late it is (clock minus its time), until one (mxmlEndMovie sets the end state 6 and
+// returns 0) stops it. Start runs the scene to its last event in this one tick, so its flags, fades, actor placement and
+// end callback all still happen and only the waiting is skipped. It steps to each event's time in turn rather than
+// jumping there at once: an event handed half a minute of lateness starts its transition (the widescreen bars, a camera
+// blend) that far past its end, which left the screen black with the picture squeezed to its edges.
 extern "C" REX_FUNC(sub_822D85F8) {
   const uint32_t movie = ctx.r3.u32;
-  bool skipped = false;
-  if (movie && REXCVAR_GET(kameo_skip_cutscenes) && REX_LOAD_U8(movie + kMovieCameraMode) == kMovieHasCamera && REX_LOAD_U8(movie + kMovieLoops) == 0 && StartPressed(base)) {
-    const uint32_t events = REX_LOAD_U32(movie + kMovieEvents);
-    uint32_t last_ms = 0;
-    for (uint32_t i = 0, count = events ? REX_LOAD_U32(movie + kMovieEventCount) : 0; i < count; ++i) {
-      const uint32_t event = REX_LOAD_U32(events + 4 * i);
-      if (event) last_ms = std::max(last_ms, REX_LOAD_U32(event + 4));
-    }
-    const double remaining = last_ms / 1000.0 - double(LoadGuestFloat(base, movie + kMovieTime)) + 0.05;
-    if (remaining > ctx.f1.f64) {
-      REXLOG_INFO("[kameo] cutscene skipped {:.1f}s ahead", remaining);
-      ctx.f1.f64 = remaining;
-      skipped = true;
-    }
+  if (!movie || !REXCVAR_GET(kameo_skip_cutscenes) || REX_LOAD_U8(movie + kMovieCameraMode) != kMovieHasCamera || REX_LOAD_U8(movie + kMovieLoops) != 0 || !StartPressed(base)) {
+    __imp__sub_822D85F8(ctx, base);
+    return;
   }
-  // The update can clobber the context, so the stop works from a copy taken before it.
-  PPCContext saved = ctx;
-  __imp__sub_822D85F8(ctx, base);
-  if (skipped) StopSceneAudio(saved, base);
+  const double clock = double(LoadGuestFloat(base, movie + kMovieTime));
+  std::vector<uint32_t> times;
+  const uint32_t events = REX_LOAD_U32(movie + kMovieEvents);
+  for (uint32_t i = 0, count = events ? REX_LOAD_U32(movie + kMovieEventCount) : 0; i < count; ++i) {
+    const uint32_t event = REX_LOAD_U32(events + 4 * i);
+    if (event && REX_LOAD_U32(event + 4) / 1000.0 > clock) times.push_back(REX_LOAD_U32(event + 4));
+  }
+  std::sort(times.begin(), times.end());
+  times.erase(std::unique(times.begin(), times.end()), times.end());
+  if (times.empty() || times.back() / 1000.0 - clock <= ctx.f1.f64) {
+    __imp__sub_822D85F8(ctx, base);
+    return;
+  }
+  REXLOG_INFO("[kameo] cutscene skipped {:.1f}s ahead, through {} event times", times.back() / 1000.0 - clock, times.size());
+  // Each step can clobber the context, so each starts from a copy taken before the first; the caller sees the last.
+  const PPCContext entry = ctx;
+  for (const uint32_t time : times) {
+    PPCContext step = entry;
+    step.f1.f64 = std::max(0.0, (time + 1) / 1000.0 - double(LoadGuestFloat(base, movie + kMovieTime)));
+    __imp__sub_822D85F8(step, base);
+    ctx = step;
+    // The scene ended, or an event moved its clock somewhere else (a jump back for a loop): no more stepping.
+    if (step.r3.u32 == 0 || double(LoadGuestFloat(base, movie + kMovieTime)) < time / 1000.0) break;
+  }
+  PPCContext stop = entry;
+  StopSceneAudio(stop, base);
 }
 
 int64_t g_kameo_credits_requested_ms = 0;

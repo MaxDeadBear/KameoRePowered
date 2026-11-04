@@ -58,6 +58,10 @@ std::vector<std::string> Summary(const Node& n) {
   if (n.kind == NodeKind::kFloat || n.kind == NodeKind::kColor) return lines;
   if (n.kind == NodeKind::kComponentMask) return {TrFormat("Channel {0}", {std::string(1, "RGB"[std::clamp(int(n.settings[0]), 0, 2)])})};
   if (n.kind == NodeKind::kCustom) return {Tr("HLSL (Details panel)")};
+  if (n.kind == NodeKind::kGameTexture) {
+    const std::optional<GameTextureRef> texture = ParseGameTexture(n.code);
+    return {texture ? texture->label : std::string(Tr("Choose in Details")), !n.settings.empty() && n.settings[0] >= 0.5f ? Tr("Its alpha") : Tr("Its colour")};
+  }
   for (size_t i = 0; i < info.settings.size() && i < n.settings.size(); ++i) lines.push_back(std::format("{}  {}", Tr(info.settings[i]), Number(n.settings[i])));
   return lines;
 }
@@ -135,16 +139,6 @@ std::optional<NodeKind> HeldHotkey() {
 ImVec2 NodeCanvas::ToScreen(float x, float y) const { return ImVec2(origin_.x + (x + pan_.x) * zoom_, origin_.y + (y + pan_.y) * zoom_); }
 
 bool NodeCanvas::Contains(ImVec2 s) const { return s.x >= origin_.x && s.y >= origin_.y && s.x < origin_.x + size_.x && s.y < origin_.y + size_.y; }
-
-int NodeCanvas::NodeAt(const ShaderGraph& graph, ImVec2 screen) const {
-  if (!Contains(screen)) return 0;
-  for (auto it = graph.nodes.rbegin(); it != graph.nodes.rend(); ++it) {
-    const Layout l = Measure(*it);
-    const ImVec2 a = ToScreen(l.x, l.y), b = ToScreen(l.x + l.w, l.y + l.h);
-    if (screen.x >= a.x && screen.x < b.x && screen.y >= a.y && screen.y < b.y) return it->id;
-  }
-  return 0;
-}
 
 ImVec2 NodeCanvas::ToGraph(ImVec2 s) const { return ImVec2((s.x - origin_.x) / zoom_ - pan_.x, (s.y - origin_.y) / zoom_ - pan_.y); }
 

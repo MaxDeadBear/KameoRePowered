@@ -109,6 +109,18 @@ Texture2D base_texture : register(t0);
 SamplerState base_sampler : register(s0);
 // The game's texture read, as a mod's own MOD_FETCH2D calls it; the preview has one texture per part.
 float4 tfetch2D(uint texture_index, uint sampler_index, float2 uv, float2 offset) { return base_texture.Sample(base_sampler, uv); }
+// The game textures a mod's Game texture nodes read, in t1 to t4; one not bound reads transparent black, as in the game.
+#define MOD_PREVIEW 1
+Texture2D game_texture0 : register(t1);
+Texture2D game_texture1 : register(t2);
+Texture2D game_texture2 : register(t3);
+Texture2D game_texture3 : register(t4);
+float4 ModGameTexture(uint slot, float2 uv) {
+    if (slot == 0u) return game_texture0.Sample(base_sampler, uv);
+    if (slot == 1u) return game_texture1.Sample(base_sampler, uv);
+    if (slot == 2u) return game_texture2.Sample(base_sampler, uv);
+    return game_texture3.Sample(base_sampler, uv);
+}
 )";
 
 const char kPixelEntry[] = R"(
@@ -132,7 +144,9 @@ float4 main(float4 position : SV_Position, float3 view_position : TEXCOORD1, flo
     mod.s.has_normal = true;
     const float sky_facing = dot(mod.s.normal, mod.s.up) * 0.5 + 0.5;
     mod.s.light = lerp(float3(0.30, 0.27, 0.33), float3(0.55, 0.58, 0.62), sky_facing) + mod.s.light_colour * 0.75 * saturate(dot(mod.s.normal, mod.s.light_dir));
-    return float4(ModFinish(mod, texel.rgb * mod.s.light, 1.0), 1.0);
+    float alpha = 1.0;
+    const float3 colour = ModFinish(mod, texel.rgb * mod.s.light, alpha);
+    return float4(colour, alpha);
 }
 )";
 
@@ -170,6 +184,7 @@ Preview::~Preview() {
   Release(layout_);
   Release(constants_);
   Release(sampler_);
+  Release(coverage_);
   Release(rasterizer_);
   Release(depth_state_);
   Release(white_);
@@ -247,6 +262,12 @@ void Preview::CreateResources() {
   sampler.AddressU = sampler.AddressV = sampler.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
   sampler.MaxLOD = D3D11_FLOAT32_MAX;
   device_->CreateSamplerState(&sampler, &sampler_);
+
+  // A see-through mod's opacity, as the share of samples it covers (MOD_SHOW_COVERAGE in shader_mod.hlsli).
+  D3D11_BLEND_DESC coverage{};
+  coverage.AlphaToCoverageEnable = TRUE;
+  coverage.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+  device_->CreateBlendState(&coverage, &coverage_);
 
   D3D11_RASTERIZER_DESC rasterizer{};
   rasterizer.FillMode = D3D11_FILL_SOLID;
@@ -458,7 +479,7 @@ void Preview::Render(uint32_t width, uint32_t height) {
     context_->OMSetRenderTargets(1, &target_, depth_view_);
     context_->OMSetDepthStencilState(depth_state_, 0);
     const float blend[4] = {};
-    context_->OMSetBlendState(nullptr, blend, 0xFFFFFFFF);
+    context_->OMSetBlendState(coverage_, blend, 0xFFFFFFFF);
     context_->IASetInputLayout(layout_);
     context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     const UINT stride = sizeof(PreviewVertex), offset = 0;
@@ -469,6 +490,7 @@ void Preview::Render(uint32_t width, uint32_t height) {
     context_->VSSetConstantBuffers(0, 1, &constants_);
     context_->PSSetConstantBuffers(0, 1, &constants_);
     context_->PSSetSamplers(0, 1, &sampler_);
+    context_->PSSetShaderResources(1, UINT(game_textures_.size()), game_textures_.data());
     for (const PreviewPart& part : parts_) {
       ID3D11ShaderResourceView* texture = part.texture >= 0 && size_t(part.texture) < textures_.size() ? textures_[part.texture] : nullptr;
       std::memcpy(scene.colour, part.colour, sizeof(part.colour));

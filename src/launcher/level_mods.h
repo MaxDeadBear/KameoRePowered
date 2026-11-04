@@ -20,15 +20,18 @@ class LevelMods {
   void Save() const;
   std::vector<LevelMod>& mods() { return mods_; }
   const std::filesystem::path& folder() const { return folder_; }
-  const std::filesystem::path& assets() const { return assets_; }
   bool AnyEnabled() const;
   std::vector<std::string> Conflicts() const;
   void Move(size_t index, int step);
   bool Build(std::filesystem::path& data_root, std::string& error);
+  // What the last Build left out, one line each: a file the game folder doesn't have (a downloadable costume's), or
+  // one the mod wasn't made from.
+  const std::vector<std::string>& Skipped() const { return skipped_; }
 
  private:
   std::filesystem::path launcher_folder_, folder_, assets_;
   std::vector<LevelMod> mods_;
+  std::vector<std::string> skipped_;
 };
 
 }  // namespace kameo::launcher

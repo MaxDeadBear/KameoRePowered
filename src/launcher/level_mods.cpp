@@ -40,6 +40,10 @@ std::string Stamp(const std::vector<LevelMod>& mods, const fs::path& assets) {
   std::ostringstream out;
   out << assets.string() << "\n";
   std::error_code ec;
+  // The level editor rewrites the custom level list with every level it builds, as a new file the old links don't see.
+  if (const fs::path list = assets / "custom_levels.toml"; fs::exists(list, ec)) {
+    out << "custom_levels.toml " << fs::file_size(list, ec) << " " << fs::last_write_time(list, ec).time_since_epoch().count() << "\n";
+  }
   for (const LevelMod& mod : mods) {
     if (!mod.enabled) continue;
     out << mod.file.filename().string() << " " << fs::file_size(mod.file, ec) << " " << fs::last_write_time(mod.file, ec).time_since_epoch().count() << "\n";
@@ -142,15 +146,27 @@ void LevelMods::Move(size_t index, int step) {
 }
 
 bool LevelMods::Build(fs::path& data_root, std::string& error) {
+  skipped_.clear();
   if (assets_.empty()) return error = Tr("the game folder (assets with default.xex) was not found"), false;
-  std::map<std::string, kmod::FilePatch> patches;
+  // Per file, the patch used (the lowest mod in the list) and the mod it is from.
+  std::map<std::string, std::pair<kmod::FilePatch, std::string>> patches;
   for (const LevelMod& mod : mods_) {
     if (!mod.enabled) continue;
     kmod::Package package;
     if (!kmod::read(ReadAll(mod.file), package, error)) return error = mod.name + ": " + error, false;
-    for (kmod::FilePatch& f : package.files) patches[f.name] = std::move(f);
+    for (kmod::FilePatch& f : package.files) patches[f.name] = {std::move(f), mod.name};
   }
+  // A file the game folder doesn't hold can't be patched here (a downloadable costume's lives in the DLC folder: the
+  // Blender add-on saves those as costumes of their own); the mod's other files and the other mods still are.
   std::error_code ec;
+  for (auto it = patches.begin(); it != patches.end();) {
+    if (fs::exists(assets_ / it->first, ec)) {
+      ++it;
+      continue;
+    }
+    skipped_.push_back(TrFormat("{0}: {1} isn't one of the game's files (a downloadable costume?), so it was left out.", {it->second.second, it->first}));
+    it = patches.erase(it);
+  }
   const std::string stamp = Stamp(mods_, assets_);
   fs::path root = (launcher_folder_.root_name() == assets_.root_name() ? launcher_folder_ : assets_.parent_path()) / "mods_build";
   const fs::path data = root / "assets";
@@ -169,9 +185,15 @@ bool LevelMods::Build(fs::path& data_root, std::string& error) {
   }
   fs::remove(root / "stamp.txt", ec);
   if (!Mirror(assets_, data, error)) return false;
-  for (const auto& [name, patch] : patches) {
+  for (const auto& [name, entry] : patches) {
+    const auto& [patch, mod_name] = entry;
     std::vector<uint8_t> out;
-    if (!kmod::apply(patch, ReadAll(assets_ / name), out, error)) return false;
+    std::string why;
+    if (!kmod::apply(patch, ReadAll(assets_ / name), out, why)) {
+      // The game's own file stays: one mod made from another version of it doesn't stop the rest.
+      skipped_.push_back(mod_name + ": " + why);
+      continue;
+    }
     fs::remove(data / name, ec);
     std::ofstream file(data / name, std::ios::binary);
     file.write(reinterpret_cast<const char*>(out.data()), std::streamsize(out.size()));

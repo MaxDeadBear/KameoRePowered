@@ -32,6 +32,7 @@ REXCVAR_DECLARE(bool, kameo_gfx_bloom);
 REXCVAR_DECLARE(bool, kameo_gfx_depth_of_field);
 REXCVAR_DECLARE(bool, kameo_gfx_stable_geometry_skip);
 REXCVAR_DECLARE(std::string, kameo_dev_find_texture_shaders);
+REXCVAR_DECLARE(bool, kameo_dev_log_hud);
 REXCVAR_DECLARE(bool, kameo_gfx_heat_haze);
 REXCVAR_DECLARE(bool, kameo_gfx_normal_maps);
 REXCVAR_DECLARE(bool, kameo_gfx_bump_maps);

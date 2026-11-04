@@ -2,6 +2,14 @@
 # An entry with nothing under its English shows in English. \n is a line break. Keep {0}, {1}... and
 # {font tags} as they are; they're filled in or read by the game.
 
+# src/core/game_archive.cpp:86
+{0} is not a game archive
+{0}은(는) 게임 아카이브가 아닙니다
+
+# src/core/game_archive.cpp:97
+{0} could not be unpacked
+{0}의 압축을 풀 수 없습니다
+
 # src/crash_dialog/main.cpp:17
 Would you like to send a crash report?
 충돌 보고서를 보내시겠습니까?
@@ -30,63 +38,63 @@ Send Report
 Kameo has crashed.\n\nWould you like to send a crash report? This is completely optional, and nothing is sent unless you choose Yes. A report shows the developers what went wrong, so crashes can get fixed.
 Kameo가 충돌했습니다.\n\n충돌 보고서를 보내시겠습니까? 보고서 전송은 전적으로 선택 사항이며, [예]를 선택하지 않으면 아무것도 전송되지 않습니다. 보고서는 개발자에게 무엇이 잘못되었는지 알려 주므로, 충돌 문제를 고칠 수 있습니다.
 
-# src/engine/dlc/dlc_skin_names.cpp:30
+# src/engine/dlc/dlc_skin_names.cpp:31
 Armored Kameo
 갑옷 카메오
 
-# src/engine/dlc/dlc_skin_names.cpp:30
+# src/engine/dlc/dlc_skin_names.cpp:31
 Fright Pack Kameo
 공포 팩 카메오
 
-# src/engine/dlc/dlc_skin_names.cpp:31
+# src/engine/dlc/dlc_skin_names.cpp:32
 Masquerade Kameo #1
 가면무도회 카메오 #1
 
-# src/engine/dlc/dlc_skin_names.cpp:31
+# src/engine/dlc/dlc_skin_names.cpp:32
 Masquerade Kameo #2
 가면무도회 카메오 #2
 
-# src/engine/dlc/dlc_skin_names.cpp:31
+# src/engine/dlc/dlc_skin_names.cpp:32
 Masquerade Kameo #3
 가면무도회 카메오 #3
 
-# src/engine/dlc/dlc_skin_names.cpp:31
+# src/engine/dlc/dlc_skin_names.cpp:32
 Masquerade Kameo #4
 가면무도회 카메오 #4
 
-# src/engine/dlc/dlc_skin_names.cpp:31
+# src/engine/dlc/dlc_skin_names.cpp:32
 Masquerade Kameo #5
 가면무도회 카메오 #5
 
-# src/engine/dlc/dlc_skin_names.cpp:32
+# src/engine/dlc/dlc_skin_names.cpp:33
 Masquerade Kameo #6
 가면무도회 카메오 #6
 
-# src/engine/dlc/dlc_skin_names.cpp:32
+# src/engine/dlc/dlc_skin_names.cpp:33
 Masquerade Kameo #7
 가면무도회 카메오 #7
 
-# src/engine/dlc/dlc_skin_names.cpp:32
+# src/engine/dlc/dlc_skin_names.cpp:33
 Masquerade Kameo #8
 가면무도회 카메오 #8
 
-# src/engine/dlc/dlc_skin_names.cpp:32
+# src/engine/dlc/dlc_skin_names.cpp:33
 Masquerade Kameo #9
 가면무도회 카메오 #9
 
-# src/engine/dlc/dlc_skin_names.cpp:32
+# src/engine/dlc/dlc_skin_names.cpp:33
 Masquerade Kameo #10
 가면무도회 카메오 #10
 
-# src/engine/dlc/dlc_skin_names.cpp:33
+# src/engine/dlc/dlc_skin_names.cpp:34
 Winter Warrior Kameo
 겨울 전사 카메오
 
-# src/engine/dlc/dlc_skin_names.cpp:33
+# src/engine/dlc/dlc_skin_names.cpp:34
 Design-A-Skin Kameo
 디자인 스킨 카메오
 
-# src/engine/dlc/joiner_skin.cpp:346 (+1)
+# src/engine/dlc/joiner_skin.cpp:410 (+1)
 Standard
 기본
 
@@ -146,11 +154,11 @@ D-Pad Left
 D-Pad Right
 방향 패드 오른쪽
 
-# src/input/pad_presets.cpp:67 (+4)
+# src/input/pad_presets.cpp:67 (+5)
 Start
 START
 
-# src/input/pad_presets.cpp:68 (+4)
+# src/input/pad_presets.cpp:68 (+7)
 Back
 뒤로
 
@@ -522,39 +530,43 @@ The game files are missing. Choose your game on the Play page first.
 The level mods could not be applied: {0}
 레벨 모드를 적용할 수 없습니다: {0}
 
-# src/launcher/launch.cpp:76
+# src/launcher/launch.cpp:77
 The game could not be started (error {0}).
 게임을 시작할 수 없습니다 (오류 {0}).
 
-# src/launcher/launch.cpp:81
+# src/launcher/launch.cpp:82
 Kameo is starting...
 Kameo를 시작하는 중...
 
-# src/launcher/level_mods.cpp:66
+# src/launcher/level_mods.cpp:70
 could not link {0} (error {1})
 {0}을(를) 링크할 수 없음 (오류 {1})
 
-# src/launcher/level_mods.cpp:70
+# src/launcher/level_mods.cpp:74
 could not read the game folder: {0}
 게임 폴더를 읽을 수 없음: {0}
 
-# src/launcher/level_mods.cpp:133
+# src/launcher/level_mods.cpp:137
 {0} and {1}
 {0} 및 {1}
 
-# src/launcher/level_mods.cpp:134
+# src/launcher/level_mods.cpp:138
 {0} is changed by {1}; only {2} (lowest in the list) is used for it.
 {0}을(를) {1}이(가) 변경합니다. 그중 {2}(목록에서 가장 아래)만 적용됩니다.
 
-# src/launcher/level_mods.cpp:145
+# src/launcher/level_mods.cpp:150
 the game folder (assets with default.xex) was not found
 게임 폴더(default.xex가 있는 assets)를 찾을 수 없음
 
 # src/launcher/level_mods.cpp:167
+{0}: {1} isn't one of the game's files (a downloadable costume?), so it was left out.
+
+
+# src/launcher/level_mods.cpp:183
 the game is still running from the mod build; close it first ({0})
 게임이 아직 모드 빌드에서 실행 중입니다. 먼저 종료하십시오 ({0})
 
-# src/launcher/level_mods.cpp:178 (+3)
+# src/launcher/level_mods.cpp:200 (+3)
 could not write {0}
 {0}을(를) 쓸 수 없음
 
@@ -810,7 +822,7 @@ Pre-releases are test builds with the newest fixes; releases are the ones consid
 Check for new builds when the launcher opens
 런처를 열 때 새 빌드 확인
 
-# src/launcher/ui/page_builds.cpp:79 (+6)
+# src/launcher/ui/page_builds.cpp:79 (+7)
 Cancel
 취소
 
@@ -1046,103 +1058,103 @@ by {0}
 Changes {0}
 변경 대상: {0}
 
-# src/launcher/ui/page_mods.cpp:78
+# src/launcher/ui/page_mods.cpp:79
 Enabled mods are applied when you press Play, into a copy of the game folder made of links; the game files themselves are never changed.
 사용하도록 설정한 모드는 [플레이]를 누를 때 링크로 만든 게임 폴더 사본에 적용되며, 게임 파일 자체는 절대 변경되지 않습니다.
 
-# src/launcher/ui/page_mods.cpp:79
+# src/launcher/ui/page_mods.cpp:80
 Kameo skins replace her Bonus costumes: pick the costume in the storybook's Bonus pages.
 카메오 스킨은 카메오의 보너스 의상을 대체합니다. 스토리북의 보너스 페이지에서 의상을 선택하십시오.
 
-# src/launcher/ui/page_mods.cpp:103
+# src/launcher/ui/page_mods.cpp:104
 Shader Mods
 셰이더 모드
 
-# src/launcher/ui/page_mods.cpp:104
+# src/launcher/ui/page_mods.cpp:105
 Shader Editor
 셰이더 에디터
 
-# src/launcher/ui/page_mods.cpp:118
+# src/launcher/ui/page_mods.cpp:119
 No shader mods yet. Put .kshader files in the shader_mods folder, or make your own with the Shader Editor.
 아직 셰이더 모드가 없습니다. .kshader 파일을 shader_mods 폴더에 넣거나, 셰이더 에디터로 직접 만드십시오.
 
-# src/launcher/ui/page_mods.cpp:136
+# src/launcher/ui/page_mods.cpp:137
 Shader mods change how things are drawn, and apply straight away, even with the game running.
 셰이더 모드는 사물이 그려지는 방식을 바꾸며, 게임이 실행 중이어도 즉시 적용됩니다.
 
-# src/launcher/ui/page_mods.cpp:146
+# src/launcher/ui/page_mods.cpp:147
 Cheats Were Used
 치트 사용됨
 
-# src/launcher/ui/page_mods.cpp:149
+# src/launcher/ui/page_mods.cpp:150
 Leaderboard scores are off because a cheat was used, and there is no backup of your saves from before it.
 치트를 사용했기 때문에 순위표 점수가 꺼져 있으며, 치트 사용 전의 저장 데이터 백업이 없습니다.
 
-# src/launcher/ui/page_mods.cpp:151
+# src/launcher/ui/page_mods.cpp:152
 Leaderboard scores are off because a cheat was used. Your saves were backed up just before that. Restoring them turns the cheats off and lets you post scores again, but any progress since then goes back too. Your current saves are kept in the save_backups folder.
 치트를 사용했기 때문에 순위표 점수가 꺼져 있습니다. 저장 데이터는 치트 사용 직전에 백업되었습니다. 백업을 복원하면 치트가 꺼지고 다시 점수를 올릴 수 있지만, 그 이후의 진행 상황도 되돌아갑니다. 현재 저장 데이터는 save_backups 폴더에 보관됩니다.
 
-# src/launcher/ui/page_mods.cpp:153
+# src/launcher/ui/page_mods.cpp:154
 Restore Saves From Before Cheats
 치트 사용 전 저장 데이터 복원
 
-# src/launcher/ui/page_mods.cpp:155
+# src/launcher/ui/page_mods.cpp:156
 Yes, Restore My Saves
 예, 저장 데이터를 복원합니다
 
-# src/launcher/ui/page_mods.cpp:158
+# src/launcher/ui/page_mods.cpp:159
 Your saves from before cheats are back.
 치트 사용 전의 저장 데이터를 복원했습니다.
 
-# src/launcher/ui/page_mods.cpp:172 (+2)
+# src/launcher/ui/page_mods.cpp:173 (+2)
 Mods
 모드
 
-# src/launcher/ui/page_mods.cpp:177 (+1)
+# src/launcher/ui/page_mods.cpp:178 (+1)
 Textures
 텍스처
 
-# src/launcher/ui/page_mods.cpp:178 (+1)
+# src/launcher/ui/page_mods.cpp:179 (+1)
 Texture Replacements
 텍스처 교체
 
-# src/launcher/ui/page_mods.cpp:178
+# src/launcher/ui/page_mods.cpp:179
 Load replacement textures from the textures folder.
 textures 폴더에서 교체용 텍스처를 불러옵니다.
 
-# src/launcher/ui/page_mods.cpp:179 (+1)
+# src/launcher/ui/page_mods.cpp:180 (+1)
 Texture Dumping
 텍스처 덤프
 
-# src/launcher/ui/page_mods.cpp:179
+# src/launcher/ui/page_mods.cpp:180
 Save the game's textures as they load, for making replacements.
 교체용 텍스처를 만들 수 있도록 게임의 텍스처를 불러올 때마다 저장합니다.
 
-# src/launcher/ui/page_mods.cpp:180 (+1)
+# src/launcher/ui/page_mods.cpp:181 (+1)
 Movie Replacements
 동영상 교체
 
-# src/launcher/ui/page_mods.cpp:180
+# src/launcher/ui/page_mods.cpp:181
 Play movies/<name>.mp4 instead of fmv/<name>.bik, e.g. movies/kameoIntro.mp4. With a soundtrack it plays its own sound for its own length; without one only the picture is replaced.
 fmv/<name>.bik 대신 movies/<name>.mp4를 재생합니다 (예: movies/kameoIntro.mp4). 사운드트랙이 있으면 자체 소리를 자체 길이만큼 재생하고, 없으면 화면만 교체됩니다.
 
-# src/launcher/ui/page_mods.cpp:183 (+1)
+# src/launcher/ui/page_mods.cpp:184 (+1)
 Gameplay
 게임플레이
 
-# src/launcher/ui/page_mods.cpp:184 (+1)
+# src/launcher/ui/page_mods.cpp:185 (+1)
 Story Split-screen
 스토리 화면 분할
 
-# src/launcher/ui/page_mods.cpp:185 (+1)
+# src/launcher/ui/page_mods.cpp:186 (+1)
 Unlock All Extras
 모든 보너스 열기
 
-# src/launcher/ui/page_mods.cpp:186 (+1)
+# src/launcher/ui/page_mods.cpp:187 (+1)
 Skippable Cutscenes
 동영상 건너뛰기
 
-# src/launcher/ui/page_mods.cpp:186
+# src/launcher/ui/page_mods.cpp:187
 Start skips in-engine cutscenes and every FMV.
 START로 게임 내 동영상과 모든 FMV를 건너뜁니다.
 
@@ -1470,267 +1482,331 @@ Close launcher on Play
 Settings are saved as you change them to {0}.
 설정은 변경하는 즉시 {0}에 저장됩니다.
 
-# src/launcher/ui/widgets.cpp:152
+# src/launcher/ui/widgets.cpp:153
 Restored the defaults on this page.
 이 페이지의 기본값을 복원했습니다.
 
-# src/launcher/ui/widgets.cpp:157 (+1)
+# src/launcher/ui/widgets.cpp:158 (+1)
 Display Mode
 화면 모드
 
-# src/launcher/ui/widgets.cpp:158 (+1)
+# src/launcher/ui/widgets.cpp:159 (+1)
 Windowed
 창 모드
 
-# src/launcher/ui/widgets.cpp:158 (+1)
+# src/launcher/ui/widgets.cpp:159 (+1)
 Borderless
 테두리 없는 창
 
-# src/launcher/ui/widgets.cpp:158 (+1)
+# src/launcher/ui/widgets.cpp:159 (+1)
 Fullscreen
 전체 화면
 
-# src/launcher/ui/widgets.cpp:169 (+1)
+# src/launcher/ui/widgets.cpp:170 (+1)
 Resolution
 해상도
 
-# src/launcher/ui/widgets.cpp:169
+# src/launcher/ui/widgets.cpp:170
 The size the game renders at. A size of another shape than your window is shown with black bars.
 게임을 렌더링하는 크기입니다. 창과 비율이 다른 크기는 검은 여백과 함께 표시됩니다.
 
-# src/launcher/ui/widgets.cpp:173
+# src/launcher/ui/widgets.cpp:174
 Match Window
 창에 맞춤
 
-# src/launcher/ui/widgets.cpp:174
+# src/launcher/ui/widgets.cpp:175
 {0} x {1}  (Ultrawide)
 {0} x {1}  (울트라와이드)
 
-# src/shader_editor/editor.cpp:122
+# src/launcher/ui/widgets.cpp:186
+Custom ({0} x {1})
+
+
+# src/launcher/ui/widgets.cpp:195
+Custom...
+
+
+# src/launcher/ui/widgets.cpp:212
+width x height
+
+
+# src/shader_editor/editor.cpp:123
 {0} opened
 {0} 열림
 
-# src/shader_editor/editor.cpp:195
+# src/shader_editor/editor.cpp:197
 {0} in {1} s, and saved
 {0} ({1}초 소요), 저장 완료
 
-# src/shader_editor/editor.cpp:195
+# src/shader_editor/editor.cpp:197
 {0} in {1} s, for this renderer only: Save before sharing it
 {0} ({1}초 소요), 이 렌더러 전용: 공유하기 전에 저장하십시오
 
-# src/shader_editor/editor.cpp:210
+# src/shader_editor/editor.cpp:212
 The mod's name, which is also its file's
 모드 이름 (파일 이름으로도 쓰임)
 
-# src/shader_editor/editor.cpp:212
+# src/shader_editor/editor.cpp:214
 New
 새로 만들기
 
-# src/shader_editor/editor.cpp:214
+# src/shader_editor/editor.cpp:216
 Open...
 열기...
 
-# src/shader_editor/editor.cpp:223
+# src/shader_editor/editor.cpp:225
 No saved mods yet.
 아직 저장된 모드가 없습니다.
 
-# src/shader_editor/editor.cpp:229
+# src/shader_editor/editor.cpp:231
 Mods Folder
 모드 폴더
 
-# src/shader_editor/editor.cpp:236
+# src/shader_editor/editor.cpp:238
 Start from...
 프리셋에서 시작...
 
-# src/shader_editor/editor.cpp:243
+# src/shader_editor/editor.cpp:245
 Undo
 실행 취소
 
-# src/shader_editor/editor.cpp:245
+# src/shader_editor/editor.cpp:247
 Ctrl+Z
 
 
-# src/shader_editor/editor.cpp:248
+# src/shader_editor/editor.cpp:250
 Redo
 다시 실행
 
-# src/shader_editor/editor.cpp:250
+# src/shader_editor/editor.cpp:252
 Ctrl+Y
 
 
-# src/shader_editor/editor.cpp:254
+# src/shader_editor/editor.cpp:256
 Frame All
 전체 보기
 
-# src/shader_editor/editor.cpp:255
+# src/shader_editor/editor.cpp:257
 Home, or F with nothing selected
 Home, 또는 아무것도 선택하지 않은 상태에서 F
 
-# src/shader_editor/editor.cpp:257 (+3)
+# src/shader_editor/editor.cpp:259 (+3)
 Comment
 주석
 
-# src/shader_editor/editor.cpp:264
+# src/shader_editor/editor.cpp:266
 C on the canvas wraps the selection in a comment
 캔버스에서 C를 누르면 선택 항목을 주석으로 묶습니다
 
-# src/shader_editor/editor.cpp:268
+# src/shader_editor/editor.cpp:270
 Raw HLSL
 HLSL 직접 작성
 
-# src/shader_editor/editor.cpp:276
+# src/shader_editor/editor.cpp:278
 Live Update
 실시간 업데이트
 
-# src/shader_editor/editor.cpp:277
+# src/shader_editor/editor.cpp:279
 Compiles and applies to the running game a moment after each edit
 편집할 때마다 잠시 후 컴파일하여 실행 중인 게임에 적용합니다
 
-# src/shader_editor/editor.cpp:281
+# src/shader_editor/editor.cpp:283
 Save
 저장
 
-# src/shader_editor/editor.cpp:283
+# src/shader_editor/editor.cpp:285
 Compiles for both renderers and saves the mod; a running game picks it up
 두 렌더러용으로 컴파일하고 모드를 저장합니다. 실행 중인 게임에도 반영됩니다
 
-# src/shader_editor/editor.cpp:285
+# src/shader_editor/editor.cpp:287
 Replace graph
 그래프 바꾸기
 
-# src/shader_editor/editor.cpp:288
+# src/shader_editor/editor.cpp:290
 Replace the graph with {0}?
 그래프를 {0}(으)로 바꾸시겠습니까?
 
-# src/shader_editor/editor.cpp:289
+# src/shader_editor/editor.cpp:291
 Undo brings yours back.
 [실행 취소]로 원래 그래프를 되돌릴 수 있습니다.
 
-# src/shader_editor/editor.cpp:290
+# src/shader_editor/editor.cpp:292
 Replace
 바꾸기
 
-# src/shader_editor/editor.cpp:297
+# src/shader_editor/editor.cpp:301
 Keep Mine
 내 그래프 유지
 
-# src/shader_editor/editor.cpp:311
+# src/shader_editor/editor.cpp:315
 Search nodes
 노드 검색
 
-# src/shader_editor/editor.cpp:345
+# src/shader_editor/editor.cpp:349
 Hold {0} and click the graph to place one.
 {0}을(를) 누른 채 그래프를 클릭하면 배치됩니다.
 
-# src/shader_editor/editor.cpp:363 (+8)
+# src/shader_editor/editor.cpp:367 (+8)
 Colour
 색상
 
-# src/shader_editor/editor.cpp:369
+# src/shader_editor/editor.cpp:373
 Details
 세부 정보
 
-# src/shader_editor/editor.cpp:370
+# src/shader_editor/editor.cpp:374
 Select a node to edit it.
 편집할 노드를 선택하십시오.
 
-# src/shader_editor/editor.cpp:371
+# src/shader_editor/editor.cpp:375
 {0} nodes selected.
 노드 {0}개 선택됨.
 
-# src/shader_editor/editor.cpp:384
+# src/shader_editor/editor.cpp:388
 Parameter
 매개변수
 
-# src/shader_editor/editor.cpp:385
+# src/shader_editor/editor.cpp:389
 Named constants are listed under Parameters, to tune without finding them in the graph
 이름을 붙인 상수는 [매개변수]에 표시되어, 그래프에서 찾지 않고도 조정할 수 있습니다
 
-# src/shader_editor/editor.cpp:391
+# src/shader_editor/editor.cpp:395
 Channel
 채널
 
-# src/shader_editor/editor.cpp:398
+# src/shader_editor/editor.cpp:407
+{0}, {1} x {2}
+{0}, {1} x {2}
+
+# src/shader_editor/editor.cpp:410
+A mod can draw with four of the game's textures; this fifth one reads nothing.
+모드는 게임 텍스처를 네 개까지 쓸 수 있습니다. 이 다섯 번째는 아무것도 읽지 않습니다.
+
+# src/shader_editor/editor.cpp:412
+No texture chosen yet.
+아직 선택한 텍스처가 없습니다.
+
+# src/shader_editor/editor.cpp:414
+Choose a texture...
+텍스처 선택...
+
+# src/shader_editor/editor.cpp:416 (+1)
+Its colour
+색상
+
+# src/shader_editor/editor.cpp:416 (+1)
+Its alpha
+알파
+
+# src/shader_editor/editor.cpp:417
+Reads
+읽기
+
+# src/shader_editor/editor.cpp:424
 Unwired inputs
 연결되지 않은 입력
 
-# src/shader_editor/editor.cpp:401
+# src/shader_editor/editor.cpp:427
 {0}: the surface's UV
 {0}: 표면의 UV
 
-# src/shader_editor/editor.cpp:418
+# src/shader_editor/editor.cpp:454
+Choose a game texture
+게임 텍스처 선택
+
+# src/shader_editor/editor.cpp:456
+Find what wears it: an enemy, a character, a prop. The mod names the texture, and the game reads it from your own files, so the mod holds none of the game's pictures.
+그것을 쓰는 대상(적, 캐릭터, 소품)을 찾으세요. 모드는 텍스처의 이름만 갖고, 게임이 사용자의 파일에서 읽으므로 모드에는 게임의 그림이 들어가지 않습니다.
+
+# src/shader_editor/editor.cpp:459
+Search, such as ShadowTroll
+검색 (예: ShadowTroll)
+
+# src/shader_editor/editor.cpp:460
+Reading the game's levels... {0} of {1} (once only)
+게임 레벨을 읽는 중... {1}개 중 {0}개 (처음 한 번만)
+
+# src/shader_editor/editor.cpp:471
+Choose something on the left.
+왼쪽에서 선택하세요.
+
+# src/shader_editor/editor.cpp:473
+Reading...
+읽는 중...
+
+# src/shader_editor/editor.cpp:475
+It has no textures a mod can draw with.
+모드가 쓸 수 있는 텍스처가 없습니다.
+
+# src/shader_editor/editor.cpp:487
+{0} x {1}, entry {2} of {3}
+{0} x {1}, {3}의 항목 {2}
+
+# src/shader_editor/editor.cpp:503
 Parameters
 매개변수
 
-# src/shader_editor/editor.cpp:431
+# src/shader_editor/editor.cpp:516
 Name a Number or Colour node to list it here.
 숫자 또는 색상 노드에 이름을 붙이면 여기에 표시됩니다.
 
-# src/shader_editor/editor.cpp:445
+# src/shader_editor/editor.cpp:530
 Applies to
 적용 대상
 
-# src/shader_editor/editor.cpp:447
+# src/shader_editor/editor.cpp:532
 Preparing the game's shaders...
 게임 셰이더 준비 중...
 
-# src/shader_editor/editor.cpp:452
+# src/shader_editor/editor.cpp:537
 Characters
 캐릭터
 
-# src/shader_editor/editor.cpp:456
+# src/shader_editor/editor.cpp:541
 Surfaces
 표면
 
-# src/shader_editor/editor.cpp:460
+# src/shader_editor/editor.cpp:545
 Levels
 레벨
 
-# src/shader_editor/editor.cpp:468 (+1)
+# src/shader_editor/editor.cpp:553 (+1)
 Also surfaces the game doesn't light
 게임이 조명하지 않는 표면에도 적용
 
-# src/shader_editor/editor.cpp:473
+# src/shader_editor/editor.cpp:558
 Glows, effects and surfaces lit from within, such as lava. Their Game colour already has fog in it, and Base texture, Light and Normal aren't known.
 발광체, 이펙트, 용암처럼 스스로 빛나는 표면입니다. 이들의 [게임 색상]에는 이미 안개가 들어 있으며, [기본 텍스처], [빛], [노멀]은 알 수 없습니다.
 
-# src/shader_editor/editor.cpp:476
+# src/shader_editor/editor.cpp:561
 {0} shaders. These choose the game's shaders, not objects, so anything else drawn with the same ones changes too.
 셰이더 {0}개. 오브젝트가 아니라 게임의 셰이더를 선택하므로, 같은 셰이더로 그려지는 다른 것도 함께 바뀝니다.
 
-# src/shader_editor/editor.cpp:477
+# src/shader_editor/editor.cpp:562
 {0} shaders, on this model alone: anything else drawn with them keeps the game's look.
 셰이더 {0}개, 이 모델에만 적용: 같은 셰이더로 그려지는 다른 것은 게임 원래 모습을 유지합니다.
 
-# src/shader_editor/editor.cpp:482
+# src/shader_editor/editor.cpp:567
 Compile log
 컴파일 로그
 
-# src/shader_editor/editor.cpp:484
+# src/shader_editor/editor.cpp:569
 Compiling... {0} of {1}
 컴파일 중... {0}/{1}
 
-# src/shader_editor/editor.cpp:485
+# src/shader_editor/editor.cpp:570
 Save, or Live Update, compiles the shaders. Run the game to see them.
 [저장] 또는 [실시간 업데이트]를 하면 셰이더가 컴파일됩니다. 결과를 보려면 게임을 실행하십시오.
 
-# src/shader_editor/editor.cpp:527
+# src/shader_editor/editor.cpp:613
 float3 Shade(ShadeInputs s) {  ... the body below ...  }   Helpers: ModKeyLight, ModStep, ModBands, ModFresnel, ModOutline, ModHalftone, ModLuminance, ModNoise (docs/modding.md).
 float3 Shade(ShadeInputs s) {  ... 아래 본문 ...  }   도우미 함수: ModKeyLight, ModStep, ModBands, ModFresnel, ModOutline, ModHalftone, ModLuminance, ModNoise (docs/modding.md).
 
-# src/shader_editor/model.cpp:58
-{0} is not a game archive
-{0}은(는) 게임 아카이브가 아닙니다
-
-# src/shader_editor/model.cpp:69
-{0} could not be unpacked
-{0}의 압축을 풀 수 없습니다
-
-# src/shader_editor/model.cpp:522
+# src/shader_editor/model.cpp:277
 {0} could not be read
 {0}을(를) 읽을 수 없습니다
 
-# src/shader_editor/model.cpp:546
+# src/shader_editor/model.cpp:300
 {0} has no model in it
 {0}에 모델이 없습니다
 
@@ -1742,19 +1818,23 @@ Channel {0}
 HLSL (Details panel)
 HLSL ([세부 정보] 패널)
 
-# src/shader_editor/node_canvas.cpp:242
+# src/shader_editor/node_canvas.cpp:63
+Choose in Details
+세부 정보에서 선택
+
+# src/shader_editor/node_canvas.cpp:236
 Search nodes...
 노드 검색...
 
-# src/shader_editor/node_canvas.cpp:258
+# src/shader_editor/node_canvas.cpp:252
 [{0} + click]
 [{0} + 클릭]
 
-# src/shader_editor/node_canvas.cpp:430
+# src/shader_editor/node_canvas.cpp:424
 (surface UV)
 (표면 UV)
 
-# src/shader_editor/node_canvas.cpp:481
+# src/shader_editor/node_canvas.cpp:475
 right-click to add a node
 마우스 오른쪽 버튼을 클릭하여 노드 추가
 
@@ -1866,95 +1946,99 @@ Thermite
 Ash
 애쉬
 
-# src/shader_editor/preview.cpp:143
+# src/shader_editor/preview.cpp:155
 The preview's shader compiler failed.
 미리 보기 셰이더 컴파일러가 실패했습니다.
 
-# src/shader_editor/preview.cpp:205 (+1)
+# src/shader_editor/preview.cpp:217 (+1)
 Kameo
 카메오
 
-# src/shader_editor/preview.cpp:206
+# src/shader_editor/preview.cpp:218
 Everyday
 평상복
 
-# src/shader_editor/preview.cpp:212
+# src/shader_editor/preview.cpp:224
 Alternate
 변신
 
-# src/shader_editor/preview.cpp:324
+# src/shader_editor/preview.cpp:336
 Install the game to preview its characters.
 캐릭터를 미리 보려면 게임을 설치하십시오.
 
-# src/shader_editor/preview.cpp:524
+# src/shader_editor/preview.cpp:537
 Spin
 회전
 
-# src/shader_editor/preview.cpp:549
+# src/shader_editor/preview.cpp:562
 Loading...
 불러오는 중...
 
-# src/shader_editor/preview.cpp:552
+# src/shader_editor/preview.cpp:565
 Drag to turn, right drag to move, wheel to zoom, double-click to frame.\nThe lighting stands in for a level's.
 드래그하여 회전, 오른쪽 드래그로 이동, 휠로 확대/축소, 더블클릭으로 화면 맞춤.\n조명은 레벨 조명을 대신하는 임시 조명입니다.
 
-# src/shader_editor/shader_build.cpp:45
+# src/shader_editor/shader_build.cpp:46
 Lava
 용암
 
-# src/shader_editor/shader_build.cpp:45
+# src/shader_editor/shader_build.cpp:46
 Fire off the lava
 용암에서 나오는 불
 
-# src/shader_editor/shader_build.cpp:98
+# src/shader_editor/shader_build.cpp:46
+Grass and plants
+풀과 식물
+
+# src/shader_editor/shader_build.cpp:100
 The game's shaders are missing from {0}; reinstall the game.
 {0}에 게임 셰이더가 없습니다. 게임을 다시 설치하십시오.
 
-# src/shader_editor/shader_build.cpp:113
+# src/shader_editor/shader_build.cpp:115
 The game's shader list could not be read.
 게임 셰이더 목록을 읽을 수 없습니다.
 
-# src/shader_editor/shader_build.cpp:155
+# src/shader_editor/shader_build.cpp:157
 {0}: new costume (everyday outfit)
 {0}: 새 의상 (평상복)
 
-# src/shader_editor/shader_build.cpp:155
+# src/shader_editor/shader_build.cpp:157
 {0}: new costume (standard look)
 {0}: 새 의상 (기본 모습)
 
-# src/shader_editor/shader_build.cpp:161
+# src/shader_editor/shader_build.cpp:163
 Shared objects
 공용 오브젝트
 
-# src/shader_editor/shader_build.cpp:162
+# src/shader_editor/shader_build.cpp:164
 All characters
 모든 캐릭터
 
-# src/shader_editor/shader_build.cpp:163
+# src/shader_editor/shader_build.cpp:165
 Everything in the game
 게임 전체
 
-# src/shader_editor/shader_build.cpp:200
+# src/shader_editor/shader_build.cpp:215
 The shader compiler is missing from {0}; reinstall the game.
 {0}에 셰이더 컴파일러가 없습니다. 게임을 다시 설치하십시오.
 
-# src/shader_editor/shader_build.cpp:204
+# src/shader_editor/shader_build.cpp:219
 Choose something for the mod to apply to.
 모드를 적용할 대상을 선택하십시오.
 
-# src/shader_editor/shader_build.cpp:251
+# src/shader_editor/shader_build.cpp:266
 The shader compiler did not start.
 셰이더 컴파일러가 시작되지 않았습니다.
 
-# src/shader_editor/shader_build.cpp:273
+# src/shader_editor/shader_build.cpp:288
 The shader compiler failed.
 셰이더 컴파일러가 실패했습니다.
 
-# src/shader_editor/shader_build.cpp:316
+# src/shader_editor/shader_build.cpp:336
 could not replace {0}: {1}
 {0}을(를) 바꿀 수 없음: {1}
 
-# src/shader_editor/shader_build.cpp:319
+# src/shader_editor/shader_build.cpp:339
 {0} shaders written to {1}
 셰이더 {0}개를 {1}에 기록함
 
@@ -1962,15 +2046,19 @@ could not replace {0}: {1}
 Output
 출력
 
+# src/shader_editor/shader_graph.cpp:29 (+2)
+Opacity
+불투명도
+
 # src/shader_editor/shader_graph.cpp:29
-The colour drawn. Fog and fades still follow where the game has them.
-그려지는 색상입니다. 안개와 페이드는 게임에 있는 곳이라면 그대로 적용됩니다.
+The colour drawn. Fog and fades still follow where the game has them. Opacity below 1 lets the scene show through in a fine dither (a hologram, a ghost).
+그려지는 색상입니다. 안개와 페이드는 게임에 있는 곳이라면 그대로 적용됩니다. 불투명도가 1보다 낮으면 촘촘한 디더링으로 장면이 비쳐 보입니다(홀로그램, 유령 등).
 
 # src/shader_editor/shader_graph.cpp:30
 Game colour
 게임 색상
 
-# src/shader_editor/shader_graph.cpp:30 (+8)
+# src/shader_editor/shader_graph.cpp:30 (+9)
 Inputs
 입력
 
@@ -1994,7 +2082,7 @@ Light
 The light on this pixel, with its shadows and shine: Game colour over Base texture. Using it makes the surface twice the work to draw.
 이 픽셀에 닿는 빛으로, 그림자와 광택을 포함합니다: [게임 색상]을 [기본 텍스처]로 나눈 값입니다. 이것을 사용하면 표면을 그리는 작업량이 두 배가 됩니다.
 
-# src/shader_editor/shader_graph.cpp:33 (+2)
+# src/shader_editor/shader_graph.cpp:33 (+3)
 UV
 
 
@@ -2490,55 +2578,164 @@ Width
 1 on an inked line Width pixels wide just inside the silhouette, and round any part seen in front of another; 0 elsewhere. It keeps its width at any distance.
 실루엣 바로 안쪽, 그리고 다른 부분 앞에 보이는 부분의 둘레를 따라 그린 [너비] 픽셀 두께의 잉크 선 위에서 1, 그 밖에서는 0입니다. 거리에 상관없이 두께가 유지됩니다.
 
-# src/shader_editor/shader_graph.cpp:255
+# src/shader_editor/shader_graph.cpp:85
+Game texture
+게임 텍스처
+
+# src/shader_editor/shader_graph.cpp:85
+Read alpha
+알파 읽기
+
+# src/shader_editor/shader_graph.cpp:85
+One of the game's own textures, such as an enemy's or another character's, read at UV (the surface's while unwired) and repeating. Choose it in the Details panel. A mod names the texture rather than carrying it, so it holds none of the game's pictures; up to four in a mod.
+적이나 다른 캐릭터 등 게임 자체의 텍스처 하나를 UV(연결하지 않으면 표면의 UV)에서 반복해 읽습니다. 세부 정보 패널에서 고르세요. 모드는 텍스처를 담지 않고 이름으로 가리키므로 게임의 그림이 들어가지 않습니다. 모드 하나에 네 개까지.
+
+# src/shader_editor/shader_graph.cpp:300
+Hologram colour
+홀로그램 색상
+
+# src/shader_editor/shader_graph.cpp:301 (+1)
+Brightness
+밝기 설정
+
+# src/shader_editor/shader_graph.cpp:306
+Own colours
+원래 색상
+
+# src/shader_editor/shader_graph.cpp:315
+Edge glow
+가장자리 빛
+
+# src/shader_editor/shader_graph.cpp:327
+Line spacing
+줄 간격
+
+# src/shader_editor/shader_graph.cpp:330
+Line speed
+줄 속도
+
+# src/shader_editor/shader_graph.cpp:351
+Flicker speed
+깜박임 속도
+
+# src/shader_editor/shader_graph.cpp:391
+Swirl strength
+소용돌이 세기
+
+# src/shader_editor/shader_graph.cpp:397
+Face tiling
+얼굴 반복
+
+# src/shader_editor/shader_graph.cpp:401
+Scroll speed
+흐르는 속도
+
+# src/shader_editor/shader_graph.cpp:418
+Shadow colour
+그림자 색상
+
+# src/shader_editor/shader_graph.cpp:455
+Grass detection
+풀 감지
+
+# src/shader_editor/shader_graph.cpp:462
+Sunny grass
+햇살 받은 풀
+
+# src/shader_editor/shader_graph.cpp:463 (+1)
+Lush grass
+무성한 풀
+
+# src/shader_editor/shader_graph.cpp:472
+Richness
+선명함
+
+# src/shader_editor/shader_graph.cpp:485
+Wind sheen
+바람 광택
+
+# src/shader_editor/shader_graph.cpp:505
+Backlight
+역광
+
+# src/shader_editor/shader_graph.cpp:515
+Blade depth
+풀잎 깊이
+
+# src/shader_editor/shader_graph.cpp:516
+Relief
+부조
+
+# src/shader_editor/shader_graph.cpp:517
+Cavities
+틈새
+
+# src/shader_editor/shader_graph.cpp:539
+Strength
+세기
+
+# src/shader_editor/shader_graph.cpp:546
+Root fade
+뿌리 흐림
+
+
+# src/shader_editor/shader_graph.cpp:596
 The game's own look
 게임 원래 모습
 
-# src/shader_editor/shader_graph.cpp:255
+# src/shader_editor/shader_graph.cpp:596
 Cel shade
 셀 셰이딩
 
-# src/shader_editor/shader_graph.cpp:255
+# src/shader_editor/shader_graph.cpp:596
 Toon bands
 툰 단계
 
-# src/shader_editor/shader_graph.cpp:255
+# src/shader_editor/shader_graph.cpp:596
 Flat colour
 단색
 
-# src/shader_editor/shader_graph.cpp:255
+# src/shader_editor/shader_graph.cpp:596
 Rim lit
 림 라이트
 
-# src/shader_editor/shader_graph.cpp:255
+# src/shader_editor/shader_graph.cpp:596
 Comic halftone
 만화 망점
 
-# src/shader_editor/shader_graph.cpp:280
+# src/shader_editor/shader_graph.cpp:596
+Hologram
+홀로그램
+
+# src/shader_editor/shader_graph.cpp:596
+Shadow troll
+섀도 트롤
+
+# src/shader_editor/shader_graph.cpp:624
 Shadow tint
 그림자 색조
 
-# src/shader_editor/shader_graph.cpp:310
+# src/shader_editor/shader_graph.cpp:654
 Rim colour
 림 색상
 
-# src/shader_editor/shader_graph.cpp:343
+# src/shader_editor/shader_graph.cpp:687
 Ink width
 잉크 너비
 
-# src/shader_editor/shader_graph.cpp:349
+# src/shader_editor/shader_graph.cpp:693
 Ink colour
 잉크 색상
 
-# src/shader_editor/shader_graph.cpp:432
+# src/shader_editor/shader_graph.cpp:776
 could not read {0}
 {0}을(를) 읽을 수 없음
 
-# src/shader_editor/shader_graph.cpp:437
+# src/shader_editor/shader_graph.cpp:781
 {0} is not valid JSON
 {0}은(는) 올바른 JSON이 아님
 
-# src/ui/string_overrides.cpp:43
+# src/ui/string_overrides.cpp:46
 Rename
 이름 변경
 
@@ -2566,7 +2763,7 @@ You'll need a higher score than that.
 Buy this item for {0} points?
 이 아이템을 {0}점에 구입하시겠습니까?
 
-# src/ui/hud/achievement_toast.cpp:150
+# src/ui/hud/achievement_toast.cpp:148
 Achievement Unlocked\n{0}   {1}G
 도전 과제 완수\n{0}   {1}G
 
@@ -2586,11 +2783,11 @@ Wheel Up
 {0} FPS
 
 
-# src/ui/hud/loading_overlay.cpp:181
+# src/ui/hud/loading_overlay.cpp:200
 Gathering the elements: preparing shaders
 대자연의 힘을 모으는 중: 셰이더 준비 중
 
-# src/ui/hud/loading_overlay.cpp:181
+# src/ui/hud/loading_overlay.cpp:200
 Awakening the kingdom: loading the game
 왕국을 깨우는 중: 게임 불러오는 중
 
@@ -2670,15 +2867,15 @@ Type a name   Bksp Delete   Enter Done   Esc Cancel
 Rename Saved Game
 저장한 게임 이름 변경
 
-# src/ui/pause_menu/achievements_page.cpp:63 (+1)
+# src/ui/pause_menu/achievements_page.cpp:63 (+3)
 Achievements
 도전 과제
 
-# src/ui/pause_menu/achievements_page.cpp:67
+# src/ui/pause_menu/achievements_page.cpp:67 (+1)
 No achievement data was found in the game's files.
 게임 파일에서 도전 과제 데이터를 찾을 수 없습니다.
 
-# src/ui/pause_menu/achievements_page.cpp:80
+# src/ui/pause_menu/achievements_page.cpp:80 (+1)
 {0} of {1} unlocked   {2}G of {3}G
 {1}개 중 {0}개 완수   {3}G 중 {2}G
 
@@ -2714,7 +2911,7 @@ Costumes in This Area
 All Costumes
 모든 의상
 
-# src/ui/pause_menu/collectible_tracker.cpp:57 (+1)
+# src/ui/pause_menu/collectible_tracker.cpp:57 (+2)
 Collectibles
 수집품
 
@@ -2730,323 +2927,343 @@ Nothing to find
 Missed, Sold in Tribe Shops
 놓친 항목은 종족 상점에서 판매
 
-# src/ui/pause_menu/level_select.cpp:32
+# src/ui/pause_menu/level_select.cpp:40
 Thorn's Castle
 쏜의 성
 
-# src/ui/pause_menu/level_select.cpp:32
+# src/ui/pause_menu/level_select.cpp:40
 Enchanted Kingdom
 마법의 왕국
 
-# src/ui/pause_menu/level_select.cpp:32
+# src/ui/pause_menu/level_select.cpp:40
 The Badlands
 야생의 땅
 
-# src/ui/pause_menu/level_select.cpp:32
+# src/ui/pause_menu/level_select.cpp:40
 Forgotten Forest
 잊혀진 숲
 
-# src/ui/pause_menu/level_select.cpp:33
+# src/ui/pause_menu/level_select.cpp:41
 Forest Temple
 숲 속 사원
 
-# src/ui/pause_menu/level_select.cpp:33
+# src/ui/pause_menu/level_select.cpp:41
 Mountain Falls
 무지개 낙원
 
-# src/ui/pause_menu/level_select.cpp:33
+# src/ui/pause_menu/level_select.cpp:41
 Mountain Rise
 산 오름길
 
-# src/ui/pause_menu/level_select.cpp:33
+# src/ui/pause_menu/level_select.cpp:41
 Water Temple
 수중 사원
 
-# src/ui/pause_menu/level_select.cpp:34
+# src/ui/pause_menu/level_select.cpp:42
 Snow Top Village
 눈 속 마을
 
-# src/ui/pause_menu/level_select.cpp:34
+# src/ui/pause_menu/level_select.cpp:42
 Snow Temple
 얼음 사원
 
-# src/ui/pause_menu/level_select.cpp:34
+# src/ui/pause_menu/level_select.cpp:42
 Ogre's Swamp
 오우거의 늪
 
-# src/ui/pause_menu/level_select.cpp:34
+# src/ui/pause_menu/level_select.cpp:42
 Thorn's Pass
 쏜의 길목
 
-# src/ui/pause_menu/level_select.cpp:35
+# src/ui/pause_menu/level_select.cpp:43
 Thorn's Airship
 쏜의 비행선
 
-# src/ui/pause_menu/level_select.cpp:81 (+1)
+# src/ui/pause_menu/level_select.cpp:99 (+2)
 Level Select
 퀘스트 선택
 
-# src/ui/pause_menu/level_select.cpp:95
+# src/ui/pause_menu/level_select.cpp:101 (+1)
+Custom Levels
+
+
+# src/ui/pause_menu/level_select.cpp:120
+Start "{0}"?
+
+
+# src/ui/pause_menu/level_select.cpp:121
+A custom level;\nthe story stays where it is.
+
+
+# src/ui/pause_menu/level_select.cpp:127
 Start from "{0}"?
 "{0}"부터 시작하시겠습니까?
 
-# src/ui/pause_menu/level_select.cpp:96
+# src/ui/pause_menu/level_select.cpp:128
 The story is set to this point;\ncollectibles are kept.
 스토리가 이 지점으로 설정됩니다.\n수집품은 그대로 유지됩니다.
 
-# src/ui/pause_menu/line_injection.cpp:34
-Brightness
-밝기 설정
-
-# src/ui/pause_menu/line_injection.cpp:54
+# src/ui/pause_menu/line_injection.cpp:54 (+2)
 Resume
 계속하기
 
-# src/ui/pause_menu/line_injection.cpp:62 (+1)
+# src/ui/pause_menu/line_injection.cpp:62 (+3)
 Options
 옵션
 
-# src/ui/pause_menu/option_values.cpp:97 (+1)
+# src/ui/pause_menu/option_values.cpp:105 (+1)
 English
 영어
 
-# src/ui/pause_menu/option_values.cpp:97
+# src/ui/pause_menu/option_values.cpp:105
 Japanese
 일본어
 
-# src/ui/pause_menu/option_values.cpp:97
+# src/ui/pause_menu/option_values.cpp:105
 German
 독일어
 
-# src/ui/pause_menu/option_values.cpp:97
+# src/ui/pause_menu/option_values.cpp:105
 French
 프랑스어
 
-# src/ui/pause_menu/option_values.cpp:97
+# src/ui/pause_menu/option_values.cpp:105
 Spanish
 스페인어
 
-# src/ui/pause_menu/option_values.cpp:97
+# src/ui/pause_menu/option_values.cpp:105
 Italian
 이탈리아어
 
-# src/ui/pause_menu/option_values.cpp:97
+# src/ui/pause_menu/option_values.cpp:105
 Korean
 한국어
 
-# src/ui/pause_menu/option_values.cpp:97
+# src/ui/pause_menu/option_values.cpp:105
 Chinese
 중국어
 
-# src/ui/pause_menu/option_values.cpp:122
+# src/ui/pause_menu/option_values.cpp:130
 Press a key (wait 5s to cancel)
 키를 누르십시오 (5초 기다리면 취소)
 
-# src/ui/pause_menu/option_values.cpp:143
+# src/ui/pause_menu/option_values.cpp:151
 Window
 창
 
-# src/ui/pause_menu/option_values.cpp:144
+# src/ui/pause_menu/option_values.cpp:152
 Window ({0}x{1})
 창 ({0}x{1})
 
-# src/ui/pause_menu/options_table.cpp:69
+# src/ui/pause_menu/options_table.cpp:70
 Control Display
 컨트롤 표시
 
-# src/ui/pause_menu/options_table.cpp:70
+# src/ui/pause_menu/options_table.cpp:71
 Score Display
 점수 표시
 
-# src/ui/pause_menu/options_table.cpp:71
+# src/ui/pause_menu/options_table.cpp:72
 Map Display
 지도 표시
 
-# src/ui/pause_menu/options_table.cpp:72 (+1)
+# src/ui/pause_menu/options_table.cpp:73 (+1)
 {0} (restart)
 {0} (재시작 필요)
 
-# src/ui/pause_menu/options_table.cpp:79
+# src/ui/pause_menu/options_table.cpp:80
 3D Display
 3D 화면
 
-# src/ui/pause_menu/options_table.cpp:79
+# src/ui/pause_menu/options_table.cpp:80
 Side by Side
 좌우 분할
 
-# src/ui/pause_menu/options_table.cpp:79
+# src/ui/pause_menu/options_table.cpp:80
 Top and Bottom
 상하 분할
 
-# src/ui/pause_menu/options_table.cpp:79
+# src/ui/pause_menu/options_table.cpp:80
 Red/Cyan Glasses
 적청 안경
 
-# src/ui/pause_menu/options_table.cpp:80
+# src/ui/pause_menu/options_table.cpp:81
 3D Depth
 3D 깊이
 
-# src/ui/pause_menu/options_table.cpp:81
+# src/ui/pause_menu/options_table.cpp:82
 3D Focus
 3D 초점
 
-# src/ui/pause_menu/options_table.cpp:81
+# src/ui/pause_menu/options_table.cpp:82
 On Kameo
 카메오에 맞춤
 
-# src/ui/pause_menu/options_table.cpp:82
+# src/ui/pause_menu/options_table.cpp:83
 3D Swap Eyes
 3D 좌우 영상 바꾸기
 
-# src/ui/pause_menu/options_table.cpp:99
+# src/ui/pause_menu/options_table.cpp:100
 Player 1 Input
 플레이어 1 입력
 
-# src/ui/pause_menu/options_table.cpp:100
+# src/ui/pause_menu/options_table.cpp:101
 Controller Preset
 컨트롤러 프리셋
 
-# src/ui/pause_menu/options_table.cpp:100
+# src/ui/pause_menu/options_table.cpp:101
 Button Position
 버튼 위치
 
-# src/ui/pause_menu/options_table.cpp:100
+# src/ui/pause_menu/options_table.cpp:101
 Button Labels
 버튼 표시
 
-# src/ui/pause_menu/options_table.cpp:100
+# src/ui/pause_menu/options_table.cpp:101
 Custom
 사용자 지정
 
-# src/ui/pause_menu/options_table.cpp:101
+# src/ui/pause_menu/options_table.cpp:102
 Mouse Look
 마우스 시점
 
-# src/ui/pause_menu/options_table.cpp:103
+# src/ui/pause_menu/options_table.cpp:104
 Player 1 Keyboard
 플레이어 1 키보드
 
-# src/ui/pause_menu/options_table.cpp:103 (+1)
+# src/ui/pause_menu/options_table.cpp:104 (+1)
 Keyboard 2
 키보드 2
 
-# src/ui/pause_menu/options_table.cpp:103 (+1)
+# src/ui/pause_menu/options_table.cpp:104 (+1)
 Keyboard 1
 키보드 1
 
-# src/ui/pause_menu/options_table.cpp:104
+# src/ui/pause_menu/options_table.cpp:105
 Player 1 Mouse
 플레이어 1 마우스
 
-# src/ui/pause_menu/options_table.cpp:104 (+1)
+# src/ui/pause_menu/options_table.cpp:105 (+1)
 Mouse 2
 마우스 2
 
-# src/ui/pause_menu/options_table.cpp:104 (+1)
+# src/ui/pause_menu/options_table.cpp:105 (+1)
 Mouse 1
 마우스 1
 
-# src/ui/pause_menu/options_table.cpp:105
+# src/ui/pause_menu/options_table.cpp:106
 Look Left/Right
 시점 좌우
 
-# src/ui/pause_menu/options_table.cpp:106
+# src/ui/pause_menu/options_table.cpp:107
 Look Up/Down
 시점 상하
 
-# src/ui/pause_menu/options_table.cpp:109
+# src/ui/pause_menu/options_table.cpp:110
 Default
 기본
 
-# src/ui/pause_menu/options_table.cpp:111
+# src/ui/pause_menu/options_table.cpp:112
 Costume
 코스튬
 
-# src/ui/pause_menu/options_table.cpp:113
+# src/ui/pause_menu/options_table.cpp:114
 Player 2 Input
 플레이어 2 입력
 
-# src/ui/pause_menu/options_table.cpp:114
+# src/ui/pause_menu/options_table.cpp:115
 Split-Screen Layout
 화면 분할 배치
 
-# src/ui/pause_menu/options_table.cpp:115
+# src/ui/pause_menu/options_table.cpp:116
 Player 2 Keyboard
 플레이어 2 키보드
 
-# src/ui/pause_menu/options_table.cpp:116
+# src/ui/pause_menu/options_table.cpp:117
 Player 2 Mouse
 플레이어 2 마우스
 
-# src/ui/pause_menu/options_table.cpp:117
+# src/ui/pause_menu/options_table.cpp:118
 Player 2 Aim X
 플레이어 2 조준 X
 
-# src/ui/pause_menu/options_table.cpp:117 (+1)
+# src/ui/pause_menu/options_table.cpp:118 (+1)
 Inverted
 반전
 
-# src/ui/pause_menu/options_table.cpp:117 (+1)
+# src/ui/pause_menu/options_table.cpp:118 (+1)
 Normal
 표준
 
-# src/ui/pause_menu/options_table.cpp:118
+# src/ui/pause_menu/options_table.cpp:119
 Player 2 Aim Y
 플레이어 2 조준 Y
 
-# src/ui/pause_menu/options_table.cpp:119
+# src/ui/pause_menu/options_table.cpp:120
 Player Pushing
 파트너 밀어내기
 
-# src/ui/pause_menu/options_table.cpp:120
+# src/ui/pause_menu/options_table.cpp:121
 Friendly Fire
 파트너 공격
 
-# src/ui/pause_menu/options_table.cpp:122
+# src/ui/pause_menu/options_table.cpp:123
+Pause Menu
+
+
+# src/ui/pause_menu/options_table.cpp:123
+Parchment Card
+
+
+# src/ui/pause_menu/options_table.cpp:123
+Storybook
+
+
+# src/ui/pause_menu/options_table.cpp:124
 Hints
 힌트
 
-# src/ui/pause_menu/options_table.cpp:125
+# src/ui/pause_menu/options_table.cpp:127
 All Warriors & Upgrades
 모든 전사 및 업그레이드
 
-# src/ui/pause_menu/options_table.cpp:134
+# src/ui/pause_menu/options_table.cpp:136
  Button
  버튼
 
-# src/ui/pause_menu/options_table.cpp:135
+# src/ui/pause_menu/options_table.cpp:137
  Button
  버튼
 
-# src/ui/pause_menu/options_table.cpp:136
+# src/ui/pause_menu/options_table.cpp:138
  Button
  버튼
 
-# src/ui/pause_menu/options_table.cpp:137
+# src/ui/pause_menu/options_table.cpp:139
  Button
  버튼
 
-# src/ui/pause_menu/options_table.cpp:154
+# src/ui/pause_menu/options_table.cpp:156
  Action
  동작
 
-# src/ui/pause_menu/options_table.cpp:155
+# src/ui/pause_menu/options_table.cpp:157
  Action
  동작
 
-# src/ui/pause_menu/options_table.cpp:156
+# src/ui/pause_menu/options_table.cpp:158
  Action
  동작
 
-# src/ui/pause_menu/options_table.cpp:157
+# src/ui/pause_menu/options_table.cpp:159
  Action
  동작
 
-# src/ui/pause_menu/options_table.cpp:170
+# src/ui/pause_menu/options_table.cpp:172
 Move Up
 위로 이동
 
-# src/ui/pause_menu/options_table.cpp:171
+# src/ui/pause_menu/options_table.cpp:173
 Move Down
 아래로 이동
 
@@ -3078,17 +3295,37 @@ Restore All Defaults
 Brightness & Gamma
 밝기 및 감마
 
-# src/ui/pause_menu/quit_prompt.cpp:98
+# src/ui/pause_menu/pause_card.cpp:208 (+1)
+Quit
+종료
+
+# src/ui/pause_menu/pause_card.cpp:209 (+1)
 Quit to Menu
 메뉴로 나가기
 
-# src/ui/pause_menu/quit_prompt.cpp:99
+# src/ui/pause_menu/pause_card.cpp:209 (+1)
 Quit Application
 프로그램 종료
 
-# src/ui/pause_menu/quit_prompt.cpp:100
+# src/ui/pause_menu/pause_card.cpp:209 (+1)
 Restart Game
 게임 재시작
+
+# src/ui/pause_menu/pause_card.cpp:209
+Back to Game
+게임으로 돌아가기
+
+# src/ui/pause_menu/pause_card.cpp:884 (+2)
+Select
+선택
+
+# src/ui/pause_menu/pause_card.cpp:979
+Category
+카테고리
+
+# src/ui/pause_menu/pause_card.cpp:984
+Any progress since you last saved will be lost.
+저장하지 않은 진행 상황은 사라집니다.
 
 # src/ui/pause_menu/quit_prompt.cpp:110
 Press  to restart the game\n\nPress  to quit the application

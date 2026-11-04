@@ -330,11 +330,15 @@ void RegisterPixelHash(uint64_t hash, uint64_t pixel_hash) {
   if (!g_index.contains(hash) && siblings.size() > 1 && ResolveReplacementLocked(hash)) MarkOneChangedLocked(hash, true);
 }
 
-void WriteDump(uint64_t hash, const std::string& level, uint32_t width, uint32_t height, uint32_t format, const std::vector<uint8_t>& pixels, uint32_t src_row_bytes, bool block_compressed, bool write_file) {
-  const std::string kind = REXCVAR_GET(kameo_gfx_dump_texture_format) == "tga" ? "tga" : "png";
-  const std::filesystem::path dir = TextureDir("dump") / FolderName(level) / fmt::format("{}x{}", width, height);
-  const std::filesystem::path path = dir / fmt::format("{:016X}_{}x{}_fmt{}.{}", hash, width, height, format, kind);
-  std::error_code ec;
+std::mutex g_keptMutex;
+struct KeptCopy {
+  uint32_t width = 0, height = 0;
+  std::vector<uint8_t> rgba;
+};
+// Wanted hashes start with no copy; the first upload of each fills one in.
+std::unordered_map<uint64_t, KeptCopy> g_kept;
+
+std::vector<uint8_t> ToRgba(uint32_t width, uint32_t height, uint32_t format, const std::vector<uint8_t>& pixels, uint32_t src_row_bytes, bool block_compressed) {
   std::vector<uint8_t> rgba;
   if (block_compressed) {
     rgba.assign(size_t(width) * height * 4, 0xFF);
@@ -343,6 +347,31 @@ void WriteDump(uint64_t hash, const std::string& level, uint32_t width, uint32_t
     rgba.resize(size_t(width) * height * 4);
     for (uint32_t y = 0; y < height; ++y) std::memcpy(rgba.data() + size_t(y) * width * 4, pixels.data() + size_t(y) * src_row_bytes, size_t(width) * 4);
   }
+  return rgba;
+}
+
+// A wanted texture's copy, taken as it uploads rather than when the dump queue gets to it, so it never waits behind a
+// level's worth of dumps or depends on dumping being set up.
+void KeepIfWanted(uint64_t hash, uint32_t width, uint32_t height, uint32_t format, const std::vector<uint8_t>& pixels, uint32_t src_row_bytes, bool block_compressed) {
+  {
+    std::lock_guard lock(g_keptMutex);
+    const auto kept = g_kept.find(hash);
+    if (kept == g_kept.end() || !kept->second.rgba.empty()) return;
+  }
+  std::vector<uint8_t> rgba = ToRgba(width, height, format, pixels, src_row_bytes, block_compressed);
+  std::lock_guard lock(g_keptMutex);
+  if (auto kept = g_kept.find(hash); kept != g_kept.end() && kept->second.rgba.empty()) {
+    kept->second = KeptCopy{width, height, std::move(rgba)};
+    KGFX_INFO("texture pack: kept a copy of {:016X} ({}x{})", hash, width, height);
+  }
+}
+
+void WriteDump(uint64_t hash, const std::string& level, uint32_t width, uint32_t height, uint32_t format, const std::vector<uint8_t>& pixels, uint32_t src_row_bytes, bool block_compressed, bool write_file) {
+  const std::string kind = REXCVAR_GET(kameo_gfx_dump_texture_format) == "tga" ? "tga" : "png";
+  const std::filesystem::path dir = TextureDir("dump") / FolderName(level) / fmt::format("{}x{}", width, height);
+  const std::filesystem::path path = dir / fmt::format("{:016X}_{}x{}_fmt{}.{}", hash, width, height, format, kind);
+  std::error_code ec;
+  const std::vector<uint8_t> rgba = ToRgba(width, height, format, pixels, src_row_bytes, block_compressed);
   RegisterPixelHash(hash, XXH3_64bits_withSeed(rgba.data(), rgba.size(), (uint64_t(width) << 32) | height));
   if (!write_file || std::filesystem::exists(path, ec)) return;
   std::vector<uint8_t> encoded;
@@ -367,6 +396,7 @@ void NoteTextureAssetLevel(uint32_t object, const std::string& level) {
 }
 
 void QueueTextureDump(uint64_t hash, uint32_t object, uint32_t width, uint32_t height, uint32_t format, std::vector<uint8_t>&& pixels, uint32_t src_row_bytes, bool block_compressed, bool write_file) {
+  KeepIfWanted(hash, width, height, format, pixels, src_row_bytes, block_compressed);
   bool newly_registered = false;
   bool newly_written = false;
   {
@@ -455,7 +485,37 @@ void RescanTextureReplacements() {
 void RefreshAllTextureReplacements() {
   std::lock_guard lock(g_packMutex);
   g_failed.clear();
+  // A game started with replacements off has never read the folder, so switching them on would refresh nothing.
+  if (!g_indexed) BuildIndexLocked();
   for (const auto& [hash, path] : g_index) MarkChangedLocked(hash, true);
+}
+
+void KeepTextureCopies(std::initializer_list<uint64_t> hashes) {
+  std::lock_guard lock(g_keptMutex);
+  for (const uint64_t hash : hashes) g_kept.try_emplace(hash);
+}
+
+bool KeptTexture(uint64_t hash, uint32_t* width, uint32_t* height, std::vector<uint8_t>* rgba) {
+  std::lock_guard lock(g_keptMutex);
+  const auto kept = g_kept.find(hash);
+  if (kept == g_kept.end() || kept->second.rgba.empty()) return false;
+  *width = kept->second.width;
+  *height = kept->second.height;
+  *rgba = kept->second.rgba;
+  return true;
+}
+
+bool LoadImageFile(const std::filesystem::path& path, uint32_t* width, uint32_t* height, std::vector<uint8_t>* rgba) {
+  std::vector<uint8_t> file;
+  if (!ReadFile(path, &file) || file.size() > size_t(INT32_MAX)) return false;
+  int w = 0, h = 0, components = 0;
+  stbi_uc* pixels = stbi_load_from_memory(file.data(), int(file.size()), &w, &h, &components, 4);
+  if (!pixels) return false;
+  *width = uint32_t(w);
+  *height = uint32_t(h);
+  rgba->assign(pixels, pixels + size_t(w) * h * 4);
+  stbi_image_free(pixels);
+  return true;
 }
 
 bool TextureWasDumped(uint64_t hash) {

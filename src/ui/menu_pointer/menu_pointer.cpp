@@ -11,6 +11,7 @@
 #include "gpu/replay/book_pick.h"
 #include "input/input.h"
 #include "ui/menu_pointer/menu_ui_state.h"
+#include "ui/pause_menu/pause_card.h"
 #include "ui/text_window.h"
 
 using namespace kameo::ui;
@@ -55,6 +56,8 @@ int32_t MenuItemAt(uint8_t* base, uint32_t text_object, float x, float y) {
 
 // Hover selects, left click presses A on the line under the pointer, right click presses B and the wheel steps the cursor; returns true when a press ran, since its callback may have rebuilt or closed the window.
 bool DriveMenuWithMouse(PPCContext& ctx, uint8_t* base, uint32_t text_object) {
+  // The pause card draws over the storybook's menu and takes the mouse itself.
+  if (KameoPauseCardOpen()) return false;
   const uint32_t window = REX_LOAD_U32(text_object + kTextWindow);
   const uint32_t menu = REX_LOAD_U32(text_object + kTextMenu);
   if (!window || !menu || REX_LOAD_U8(text_object + 233) != 0 || (REX_LOAD_U16(menu) & 0x80) != 0) return false;

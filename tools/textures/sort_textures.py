@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Sort an export_textures.py export by where each texture is used and how much an upscale would gain.
 
-    python tools/sort_textures.py out/build/release/textures/export
+    python tools/textures/sort_textures.py out/build/release/textures/export
 
 Adds to the export, as hard links so it takes no more disk space:
 

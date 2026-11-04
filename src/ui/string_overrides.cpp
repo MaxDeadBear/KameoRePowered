@@ -5,19 +5,22 @@
 #include <unordered_map>
 
 #include "core/localization.h"
+#include "engine/custom_levels.h"
 #include "engine/dlc/dlc.h"
 #include "ui/text_window.h"
 
 using kameo::l10n::Tr;
 using kameo::ui::GuestWideString;
 
-// LocString_GetString(table, id) -- the save list's "A Select (B Back) Y Delete" hints (2142, 8142) gain the X Rename button ahead of Delete, and the downloadable skin names the vanilla table lacks come from the title update's list, as does the shader mod costume's.
+// LocString_GetString(table, id) -- the save list's "A Select (B Back) Y Delete" hints (2142, 8142) gain the X Rename button ahead of Delete, and the downloadable skin names the vanilla table lacks come from the title update's list, as does the shader mod costume's and a custom level's title.
 extern "C" REX_FUNC(sub_8251DCE8) {
   const uint32_t id = ctx.r4.u32;
   __imp__sub_8251DCE8(ctx, base);
   // A missing id comes back as "<kameostringsStripped:ID Not Found>" rather than null.
   if (!ctx.r3.u32 || !REX_LOAD_U16(ctx.r3.u32) || REX_LOAD_U16(ctx.r3.u32) == u'<') {
-    if (const std::u16string name = KameoDlcSkinName(id); !name.empty()) {
+    std::u16string name = kameo::engine::CustomLevelTitleOfString(id);
+    if (name.empty()) name = KameoDlcSkinName(id);
+    if (!name.empty()) {
       if (const uint32_t address = GuestWideString(name)) ctx.r3.u64 = address;
       return;
     }

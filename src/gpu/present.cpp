@@ -209,7 +209,7 @@ void GraphicsSystem::PresentClear() {
         list, scene_texture, composition_texture, composition_framebuffer, width, height);
     else UpscaleScene(list, scene_texture, composition_texture, composition_framebuffer, width, height);
   }
-  if (!bink_in_scene_) DrawBink(list, false);
+  if (!bink_in_scene_) DrawBink(list, false, 1, width, height);
   // Before ApplyGamma, which rebinds its own state, so the UI goes through the scanout ramp like everything else.
   DrawUi(list, composition_framebuffer, width, height);
   // Last thing in the frame, exactly where the console's scanout ramp sits.

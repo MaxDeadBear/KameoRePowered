@@ -25,4 +25,9 @@ extern uint32_t g_emptySlot;
 void EnsurePlaceholderTextures(GraphicsSystem::DrawPathContext& ctx, plume::RenderCommandList* list);
 void ReleasePlaceholderTextures();
 
+// Shader mods' textures (gpu/shaders/shader_mods.cpp): puts those read since the last call into the heap, and the
+// linear, repeating sampler ModGameTexture reads them with.
+void UploadShaderModTextures(GraphicsSystem::DrawPathContext& ctx, plume::RenderCommandList* list);
+uint32_t ShaderModSampler(GraphicsSystem::DrawPathContext& ctx);
+
 }  // namespace kameo::gpu::detail

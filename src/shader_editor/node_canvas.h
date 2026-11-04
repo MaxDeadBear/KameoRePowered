@@ -26,8 +26,7 @@ class NodeCanvas {
   const std::vector<int>& selected() const { return selected_; }
   int selected_comment() const { return selected_comment_; }
 
-  // The node under a screen point, or 0; whether the point is on the canvas; and where it is in the graph.
-  int NodeAt(const ShaderGraph& graph, ImVec2 screen) const;
+  // Whether a screen point is on the canvas, and where it is in the graph.
   bool Contains(ImVec2 screen) const;
   ImVec2 ToGraph(ImVec2 screen) const;
 

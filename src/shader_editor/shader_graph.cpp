@@ -22,11 +22,11 @@ const Float3 kZero{0, 0, 0}, kOne{1, 1, 1};
 
 // Stable names for the saved files, by NodeKind.
 const char* const kKindNames[] = {"output", "game_colour", "albedo", "light", "uv", "screen", "key_light", "sun_light", "fresnel", "up_facing", "float", "color", "add", "subtract", "multiply", "divide", "lerp", "one_minus", "saturate", "power", "min", "max", "step", "smoothstep", "bands", "desaturate", "luminance", "halftone", "custom",
-                                  "reroute", "time", "panner", "noise", "sine", "cosine", "frac", "floor", "ceil", "abs", "clamp", "dot", "cross", "normalize", "length", "distance", "remap", "if", "component_mask", "make_colour", "normal", "camera_vector", "up_vector", "key_vector", "sun_vector", "sun_colour", "outline"};
+                                  "reroute", "time", "panner", "noise", "sine", "cosine", "frac", "floor", "ceil", "abs", "clamp", "dot", "cross", "normalize", "length", "distance", "remap", "if", "component_mask", "make_colour", "normal", "camera_vector", "up_vector", "key_vector", "sun_vector", "sun_colour", "outline", "game_texture"};
 static_assert(std::size(kKindNames) == size_t(NodeKind::kCount));
 
 const std::vector<NodeInfo> kInfos = {
-    {TR_NOOP("Output"), TR_NOOP("Output"), {TR_NOOP("Colour")}, {{1, 0, 1}}, {}, {}, TR_NOOP("The colour drawn. Fog and fades still follow where the game has them.")},
+    {TR_NOOP("Output"), TR_NOOP("Output"), {TR_NOOP("Colour"), TR_NOOP("Opacity")}, {{1, 0, 1}, kOne}, {}, {}, TR_NOOP("The colour drawn. Fog and fades still follow where the game has them. Opacity below 1 lets the scene show through in a fine dither (a hologram, a ghost).")},
     {TR_NOOP("Game colour"), TR_NOOP("Inputs"), {}, {}, {}, {}, TR_NOOP("The pixel as the game lit it: its textures, lights and shadows. Wire this to Output to change nothing.")},
     {TR_NOOP("Base texture"), TR_NOOP("Inputs"), {}, {}, {}, {}, TR_NOOP("The surface's colour before lighting, with all its layers. Often paler than it looks in game: multiply in Light's colour to keep a level's mood. Using it makes the surface twice the work to draw.")},
     {TR_NOOP("Light"), TR_NOOP("Inputs"), {}, {}, {}, {}, TR_NOOP("The light on this pixel, with its shadows and shine: Game colour over Base texture. Using it makes the surface twice the work to draw.")},
@@ -82,6 +82,7 @@ const std::vector<NodeInfo> kInfos = {
     {TR_NOOP("Sun vector"), TR_NOOP("Lighting"), {}, {}, {}, {}, TR_NOOP("The direction to the level's sun or main light, camera space.")},
     {TR_NOOP("Sun colour"), TR_NOOP("Lighting"), {}, {}, {}, {}, TR_NOOP("The colour of the level's sun or main light.")},
     {TR_NOOP("Outline"), TR_NOOP("Cel"), {TR_NOOP("Width")}, {{2.5f, 2.5f, 2.5f}}, {}, {}, TR_NOOP("1 on an inked line Width pixels wide just inside the silhouette, and round any part seen in front of another; 0 elsewhere. It keeps its width at any distance."), 'I'},
+    {TR_NOOP("Game texture"), TR_NOOP("Inputs"), {TR_NOOP("UV")}, {kZero}, {TR_NOOP("Read alpha")}, {0.0f}, TR_NOOP("One of the game's own textures, such as an enemy's or another character's, read at UV (the surface's while unwired) and repeating. Choose it in the Details panel. A mod names the texture rather than carrying it, so it holds none of the game's pictures; up to four in a mod."), 'G', true},
 };
 
 std::string Hlsl(float v) {
@@ -165,10 +166,15 @@ bool ShaderGraph::Connect(int from, int to, int input) {
 std::string GenerateHlsl(const ShaderGraph& graph) {
   // Raw HLSL is the body of Shade, or a whole file when it defines Shade itself, for code that needs more around it,
   // such as its own MOD_FETCH2D.
-  if (graph.raw && graph.raw_code.find("Shade(ShadeInputs") != std::string::npos) return graph.raw_code;
-  if (graph.raw) return std::format("float3 Shade(ShadeInputs s)\n{{\n{}\n}}\n", graph.raw_code);
+  // A mod also says how much of the surface shows (shader_mod.hlsli); one that doesn't shows all of it.
+  constexpr const char* kSolid = "float ShadeOpacity(ShadeInputs s)\n{\n    return 1.0;\n}\n";
+  if (graph.raw) {
+    const std::string code = graph.raw_code.find("Shade(ShadeInputs") != std::string::npos ? graph.raw_code : std::format("float3 Shade(ShadeInputs s)\n{{\n{}\n}}\n", graph.raw_code);
+    return code.find("ShadeOpacity(ShadeInputs") != std::string::npos ? code : code + kSolid;
+  }
   std::string customs, body;
   std::vector<int> emitted;
+  const std::vector<GameTextureRef> textures = GameTextures(graph);
   std::function<std::string(const Node&)> emit = [&](const Node& n) -> std::string {
     const std::string name = std::format("n{}", n.id);
     if (std::find(emitted.begin(), emitted.end(), n.id) != emitted.end()) return name;
@@ -210,7 +216,8 @@ std::string GenerateHlsl(const ShaderGraph& graph) {
       case NodeKind::kLuminance: e = std::format("(float3)ModLuminance({})", in[0]); break;
       case NodeKind::kHalftone: e = std::format("(float3)ModHalftone(s.screen, ({}).x, ({}).x)", in[0], in[1]); break;
       case NodeKind::kCustom:
-        customs += std::format("float3 ModCustom{}(ShadeInputs s, float3 a, float3 b, float3 c, float3 d)\n{{\n{}\n}}\n\n", n.id, n.code);
+        if (customs.find(std::format("ModCustom{}(", n.id)) == std::string::npos)
+          customs += std::format("float3 ModCustom{}(ShadeInputs s, float3 a, float3 b, float3 c, float3 d)\n{{\n{}\n}}\n\n", n.id, n.code);
         e = std::format("ModCustom{}(s, {}, {}, {}, {})", n.id, in[0], in[1], in[2], in[3]);
         break;
       case NodeKind::kReroute: e = in[0]; break;
@@ -240,6 +247,14 @@ std::string GenerateHlsl(const ShaderGraph& graph) {
       case NodeKind::kSunVector: e = "s.light_dir"; break;
       case NodeKind::kSunColour: e = "s.light_colour"; break;
       case NodeKind::kOutline: e = std::format("(float3)ModOutline(s, ({}).x)", in[0]); break;
+      case NodeKind::kGameTexture: {
+        const std::optional<GameTextureRef> texture = ParseGameTexture(n.code);
+        const auto slot = texture ? std::find(textures.begin(), textures.end(), *texture) : textures.end();
+        // One not chosen yet, or past the fourth, reads nothing.
+        if (slot == textures.end()) e = "(float3)0.0";
+        else e = std::format("ModGameTexture({}u, ({}).xy).{}", slot - textures.begin(), in[0], !n.settings.empty() && n.settings[0] >= 0.5f ? "aaa" : "rgb");
+        break;
+      }
       case NodeKind::kCount: break;
     }
     body += std::format("    const float3 {} = {};\n", name, e);
@@ -248,11 +263,343 @@ std::string GenerateHlsl(const ShaderGraph& graph) {
   };
   const auto output = std::find_if(graph.nodes.begin(), graph.nodes.end(), [](const Node& n) { return n.kind == NodeKind::kOutput; });
   const std::string result = output == graph.nodes.end() ? "s.colour" : emit(*output);
-  return std::format("{}float3 Shade(ShadeInputs s)\n{{\n{}    return {};\n}}\n", customs, body, result);
+  const std::string shade = std::format("float3 Shade(ShadeInputs s)\n{{\n{}    return {};\n}}\n", body, result);
+  // Opacity is worked out on its own: the nodes it shares with the colour are emitted again, and the compiler merges
+  // them once both are inlined.
+  const Link* opacity_link = output == graph.nodes.end() ? nullptr : graph.Into(output->id, 1);
+  const Node* opacity_node = opacity_link ? graph.Find(opacity_link->from) : nullptr;
+  if (!opacity_node) {
+    const float constant = output == graph.nodes.end() || output->inputs.size() < 2 ? 1.0f : output->inputs[1][0];
+    if (constant >= 1.0f) return customs + shade + kSolid;
+    return std::format("{}{}float ShadeOpacity(ShadeInputs s)\n{{\n    return saturate({});\n}}\n", customs, shade, Hlsl(constant));
+  }
+  body.clear(), emitted.clear();
+  const std::string opacity = emit(*opacity_node);
+  return std::format("{}{}float ShadeOpacity(ShadeInputs s)\n{{\n{}    return saturate(({}).x);\n}}\n", customs, shade, body, opacity);
+}
+
+namespace {
+
+// The game's holograms (the Chamber of Portraits' holo creatures): the surface's own light turned to one tint, a glow
+// round the edge where it turns away from the camera, and see-through but for the edge. Scan lines rolling up the
+// screen and a flicker make it a projection.
+ShaderGraph MakeHologram() {
+  ShaderGraph g;
+  const auto named = [&](NodeKind kind, float x, float y, const std::string& name, std::vector<float> settings) {
+    Node& n = g.Add(kind, x, y);
+    n.name = name, n.settings = std::move(settings);
+    return n.id;
+  };
+  const auto node = [&](NodeKind kind, float x, float y) { return g.Add(kind, x, y).id; };
+  const auto input = [&](int id, size_t i, float v) { g.Find(id)->inputs[i] = {v, v, v}; };
+
+  // The tinted body.
+  const int game = node(NodeKind::kGameColour, 0, 0);
+  const int luminance = node(NodeKind::kLuminance, 180, 0);
+  g.Connect(game, luminance, 0);
+  const int tint = named(NodeKind::kColor, 180, 100, Tr("Hologram colour"), {0.3f, 0.8f, 1.0f});
+  const int brightness = named(NodeKind::kFloat, 180, 200, Tr("Brightness"), {2.2f});
+  const int tinted = node(NodeKind::kMultiply, 380, 40);
+  g.Connect(luminance, tinted, 0), g.Connect(tint, tinted, 1);
+  const int bright = node(NodeKind::kMultiply, 540, 80);
+  g.Connect(tinted, bright, 0), g.Connect(brightness, bright, 1);
+  const int keep = named(NodeKind::kFloat, 380, 180, Tr("Own colours"), {0.15f});
+  const int body = node(NodeKind::kLerp, 720, 60);
+  g.Connect(bright, body, 0), g.Connect(game, body, 1), g.Connect(keep, body, 2);
+
+  // The edge glow.
+  const int rim = node(NodeKind::kFresnel, 0, 320);
+  const int edge = node(NodeKind::kPower, 180, 320);
+  g.Connect(rim, edge, 0);
+  input(edge, 1, 2.0f);
+  const int glow_colour = named(NodeKind::kColor, 180, 420, Tr("Edge glow"), {0.75f, 0.95f, 1.0f});
+  const int glow = node(NodeKind::kMultiply, 380, 340);
+  g.Connect(edge, glow, 0), g.Connect(glow_colour, glow, 1);
+  const int glowing = node(NodeKind::kAdd, 900, 120);
+  g.Connect(body, glowing, 0), g.Connect(glow, glowing, 1);
+
+  // Scan lines: rows of the screen, rolling up.
+  const int screen = node(NodeKind::kScreen, 0, 560);
+  Node& row = g.Add(NodeKind::kComponentMask, 180, 560);
+  row.settings = {1.0f};
+  const int row_id = row.id;
+  g.Connect(screen, row_id, 0);
+  const int spacing = named(NodeKind::kFloat, 180, 660, Tr("Line spacing"), {6.0f});
+  const int rows = node(NodeKind::kDivide, 380, 580);
+  g.Connect(row_id, rows, 0), g.Connect(spacing, rows, 1);
+  const int roll = named(NodeKind::kTime, 380, 680, Tr("Line speed"), {2.0f});
+  const int rolled = node(NodeKind::kAdd, 540, 600);
+  g.Connect(rows, rolled, 0), g.Connect(roll, rolled, 1);
+  const int phase = node(NodeKind::kFrac, 700, 600);
+  g.Connect(rolled, phase, 0);
+  const int line = node(NodeKind::kStep, 860, 600);
+  input(line, 0, 0.45f);
+  g.Connect(phase, line, 1);
+  const int dimmed = node(NodeKind::kMultiply, 1060, 220);
+  g.Connect(glowing, dimmed, 0);
+  input(dimmed, 1, 0.65f);
+  const int lined = node(NodeKind::kLerp, 1240, 160);
+  g.Connect(dimmed, lined, 0), g.Connect(glowing, lined, 1), g.Connect(line, lined, 2);
+
+  // How much shows: the body faint, the edge solid, gaps between the lines fainter, all flickering.
+  const int opacity = named(NodeKind::kFloat, 380, 440, Tr("Opacity"), {0.45f});
+  const int shown = node(NodeKind::kLerp, 700, 400);
+  g.Connect(opacity, shown, 0), g.Connect(edge, shown, 2);
+  const int between = node(NodeKind::kLerp, 1060, 640);
+  input(between, 0, 0.55f);
+  g.Connect(line, between, 2);
+  const int flicker_time = named(NodeKind::kTime, 700, 760, Tr("Flicker speed"), {12.0f});
+  Node& noise = g.Add(NodeKind::kNoise, 860, 760);
+  noise.inputs[1] = {1, 1, 1};
+  const int noise_id = noise.id;
+  g.Connect(flicker_time, noise_id, 0);
+  const int flicker = node(NodeKind::kRemap, 1060, 760);
+  input(flicker, 3, 0.75f);
+  g.Connect(noise_id, flicker, 0);
+  const int steady = node(NodeKind::kMultiply, 1240, 520);
+  g.Connect(shown, steady, 0), g.Connect(between, steady, 1);
+  const int shown_now = node(NodeKind::kMultiply, 1420, 560);
+  g.Connect(steady, shown_now, 0), g.Connect(flicker, shown_now, 1);
+
+  const int output = node(NodeKind::kOutput, 1600, 240);
+  g.Connect(lined, output, 0), g.Connect(shown_now, output, 1);
+  return g;
+}
+
+// The game's shadow trolls: a black body that shows only where a wall of screaming faces does. The faces scroll as
+// theirs do (the material's texture transform: 0.25 across and 1 down a second), pushed about by a streaked map fixed
+// to the surface (texbem, by 0.1 of its value). Both textures are the troll's own, from QuadapusCave (024CE245.lvl),
+// which the mod names and the game reads from the player's own files.
+ShaderGraph MakeShadowTroll() {
+  ShaderGraph g;
+  const auto named = [&](NodeKind kind, float x, float y, const std::string& name, std::vector<float> settings) {
+    Node& n = g.Add(kind, x, y);
+    n.name = name, n.settings = std::move(settings);
+    return n.id;
+  };
+  const auto node = [&](NodeKind kind, float x, float y) { return g.Add(kind, x, y).id; };
+  const auto input = [&](int id, size_t i, Float3 v) { g.Find(id)->inputs[i] = v; };
+  const auto texture = [&](float x, float y, uint32_t entry, uint32_t size, bool alpha) {
+    Node& n = g.Add(NodeKind::kGameTexture, x, y);
+    n.code = FormatGameTexture({"024CE245.lvl", entry, size, size, "ShadowTroll"});
+    n.settings = {alpha ? 1.0f : 0.0f};
+    return n.id;
+  };
+
+  // The push: the streaked map where it lies on the surface.
+  const int streaks = texture(0, 0, 74, 256, false);
+  const int swirl = named(NodeKind::kFloat, 180, 100, Tr("Swirl strength"), {0.1f});
+  const int push = node(NodeKind::kMultiply, 380, 20);
+  g.Connect(streaks, push, 0), g.Connect(swirl, push, 1);
+
+  // The faces, scrolling.
+  const int uv = node(NodeKind::kUv, 0, 220);
+  const int face_size = named(NodeKind::kFloat, 0, 320, Tr("Face tiling"), {2.0f});
+  const int tiled = node(NodeKind::kMultiply, 180, 240);
+  g.Connect(uv, tiled, 0), g.Connect(face_size, tiled, 1);
+  const int time = node(NodeKind::kTime, 0, 440);
+  const int speed = named(NodeKind::kFloat, 0, 540, Tr("Scroll speed"), {1.0f});
+  const int seconds = node(NodeKind::kMultiply, 180, 460);
+  g.Connect(time, seconds, 0), g.Connect(speed, seconds, 1);
+  const int scroll = node(NodeKind::kMultiply, 380, 460);
+  input(scroll, 1, {0.25f, -1.0f, 0.0f});
+  g.Connect(seconds, scroll, 0);
+  const int scrolled = node(NodeKind::kAdd, 560, 300);
+  g.Connect(tiled, scrolled, 0), g.Connect(scroll, scrolled, 1);
+  const int face_uv = node(NodeKind::kAdd, 720, 160);
+  g.Connect(scrolled, face_uv, 0), g.Connect(push, face_uv, 1);
+  const int faces = texture(880, 160, 75, 128, true);
+  g.Connect(face_uv, faces, 0);
+
+  // The body: black, as their face texture is, with the game's light on it barely showing its shape.
+  const int game = node(NodeKind::kGameColour, 0, 680);
+  const int luminance = node(NodeKind::kLuminance, 180, 680);
+  g.Connect(game, luminance, 0);
+  const int body_colour = named(NodeKind::kColor, 180, 780, Tr("Shadow colour"), {0.06f, 0.06f, 0.07f});
+  const int body = node(NodeKind::kMultiply, 380, 700);
+  g.Connect(luminance, body, 0), g.Connect(body_colour, body, 1);
+
+  // Shown only where the faces are.
+  const int opacity = named(NodeKind::kFloat, 880, 320, Tr("Opacity"), {1.0f});
+  const int shown = node(NodeKind::kMultiply, 1080, 220);
+  g.Connect(faces, shown, 0), g.Connect(opacity, shown, 1);
+
+  const int output = node(NodeKind::kOutput, 1280, 420);
+  g.Connect(body, output, 0), g.Connect(shown, output, 1);
+  return g;
+}
+
+// Grass for the levels (the "Grass and plants" target): only its green pixels change, found from the surface's own
+// colour, since the same shaders draw the rock and earth beside it. On them: broad patches of sunnier and lusher green
+// to break up the tiling, richer colour, gusts of wind rolling over as a sheen, a speckle of blades, and the glow of
+// sunlight through it when the sun is ahead. All of it rides on the game's own light, so shadows stay where they are.
+ShaderGraph MakeGrass() {
+  ShaderGraph g;
+  const auto named = [&](NodeKind kind, float x, float y, const std::string& name, std::vector<float> settings) {
+    Node& n = g.Add(kind, x, y);
+    n.name = name, n.settings = std::move(settings);
+    return n.id;
+  };
+  const auto node = [&](NodeKind kind, float x, float y) { return g.Add(kind, x, y).id; };
+  const auto input = [&](int id, size_t i, Float3 v) { g.Find(id)->inputs[i] = v; };
+  const auto custom = [&](float x, float y, const char* code) {
+    Node& n = g.Add(NodeKind::kCustom, x, y);
+    n.code = code;
+    return n.id;
+  };
+
+  const int game = node(NodeKind::kGameColour, 0, 0);
+  const int albedo = node(NodeKind::kAlbedo, 0, 120);
+
+  // Which pixels are grass: how much greener than red and blue the surface is, against its green.
+  const int detection = named(NodeKind::kFloat, 0, 220, Tr("Grass detection"), {6.0f});
+  const int mask = custom(220, 160, "return (float3)saturate((a.g - max(a.r, a.b)) / max(a.g, 1e-3) * b.x);");
+  g.Connect(albedo, mask, 0), g.Connect(detection, mask, 1);
+
+  // Patches: a large, soft noise between a sunny and a lush tint.
+  const int patches = node(NodeKind::kNoise, 0, 340);
+  input(patches, 1, {0.35f, 0.35f, 0.35f});
+  const int sunny = named(NodeKind::kColor, 180, 300, Tr("Sunny grass"), {1.12f, 1.06f, 0.74f});
+  const int lush = named(NodeKind::kColor, 180, 400, Tr("Lush grass"), {0.8f, 1.08f, 0.86f});
+  const int tint = node(NodeKind::kLerp, 380, 320);
+  g.Connect(sunny, tint, 0), g.Connect(lush, tint, 1), g.Connect(patches, tint, 2);
+  const int tinted = node(NodeKind::kMultiply, 560, 60);
+  g.Connect(game, tinted, 0), g.Connect(tint, tinted, 1);
+
+  // Richer colour: away from its own grey.
+  const int grey = node(NodeKind::kLuminance, 720, 160);
+  g.Connect(tinted, grey, 0);
+  const int richness = named(NodeKind::kFloat, 720, 260, Tr("Richness"), {1.3f});
+  const int rich = node(NodeKind::kLerp, 900, 80);
+  g.Connect(grey, rich, 0), g.Connect(tinted, rich, 1), g.Connect(richness, rich, 2);
+
+  // Wind: slow gusts drifting over the field, brightening the blades they bend.
+  const int drift = node(NodeKind::kPanner, 0, 520);
+  input(drift, 1, {0.06f, 0.025f, 0.0f});
+  const int gusts = node(NodeKind::kNoise, 180, 520);
+  input(gusts, 1, {0.6f, 0.6f, 0.6f});
+  g.Connect(drift, gusts, 0);
+  const int centred = node(NodeKind::kSubtract, 380, 520);
+  input(centred, 1, {0.5f, 0.5f, 0.5f});
+  g.Connect(gusts, centred, 0);
+  const int sheen = named(NodeKind::kFloat, 380, 620, Tr("Wind sheen"), {0.4f});
+  const int gust = node(NodeKind::kMultiply, 560, 540);
+  g.Connect(centred, gust, 0), g.Connect(sheen, gust, 1);
+  const int brighten = node(NodeKind::kAdd, 720, 540);
+  input(brighten, 1, {1.0f, 1.0f, 1.0f});
+  g.Connect(gust, brighten, 0);
+  const int windy = node(NodeKind::kMultiply, 1080, 120);
+  g.Connect(rich, windy, 0), g.Connect(brighten, windy, 1);
+
+  // Blades: a fine speckle.
+  const int blades = node(NodeKind::kNoise, 720, 680);
+  input(blades, 1, {45.0f, 45.0f, 45.0f});
+  const int speckle = node(NodeKind::kRemap, 900, 680);
+  input(speckle, 3, {0.82f, 0.82f, 0.82f});
+  input(speckle, 4, {1.06f, 1.06f, 1.06f});
+  g.Connect(blades, speckle, 0);
+  const int detailed = node(NodeKind::kMultiply, 1240, 160);
+  g.Connect(windy, detailed, 0), g.Connect(speckle, detailed, 1);
+
+  // Sunlight through it, looking towards the sun, the more so on blades seen edge-on.
+  const int backlight_strength = named(NodeKind::kFloat, 900, 820, Tr("Backlight"), {0.6f});
+  const int backlight = custom(1080, 760,
+                               "const float ahead = pow(saturate(dot(-s.view, s.light_dir)), 3.0);\n"
+                               "const float edge = 1.0 - saturate(dot(s.normal, s.view));\n"
+                               "return s.light_colour * a * ahead * (0.35 + edge) * b.x;");
+  g.Connect(albedo, backlight, 0), g.Connect(backlight_strength, backlight, 1);
+  // Depth, for flat grass that should look deep. Grass cards (the tall grass, drawn without a surface direction) darken
+  // towards their roots, which are at the bottom of their texture, and brighten at the tips. Everywhere, the
+  // texture's own light and dark is taken for height: its bumps are lit again from the sun (from over the camera's
+  // shoulder where the shader doesn't know the sun), and the gaps between blades go darker.
+  const int blade_depth = named(NodeKind::kFloat, 1240, 860, Tr("Blade depth"), {0.55f});
+  const int relief_strength = named(NodeKind::kFloat, 1240, 940, Tr("Relief"), {0.6f});
+  const int cavities = named(NodeKind::kFloat, 1240, 1020, Tr("Cavities"), {0.35f});
+  const int depth = custom(1420, 900,
+                           "const float height = dot(a, float3(0.3, 0.59, 0.11));\n"
+                           "float shade = 1.0;\n"
+                           "if (!s.has_normal) {\n"
+                           "    const float root = pow(saturate(s.uv.y), 1.6);\n"
+                           "    shade *= lerp(1.0 + b.x * 0.25, 1.0 - b.x, root);\n"
+                           "}\n"
+                           "const float2 slope = clamp(float2(ddx(height), ddy(height)), -0.08, 0.08);\n"
+                           "const float3 n = s.has_normal ? s.normal : float3(0.0, 0.0, 1.0);\n"
+                           "const float3 l = s.has_normal ? s.light_dir : ModKeyDirection(s, 0.5, 0.7, 0.5);\n"
+                           "const float3 bent = normalize(n + float3(-slope.x, slope.y, 0.0) * c.x * 30.0);\n"
+                           "shade *= (saturate(dot(bent, l)) * 0.7 + 0.3) / (saturate(dot(n, l)) * 0.7 + 0.3);\n"
+                           "shade *= lerp(1.0 - d.x, 1.0, saturate(height * 2.5));\n"
+                           "return (float3)shade;");
+  g.Connect(albedo, depth, 0), g.Connect(blade_depth, depth, 1), g.Connect(relief_strength, depth, 2), g.Connect(cavities, depth, 3);
+  const int deep = node(NodeKind::kMultiply, 1400, 200);
+  g.Connect(detailed, deep, 0), g.Connect(depth, deep, 1);
+  const int lit = node(NodeKind::kAdd, 1560, 260);
+  g.Connect(deep, lit, 0), g.Connect(backlight, lit, 1);
+
+  // Only on the grass, by Strength.
+  const int strength = named(NodeKind::kFloat, 1400, 0, Tr("Strength"), {1.0f});
+  const int amount = node(NodeKind::kMultiply, 1560, 60);
+  g.Connect(mask, amount, 0), g.Connect(strength, amount, 1);
+  const int result = node(NodeKind::kLerp, 1740, 120);
+  g.Connect(game, result, 0), g.Connect(lit, result, 1), g.Connect(amount, result, 2);
+  // Grass cards fade out over the bottom of their height, so the blades melt into the ground rather than stop at the
+  // card's edge.
+  const int root_fade = named(NodeKind::kFloat, 1560, 380, Tr("Root fade"), {0.25f});
+  const int fade = custom(1740, 380,
+                          "if (s.has_normal) return (float3)1.0;\n"
+                          "return (float3)(1.0 - smoothstep(1.0 - max(b.x, 1e-3), 1.0, saturate(s.uv.y)));");
+  g.Connect(root_fade, fade, 1);
+  const int output = node(NodeKind::kOutput, 1920, 160);
+  g.Connect(result, output, 0), g.Connect(fade, output, 1);
+  return g;
+}
+
+}  // namespace
+
+std::optional<GameTextureRef> ParseGameTexture(const std::string& code) {
+  std::vector<std::string> parts;
+  for (size_t start = 0;;) {
+    const size_t bar = code.find('|', start);
+    parts.push_back(code.substr(start, bar == std::string::npos ? std::string::npos : bar - start));
+    if (bar == std::string::npos) break;
+    start = bar + 1;
+  }
+  if (parts.size() < 4 || parts[0].empty()) return std::nullopt;
+  GameTextureRef texture;
+  texture.archive = parts[0];
+  texture.entry = uint32_t(std::strtoul(parts[1].c_str(), nullptr, 10));
+  texture.width = uint32_t(std::strtoul(parts[2].c_str(), nullptr, 10));
+  texture.height = uint32_t(std::strtoul(parts[3].c_str(), nullptr, 10));
+  if (parts.size() > 4) texture.label = parts[4];
+  if (!texture.entry || !texture.width || !texture.height) return std::nullopt;
+  return texture;
+}
+
+std::string FormatGameTexture(const GameTextureRef& texture) {
+  return std::format("{}|{}|{}|{}|{}", texture.archive, texture.entry, texture.width, texture.height, texture.label);
+}
+
+bool SeeThrough(const ShaderGraph& graph) {
+  if (graph.raw) return graph.raw_code.find("ShadeOpacity(ShadeInputs") != std::string::npos;
+  const auto output = std::find_if(graph.nodes.begin(), graph.nodes.end(), [](const Node& n) { return n.kind == NodeKind::kOutput; });
+  if (output == graph.nodes.end()) return false;
+  return graph.Into(output->id, 1) || (output->inputs.size() > 1 && output->inputs[1][0] < 1.0f);
+}
+
+std::vector<GameTextureRef> GameTextures(const ShaderGraph& graph) {
+  std::vector<const Node*> nodes;
+  for (const Node& n : graph.nodes)
+    if (n.kind == NodeKind::kGameTexture) nodes.push_back(&n);
+  std::sort(nodes.begin(), nodes.end(), [](const Node* a, const Node* b) { return a->id < b->id; });
+  std::vector<GameTextureRef> textures;
+  for (const Node* n : nodes) {
+    const std::optional<GameTextureRef> texture = ParseGameTexture(n->code);
+    if (texture && textures.size() < kGameTextureSlots && std::find(textures.begin(), textures.end(), *texture) == textures.end()) textures.push_back(*texture);
+  }
+  return textures;
 }
 
 const char* PresetName(Preset preset) {
-  constexpr const char* kNames[] = {TR_NOOP("The game's own look"), TR_NOOP("Cel shade"), TR_NOOP("Toon bands"), TR_NOOP("Flat colour"), TR_NOOP("Rim lit"), TR_NOOP("Comic halftone")};
+  constexpr const char* kNames[] = {TR_NOOP("The game's own look"), TR_NOOP("Cel shade"), TR_NOOP("Toon bands"), TR_NOOP("Flat colour"), TR_NOOP("Rim lit"), TR_NOOP("Comic halftone"), TR_NOOP("Hologram"), TR_NOOP("Shadow troll"), TR_NOOP("Lush grass")};
   return kNames[size_t(preset)];
 }
 
@@ -263,6 +610,9 @@ ShaderGraph MakePreset(Preset preset) {
     g.Connect(colour, g.Add(NodeKind::kOutput, 300, 0).id, 0);
     return g;
   }
+  if (preset == Preset::kHologram) return MakeHologram();
+  if (preset == Preset::kShadowTroll) return MakeShadowTroll();
+  if (preset == Preset::kGrass) return MakeGrass();
   const int albedo = g.Add(NodeKind::kAlbedo, 0, 0).id;
   const int key = g.Add(NodeKind::kKeyLight, 0, 140).id;
   // From the side, so the shadow makes a shape across a character, not just a rim.

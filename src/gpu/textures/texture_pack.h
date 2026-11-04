@@ -2,6 +2,8 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <filesystem>
+#include <initializer_list>
 #include <memory>
 #include <string>
 #include <vector>
@@ -46,6 +48,13 @@ void RefreshAllTextureReplacements();
 std::vector<uint64_t> TakeChangedReplacements();
 // Turning dumping on after textures loaded without it: the draw path reloads the ones never written so they dump.
 bool TextureWasDumped(uint64_t hash);
+// Keeps a decoded RGBA copy of the textures with these content hashes as the game loads them, for interface drawn with
+// the game's own art from the player's own copy. Call before the game starts: each texture is decoded once, when first seen.
+void KeepTextureCopies(std::initializer_list<uint64_t> hashes);
+// A kept copy, RGBA8 rows of width * 4 bytes; false until the texture has loaded.
+bool KeptTexture(uint64_t hash, uint32_t* width, uint32_t* height, std::vector<uint8_t>* rgba);
+// An image file of our own (PNG and the other formats stb_image reads) as RGBA8 rows of width * 4 bytes.
+bool LoadImageFile(const std::filesystem::path& path, uint32_t* width, uint32_t* height, std::vector<uint8_t>* rgba);
 void RequestDumpOfLoadedTextures();
 bool TakeDumpOfLoadedTexturesRequest();
 

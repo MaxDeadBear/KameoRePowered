@@ -18,7 +18,7 @@ struct KameoSettingSpec {
 
 inline constexpr KameoSettingSpec kKameoSettings[] = {
     {"Display", "kameo_window_mode", "0 = Windowed, 1 = Borderless, 2 = Fullscreen (exclusive). Use 0 or 1 if fullscreen misbehaves.", KameoSettingType::Int, "-1"},
-    {nullptr, "kameo_gfx_widescreen", "true = wider view filling the screen, false = the original 16:9 picture.", KameoSettingType::Bool, "false"},
+    {nullptr, "kameo_gfx_widescreen", "true = wider view filling a screen wider than 16:9 (ultrawide), false = the original 16:9 picture.", KameoSettingType::Bool, "true"},
     {nullptr, "kameo_gfx_user_gamma", "Gamma in percent: 100 = unchanged, higher = brighter midtones, 50 - 200.", KameoSettingType::Int, "100"},
     {nullptr, "kameo_hud_layout", "HUD on screens wider than 16:9: 0 = stretched, 1 = centred 16:9, 2 = each element at its screen edge.", KameoSettingType::Int, "2"},
     {nullptr, "kameo_hud_scale", "HUD size in percent, 50 - 150.", KameoSettingType::Int, "100"},
@@ -62,6 +62,7 @@ inline constexpr KameoSettingSpec kKameoSettings[] = {
     {nullptr, "kameo_unlocked_codes", "Features unlocked by pause-menu cheat codes, one bit each.", KameoSettingType::Int, "0"},
     {nullptr, "kameo_cheats_used", "Set when a cheat first takes effect. Leaderboard scores stay off until the launcher's Mods page restores your saves from before it.", KameoSettingType::Bool, "false"},
     {nullptr, "kameo_skip_cutscenes", "Start skips in-engine cutscenes and every FMV.", KameoSettingType::Bool, "true"},
+    {nullptr, "kameo_menu_style", "The pause menu: 0 = the storybook's own, 1 = the parchment card.", KameoSettingType::Int, "0"},
     {"Crash reports (true or false)", "crash_reports", "Optional. true asks whether to send a report to the developers when the game crashes, and sends nothing unless you agree; false never asks. Takes effect the next time the game starts.", KameoSettingType::Bool, "true"},
     {"Controls", "kameo_input_mode", "Player one: 0 = keyboard and mouse, 1 = first available gamepad.", KameoSettingType::Int, "0"},
     {nullptr, "kameo_p2_input_mode", "0 = Co-op gamepad, 1 = Co-op keyboard and mouse (a second physical keyboard is needed when player one also uses one).", KameoSettingType::Int, "0"},

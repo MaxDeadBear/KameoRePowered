@@ -21,8 +21,7 @@ std::unique_ptr<rex::ui::ImmediateTexture> PlumeImmediateDrawer::CreateTexture(
     uint32_t width, uint32_t height, rex::ui::ImmediateTextureFilter filter, bool is_repeated,
     const uint8_t* data) {
   (void)filter;
-  (void)is_repeated;
-  const uint32_t id = graphics_ ? graphics_->CreateUiTexture(width, height, data) : 0;
+  const uint32_t id = graphics_ ? graphics_->CreateUiTexture(width, height, data, is_repeated) : 0;
   // The font atlas is uploaded lazily on the first Draw, which can precede the
   // guest creating the device; nullptr makes that a retry rather than a texture
   // permanently registered as undrawable.

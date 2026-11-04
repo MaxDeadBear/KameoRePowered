@@ -8,7 +8,7 @@ REXCVAR_DEFINE_STRING(kameo_gfx_backend, "auto", "Kameo",
                       "visual fault is in this renderer's logic (it will look identical on both) "
                       "or in one backend's path (it will not).");
 
-REXCVAR_DEFINE_BOOL(kameo_gfx_widescreen, false, "Kameo", "Widen the field of view to the display's aspect instead of pillarboxing the 4:3-era 16:9 image. The scene projection is built by mtx44Perspective, which divides its X scale by the aspect it is handed, so substituting the display's shows more of the world at the sides rather than stretching it. The HUD is authored for 16:9 and stretches with it.");
+REXCVAR_DEFINE_BOOL(kameo_gfx_widescreen, true, "Kameo", "On a display wider than 16:9, widen the field of view to its aspect instead of pillarboxing the 16:9 image; a 16:9 or narrower display keeps the original picture either way. The scene projection is built by mtx44Perspective, which divides its X scale by the aspect it is handed, so substituting the display's shows more of the world at the sides rather than stretching it. The HUD is authored for 16:9 and stretches with it.");
 REXCVAR_DEFINE_BOOL(kameo_gfx_shadows, true, "Kameo", "Draw shadows. Off leaves the shadow map at its cleared depth and skips the stencil shadow volumes, so nothing reads as shadowed.");
 REXCVAR_DEFINE_BOOL(kameo_gfx_particles, true, "Kameo", "Draw particle effects (the PLite emitters and smoke plumes).");
 REXCVAR_DEFINE_INT32(kameo_hud_layout, 2, "Kameo", "Where the HUD sits when the picture is wider than 16:9: 0 stretches it with the picture as the original did, 1 keeps its shape in a centred 16:9 area, 2 keeps its shape and moves each element to its own screen edge.");
@@ -25,6 +25,7 @@ REXCVAR_DEFINE_BOOL(kameo_gfx_grass, true, "Kameo", "Draw the instanced grass.")
 REXCVAR_DEFINE_BOOL(kameo_gfx_fur, true, "Kameo", "Draw the fur shells over furry models.");
 REXCVAR_DEFINE_BOOL(kameo_gfx_dust_motes, true, "Kameo", "Draw the floating dust motes and sparkles that fill the air.");
 REXCVAR_DEFINE_BOOL(kameo_gfx_bloom, true, "Kameo", "Draw the bloom glow and its composite.");
+REXCVAR_DEFINE_BOOL(kameo_dev_log_hud, false, "Kameo", "For fixing the widescreen HUD: logs, about once a second, each 2D draw the HUD layout left where the guest put it, and why.");
 REXCVAR_DEFINE_STRING(kameo_dev_find_texture_shaders, "", "Kameo", "For making shader mods: logs the pixel shader of each draw that samples one of these textures, by the hashes the texture dump names them with, comma-separated.");
 REXCVAR_DEFINE_BOOL(kameo_gfx_stable_geometry_skip, true, "Kameo", "Check vertex data that has stopped changing only every few frames instead of every frame. A model rewritten in place can show its old shape for up to 8 frames.");
 REXCVAR_DEFINE_BOOL(kameo_gfx_depth_of_field, true, "Kameo", "Blur the distance with the game's depth of field.");

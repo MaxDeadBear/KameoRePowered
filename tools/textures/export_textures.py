@@ -5,7 +5,7 @@ Reads the game's CAFF archives (.lvl, .mdl) directly, so it covers areas nobody 
 from a dump folder that the archives don't explain. Each PNG is named by the hash the game gives that texture, so an
 edited copy works as it is in textures/replace/.
 
-    python tools/export_textures.py --assets out/build/release/assets --out out/build/release/textures/export \\
+    python tools/textures/export_textures.py --assets out/build/release/assets --out out/build/release/textures/export \\
         --dump out/build/release/textures/dump --dlc "%USERPROFILE%/Documents/kameorepowered"
 
 The output holds:
@@ -18,7 +18,7 @@ The output holds:
     sheets/        contact sheets of each folder, to sort through at a glance
     manifest.csv   every texture: hash, size, format, folder, where it comes from, and whether a dump saw it
 
-Needs NumPy, xxhash and Pillow.
+Needs NumPy and Pillow; xxhash makes it faster.
 """
 
 from __future__ import annotations
@@ -34,20 +34,14 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 
 import numpy as np
-import xxhash
 from PIL import Image, ImageDraw
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "modkit"))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "modkit"))
 
 from kameo_modkit.caff import Caff  # noqa: E402
 from kameo_modkit.graph import Ref, Resolver  # noqa: E402
 from kameo_modkit import texture as tx  # noqa: E402
-
-# The fetch constant's swizzle goes into the game's hash but is not in the archive. Each format always draws with the
-# same one, except a few 8888 textures, which the dump's hashes tell apart.
-SWIZZLE_DEFAULT = 0x688
-SWIZZLE_BY_FORMAT = {10: 0x200, 2: 0xA00}
-SWIZZLE_ALTERNATES = {6: [0xA0A]}
+from kameo_modkit.xxh3 import xxh3_64  # noqa: E402
 
 THUMB = 192
 SHEET_COLUMNS = 10
@@ -64,11 +58,6 @@ class Exported:
     format: int
     folder: str
     sources: set[str] = field(default_factory=set)
-
-
-def game_hash(data: bytes, width: int, height: int, gpu_format: int, swizzle: int) -> int:
-    """TextureContentHash in src/gpu/textures/texture_pack.cpp."""
-    return xxhash.xxh3_64_intdigest(data, seed=(width << 40) ^ (height << 20) ^ (gpu_format << 12) ^ swizzle)
 
 
 def read_dumps(folder: str | None) -> dict[int, tuple[str, str]]:
@@ -153,8 +142,7 @@ def main() -> int:
 
     def export(resolver: Resolver, texture, data: bytes, key: int) -> None:
         pixels = tx.to_pixels(resolver, texture)
-        hashes = [game_hash(data, texture.width, texture.height, texture.gpu_format, SWIZZLE_BY_FORMAT.get(texture.gpu_format, SWIZZLE_DEFAULT))]
-        hashes += [game_hash(data, texture.width, texture.height, texture.gpu_format, s) for s in SWIZZLE_ALTERNATES.get(texture.gpu_format, [])]
+        hashes = tx.game_hashes(resolver, texture, data)
         final = next((h for h in hashes if h in dumps), hashes[0])
         category = folder_of(texture.format_name, pixels)
         name = f"{final:016X}_{texture.width}x{texture.height}_fmt{texture.gpu_format}.png"
@@ -190,7 +178,7 @@ def main() -> int:
                         skipped[f"format {texture.gpu_format}"] += 1
                         continue
                     data = tx.base_level_bytes(resolver, texture)
-                    key = xxhash.xxh3_64_intdigest(data, seed=(texture.width << 40) ^ (texture.height << 20) ^ (texture.gpu_format << 12))
+                    key = xxh3_64(data, (texture.width << 40) ^ (texture.height << 20) ^ (texture.gpu_format << 12))
                     if key in seen:
                         exported[key].sources.add(label)
                         continue

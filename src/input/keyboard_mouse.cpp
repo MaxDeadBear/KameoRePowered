@@ -13,6 +13,7 @@
 #include "input/guest_controls.h"
 #include "input/input.h"
 #include "input/input_internal.h"
+#include "ui/pause_menu/pause_card.h"
 #include "ui/pause_menu/pause_menu.h"
 
 REXCVAR_DECLARE(double, mnk_sensitivity);
@@ -77,6 +78,16 @@ extern "C" REX_FUNC(sub_826BA2F0) {
       }
     }
   } hold_for_guide{ctx, base, state};
+  // The pause card takes the state the game would have got, keyboard included, while it is open.
+  struct HoldForCard {
+    PPCContext& ctx;
+    uint8_t* base;
+    uint32_t user;
+    uint32_t state;
+    ~HoldForCard() {
+      if (state && ctx.r3.u32 == 0) KameoPauseCardTakePad(ctx, base, user, state);
+    }
+  } hold_for_card{ctx, base, user, state};
   if (user == 1 && state && KameoPausedBy() == 1 && !CoopInputRouteActive()) {
     std::memcpy(base + state, &g_playerOneOutput, sizeof(g_playerOneOutput));
     ctx.r3.u64 = 0;
@@ -202,6 +213,8 @@ extern "C" REX_FUNC(sub_826BA2F0) {
     if (g_triggerPolls[player] > 0) --g_triggerPolls[player];
     const bool trigger_held = g_triggerPolls[player] > 4;
     uint16_t buttons = keyboard.gamepad.buttons;
+    // The pause card takes the mouse itself, so its clicks are not presses as well.
+    if (KameoPauseCardOpen()) left = right = false;
     if (left) buttons |= rex::input::X_INPUT_GAMEPAD_A;
     // "Press Start" has no menu to click, so there the left button is Start as well.
     if (left && AtTitleScreen()) buttons |= rex::input::X_INPUT_GAMEPAD_START;

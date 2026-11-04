@@ -24,6 +24,7 @@
 #include "gpu/resolve_blit.h"
 #include "gpu/surface_pool.h"
 #include "gpu/sampler_cache.h"
+#include "gpu/resolve.h"
 #include "gpu/scene_resolve_state.h"
 #include "gpu/shaders/embedded_shaders.h"
 #include "gpu/shaders/shader_cache.h"
@@ -87,6 +88,10 @@ struct DrawPlacement {
 // Whether this frame's draws time their texture, pipeline and upload work; read once per frame.
 bool g_profileDraws = false;
 
+const float* c_hud_matrix(const DrawFrame& frame, const DrawCall& call) {
+  return call.vs_constants != kNoData ? reinterpret_cast<const float*>(frame.arena.data() + call.vs_constants) : nullptr;
+}
+
 // Logs each pixel shader a watched texture is drawn with, once.
 void FindTextureShader(const DrawCall& call, uint32_t texture_index) {
   static std::string watched_text;
@@ -110,7 +115,7 @@ void FindTextureShader(const DrawCall& call, uint32_t texture_index) {
 
 // Writes the draw's texture and sampler indices and shared constants into the shared block; true when it samples the storybook page.
 
-bool BuildSharedBlock(ReplayContext& rc, const DrawCall& call) {
+bool BuildSharedBlock(ReplayContext& rc, const DrawCall& call, plume::RenderShader* ps) {
   GraphicsSystem::DrawPathContext& ctx = rc.ctx;
   plume::RenderCommandList* list = rc.list;
   uint8_t* base = rc.base;
@@ -164,6 +169,17 @@ bool BuildSharedBlock(ReplayContext& rc, const DrawCall& call) {
   // c17.w, which only shader mods read.
   const float mod_time = ShaderModTime();
   std::memcpy(&shared_words[71], &mod_time, sizeof(float));
+  // c20.y, how a shader mod's opacity shows on this draw.
+  const bool multisampled = (rc.current_framebuffer == rc.framebuffer ? rc.ctx.scene_samples : 1) > 1;
+  shared_words[81] = ShaderModShow(ShaderModSeeThrough(ps), call.blend_control, call.alpha_to_mask != 0, multisampled);
+  // c19 and c20.x, the game's textures a shader mod draws with and their sampler (ModGameTexture); a slot not read in
+  // yet is transparent black.
+  if (call.shader_mod_textures) {
+    uint32_t slots[kShaderModTextureSlots];
+    ShaderModTextureSlots(call.shader_mod_textures, slots);
+    for (uint32_t i = 0; i < kShaderModTextureSlots; ++i) shared_words[76 + i] = slots[i] ? slots[i] : g_emptySlot;
+    shared_words[80] = ShaderModSampler(ctx);
+  }
   if (FindPointSprite(call)) {
     const float point[4] = {1.0f / std::max(call.viewport[2], 1.0f), 1.0f / std::max(call.viewport[3], 1.0f), float(call.point_minmax & 0xFFFFu) * 0.125f, float(call.point_minmax >> 16) * 0.125f};
     std::memcpy(&shared_words[72], point, sizeof(point));
@@ -328,7 +344,10 @@ DrawPlacement SetDrawViewport(ReplayContext& rc, const DrawCall& call, uint32_t 
   // A HUD draw placed by PlaceHudBox gets a viewport of its own from its clip-space affine, and its scissor follows the same map.
   HudPlacement hud;
   const size_t draw_index = size_t(&call - frame.draws.data());
-  const bool hud_placed = on_screen && !rc.hud_boxed.empty() && rc.hud_boxed[draw_index] && PlaceHudBox(rc.hud_boxes[draw_index].data(), scale_x / scale_y, &hud);
+  const bool hud_placed = on_screen && ((!rc.hud_boxed.empty() && rc.hud_boxed[draw_index] && PlaceHudBox(rc.hud_boxes[draw_index].data(), scale_x / scale_y, &hud, rc.hud_boxed[draw_index] == 2)) ||
+                                        (call.ps && PlaceMenuCard(call.ps->hash, scale_x / scale_y, &hud)) ||
+                                        (call.loading_layer == kLoadingPicture && PlaceMenuCard(0, scale_x / scale_y, &hud)) ||
+                                        (call.loading_layer == kLoadingBackdrop && PlaceLoadingBackdrop(scale_x / scale_y, &hud)));
   const float guest_vp_x = vp_x;
   const float guest_vp_y = vp_y;
   if (hud_placed) {
@@ -410,7 +429,7 @@ void ReplayDraw(ReplayContext& rc, const DrawCall& call, uint32_t off_w, uint32_
   bool samples_book_page = false;
   {
     ScopedNs timed(g_profileDraws ? &g_frameProfile.ns_textures : nullptr);
-    samples_book_page = BuildSharedBlock(rc, call);
+    samples_book_page = BuildSharedBlock(rc, call, ps);
   }
   DrawUploads up;
   {
@@ -496,6 +515,7 @@ void DrawCapturedScene(GraphicsSystem& gfx, plume::RenderCommandList* list, plum
   }
 
   EnsurePlaceholderTextures(ctx, list);
+  UploadShaderModTextures(ctx, list);
 
   // Before any draw of this frame is recorded; what it evicts goes to the graveyard stamped with this frame and is freed once no list in flight can name it.
   ++g_drawFrame;
@@ -545,7 +565,8 @@ void DrawCapturedScene(GraphicsSystem& gfx, plume::RenderCommandList* list, plum
       }
       if (call.kind != CommandKind::Draw) SuspendVulkanQuery(rc.ctx, list, rc.occlusion);
       if (call.kind == CommandKind::Bink) {
-        gfx.DrawPendingBink(list, rc.current_framebuffer == framebuffer ? ctx.scene_samples : 1);
+        const bool on_screen = rc.current_framebuffer == framebuffer;
+        gfx.DrawPendingBink(list, on_screen ? ctx.scene_samples : 1, on_screen ? width : 0, on_screen ? height : 0);
         if (rc.current_framebuffer == framebuffer) InvalidateSceneColorResolve(ctx.scene_resolve_dirty);
         RebindSceneLayout(rc);
         continue;

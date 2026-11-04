@@ -11,6 +11,7 @@
 #include <utility>
 #include <vector>
 
+#include "shader_editor/game_textures.h"
 #include "shader_editor/node_canvas.h"
 #include "shader_editor/preview.h"
 #include "shader_editor/shader_build.h"
@@ -37,6 +38,8 @@ class Editor {
   void DrawParameters();
   void DrawTargets();
   void DrawLog();
+  // The window a Game texture node's texture is chosen in, while picking_node_ names the node.
+  void DrawTexturePicker();
   void TargetBox(const Target& target);
   bool Targeted(const std::string& key) const;
 
@@ -58,6 +61,11 @@ class Editor {
   NodeCanvas canvas_;
   Preview preview_;
   bool preview_attached_ = false;
+  GameTextureLibrary game_textures_;
+  int picking_node_ = 0;
+  std::string picker_search_;
+  std::string picker_archive_;
+  std::string picker_type_;
   History history_;
   std::vector<std::filesystem::path> saved_;
   std::string palette_search_;

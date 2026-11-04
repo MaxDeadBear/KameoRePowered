@@ -88,6 +88,9 @@ void AddToggleRow(PPCContext& ctx, uint8_t* base, uint32_t window, uint32_t id, 
   AddTextItem(ctx, base, window, id, LocalisedString(ctx, base, kValueFormatString), value_text, kPauseMenuPressACallback, true);
 }
 
+std::span<const PageInfo> AllPages() { return kPages; }
+std::span<const Page> OptionsCategories() { return kOptionsCategories; }
+
 const PageInfo* FindPage(Page page) {
   for (const PageInfo& info : kPages) {
     if (info.page == page) return &info;
@@ -155,8 +158,7 @@ void ActivatePage(PPCContext& ctx, uint8_t* base, uint32_t pause, uint32_t windo
   REX_STORE_U32(REX_LOAD_U32(pause + 512) + 120, 1);
 }
 
-void ChangeOption(PPCContext& ctx, uint8_t* base, uint32_t pause, uint32_t window, const Option& option, int direction, bool wrap) {
-  const uint32_t index = SelectedIndex(base, window);
+void ApplyOption(PPCContext& ctx, uint8_t* base, uint32_t pause, const Option& option, int direction, bool wrap) {
   option.step(direction, wrap);
   if (option.id == kItemHints) {
     PPCContext hint = ctx;
@@ -164,8 +166,13 @@ void ChangeOption(PPCContext& ctx, uint8_t* base, uint32_t pause, uint32_t windo
     REX_STORE_U32(kCurrentHint, hint.r3.u32);
   }
   // The game marks its settings changed at +64 of the pause record, as its own Game Options page does, so they are saved with the profile.
-  if (option.game_value) REX_STORE_U32(REX_LOAD_U32(pause + 512) + 64, 1);
+  if (option.game_value && pause && REX_LOAD_U32(pause + 512)) REX_STORE_U32(REX_LOAD_U32(pause + 512) + 64, 1);
   KameoSaveSettings();
+}
+
+void ChangeOption(PPCContext& ctx, uint8_t* base, uint32_t pause, uint32_t window, const Option& option, int direction, bool wrap) {
+  const uint32_t index = SelectedIndex(base, window);
+  ApplyOption(ctx, base, pause, option, direction, wrap);
   // The gamma bar is drawn from the setting every frame, like the brightness bar beside it, so its page needs no rebuild.
   if (option.page == Page::GameBrightness) return;
   ActivatePage(ctx, base, pause, window, option.page);

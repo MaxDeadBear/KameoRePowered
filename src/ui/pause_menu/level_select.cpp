@@ -1,15 +1,23 @@
 // Level Select: the story's tasks grouped by region, and starting one the way the storybook's task jump does.
 
 #include <algorithm>
+#include <cstdlib>
 #include <map>
 #include <string>
 #include <vector>
 
 #include <rex/cvar.h>
 
+#include <rex/system/kernel_state.h>
+
+#include "core/guest.h"
 #include "core/localization.h"
 #include "engine/current_level.h"
+#include "engine/custom_levels.h"
 #include "engine/dlc/dlc_swap.h"
+#include "engine/guest_addresses.h"
+#include "core/time.h"
+#include "gpu/replay/screen_layout.h"
 #include "engine/kept_progress.h"
 #include "ui/pause_menu/pause_menu_internal.h"
 
@@ -35,10 +43,17 @@ constexpr LevelChapter kLevelChapters[] = {
     {TR_NOOP(u"Thorn's Airship"), 203, 225},
 };
 
+// After the story's chapters, the custom levels' chapter, shown when there are any.
+constexpr uint32_t kCustomChapter = uint32_t(std::size(kLevelChapters));
+
 uint32_t g_levelChapter = 0;
 uint32_t g_levelPickedTask = 0;
+// The custom level picked instead of a task, or -1.
+int32_t g_levelPickedCustom = -1;
 // A task to start once the pause menu has closed, or -1.
 int32_t g_levelJumpTask = -1;
+// A custom level to load once the pause menu has closed, or -1.
+int32_t g_levelJumpCustom = -1;
 
 // The task's checkpoint name as the game's save list shows it, without its {tags} or line breaks.
 std::u16string TaskName(PPCContext& ctx, uint8_t* base, uint32_t task) {
@@ -72,7 +87,10 @@ std::vector<std::u16string> WithoutChapter(std::vector<std::u16string> names) {
   return names;
 }
 
-uint32_t PickedTaskIndex() { return g_levelPickedTask - kLevelChapters[g_levelChapter].first_task; }
+uint32_t PickedTaskIndex() {
+  if (g_levelPickedCustom >= 0) return uint32_t(g_levelPickedCustom);
+  return g_levelPickedTask - kLevelChapters[g_levelChapter].first_task;
+}
 
 }  // namespace
 
@@ -80,6 +98,13 @@ bool AddLevelSelectRows(PPCContext& ctx, uint8_t* base, uint32_t window, Page pa
   if (page == Page::LevelSelect) {
     AddPageTitle(ctx, base, window, kameo::l10n::Tr(u"Level Select"));
     for (uint32_t i = 0; i < std::size(kLevelChapters); ++i) AddCategoryLine(ctx, base, window, kItemLevelChapter + i, kameo::l10n::Tr(kLevelChapters[i].title));
+    if (!engine::CustomLevels().empty()) AddCategoryLine(ctx, base, window, kItemLevelChapter + kCustomChapter, kameo::l10n::Tr(u"Custom Levels"));
+    return true;
+  }
+  if (page == Page::LevelChapter && g_levelChapter == kCustomChapter) {
+    AddPageTitle(ctx, base, window, kameo::l10n::Tr(u"Custom Levels"));
+    const auto& levels = engine::CustomLevels();
+    for (uint32_t i = 0; i < levels.size(); ++i) AddCategoryLine(ctx, base, window, kItemCustomLevel + i, Number(int32_t(i + 1), u". ") + levels[i].title);
     return true;
   }
   if (page == Page::LevelChapter) {
@@ -89,6 +114,13 @@ bool AddLevelSelectRows(PPCContext& ctx, uint8_t* base, uint32_t window, Page pa
     for (uint32_t task = chapter.first_task; task <= chapter.last_task; ++task) names.push_back(TaskName(ctx, base, task));
     names = WithoutChapter(std::move(names));
     for (uint32_t i = 0; i < names.size(); ++i) AddCategoryLine(ctx, base, window, kItemLevelTask + chapter.first_task + i, Number(int32_t(i + 1), u". ") + names[i]);
+    return true;
+  }
+  if (page == Page::ConfirmJump && g_levelPickedCustom >= 0 && size_t(g_levelPickedCustom) < engine::CustomLevels().size()) {
+    AddPageTitle(ctx, base, window, kameo::l10n::TrFormat(u"Start \"{0}\"?", {engine::CustomLevels()[g_levelPickedCustom].title}));
+    if (const uint32_t note = GuestWideString(kameo::l10n::Tr(u"A custom level;\nthe story stays where it is."))) AddTextItem(ctx, base, window, 0, GuestWideString(u"{alignment='centre' size='21'}"), note, 0, false);
+    AddCategoryLine(ctx, base, window, kItemJumpStart, kameo::l10n::Tr(u"Start"));
+    AddCategoryLine(ctx, base, window, kItemJumpCancel, kameo::l10n::Tr(u"Cancel"));
     return true;
   }
   if (page == Page::ConfirmJump) {
@@ -106,20 +138,28 @@ bool PressLevelSelectItem(PPCContext& ctx, uint8_t* base, uint32_t pause, uint32
     ActivatePage(ctx, base, pause, window, Page::LevelSelect);
     return true;
   }
-  if (id >= kItemLevelChapter && id < kItemLevelChapter + std::size(kLevelChapters)) {
+  if (id >= kItemLevelChapter && id <= kItemLevelChapter + kCustomChapter) {
     g_levelChapter = id - kItemLevelChapter;
     ActivatePage(ctx, base, pause, window, Page::LevelChapter);
     return true;
   }
   if (id > kItemLevelTask && id <= kItemLevelTask + kLevelChapters[std::size(kLevelChapters) - 1].last_task) {
     g_levelPickedTask = id - kItemLevelTask;
+    g_levelPickedCustom = -1;
     ActivatePage(ctx, base, pause, window, Page::ConfirmJump);
     // The cursor starts on Cancel, so a stray second press does not replace anything.
     KeepCursor(ctx, base, window, 1);
     return true;
   }
+  if (id >= kItemCustomLevel && id < kItemCustomLevel + engine::CustomLevels().size()) {
+    g_levelPickedCustom = int32_t(id - kItemCustomLevel);
+    ActivatePage(ctx, base, pause, window, Page::ConfirmJump);
+    KeepCursor(ctx, base, window, 1);
+    return true;
+  }
   if (id == kItemJumpStart) {
-    g_levelJumpTask = int32_t(g_levelPickedTask);
+    if (g_levelPickedCustom >= 0) g_levelJumpCustom = g_levelPickedCustom;
+    else g_levelJumpTask = int32_t(g_levelPickedTask);
     g_resumeRequested = true;
     return true;
   }
@@ -150,12 +190,25 @@ bool BackFromLevelSelect(PPCContext& ctx, uint8_t* base, uint32_t pause, uint32_
   return false;
 }
 
+void RequestCustomLevelJump(int32_t index) {
+  g_levelJumpCustom = index;
+  g_resumeRequested = true;
+}
+
 void JumpToTask(PPCContext& ctx, uint8_t* base, int32_t task) {
   g_levelJumpTask = task;
   StartPendingLevelJump(ctx, base);
 }
 
 void StartPendingLevelJump(PPCContext& ctx, uint8_t* base) {
+  if (const int32_t custom = g_levelJumpCustom; custom >= 0) {
+    g_levelJumpCustom = -1;
+    if (size_t(custom) < engine::CustomLevels().size()) {
+      const engine::CustomLevel& level = engine::CustomLevels()[custom];
+      ChangeToLevel(ctx, base, level.name, level.start);
+    }
+    return;
+  }
   const int32_t task = g_levelJumpTask;
   g_levelJumpTask = -1;
   if (task < 0) return;
@@ -178,11 +231,28 @@ void StartPendingLevelJump(PPCContext& ctx, uint8_t* base) {
   REXLOG_INFO("[kameo] level select: started task {}", task);
 }
 
+void ChangeToLevel(PPCContext& ctx, uint8_t* base, const std::string& level, uint32_t setup_point) {
+  // In guest memory of its own: LevelChange copies the name, but only once its fade has started.
+  static uint32_t name = 0;
+  if (!name) name = rex::system::kernel_state()->memory()->SystemHeapAlloc(64);
+  if (!name || level.empty()) return;
+  WriteGuestStringAt(base, name, level.substr(0, 42).c_str());
+  // As a level exit does (doLevelChangeAction): the setup point by number, and Kai as the player.
+  REX_STORE_U32(engine::kNextLevelPlayerSetup, setup_point);
+  WriteGuestStringAt(base, engine::kNextLevelPlayerObject, "Kai");
+  // LevelChange, through its hook (current_level.cpp) so the level is tracked: fades out and loads the level whose file
+  // is the ELF hash of its name (databaseMakeLevelFilename).
+  CallGuest(ctx, base, sub_820B6B18, name);
+  REXLOG_INFO("[kameo] level change to {} at setup point {}", level, setup_point);
+}
+
 }  // namespace kameo::ui
 
 REXCVAR_DEFINE_INT32(kameo_dev_start_task, -1, "Kameo", "For testing: jump to this story task a few seconds after a level starts, as the pause menu's level select does. -1 is off. Keep it off with a save you care about.");
 
 REXCVAR_DEFINE_STRING(kameo_dev_skin, "", "Kameo", "For testing: put Kameo in this skin, by file suffix (00 is Classic), some seconds after a level starts.");
+
+REXCVAR_DEFINE_STRING(kameo_dev_start_level, "", "Kameo", "For testing: change to this level a few seconds after a level starts, by name (its file is the ELF hash of the name in hex, .lvl), with :N after it for its player setup point (0 when left out). Empty is off.");
 
 void KameoDevStartTaskTick(PPCContext& ctx, uint8_t* base) {
   constexpr uint32_t kTaskTick = 300;
@@ -190,10 +260,27 @@ void KameoDevStartTaskTick(PPCContext& ctx, uint8_t* base) {
   static uint32_t ticks = 0;
   const int32_t task = REXCVAR_GET(kameo_dev_start_task);
   const std::string skin = REXCVAR_GET(kameo_dev_skin);
-  if ((task < 0 && skin.empty()) || ticks > kSkinTick) return;
+  const std::string target = REXCVAR_GET(kameo_dev_start_level);
+  if (task < 0 && skin.empty() && target.empty()) return;
   const std::string level = KameoCurrentLevelName();
   if (level.empty() || level == "FrontEndLevel") return;
-  ++ticks;
-  if (ticks == kTaskTick + 1 && task >= 0) kameo::ui::JumpToTask(ctx, base, task);
-  if (ticks == kSkinTick + 1 && !skin.empty()) QueueKameoDlcSuffix(skin);
+  const bool counting = ticks <= kSkinTick;
+  if (counting) ++ticks;
+  if (counting && ticks == kTaskTick + 1 && task >= 0) kameo::ui::JumpToTask(ctx, base, task);
+  // A level change only once the level has been running a while: one made while another is still loading never finishes.
+  static std::string target_from;
+  static int64_t level_since = 0;
+  if (level != target_from) {
+    target_from = level;
+    level_since = KameoSteadyMilliseconds();
+  }
+  static bool target_done = false;
+  if (kameo::gpu::detail::LoadingScreenShowing()) level_since = KameoSteadyMilliseconds();
+  if (!target_done && !target.empty() && KameoSteadyMilliseconds() - level_since > 10000) {
+    target_done = true;
+    const size_t colon = target.find(':');
+    const uint32_t setup = colon == std::string::npos ? 0 : uint32_t(std::strtoul(target.c_str() + colon + 1, nullptr, 10));
+    kameo::ui::ChangeToLevel(ctx, base, target.substr(0, colon), setup);
+  }
+  if (counting && ticks == kSkinTick + 1 && !skin.empty()) QueueKameoDlcSuffix(skin);
 }

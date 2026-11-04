@@ -19,7 +19,6 @@ struct Value {
 
   // The member named `key`, or a shared null value when there is none or this is not an object.
   const Value& operator[](std::string_view key) const;
-  bool IsNull() const { return type == Type::Null; }
   std::string Str() const { return type == Type::String ? string : std::string(); }
   bool Bool() const { return type == Type::Bool && boolean; }
   double Num() const { return type == Type::Number ? number : 0.0; }

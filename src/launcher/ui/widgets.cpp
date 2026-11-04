@@ -1,5 +1,6 @@
 // The settings rows, toggles, tiles and section cards the launcher pages are built from.
 
+#include <algorithm>
 #include <cmath>
 #include <cstdlib>
 #include <string>
@@ -174,18 +175,41 @@ void ResolutionRow(App& app) {
     if (r.width * 9 > r.height * 17) return TrFormat("{0} x {1}  (Ultrawide)", {std::to_string(r.width), std::to_string(r.height)});
     return std::to_string(r.width) + " x " + std::to_string(r.height);
   };
+  // A size none of the presets has (set here with Custom, or by hand) is the custom one.
+  static bool custom_open = false;
   size_t current = 0;
+  bool preset = height <= 0;
   for (size_t i = 1; i < std::size(kResolutions); ++i) {
-    if (height > 0 && kResolutions[i].height == height && (kResolutions[i].width == width || width <= 0)) current = i;
+    if (height > 0 && kResolutions[i].height == height && (kResolutions[i].width == width || width <= 0)) current = i, preset = true;
   }
-  if (ImGui::BeginCombo("##resolution", label(kResolutions[current]).c_str())) {
+  const bool custom = custom_open || !preset;
+  const std::string shown = custom ? TrFormat("Custom ({0} x {1})", {std::to_string(width), std::to_string(height)}) : label(kResolutions[current]);
+  if (ImGui::BeginCombo("##resolution", shown.c_str())) {
     for (size_t i = 0; i < std::size(kResolutions); ++i) {
-      if (ImGui::Selectable(label(kResolutions[i]).c_str(), i == current)) {
+      if (ImGui::Selectable(label(kResolutions[i]).c_str(), !custom && i == current)) {
         app.settings.SetInt("kameo_gfx_render_width", kResolutions[i].width);
         app.settings.SetInt("kameo_gfx_render_height", kResolutions[i].height);
+        custom_open = false;
+      }
+    }
+    if (ImGui::Selectable(Tr("Custom..."), custom)) {
+      custom_open = true;
+      if (height <= 0) {
+        app.settings.SetInt("kameo_gfx_render_width", 1920);
+        app.settings.SetInt("kameo_gfx_render_height", 1080);
       }
     }
     ImGui::EndCombo();
+  }
+  if (custom) {
+    int size[2] = {app.settings.GetInt("kameo_gfx_render_width"), app.settings.GetInt("kameo_gfx_render_height")};
+    ImGui::SetNextItemWidth(ImGui::CalcTextSize("00000 00000").x * 2.0f);
+    if (ImGui::InputInt2("##custom_resolution", size, ImGuiInputTextFlags_EnterReturnsTrue) || ImGui::IsItemDeactivatedAfterEdit()) {
+      app.settings.SetInt("kameo_gfx_render_width", std::clamp(size[0], 320, 7680));
+      app.settings.SetInt("kameo_gfx_render_height", std::clamp(size[1], 240, 4320));
+    }
+    ImGui::SameLine();
+    ImGui::TextColored(kTextDim, "%s", Tr("width x height"));
   }
 }
 

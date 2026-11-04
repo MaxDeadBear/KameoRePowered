@@ -10,6 +10,7 @@
 #include "input/guest_controls.h"
 #include "input/input.h"
 #include "ui/menu_pointer/menu_ui_state.h"
+#include "ui/pause_menu/pause_card.h"
 #include "ui/pause_menu/pause_menu.h"
 #include "ui/pause_menu/pause_menu_internal.h"
 
@@ -51,6 +52,8 @@ extern "C" REX_FUNC(sub_823EFB78) {
   const uint32_t record = pause ? REX_LOAD_U32(pause + 512) : 0;
   const uint32_t window = record ? REX_LOAD_U32(record + 68) : 0;
   NotePauseMenuWindow(window);
+  // The parchment card, when it is the pause menu, opens over the main page.
+  if (pause && window) KameoPauseCardTick(ctx, base, pause, window, record ? REX_LOAD_U32(record + 120) : 0);
   // A hotkey's page, once the menu it opened (or found open) has its window.
   if (window && pause && g_hotkeyPage != Page::None) {
     const Page page = g_hotkeyPage;

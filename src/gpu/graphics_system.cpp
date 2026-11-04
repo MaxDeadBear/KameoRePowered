@@ -171,6 +171,7 @@ void GraphicsSystem::Shutdown() {
   ui_pipeline_.reset();
   ui_layout_.reset();
   ui_sampler_.reset();
+  ui_sampler_repeat_.reset();
   gamma_descriptors_.reset();
   gamma_pipeline_.reset();
   gamma_layout_.reset();

@@ -38,6 +38,8 @@ In short, on Windows:
 2. Open `KameoLauncher` and choose your Xbox 360 disc image (`.iso`) or Games on Demand package. The launcher unpacks it for you.
 3. Press Play.
 
+If Windows Defender or another antivirus removes the files, it's a false alarm about an unsigned new release: see [If Windows or your antivirus warns you](docs/getting-started.md#if-windows-or-your-antivirus-warns-you).
+
 On Linux, extract your game into an `assets` folder next to the executable and run `kameorepowered`.
 
 The launcher also edits every setting, installs DLC and level mods, and switches between releases while keeping your settings, saves and game files. See [docs/launcher.md](docs/launcher.md). Kameo: RePowered is also available on [Goopie](https://goopie.xyz), and [nightly builds](https://nightly.link/MaxDeadBear/KameoRePowered/workflows/ci/main?preview) come from every push to main.
@@ -90,7 +92,7 @@ The game defaults to English. Pick another language in **Options > Gameplay**, o
 
 ### Downloadable content
 
-Copy your content packages into the save-data folder's `00000002` directory and run `python tools/extract_dlc.py`, which unpacks each one in place.
+Pick the folder holding your content packages (or the package files themselves) on the launcher's DLC page, which unpacks each one into the folder the game reads.
 
 ### Title update
 
@@ -113,7 +115,7 @@ A fruit, elixir, Crystal Eye or costume left in a level the story has moved past
 
 ### Logs and overlay keys
 
-Logs are written to `logs/kameorepowered_N.log`. In game, F1 toggles the FPS counter, F4 opens the Options pages and F6 the Achievements page (both in the game's own menu), F10 opens the Xbox Guide, `` ` `` opens the console, F3 the debug overlay and F7 the shader list, which switches the game's shaders on and off one at a time to find which one draws something (its hashes are what a shader mod targets).
+Logs are written to `logs/kameorepowered_N.log`. In game, F1 toggles the FPS counter, F4 opens the Options pages and F6 the Achievements page (both in the game's own menu), F8 switches texture replacements on and off, F10 opens the Xbox Guide, `` ` `` opens the console, F3 the debug overlay and F7 the shader list, which switches the game's shaders on and off one at a time to find which one draws something (its hashes are what a shader mod targets).
 
 On Windows, minimizing the game reduces rendering to at most 15 FPS to save background GPU work. Restoring the window resumes your selected frame rate, including uncapped. Frame timing logs include GPU time and the number of MSAA resolves performed and reused per frame.
 

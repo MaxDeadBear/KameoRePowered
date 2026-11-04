@@ -27,6 +27,12 @@
 #include "core/settings.h"
 #include "engine/audio.h"
 #include "engine/dlc/dlc_models.h"
+#include "engine/custom_levels.h"
+#include "engine/dlc/mod_costumes.h"
+#include "gpu/config.h"
+#include "gpu/replay/screen_layout.h"
+#include "gpu/shaders/shader_mods.h"
+#include "gpu/textures/texture_pack.h"
 #include "input/input.h"
 #include "ui/hud/achievement_toast.h"
 #include "ui/pause_menu/pause_menu.h"
@@ -85,14 +91,32 @@ void KameoApp::OnPreSetup(rex::RuntimeConfig& config) {
   // The RexLiveless Guide sees the controller's Guide button in the game's own pad reads, which carry it only with guide_button on; a config that sets it still decides.
   if (const rex::cvar::FlagEntry* flag = rex::cvar::GetFlagInfo("guide_button"); REXCVAR_GET(kameo_rexliveless) && flag && flag->source == rex::cvar::Source::kDefault) rex::cvar::SetFlagByName("guide_button", "true");
   SyncKameoDlcListForCustomModels(user_data_root());
+  kameo::engine::BuildModCostumePackage(user_data_root());
+  kameo::engine::LoadCustomLevels(game_data_root());
+  // Shader mods read the textures they name from the game's own archives.
+  kameo::gpu::SetShaderModDataRoot(game_data_root());
+  // The pause card's art is kept as the game loads it, which starts before any menu exists.
+  KameoKeepPauseCardArt();
   // The host VFS snapshots the tree at mount time, so a folder created after this resolves but exposes no children.
   kameo::app::BuildMergedLanguageDir(game_data_root());
 #ifdef _WIN32
   veh_handle_ = InstallGuestFpExceptionHandlerWin();
 #endif
 
+  // Releases don't ship the xenos plugin, so a setting that asks for it falls back to the native renderer there.
+  bool native = kameo::gpu::NativeRendererEnabled();
+  if (!native) {
+    std::error_code ec;
+    bool plugin = false;
+    for (const auto& entry : std::filesystem::directory_iterator(rex::filesystem::GetExecutableFolder(), ec))
+      plugin = plugin || entry.path().filename().string().find("rexgpu-xenos") != std::string::npos;
+    if (!plugin) {
+      REXLOG_WARN("[kameo-gfx] kameo_native_renderer is off but the xenos plugin isn't installed; using the native renderer");
+      native = true;
+    }
+  }
   // RuntimeConfig::gpu_plugin is only consulted when `graphics` is empty; the window does not exist yet, so its handle is fetched through a callback.
-  if (kameo::gpu::NativeRendererEnabled()) {
+  if (native) {
     auto graphics = std::make_unique<kameo::gpu::GraphicsSystem>(
         [this]() -> void* { return kameo::gpu::NativeWindowHandle(window()); },
         kameo::gpu::NativeRendererBackend());
@@ -137,6 +161,14 @@ bool KameoApp::SetupPresentation() {
       // Options and Achievements are pages of the game's own menu, not ImGui: F4 and F6 open them there.
       if (ImGui::IsKeyPressed(ImGuiKey_F4, false)) KameoRequestMenuPage(KameoMenuHotkey::Options);
       if (ImGui::IsKeyPressed(ImGuiKey_F6, false)) KameoRequestMenuPage(KameoMenuHotkey::Achievements);
+      // F8 flips texture replacements in play, as the Mods page's switch does, to compare a pack with the original textures.
+      if (ImGui::IsKeyPressed(ImGuiKey_F9, false) && REXCVAR_GET(kameo_dev_log_hud)) kameo::gpu::RequestHudFrameDump();
+      if (ImGui::IsKeyPressed(ImGuiKey_F8, false)) {
+        REXCVAR_SET(kameo_gfx_texture_replacements, !REXCVAR_GET(kameo_gfx_texture_replacements));
+        kameo::gpu::RefreshAllTextureReplacements();
+        KameoSaveSettings();
+        REXLOG_INFO("[kameo] texture replacements {}", REXCVAR_GET(kameo_gfx_texture_replacements) ? "on" : "off");
+      }
       CrashIfTestKeyHeld();
     });
   }
@@ -191,6 +223,7 @@ void KameoApp::OnPostSetup() {
     if (!kameo_guide_installed_) KameoPushAchievementToast(event);
   });
   if (kameo_achievement_icons_) kameo_achievement_icons_->SetRuntime(runtime());
+  if (kameo_pause_card_) kameo_pause_card_->SetRuntime(runtime());
   // Sentry takes the last-chance filter back here and ends the process without calling the one before it, so the local report goes back on top: crash_*.txt and .dmp are still written, the player is asked before the crash goes on to Sentry, and the log Sentry attaches carries the guest function names.
   sentrywork::OnRuntimeReady(runtime());
   InstallCrashReporter();
@@ -206,6 +239,7 @@ void KameoApp::OnCreateDialogs(rex::ui::ImGuiDrawer* drawer) {
   kameo_fps_overlay_ = std::make_unique<KameoFpsOverlay>(drawer);
   kameo_loading_overlay_ = std::make_unique<KameoLoadingOverlay>(drawer);
   kameo_achievement_icons_ = std::make_unique<KameoAchievementIcons>(drawer, kameo_immediate_drawer_.get());
+  kameo_pause_card_ = std::make_unique<KameoPauseCard>(drawer, kameo_immediate_drawer_.get());
   // Last, so the Guide draws over the game's own overlays.
   if (REXCVAR_GET(kameo_rexliveless) && kameo_immediate_drawer_) {
     rexglue_guide::Install(this, drawer, {

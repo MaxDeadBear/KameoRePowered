@@ -24,6 +24,8 @@ extern DrawFrameExchange g_frameExchange;
 extern std::atomic<uint64_t> g_framesTaken;
 // Bumped once per captured frame, for cache eviction.
 extern uint64_t g_captureFrame;
+// The LoadingLayer the level fade model's hooks are drawing, on the game thread that records the draws.
+extern uint8_t g_capturingLoadingLayer;
 // Canonical guest addresses the render thread will read while recording this frame, gathered as its draws are captured.
 extern std::vector<uint32_t> g_frameGuestReads;
 

@@ -34,7 +34,15 @@ std::vector<Resolution> ResolutionChoices(int32_t* window_width, int32_t* window
   if (auto* gfx = kameo::gpu::GraphicsSystem::instance()) gfx->WindowSize(&width, &height);
   *window_width = int32_t(width);
   *window_height = int32_t(height);
-  return {{0, 0}, {640, 360}, {854, 480}, {1280, 720}, {1600, 900}, {1920, 1080}, {2560, 1440}, {3840, 2160}, {2560, 1080}, {3440, 1440}, {5120, 2160}};
+  std::vector<Resolution> choices = {{0, 0}, {640, 360}, {854, 480}, {1280, 720}, {1600, 900}, {1920, 1080}, {2560, 1440}, {3840, 2160}, {2560, 1080}, {3440, 1440}, {5120, 2160}};
+  // A custom size (the launcher's Custom, or set by hand) is offered beside the presets rather than lost to the nearest.
+  const int32_t custom_width = REXCVAR_GET(kameo_gfx_render_width);
+  const int32_t custom_height = REXCVAR_GET(kameo_gfx_render_height);
+  if (custom_width > 0 && custom_height > 0 &&
+      std::none_of(choices.begin(), choices.end(), [&](const Resolution& r) { return r.width == custom_width && r.height == custom_height; })) {
+    choices.push_back({custom_width, custom_height});
+  }
+  return choices;
 }
 
 // The choice the settings are on, or the one with the nearest height when the window has changed shape since it was picked.

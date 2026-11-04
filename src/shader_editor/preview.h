@@ -4,6 +4,7 @@
 
 #include <d3d11.h>
 
+#include <array>
 #include <chrono>
 #include <filesystem>
 #include <future>
@@ -23,6 +24,8 @@ class Preview {
   void SetTemplate(std::string text);
   // The mod's Shade function; rebuilt when it changes.
   void SetShade(const std::string& shade);
+  // The game textures the mod's Game texture nodes read, by slot; the library that made them keeps them.
+  void SetGameTextures(const std::array<ID3D11ShaderResourceView*, 4>& views) { game_textures_ = views; }
   void Draw();
 
  private:
@@ -61,9 +64,11 @@ class Preview {
   ID3D11InputLayout* layout_ = nullptr;
   ID3D11Buffer* constants_ = nullptr;
   ID3D11SamplerState* sampler_ = nullptr;
+  ID3D11BlendState* coverage_ = nullptr;
   ID3D11RasterizerState* rasterizer_ = nullptr;
   ID3D11DepthStencilState* depth_state_ = nullptr;
   ID3D11ShaderResourceView* white_ = nullptr;
+  std::array<ID3D11ShaderResourceView*, 4> game_textures_{};
 
   ID3D11Texture2D* colour_ = nullptr;
   ID3D11Texture2D* resolved_ = nullptr;

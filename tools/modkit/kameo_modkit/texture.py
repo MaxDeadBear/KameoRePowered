@@ -93,11 +93,9 @@ def base_level_bytes(resolver: Resolver, texture: Texture) -> bytes:
     out = bytearray(blocks_x * blocks_y * block_bytes)
     if texture.format & 0x100:
         log2_bpp = block_bytes.bit_length() - 1
-        for y in range(blocks_y):
-            for x in range(blocks_x):
-                start = base + tiled_offset_2d(x, y, blocks_x, log2_bpp) * block_bytes
-                dest = (y * blocks_x + x) * block_bytes
-                out[dest:dest + block_bytes] = source[start:start + block_bytes]
+        offsets = _tiled_offsets(blocks_x, blocks_y, log2_bpp).reshape(-1)
+        tiled = np.frombuffer(source, np.uint8, count=(int(offsets.max()) + 1) * block_bytes, offset=base).reshape(-1, block_bytes)
+        out[:] = tiled[offsets].tobytes()
     else:
         pitch = ((blocks_x + TILE_BLOCKS - 1) // TILE_BLOCKS) * TILE_BLOCKS
         for y in range(blocks_y):
@@ -145,6 +143,28 @@ def _alpha_blocks(blocks: np.ndarray) -> np.ndarray:
         bits |= blocks[:, 2 + k].astype(np.uint64) << np.uint64(8 * k)
     index = (bits[:, None] >> (np.uint64(3) * np.arange(16, dtype=np.uint64))) & np.uint64(7)
     return np.take_along_axis(palette, index.astype(np.int64), axis=1)
+
+
+# The fetch constant's swizzle goes into the game's hash but is not in the archive. Each format always draws with the
+# same one, except a few 8888 textures, which the dump's hashes tell apart.
+SWIZZLE_DEFAULT = 0x688
+SWIZZLE_BY_FORMAT = {10: 0x200, 2: 0xA00}
+SWIZZLE_ALTERNATES = {6: [0xA0A]}
+
+
+def game_hash(data: bytes, width: int, height: int, gpu_format: int, swizzle: int) -> int:
+    """TextureContentHash in src/gpu/textures/texture_pack.cpp: the name a replacement image in textures/replace starts
+    with, as 16 hex digits."""
+    from .xxh3 import xxh3_64
+
+    return xxh3_64(data, (width << 40) ^ (height << 20) ^ (gpu_format << 12) ^ swizzle)
+
+
+def game_hashes(resolver: Resolver, texture: Texture, data: bytes | None = None) -> list[int]:
+    """The hashes the game may give the texture: the usual one first, then any its format sometimes draws with."""
+    data = base_level_bytes(resolver, texture) if data is None else data
+    swizzles = [SWIZZLE_BY_FORMAT.get(texture.gpu_format, SWIZZLE_DEFAULT)] + SWIZZLE_ALTERNATES.get(texture.gpu_format, [])
+    return [game_hash(data, texture.width, texture.height, texture.gpu_format, s) for s in swizzles]
 
 
 def _untile_blocks(texels: np.ndarray, width: int, height: int) -> np.ndarray:

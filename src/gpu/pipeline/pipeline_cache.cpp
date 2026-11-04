@@ -13,6 +13,7 @@
 #include "gpu/config.h"
 #include "gpu/guest_state.h"
 #include "gpu/log.h"
+#include "gpu/shaders/shader_mods.h"
 #include "gpu/pipeline/pipeline_state.h"
 #include "gpu/shaders/embedded_shaders.h"
 
@@ -174,6 +175,9 @@ plume::RenderPipeline* EnsurePipeline(GraphicsSystem::DrawPathContext& ctx, cons
   // The guest sets alpha-to-mask on thousands of foliage draws, which on Xenos ran against EDRAM's 4x MSAA; at one sample it would only add a second hard cut, so it follows the real sample count.
   desc.alphaToCoverageEnabled =
       call.alpha_to_mask != 0 && desc.multisampling.sampleCount > plume::RenderSampleCount::COUNT_1;
+  // A see-through shader mod on a solid draw shows its opacity as the share of samples it covers (MOD_SHOW_COVERAGE).
+  if (!call.depth_only && !blend.blendEnabled && desc.multisampling.sampleCount > plume::RenderSampleCount::COUNT_1 && ShaderModSeeThrough(ps))
+    desc.alphaToCoverageEnabled = true;
 
   // The guest's offset is absolute normalised depth; D3D12's DepthBias is an integer scaled by 2^(zexp - 23) against a float target, so 2^24 converts near the far plane, approximately but enough to stop decals z-fighting.
   if (call.poly_offset != 0.0f || call.poly_offset_scale != 0.0f) {

@@ -16,6 +16,8 @@ inline constexpr uint32_t kIsSplitScreenMode = 0x82B70AF8;
 inline constexpr uint32_t kCurrentSetupPoint = 0x827338D4;
 // nextLevelPlayerObject is a char buffer, not a pointer: levelCreatePlayerSetup receives its address.
 inline constexpr uint32_t kNextLevelPlayerObject = 0x82755BE8;
+// nextLevelPlayerSetup: which PlrSetupPoint the next level starts the player at, by its number.
+inline constexpr uint32_t kNextLevelPlayerSetup = 0x827559AC;
 // playerControllers[36 * playerNo] holds the pad index; Sticks points at the pad records, 320 bytes each, +0 the held buttons and +8 those pressed this frame.
 inline constexpr uint32_t kPlayerControllers = 0x82732F48;
 inline constexpr uint32_t kSticks = 0x8276706C;

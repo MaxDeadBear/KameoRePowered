@@ -4,6 +4,7 @@
 #include <shellapi.h>
 
 #include <algorithm>
+#include <array>
 #include <cctype>
 #include <format>
 #include <fstream>
@@ -170,6 +171,8 @@ void Editor::Build(bool full) {
   request.meshes = source_.Meshes(mod_.targets);
   request.model_type = source_.CostumeModel(mod_.targets);
   request.unlit = mod_.unlit || source_.NeedsUnlit(mod_.targets);
+  request.textures = PackageTextures(GameTextures(mod_.graph));
+  request.see_through = SeeThrough(mod_.graph);
   request.out = ModsFolder() / (file + kPackageExtension);
   const bool vulkan = GameUsesVulkan();
   request.dxil = full || !vulkan;
@@ -289,6 +292,8 @@ void Editor::DrawToolbar() {
     ImGui::TextDisabled("%s", Tr("Undo brings yours back."));
     if (ImGui::Button(Tr("Replace"))) {
       mod_.graph = MakePreset(Preset(pending_preset_));
+      // The grass is for the levels' grass, not a character.
+      if (Preset(pending_preset_) == Preset::kGrass) mod_.targets = {"grass"};
       canvas_.Reset();
       pending_preset_ = -1;
       ImGui::CloseCurrentPopup();
@@ -389,6 +394,28 @@ void Editor::DrawDetails() {
   } else if (n->kind == NodeKind::kComponentMask) {
     int channel = std::clamp(int(n->settings[0]), 0, 2);
     if (ImGui::Combo(Tr("Channel"), &channel, "R (X)\0G (Y)\0B (Z)\0")) n->settings[0] = float(channel);
+  } else if (n->kind == NodeKind::kGameTexture) {
+    const std::optional<GameTextureRef> texture = ParseGameTexture(n->code);
+    if (texture) {
+      // On a light square, as many of the game's textures are dark shapes cut out by their alpha.
+      const ImVec2 at = ImGui::GetCursorScreenPos();
+      ImGui::GetWindowDrawList()->AddRectFilled(at, ImVec2(at.x + 96, at.y + 96), IM_COL32(190, 190, 196, 255), 4.0f);
+      if (ID3D11ShaderResourceView* view = game_textures_.View(*texture)) ImGui::Image(ImTextureRef(ImTextureID(view)), ImVec2(96, 96));
+      else ImGui::Dummy(ImVec2(96, 96));
+      ImGui::SameLine();
+      ImGui::BeginGroup();
+      ImGui::TextUnformatted(texture->label.c_str());
+      ImGui::TextDisabled("%s", TrFormat("{0}, {1} x {2}", {texture->archive, std::to_string(texture->width), std::to_string(texture->height)}).c_str());
+      ImGui::EndGroup();
+      const std::vector<GameTextureRef> used = GameTextures(g);
+      if (std::find(used.begin(), used.end(), *texture) == used.end()) ImGui::TextColored(ImVec4(1.0f, 0.55f, 0.45f, 1.0f), "%s", Tr("A mod can draw with four of the game's textures; this fifth one reads nothing."));
+    } else {
+      ImGui::TextDisabled("%s", Tr("No texture chosen yet."));
+    }
+    if (ImGui::Button(Tr("Choose a texture..."))) picking_node_ = n->id;
+    int read = !n->settings.empty() && n->settings[0] >= 0.5f;
+    const std::string reads = std::string(Tr("Its colour")) + '\0' + Tr("Its alpha") + '\0';
+    if (ImGui::Combo(Tr("Reads"), &read, reads.c_str()) && !n->settings.empty()) n->settings[0] = float(read);
   } else {
     for (size_t s = 0; s < n->settings.size() && s < info.settings.size(); ++s) ImGui::DragFloat(Tr(info.settings[s]), &n->settings[s], 0.01f);
   }
@@ -414,6 +441,65 @@ void Editor::DrawDetails() {
 }
 
 // The named constants of the graph, to tune in one place; clicking a name finds it in the graph.
+// Any object of the game's levels, then one of its textures; the node takes it.
+void Editor::DrawTexturePicker() {
+  if (!picking_node_) return;
+  Node* node = mod_.graph.Find(picking_node_);
+  if (!node || node->kind != NodeKind::kGameTexture) {
+    picking_node_ = 0;
+    return;
+  }
+  game_textures_.StartIndex();
+  ImGui::SetNextWindowSize(ImVec2(760, 540), ImGuiCond_FirstUseEver);
+  bool open = true;
+  if (ImGui::Begin(Tr("Choose a game texture"), &open, ImGuiWindowFlags_NoCollapse)) {
+    ImGui::PushTextWrapPos(0);
+    ImGui::TextDisabled("%s", Tr("Find what wears it: an enemy, a character, a prop. The mod names the texture, and the game reads it from your own files, so the mod holds none of the game's pictures."));
+    ImGui::PopTextWrapPos();
+    ImGui::SetNextItemWidth(-1);
+    ImGui::InputTextWithHint("##search", Tr("Search, such as ShadowTroll"), picker_search_.data(), picker_search_.capacity() + 1, ImGuiInputTextFlags_CallbackResize, ResizeString, &picker_search_);
+    if (game_textures_.Indexing()) ImGui::TextDisabled("%s", TrFormat("Reading the game's levels... {0} of {1} (once only)", {std::to_string(game_textures_.IndexedFiles()), std::to_string(game_textures_.FilesToIndex())}).c_str());
+    ImGui::BeginChild("types", ImVec2(260, 0), ImGuiChildFlags_Borders);
+    for (const GameTextureLibrary::Found& found : game_textures_.Find(picker_search_, 500)) {
+      const std::string label = found.type + "##" + found.archive;
+      if (ImGui::Selectable(label.c_str(), found.type == picker_type_ && found.archive == picker_archive_)) picker_type_ = found.type, picker_archive_ = found.archive;
+      ImGui::SetItemTooltip("%s", found.archive.c_str());
+    }
+    ImGui::EndChild();
+    ImGui::SameLine();
+    ImGui::BeginChild("textures", ImVec2(0, 0), ImGuiChildFlags_Borders);
+    if (picker_type_.empty()) {
+      ImGui::TextDisabled("%s", Tr("Choose something on the left."));
+    } else if (const std::vector<GameTextureRef>* textures = game_textures_.TexturesOf(picker_archive_, picker_type_); !textures) {
+      ImGui::TextDisabled("%s", Tr("Reading..."));
+    } else if (textures->empty()) {
+      ImGui::TextDisabled("%s", Tr("It has no textures a mod can draw with."));
+    } else {
+      constexpr float kThumb = 128.0f;
+      const float room = ImGui::GetContentRegionAvail().x;
+      float x = 0;
+      for (const GameTextureRef& texture : *textures) {
+        ImGui::PushID(int(texture.entry));
+        if (x > 0 && x + kThumb + 8 <= room) ImGui::SameLine();
+        else x = 0;
+        bool chosen = false;
+        if (ID3D11ShaderResourceView* view = game_textures_.View(texture)) chosen = ImGui::ImageButton("##texture", ImTextureRef(ImTextureID(view)), ImVec2(kThumb, kThumb), ImVec2(0, 0), ImVec2(1, 1), ImVec4(0.75f, 0.75f, 0.77f, 1.0f));
+        else chosen = ImGui::Button("...", ImVec2(kThumb + 8, kThumb + 8));
+        ImGui::SetItemTooltip("%s", TrFormat("{0} x {1}, entry {2} of {3}", {std::to_string(texture.width), std::to_string(texture.height), std::to_string(texture.entry), texture.archive}).c_str());
+        if (chosen) {
+          node->code = FormatGameTexture(texture);
+          picking_node_ = 0;
+        }
+        x += kThumb + 8 + ImGui::GetStyle().ItemSpacing.x;
+        ImGui::PopID();
+      }
+    }
+    ImGui::EndChild();
+  }
+  ImGui::End();
+  if (!open) picking_node_ = 0;
+}
+
 void Editor::DrawParameters() {
   ImGui::SeparatorText(Tr("Parameters"));
   bool any = false;
@@ -492,6 +578,7 @@ void Editor::DrawLog() {
 void Editor::Draw(ID3D11Device* device, ID3D11DeviceContext* context) {
   if (!preview_attached_) {
     preview_.Attach(device, context);
+    game_textures_.Attach(device, context);
     preview_attached_ = true;
   }
   if (preparing_.valid() && preparing_.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
@@ -535,6 +622,10 @@ void Editor::Draw(ID3D11Device* device, ID3D11DeviceContext* context) {
   const float height = ImGui::GetContentRegionAvail().y;
   ImGui::BeginChild("preview", ImVec2(0, height * 0.5f), ImGuiChildFlags_Borders, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
   preview_.SetShade(GenerateHlsl(g));
+  std::array<ID3D11ShaderResourceView*, kGameTextureSlots> views{};
+  const std::vector<GameTextureRef> textures = GameTextures(g);
+  for (size_t i = 0; i < textures.size() && i < views.size(); ++i) views[i] = game_textures_.View(textures[i]);
+  preview_.SetGameTextures(views);
   preview_.Draw();
   ImGui::EndChild();
   ImGui::BeginChild("targets", ImVec2(0, height * 0.32f), ImGuiChildFlags_Borders);
@@ -544,6 +635,7 @@ void Editor::Draw(ID3D11Device* device, ID3D11DeviceContext* context) {
   DrawLog();
   ImGui::EndChild();
   ImGui::EndChild();
+  DrawTexturePicker();
   Changed();
   Remember();
   if (live_ && live_pending_ && ready_ && !build_.valid() && !ImGui::IsMouseDown(ImGuiMouseButton_Left) && std::chrono::steady_clock::now() - edited_at_ > kLiveDelay) {

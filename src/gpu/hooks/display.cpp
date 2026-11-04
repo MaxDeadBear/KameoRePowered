@@ -11,7 +11,9 @@
 
 #include "gpu/config.h"
 #include "gpu/log.h"
+#include "gpu/draw/capture.h"
 #include "gpu/passes/gamma_pass.h"
+#include "gpu/replay/screen_layout.h"
 #include "gpu/stereo/stereo.h"  // STEREO:
 
 using kameo::gpu::hooks::Active;
@@ -37,10 +39,20 @@ extern "C" REX_FUNC(sub_820C2CF0) {
   }
 }
 
+// levelDrawLevelFadeModel -- draws the loading screen between levels: the smoke backdrop over the whole 1280x720 (marked
+// by modelRender's hook in effects.cpp), then the book in a viewport of its own and the hint text. Its draws are marked so
+// a wider screen keeps their shape (DrawCall::loading_layer), and its camera is left unwidened.
+extern "C" REX_FUNC(sub_82270C30) {
+  kameo::gpu::NoteLoadingScreenDrawn();
+  kameo::gpu::detail::g_capturingLoadingLayer = kameo::gpu::kLoadingPicture;
+  __imp__sub_82270C30(ctx, base);
+  kameo::gpu::detail::g_capturingLoadingLayer = kameo::gpu::kLoadingNone;
+}
+
 // mtx44Perspective(float* out, double fovDegrees, double aspect, double nearZ, double farZ)
 // The aspect in f2 divides the matrix's X scale, so handing it the display's widens the view instead of squeezing the image; only the 16:9 scene projections are touched, not the shadow, decal and light passes.
 extern "C" REX_FUNC(sub_820DFD38) {
-  if (REXCVAR_GET(kameo_gfx_widescreen)) {
+  if (REXCVAR_GET(kameo_gfx_widescreen) && !kameo::gpu::detail::g_capturingLoadingLayer) {
     if (auto* gfx = Active()) {
       const double aspect = ctx.f2.f64;
       const double display = gfx->DisplayAspect();
@@ -63,7 +75,7 @@ extern "C" REX_FUNC(sub_820ED110) {
     float aspect = 0.0f;
     std::memcpy(&aspect, &saved, sizeof(aspect));
     double widened = aspect;
-    if (REXCVAR_GET(kameo_gfx_widescreen)) {
+    if (REXCVAR_GET(kameo_gfx_widescreen) && !kameo::gpu::detail::g_capturingLoadingLayer) {
       if (auto* gfx = Active()) {
         const double display = gfx->DisplayAspect();
         if (display > aspect && aspect > 1.6f && aspect < 1.9f) widened = display;

@@ -46,6 +46,8 @@ struct App : WindowState {
   std::vector<std::string> dlc_log;
   Page page = Page::Play;
   bool close_on_launch = true;
+  // A level the game goes straight into once it starts (--start-level, from the Blender level editor's Play).
+  std::string start_level;
   // The game builds from the GitHub releases: the one in the game folder, whether update notices include pre-releases, and whether to look for builds on start.
   BuildManager builds;
   std::string active_build;

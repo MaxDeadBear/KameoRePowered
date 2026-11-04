@@ -12,18 +12,32 @@
 #include "gpu/draw/draw_constants.h"
 #include "gpu/frame_ring.h"
 #include "gpu/graphics_system.h"
+#include "core/time.h"
 #include "gpu/guest_state.h"
+#include "gpu/log.h"
+#include "gpu/resolve.h"
 
 namespace kameo::gpu::detail {
 namespace {
 
 std::atomic<bool> g_hudMenuOpen{false};
+// When the loading screen was last drawn, in steady milliseconds.
+std::atomic<int64_t> g_loadingScreenMs{0};
+constexpr int64_t kLoadingScreenHoldMs = 250;
 
 }  // namespace
 
-// Widescreen already widened the projection to the display's aspect, so the guest frame covers the whole window; letterboxing too would squeeze the extra view back into 16:9.
+// Widescreen widens the projection only for a display wider than 16:9, where the guest frame then covers the whole window and letterboxing too would squeeze the extra view back into 16:9; on a 16:9 or narrower display it changes nothing, so the frame keeps its bars there.
+bool LoadingScreenShowing() {
+  const int64_t at = g_loadingScreenMs.load(std::memory_order_relaxed);
+  return at && KameoSteadyMilliseconds() - at < kLoadingScreenHoldMs;
+}
+
 bool LetterboxScene() {
-  return REXCVAR_GET(kameo_gfx_preserve_aspect) && !REXCVAR_GET(kameo_gfx_widescreen);
+  if (!REXCVAR_GET(kameo_gfx_preserve_aspect)) return false;
+  if (!REXCVAR_GET(kameo_gfx_widescreen)) return true;
+  const GraphicsSystem* gfx = GraphicsSystem::instance();
+  return !gfx || gfx->DisplayAspect() <= 16.0 / 9.0 + 0.01;
 }
 
 GuestToHost GuestToHostTransform(uint32_t host_w, uint32_t host_h) {
@@ -41,10 +55,18 @@ GuestToHost GuestToHostTransform(uint32_t host_w, uint32_t host_h) {
 }
 
 bool HudDrawBox(const DrawCall& call, const uint8_t* vertices, const uint32_t* indices, const float* vs_constants, float* box) {
-  if (!call.hud_2d || !call.layout || !vertices || !vs_constants || call.vs_constant_bytes < 64) return false;
-  if (call.depth_control & (state::kDepthTestEnableBit | state::kDepthWriteEnableBit)) return false;
+  // A vertex shader that reads no constants can't transform its positions, so they are on the screen already: the
+  // storybook's pause card and the bar under it are drawn so.
+  static const float kIdentity[16] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
+  const bool passthrough = !call.hud_2d && call.vs_constant_bytes == 0;
+  if (passthrough) vs_constants = kIdentity;
+  if ((!call.hud_2d && !passthrough) || !call.layout || !vertices || !vs_constants || (!passthrough && call.vs_constant_bytes < 64)) return false;
   const float* c = vs_constants;
   if (std::abs(c[12]) > 1e-4f || std::abs(c[13]) > 1e-4f || std::abs(c[14]) > 1e-4f || std::abs(c[15] - 1.0f) > 1e-4f) return false;
+  // Flat on the screen: no perspective row, and x and y that don't follow z. The storybook's pause card and its text are
+  // drawn so with depth testing on; anything else drawn with depth must be screen-flat in this way to count.
+  const bool screen_flat = std::abs(c[2]) < 1e-6f && std::abs(c[6]) < 1e-6f;
+  if ((call.depth_control & (state::kDepthTestEnableBit | state::kDepthWriteEnableBit)) && !screen_flat) return false;
   const HostElement* position = nullptr;
   for (const HostElement& e : call.layout->elements) {
     if (e.usage == 0 && e.usage_index == 0) position = &e;
@@ -81,8 +103,38 @@ bool HudDrawBox(const DrawCall& call, const uint8_t* vertices, const uint32_t* i
   return true;
 }
 
-bool PlaceHudBox(const float* box, float stretch, HudPlacement* out) {
+bool PlaceMenuCard(uint64_t pixel_shader, float stretch, HudPlacement* out) {
+  // The card shaders, by the hash the shader list shows; they read their camera from the full constant block, which the
+  // HUD layout's box finder can't, so they are known by shader instead.
+  static constexpr uint64_t kCardShaders[] = {0x8FF3DB98F857D8A7ull, 0x113302E71053FE39ull, 0x7ACB95FC3FB81F09ull};
+  if (stretch <= 1.0f || std::clamp(REXCVAR_GET(kameo_hud_layout), 0, 2) == 0) return false;
+  if (pixel_shader && std::find(std::begin(kCardShaders), std::end(kCardShaders), pixel_shader) == std::end(kCardShaders)) return false;
+  out->mx = 1.0f / stretch;
+  out->bx = 0.0f;
+  out->my = 1.0f;
+  out->by = 0.0f;
+  return true;
+}
+
+bool PlaceLoadingBackdrop(float stretch, HudPlacement* out) {
+  if (stretch <= 1.0f || std::clamp(REXCVAR_GET(kameo_hud_layout), 0, 2) == 0) return false;
+  out->mx = 1.0f;
+  out->bx = 0.0f;
+  out->my = stretch;
+  out->by = 0.0f;
+  return true;
+}
+
+bool PlaceHudBox(const float* box, float stretch, HudPlacement* out, bool artwork) {
   const int32_t layout = std::clamp(REXCVAR_GET(kameo_hud_layout), 0, 2);
+  if (artwork) {
+    if (layout == 0 || stretch <= 1.0f) return false;
+    out->mx = 1.0f / stretch;
+    out->bx = 0.0f;
+    out->my = 1.0f;
+    out->by = 0.0f;
+    return true;
+  }
   const bool menu = g_hudMenuOpen.load(std::memory_order_relaxed);
   const float scale = menu ? 1.0f : std::clamp(REXCVAR_GET(kameo_hud_scale), 50, 150) / 100.0f;
   const float unstretch = layout == 0 ? 1.0f : 1.0f / std::max(stretch, 1.0f);
@@ -116,10 +168,30 @@ void ClusterHudBoxes(const DrawFrame& frame, std::vector<std::array<float, 4>>& 
     std::vector<uint32_t> boxed;
     for (size_t i = 0; i < frame.draws.size(); ++i) {
       const DrawCall& c = frame.draws[i];
-      if (c.kind != CommandKind::Draw || !c.hud_2d || c.vs_constants == kNoData) continue;
+      // Draws whose shader reads no constants count only under a menu: in play they can be effects placed in screen
+      // space (flares), which the layout mustn't move.
+      const bool passthrough = !c.hud_2d && c.vs_constant_bytes == 0 && g_hudMenuOpen.load(std::memory_order_relaxed);
+      if (c.kind != CommandKind::Draw || (!passthrough && (!c.hud_2d || c.vs_constants == kNoData))) continue;
       std::array<float, 4>& box = hud_boxes[i];
-      if (!HudDrawBox(c, VertexBytes(frame, c), reinterpret_cast<const uint32_t*>(IndexBytes(frame, c)), reinterpret_cast<const float*>(frame.arena.data() + c.vs_constants), box.data())) continue;
-      if (box[1] - box[0] > 1.5f || box[3] - box[2] > 1.5f) continue;
+      if (!HudDrawBox(c, VertexBytes(frame, c), reinterpret_cast<const uint32_t*>(IndexBytes(frame, c)), passthrough ? nullptr : reinterpret_cast<const float*>(frame.arena.data() + c.vs_constants), box.data())) continue;
+      if (passthrough && (box[1] - box[0] > 1.5f || box[3] - box[2] > 1.5f)) continue;
+      if (box[1] - box[0] > 1.5f || box[3] - box[2] > 1.5f) {
+        // A full-screen picture (the storybook's pause card, a loading screen the game drew into a 640x480 texture first)
+        // keeps its 16:9 shape; fades, tints and the passes that sample the scene itself (a copy of it, or a smaller one
+        // for bloom, all 16:9) still cover the whole width.
+        const GuestTextureFetch& texture = c.textures[0];
+        const bool full_screen = box[0] <= -0.95f && box[1] >= 0.95f && box[2] <= -0.95f && box[3] >= 0.95f;
+        const uint32_t tw = texture.valid() ? texture.width() : 0, th = texture.valid() ? texture.height() : 0;
+        const bool scene_copy = th && std::abs(float(tw) / float(th) - 16.0f / 9.0f) < 0.05f &&
+                                g_resolveTargets.contains({texture.address(), uint16_t(tw), uint16_t(th), false});
+        const bool picture = tw >= 128 && th >= 64 && !scene_copy;
+        if (REXCVAR_GET(kameo_dev_log_hud) && full_screen) {
+          static uint64_t logged_at = 0;
+          if (logged_at++ % 120 == 0) KGFX_INFO("hud: draw {} full screen, texture {:08X} {}x{}{}: {}", i, texture.address(), tw, th, scene_copy ? " (scene copy)" : "", picture ? "kept 16:9" : "stretched");
+        }
+        if (full_screen && picture) hud_boxed[i] = 2;
+        continue;
+      }
       hud_boxed[i] = 1;
       boxed.push_back(uint32_t(i));
     }
@@ -169,6 +241,10 @@ namespace kameo::gpu {
 using namespace detail;
 
 void SetHudMenuOpen(bool open) { g_hudMenuOpen.store(open, std::memory_order_relaxed); }
+
+std::atomic<bool> g_hudFrameDumpRequested{false};
+void RequestHudFrameDump() { g_hudFrameDumpRequested.store(true, std::memory_order_relaxed); }
+void NoteLoadingScreenDrawn() { g_loadingScreenMs.store(KameoSteadyMilliseconds(), std::memory_order_relaxed); }
 
 bool WindowPointToUiLayout(float window_x, float window_y, uint32_t window_width, uint32_t window_height, float* layout_x, float* layout_y) {
   if (window_width == 0 || window_height == 0) return false;

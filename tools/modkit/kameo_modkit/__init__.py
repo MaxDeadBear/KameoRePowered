@@ -7,10 +7,10 @@ Blender it is a command line tool, python -m kameo_modkit.
 bl_info = {
     "name": "Kameo Modkit",
     "author": "Kameo RePowered",
-    "version": (1, 0, 0),
+    "version": (1, 1, 0),
     "blender": (3, 6, 0),
     "location": "File > Import > Kameo Character, File > Export > Kameo Mod, 3D View > Sidebar > Kameo",
-    "description": "Edit Kameo: Elements of Power characters and save them as mods for Kameo RePowered's launcher",
+    "description": "Edit Kameo: Elements of Power characters, paint them live in the game, make new levels, and save them as mods for Kameo RePowered's launcher",
     "category": "Import-Export",
 }
 

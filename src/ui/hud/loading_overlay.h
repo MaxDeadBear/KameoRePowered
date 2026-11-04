@@ -5,6 +5,12 @@
 
 #include <rex/ui/imgui_dialog.h>
 
+// The pause book's faces ConfigureFonts adds from the fonts folder: IM FELL English small capitals, roman and italic (null when
+// the folder is missing).
+ImFont* KameoBookCapsFont();
+ImFont* KameoBookTextFont();
+ImFont* KameoBookItalicFont();
+
 class KameoLoadingOverlay : public rex::ui::ImGuiDialog {
  public:
   explicit KameoLoadingOverlay(rex::ui::ImGuiDrawer* drawer) : rex::ui::ImGuiDialog(drawer), start_(std::chrono::steady_clock::now()) {}

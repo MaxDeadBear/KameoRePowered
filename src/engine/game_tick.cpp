@@ -4,6 +4,7 @@
 #include "core/localization.h"
 #include "engine/audio.h"
 #include "engine/dlc/dlc.h"
+#include "engine/dlc/mod_costumes.h"
 #include "engine/guest_addresses.h"
 #include "engine/super_jump.h"
 #include "engine/unlocks.h"
@@ -29,6 +30,7 @@ void KameoGameTick() {
   KameoReplayCachedVolumes(*ctx_ptr, base);
   kameo::engine::ProcessPendingDlcSwap(*ctx_ptr, base);
   kameo::engine::TickKameoSkin(base);
+  kameo::engine::TickModCostumes(*ctx_ptr, base);
   kameo::engine::TickJoinerSkin(*ctx_ptr, base);
   kameo::engine::TickWarriorUnlock(*ctx_ptr, base);
   KameoUpdateSuperJumpFloat(*ctx_ptr, base);

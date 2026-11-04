@@ -40,3 +40,24 @@ extern "C" REX_FUNC(sub_820B6B18) {
   }
   __imp__sub_820B6B18(ctx, base);
 }
+
+namespace {
+
+std::string GuestText(uint8_t* base, uint32_t address, size_t limit) {
+  std::string text;
+  for (size_t i = 0; address && i < limit; ++i) {
+    const char c = char(REX_LOAD_U8(address + uint32_t(i)));
+    if (c == 0) break;
+    text.push_back(c);
+  }
+  return text;
+}
+
+}  // namespace
+
+// databaseLoadLevel(path, levelName, extension, kind) -- queues a level archive's load: the file is path, the ELF hash of the name in hex, and the
+// extension (databaseMakeLevelFilename). Logged so a level that never finishes loading shows which file it waited on.
+extern "C" REX_FUNC(sub_822C5FE0) {
+  REXLOG_INFO("[kameo] level archive load: '{}' '{}' '{}' kind {}", GuestText(base, ctx.r3.u32, 64), GuestText(base, ctx.r4.u32, 64), GuestText(base, ctx.r5.u32, 16), int32_t(ctx.r6.u32));
+  __imp__sub_822C5FE0(ctx, base);
+}

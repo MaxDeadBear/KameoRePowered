@@ -109,6 +109,23 @@ Things to expect:
 - **UVs.** Images repeat, so UVs outside 0–1 are fine. They are stored in a limited range; the export moves them by
   whole tiles to fit, and says so.
 
+### Painting in the running game
+
+The **Textures** panel (Kameo tab) lists the character's textures. Each one is linked to the texture it replaces in game.
+
+1. Click a texture's brush button. Blender switches to Texture Paint on that image.
+2. Paint. Then click **Show in Game**, or switch on **Live Link**, which sends each change about a second after you
+   make it.
+3. **Play** starts the game as the launcher does. If the game is already running, the change appears there within a
+   second or two.
+
+In game, **F8** switches texture replacements off and on, so you can compare with the original. **Remove from Game**
+puts the character's own textures back.
+
+Painted textures go to `textures/replace/blender/<model>/` in the game folder, named the way a texture dump names
+them, at any size. They aren't part of the `.kmod`. To ship a texture inside a mod, use **Export Kameo Mod** as usual.
+To share a texture pack, hand out that folder.
+
 ### Rules underneath
 
 These matter if you edit the exported files by hand or something looks off:
@@ -133,6 +150,47 @@ Install `kameo_modkit_blender279.zip` instead (**File > User Preferences > Add-o
 
 There is no Attach button in 2.79: the export attaches everything in the scene that isn't Kameo's. Parts weighted to
 her `joint_` bones keep those weights; the rest take hers. Keep her bone names and material names as they are.
+
+The **Kameo Textures** panel in the Tool Shelf (**T**) works as described above: Paint, **Show in Game**,
+**Live Link** (click it again to stop), **Remove from Game**, and **Play** in the Kameo panel.
+
+The level editor below needs Blender 3.6 or newer.
+
+## Making a level with Blender
+
+New levels go in Level Select under **Custom Levels**, beside the game's own; the story is untouched. A level is
+built over one of the game's levels, which lends it materials, props and enemies:
+
+| Base | Gives |
+| --- | --- |
+| Hut | Wood, plaster and thatch; barrels, crates, urns, torches. No enemies. Loads quickly. |
+| Water Temple | Carved stone, tiles and lava; crates, vases, chains, torches; trolls. |
+
+1. In the **Kameo** tab of the sidebar, under **Kameo Level**, click **New Level**. Give it a name (letters, digits
+   and `_`, no spaces), a title for Level Select, and a base. It opens in a scene of its own with a floor and a
+   player start.
+2. Model the level. One Blender unit is one game unit: Kameo is about 5.5 tall. Faces draw with the base's materials,
+   the ones named after it (`Water Temple 13`); assign them as you would any material. **Tile Textures** textures
+   the selected meshes so the textures keep their size on every face.
+3. Each object's **Role**, in the panel, says what it is. Meshes are drawn and solid unless you make them **Drawn
+   Only** (walk-through) or **Solid Only** (invisible walls). **Not in the Level** leaves an object out.
+4. Add, at the 3D cursor: the **Player Start** (Kameo faces the way its arrow points), **Troll Spawners**, which
+   make trolls from the start (how many at once, how many in all, and how often), and **Props**, picked from the
+   base's own objects. Markers are wire boxes at their size, standing on their origin.
+5. **Build Level** writes it into the game. **Build and Play** also starts the game: load a save, and the level
+   follows a few seconds later.
+
+Trolls have no wall collision. They keep to one **troll area**: by default the main floor, a little in from its
+edge, walking round anything solid that stands on it. On a level with ledges or more than one floor, add a **Troll
+Area** and shape it (seen from above) to where trolls may go.
+
+Things to know:
+
+- **Lighting is baked from the base.** Each face gets one even light level for the way it faces.
+- **The game reads the list of custom levels when it starts.** A brand-new level needs a restart; rebuilding one it
+  already lists only needs you to go into the level again.
+- **Limits.** 65535 vertices per material and 65535 solid triangles in all.
+- **Remove from Game** takes a level out again. The scene stays.
 
 ## Shader mods
 
@@ -235,6 +293,57 @@ Helpers: `ModKeyLight(s, towards, up, side)`, `ModStep(edge, x)`, `ModBands(x, c
 `ModHalftone(s.screen, amount, cell)`, `ModLuminance(colour)` and `ModNoise(uv)`. If `Shade` returns a value that isn't a
 number, such as after dividing by zero, the game's own colour is drawn for that pixel.
 
+**See-through surfaces.** The Output node's **Opacity** (in HLSL, `float ShadeOpacity(ShadeInputs s)` beside `Shade`;
+a mod without one shows all of the surface) lets the scene show through. How depends on how the game draws the
+surface:
+
+- **Blended surfaces** (the tall grass and other foliage): they fade by their own alpha.
+- **Solid surfaces** (characters, drawn with the scenery): with anti-aliasing on, they cover that share of each pixel's
+  samples, which averages out smooth. A mod can't blend these, as anything drawn later behind them would be hidden.
+- **With anti-aliasing off:** solid surfaces leave out pixels in a fine 4x4 dither instead, which shows as dots.
+
+A see-through mod is saved as package version 5, which needs this build of the game or later. The **Hologram** preset
+uses Opacity for the look of the Chamber of Portraits' holo creatures:
+
+- its colour turned to one tint;
+- a glow round the edge;
+- a faint body but a solid edge;
+- scan lines rolling up the screen, and a flicker.
+
+Shadows stay solid.
+
+**The game's own textures.** A **Game texture** node reads one of the game's textures, such as another character's
+or an enemy's, repeating over the surface. In its Details, **Choose a texture...** lets you search for what wears it
+and pick from that object's textures. The first search reads every level once, which takes a minute. A mod can use up
+to four game textures. In HLSL, call `ModGameTexture(slot, uv)`, slots 0 to 3, inside `Shade`, `ShadeOpacity` or a
+Custom node.
+
+The mod only names each texture (a level file and the texture's entry in it), and never carries the picture. The
+game reads it from the player's own copy of that level when the mod loads, so a `.kshader` holds none of the game's
+art and can be shared like any other. A texture that can't be found draws as transparent black, and the game's log
+says which one.
+
+The **Shadow troll** preset uses two of the troll's own textures from QuadapusCave: its wall of screaming faces, and
+the streaked map that swirls them.
+
+**Grass.** The **Grass and plants** target (under Surfaces) covers the shaders the levels' grass, ferns and leaves
+are drawn with. `tools/shaders/find_grass_shaders.py` finds them as the background materials whose colour texture is
+green. The same shaders draw the rock and earth beside the grass, so a grass mod picks out its green pixels by colour,
+as the **Lush grass** preset does:
+
+- patches of sunnier and lusher green;
+- richer colour;
+- gusts of wind as a moving sheen;
+- a speckle of blades;
+- sunlight glowing through it when the sun is ahead.
+
+The tall grass (the Enchanted Kingdom's, the castle grounds' and the rest) is drawn by the game's own grass code
+rather than a model, so its shader was found in the running game. It's listed in `EXTRA` in that script. Its constants
+have names of their own, so `build_shader_mod_source.py` hooks it by hand (`HAND_HOOKS`).
+
+Packages that use game textures are version 4 and need a build of the game from this change on. Packages without
+any are still written as version 3.
+
 To make a surface move, not just change colour, a Raw HLSL mod can define the whole file (its own `Shade` and more)
 and replace the shaders' texture reads with `#define MOD_FETCH2D(texture, sampler, uv, offset) MyFetch(texture,
 sampler, uv, offset, mod.s.time)`, reading from somewhere else where it means to. `Molten Lava` does that: where a
@@ -260,6 +369,7 @@ python -m kameo_modkit gltf   assets/007183BF_01.mdl  work/kameo.gltf      # a m
 python -m kameo_modkit import assets/007183BF_01.mdl  work/edited.gltf  work/007183BF_01.mdl
 python -m kameo_modkit kmod   work/my_mod.kmod "assets/007183BF_01.mdl=work/007183BF_01.mdl" --name "My Mod" --author me
 python -m kameo_modkit info   assets/007183BF_01.mdl                     # an archive's sections and asset types
+python -m kameo_modkit.custom_level build work/level.json assets          # a level from a JSON design (see custom_level.py)
 ```
 
 Model files are named by a hash of the character's name and a skin number: `007183BF_00`, `_01` and `_02` are

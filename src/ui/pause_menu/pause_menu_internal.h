@@ -60,6 +60,8 @@ constexpr uint32_t kItemPlayCredits = 0x7A5E0609;
 constexpr uint32_t kItemLevelSelectPage = 0x7A5E0700;
 constexpr uint32_t kItemLevelChapter = 0x7A5E0710;
 constexpr uint32_t kItemLevelTask = 0x7A5E0800;
+// Level Select's custom levels (engine/custom_levels.h), one line each.
+constexpr uint32_t kItemCustomLevel = 0x7A5E0C00;
 constexpr uint32_t kItemCollectiblesPage = 0x7A5E0900;
 // The tracker's rows, which do nothing when pressed.
 constexpr uint32_t kItemCollectibleRow = 0x7A5E0910;
@@ -96,6 +98,9 @@ std::span<const Option> AllOptions();
 const Option* FindOption(uint32_t id);
 uint32_t VisibleOptionCount(Page page);
 
+std::span<const PageInfo> AllPages();
+// The Options page's categories, in order.
+std::span<const Page> OptionsCategories();
 const PageInfo* FindPage(Page page);
 const PageInfo* FindPageByItem(uint32_t item);
 // Where `page` sits among its parent's categories, so returning to the parent puts the cursor back on it.
@@ -107,6 +112,8 @@ void AddPageTitle(PPCContext& ctx, uint8_t* base, uint32_t window, const std::u1
 void AddCategoryLine(PPCContext& ctx, uint8_t* base, uint32_t window, uint32_t id, const std::u16string& label);
 // The same page reset activateSimplePauseSettingsMenu performs, then our page's lines instead of the game's settings.
 void ActivatePage(PPCContext& ctx, uint8_t* base, uint32_t pause, uint32_t window, Page page);
+// Changes one option, as either Options screen does: steps it, marks the game's settings changed, saves.
+void ApplyOption(PPCContext& ctx, uint8_t* base, uint32_t pause, const Option& option, int direction, bool wrap);
 // Changes one option and rebuilds its page, which is how the game itself refreshes a changed value.
 void ChangeOption(PPCContext& ctx, uint8_t* base, uint32_t pause, uint32_t window, const Option& option, int direction, bool wrap);
 // The main menu's options object, which the game kills where the pause menu would return to its main page.
@@ -146,6 +153,10 @@ bool BackFromLevelSelect(PPCContext& ctx, uint8_t* base, uint32_t pause, uint32_
 // Starts the task Level Select picked, once the pause menu has closed.
 void StartPendingLevelJump(PPCContext& ctx, uint8_t* base);
 void JumpToTask(PPCContext& ctx, uint8_t* base, int32_t task);
+// Loads custom level `index` once the pause menu has closed, closing it.
+void RequestCustomLevelJump(int32_t index);
+// Loads `level` by name, as a level exit does, starting the player at its setup point `setup_point`.
+void ChangeToLevel(PPCContext& ctx, uint8_t* base, const std::string& level, uint32_t setup_point);
 
 // A label and its value on one row, like a setting's.
 void AddToggleRow(PPCContext& ctx, uint8_t* base, uint32_t window, uint32_t id, const std::u16string& label, uint32_t value_text);

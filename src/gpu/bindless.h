@@ -108,11 +108,6 @@ class DeferredDestroyQueue {
     return dead.size();
   }
 
-  size_t depth() {
-    std::lock_guard<std::mutex> lock(mutex_);
-    return pending_.size();
-  }
-
  private:
   struct Entry {
     T object;

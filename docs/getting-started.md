@@ -29,6 +29,12 @@ The first time you play, your PC prepares the game's shaders in the background w
 
 Kameo: RePowered isn't code-signed, so Windows SmartScreen may show "Windows protected your PC", and some antivirus programs may flag it. If you downloaded it from the official releases page, you can choose **More info**, then **Run anyway**. Never run a copy from anywhere else.
 
+Microsoft Defender sometimes removes a new release's zip or files as soon as they arrive, under a name such as `Trojan:Win32/Suschil!rfn`. A name ending in `!rfn` or `!ml` is Defender guessing about a file it hasn't seen before, not a real virus it found in it. Each release is sent to Microsoft to be cleared, which usually takes a day or so. To keep a copy you downloaded from the official releases page before then:
+
+1. Open **Windows Security**, then **Virus & threat protection**, then **Protection history**.
+2. Choose the Kameo: RePowered entry, then **Actions**, then **Restore**.
+3. To stop it happening again, go to **Virus & threat protection settings**, then **Exclusions**, and add the game's folder.
+
 ## Install on Linux
 
 1. Download the file ending in `linux-x64.tar.gz` from the [releases page](https://github.com/MaxDeadBear/KameoRePowered/releases/latest) and extract it into a new folder.

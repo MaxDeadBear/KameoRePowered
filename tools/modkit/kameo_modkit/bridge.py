@@ -2,7 +2,8 @@
 Blender cannot run the modkit. Models cross between the two as FBX.
 
   blender -b --factory-startup --python bridge.py -- import <model.mdl> <out.fbx>
-      a game model as an FBX 2.79 opens: rigged, textured (embedded), Kameo's materials and bone names kept
+      a game model as an FBX 2.79 opens: rigged, textured (embedded), Kameo's materials and bone names kept; and
+      <out>.textures.json, per image file name, the game texture it came from (blender_textures.py)
   blender -b --factory-startup --python bridge.py -- mod <scene.fbx> <model.mdl> <mods folder> <name> <author> <description> <0|1>
       the FBX 2.79 saved, as a .kmod: Kameo's own parts known by their material names (graph<g>_mesh<m>_draw<d>), and
       everything else attached to her as the add-on's Attach does (its own weights kept where it has joint_ ones)
@@ -10,6 +11,7 @@ Blender cannot run the modkit. Models cross between the two as FBX.
 Prints, for the 2.79 add-on to show: "NOTE: ..." lines, then "DONE: ..." or "ERROR: ...".
 """
 
+import json
 import os
 import sys
 import traceback
@@ -22,9 +24,36 @@ from kameo_modkit import blender as kb  # noqa: E402
 from kameo_modkit.importer import DRAW_NAME  # noqa: E402
 
 
+def _colour_image_direct(material) -> None:
+    """The colour image linked straight to Base Color. The glTF import multiplies it by the vertex colours first, and the
+    FBX export only follows a direct link, so 2.79 got every material without its colour texture."""
+    tree = material.node_tree if material and material.use_nodes else None
+    shader = next((n for n in tree.nodes if n.type == "BSDF_PRINCIPLED"), None) if tree else None
+    if shader is None or not shader.inputs["Base Color"].is_linked:
+        return
+    node = shader.inputs["Base Color"].links[0].from_node
+    seen = set()
+    while node is not None and node.type != "TEX_IMAGE" and node.name not in seen:
+        seen.add(node.name)
+        linked = [i for i in node.inputs if i.is_linked and i.links[0].from_node.type in ("TEX_IMAGE", "MIX", "MIX_RGB")]
+        node = linked[0].links[0].from_node if linked else None
+    if node is not None and node.type == "TEX_IMAGE":
+        tree.links.new(node.outputs["Color"], shader.inputs["Base Color"])
+
+
 def to_fbx(model: str, out: str) -> None:
     kb._import_model(bpy.context, model)
+    for material in bpy.data.materials:
+        _colour_image_direct(material)
     bpy.ops.export_scene.fbx(filepath=out, path_mode="COPY", embed_textures=True, add_leaf_bones=False, bake_anim=False, use_armature_deform_only=False)
+    textures = {}
+    for image in bpy.data.images:
+        if image.get("kameo_game"):
+            entry = json.loads(image["kameo_game"])
+            textures[image.name] = entry
+            textures[os.path.basename(bpy.path.abspath(image.filepath_raw))] = entry
+    with open(out + ".textures.json", "w", encoding="utf-8") as handle:
+        json.dump(textures, handle)
     print("DONE:", out)
 
 

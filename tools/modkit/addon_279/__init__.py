@@ -1,45 +1,42 @@
-# Kameo Modkit for Blender 2.79: the same Import > Kameo Character and Export > Kameo Mod as the add-on for newer
-# Blender, for those modelling in 2.79. Blender 2.79's Python is too old to run the modkit, so the conversions run in
-# a newer Blender (2.93 or later; the free portable zip from blender.org is enough) in the background, and models
-# cross between the two as FBX. Written for Python 3.5: no f-strings, 2.79's property syntax.
+# Kameo Modkit for Blender 2.79: the same Import > Kameo Character, Export > Kameo Mod, Textures panel and Play as the
+# add-on for newer Blender, for those modelling in 2.79. Blender 2.79's Python is too old to run the modkit, so the
+# conversions run in a newer Blender (2.93 or later; the free portable zip from blender.org is enough) in the
+# background, and models cross between the two as FBX. Painted textures need no conversion: they are written straight
+# into the game's textures/replace folder, which the running game watches (see kameo_modkit/blender_textures.py).
+# Written for Python 3.5: no f-strings, 2.79's property syntax, and no NumPy.
 
 bl_info = {
     "name": "Kameo Modkit (Blender 2.79)",
     "author": "Kameo RePowered",
-    "version": (1, 0, 0),
+    "version": (1, 1, 0),
     "blender": (2, 79, 0),
     "location": "File > Import > Kameo Character, File > Export > Kameo Mod, Tool Shelf > Kameo",
-    "description": "Edit Kameo: Elements of Power characters and save them as mods for Kameo RePowered's launcher",
+    "description": "Edit Kameo: Elements of Power characters, paint them live in the game, and save them as mods for Kameo RePowered's launcher",
     "category": "Import-Export",
 }
 
+import array
+import importlib.machinery
+import json
 import os
-import re
+import shutil
+import struct
 import subprocess
 import tempfile
+import zlib
 
 import bpy
 from bpy.props import BoolProperty, EnumProperty, StringProperty
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 BRIDGE = os.path.join(HERE, "kameo_modkit", "bridge.py")
+NO_WINDOW = 0x08000000 if os.name == "nt" else 0
+LIVE_SECONDS = 1.0
+KIND_LABEL = {"colour": "Colour", "normal": "Normal map", "mask": "Mask"}
 
-# Model files are named by the hash of the character they dress and a skin number.
-CHARACTERS = {
-    0x007183BF: "Kameo", 0x0CE65812: "Pummel Weed", 0x0A70BAB2: "Snare", 0x037AABBF: "Major Ruin", 0x079B8925: "Rubble",
-    0x0BBEAEDE: "Ash", 0x005C444C: "Thermite", 0x05800519: "Chilla", 0x008B5284: "40 Below", 0x08EBDF9E: "Flex", 0x056D64DE: "Deep Blue",
-}
-KAMEO_OUTFITS = {0: "default outfit", 1: "second outfit", 2: "third outfit"}
-
-
-def model_label(filename):
-    match = re.match(r"([0-9A-Fa-f]{8})_(\d+)\.mdl$", filename)
-    if not match:
-        return filename
-    who, number = int(match.group(1), 16), int(match.group(2))
-    if who == 0x007183BF:
-        return "Kameo, " + KAMEO_OUTFITS.get(number, "outfit {}".format(number))
-    return "{}, skin {}".format(CHARACTERS.get(who, "Unknown character"), number)
+# The character names both add-ons use; the rest of the modkit needs a newer Python than 2.79's.
+names = importlib.machinery.SourceFileLoader("kameo_modkit_names", os.path.join(HERE, "kameo_modkit", "names.py")).load_module()
+model_label = names.model_label
 
 
 def preferences():
@@ -54,9 +51,14 @@ def assets_folder():
     return ""
 
 
-def mods_folder():
+def game_folder():
     assets = assets_folder()
-    return os.path.join(os.path.dirname(assets), "mods") if assets else ""
+    return os.path.dirname(assets) if assets else ""
+
+
+def mods_folder():
+    game = game_folder()
+    return os.path.join(game, "mods") if game else ""
 
 
 # 2.79 drops dynamic enum strings Python no longer references, so the list is kept.
@@ -77,9 +79,8 @@ def run_bridge(arguments):
     blender = bpy.path.abspath(preferences().blender_path)
     if not os.path.isfile(blender):
         return False, [], "set 'Newer Blender' in the add-on's preferences to a blender.exe of version 2.93 or later"
-    flags = 0x08000000 if os.name == "nt" else 0  # no console window
     process = subprocess.run([blender, "-b", "--factory-startup", "--python", BRIDGE, "--"] + arguments,
-                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, creationflags=flags)
+                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, creationflags=NO_WINDOW)
     lines = process.stdout.splitlines()
     notes = [line[6:] for line in lines if line.startswith("NOTE: ")]
     errors = [line[7:] for line in lines if line.startswith("ERROR: ")]
@@ -88,6 +89,139 @@ def run_bridge(arguments):
         return False, notes, errors[-1] if errors else "the helper Blender stopped: " + " | ".join(lines[-5:])
     return True, notes, ""
 
+
+def game_running():
+    if os.name != "nt":
+        return False
+    try:
+        listing = subprocess.run(["tasklist", "/FO", "CSV", "/NH"], stdout=subprocess.PIPE, universal_newlines=True, creationflags=NO_WINDOW).stdout.lower()
+    except OSError:
+        return False
+    return '"kameorepowered.exe"' in listing or '"kameorepowered-tu.exe"' in listing
+
+
+# --- textures --------------------------------------------------------------------------------------------------
+# Each image the import brings in carries the game texture it came from (kameo_game: hashes, size, format, kind) and a
+# checksum of its pixels as opened; one whose pixels differ is written to <game>/textures/replace/blender/<model>/
+# under the name a texture dump gives it, and the game swaps it in.
+
+# Per image, the checksum last written to the game (None: its files were removed), for Live Link.
+_sent = {}
+
+
+def replace_folder(context):
+    game = game_folder()
+    model = context.scene.get("kameo_model", "")
+    if not game or not model:
+        return ""
+    return os.path.join(game, "textures", "replace", "blender", os.path.splitext(os.path.basename(model))[0])
+
+
+def image_bytes(image):
+    """The image as RGBA bytes, top row first, and its width and height."""
+    width, height = image.size
+    values = image.pixels[:]
+    try:
+        import numpy
+    except ImportError:
+        numpy = None
+    if numpy is not None:
+        pixels = (numpy.clip(numpy.array(values, numpy.float32), 0.0, 1.0) * 255.0 + 0.5).astype(numpy.uint8)
+        return numpy.flipud(pixels.reshape(height, width * 4)).tobytes(), width, height
+    row = width * 4
+    rows = []
+    for y in range(height - 1, -1, -1):
+        rows.append(bytes(min(255, max(0, int(v * 255.0 + 0.5))) for v in values[y * row:(y + 1) * row]))
+    return b"".join(rows), width, height
+
+
+def checksum(image):
+    width, height = image.size
+    return zlib.crc32(array.array("f", image.pixels[:]).tobytes(), zlib.crc32(struct.pack("<II", width, height)))
+
+
+def write_png(path, rgba, width, height):
+    def chunk(kind, data):
+        return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data) & 0xFFFFFFFF)
+
+    stride = width * 4
+    raw = b"".join(b"\x00" + rgba[y * stride:(y + 1) * stride] for y in range(height))
+    header = struct.pack(">IIBBBBB", width, height, 8, 6, 0, 0, 0)
+    with open(path, "wb") as handle:
+        handle.write(b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", header) + chunk(b"IDAT", zlib.compress(raw, 6)) + chunk(b"IEND", b""))
+
+
+def for_game(rgba, kind):
+    # A mask was opened as white with its brightness as alpha; the game's texture is the brightness.
+    if kind != "mask":
+        return rgba
+    out = bytearray(len(rgba))
+    out[0::4] = out[1::4] = out[2::4] = rgba[3::4]
+    out[3::4] = b"\xff" * (len(rgba) // 4)
+    return bytes(out)
+
+
+def game_images():
+    return sorted((i for i in bpy.data.images if i.get("kameo_game")), key=lambda i: i.name)
+
+
+def tag_images(images, mapping):
+    """Marks the images an FBX import made with the game texture each came from. The FBX import makes an image per
+    material using a texture, so the copies are merged into one: painting it paints every part that shows it, and no
+    unpainted copy takes the painted one's file out of the game."""
+    first = {}
+    for image in images:
+        keys = [image.name, os.path.basename(bpy.path.abspath(image.filepath_raw))]
+        keys += [os.path.splitext(k)[0] + ".png" for k in keys]
+        entry = next((mapping[k] for k in keys if k in mapping), None)
+        if entry is None or image.size[0] == 0:
+            continue
+        kept = first.get(entry["hashes"][0])
+        if kept is not None:
+            image.user_remap(kept)
+            bpy.data.images.remove(image, do_unlink=True)
+            continue
+        first[entry["hashes"][0]] = image
+        image["kameo_game"] = json.dumps(entry)
+        image["kameo_original"] = str(checksum(image))
+    return len(first)
+
+
+def sync(context, only_changed=False):
+    """Writes every edited image to the game's replace folder and removes the files of the rest: (shown, removed)."""
+    folder = replace_folder(context)
+    if not folder:
+        raise RuntimeError("set the game folder in the add-on's preferences first")
+    if not os.path.isdir(folder):
+        os.makedirs(folder)
+    shown = removed = 0
+    for image in game_images():
+        if only_changed and not image.is_dirty and image.name in _sent:
+            continue
+        entry = json.loads(image["kameo_game"])
+        now = checksum(image)
+        edited = str(now) != image.get("kameo_original")
+        if only_changed and _sent.get(image.name, "unsent") == (now if edited else None):
+            continue
+        rgba = None
+        for h in entry["hashes"]:
+            path = os.path.join(folder, "{}_{}x{}_fmt{}.png".format(h, entry["width"], entry["height"], entry["format"]))
+            if edited:
+                if rgba is None:
+                    pixels, width, height = image_bytes(image)
+                    rgba = for_game(pixels, entry["kind"])
+                # Written aside and renamed, so the game never reads half a file.
+                write_png(path + ".tmp", rgba, width, height)
+                os.replace(path + ".tmp", path)
+            elif os.path.exists(path):
+                os.remove(path)
+                removed += 1
+        shown += edited
+        _sent[image.name] = now if edited else None
+    return shown, removed
+
+
+# --- operators -------------------------------------------------------------------------------------------------
 
 class KameoPreferences(bpy.types.AddonPreferences):
     bl_idname = __name__
@@ -127,10 +261,19 @@ class KameoImportCharacter(bpy.types.Operator):
         if not finished:
             self.report({"ERROR"}, "Could not open it: " + error)
             return {"CANCELLED"}
+        before = set(bpy.data.images)
         bpy.ops.import_scene.fbx(filepath=fbx)
+        mapping = {}
+        if os.path.isfile(fbx + ".textures.json"):
+            with open(fbx + ".textures.json", encoding="utf-8") as handle:
+                mapping = json.load(handle)
+        tag_images([i for i in bpy.data.images if i not in before], mapping)
         bpy.ops.file.pack_all()
+        for o in context.scene.objects:
+            o["kameo_character"] = True
         context.scene["kameo_model"] = self.model
         context.scene["kameo_label"] = model_label(os.path.basename(self.model))
+        _sent.clear()
         self.report({"INFO"}, "Opened " + context.scene["kameo_label"])
         return {"FINISHED"}
 
@@ -179,6 +322,149 @@ class KameoExportMod(bpy.types.Operator):
         return {"FINISHED"}
 
 
+class KameoShowTextures(bpy.types.Operator):
+    """Put the textures you changed into the game. It swaps them in while it runs; F8 there switches them off and on"""
+    bl_idname = "kameo.show_textures"
+    bl_label = "Show in Game"
+
+    @classmethod
+    def poll(cls, context):
+        return bool(game_images())
+
+    def execute(self, context):
+        try:
+            shown, removed = sync(context)
+        except (OSError, RuntimeError) as error:
+            self.report({"ERROR"}, "Could not write the textures: {}".format(error))
+            return {"CANCELLED"}
+        if shown:
+            self.report({"INFO"}, "{} texture(s) now show in game{}".format(shown, "" if game_running() else "; start the game to see them"))
+        else:
+            self.report({"INFO"}, "No texture differs from the game's yet: paint one first")
+        return {"FINISHED"}
+
+
+class KameoRemoveTextures(bpy.types.Operator):
+    """Take this character's painted textures out of the game, so it shows its own again"""
+    bl_idname = "kameo.remove_textures"
+    bl_label = "Remove from Game"
+
+    @classmethod
+    def poll(cls, context):
+        folder = replace_folder(context)
+        return bool(folder) and os.path.isdir(folder)
+
+    def execute(self, context):
+        shutil.rmtree(replace_folder(context), ignore_errors=True)
+        _sent.clear()
+        context.scene.kameo_live_textures = False
+        self.report({"INFO"}, "The game shows this character's own textures again")
+        return {"FINISHED"}
+
+
+class KameoLiveLink(bpy.types.Operator):
+    """Send each brush stroke to the running game a moment after it. Press again to stop"""
+    bl_idname = "kameo.live_link"
+    bl_label = "Live Link"
+
+    _timer = None
+
+    @classmethod
+    def poll(cls, context):
+        return bool(game_images())
+
+    def invoke(self, context, event):
+        scene = context.scene
+        if scene.kameo_live_textures:
+            scene.kameo_live_textures = False
+            return {"FINISHED"}
+        scene.kameo_live_textures = True
+        _sent.clear()
+        self._timer = context.window_manager.event_timer_add(LIVE_SECONDS, context.window)
+        context.window_manager.modal_handler_add(self)
+        return {"RUNNING_MODAL"}
+
+    def modal(self, context, event):
+        if not context.scene.kameo_live_textures:
+            context.window_manager.event_timer_remove(self._timer)
+            return {"CANCELLED"}
+        if event.type == "TIMER":
+            try:
+                sync(context, only_changed=True)
+            except (OSError, RuntimeError):
+                pass
+        return {"PASS_THROUGH"}
+
+
+class KameoPaintTexture(bpy.types.Operator):
+    """Paint this texture on the model"""
+    bl_idname = "kameo.paint_texture"
+    bl_label = "Paint"
+    bl_options = {"REGISTER", "UNDO"}
+
+    image = StringProperty()
+
+    def execute(self, context):
+        image = bpy.data.images.get(self.image)
+        if image is None:
+            return {"CANCELLED"}
+        obj = None
+        for o in context.scene.objects:
+            if o.type != "MESH":
+                continue
+            for slot in o.material_slots:
+                material = slot.material
+                textures = [t.texture for t in (material.texture_slots if material else []) if t and t.texture and t.texture.type == "IMAGE"]
+                tree = material.node_tree if material and material.use_nodes else None
+                nodes = [n for n in (tree.nodes if tree else []) if n.type == "TEX_IMAGE"]
+                if any(t.image == image for t in textures) or any(n.image == image for n in nodes):
+                    obj = o
+                    break
+            if obj:
+                break
+        if obj is None:
+            self.report({"WARNING"}, "No part of the character shows " + image.name)
+            return {"CANCELLED"}
+        if context.mode != "OBJECT":
+            bpy.ops.object.mode_set(mode="OBJECT")
+        bpy.ops.object.select_all(action="DESELECT")
+        obj.hide = False
+        obj.select = True
+        context.scene.objects.active = obj
+        bpy.ops.object.mode_set(mode="TEXTURE_PAINT")
+        paint = context.scene.tool_settings.image_paint
+        paint.mode = "IMAGE"
+        paint.canvas = image
+        for area in context.screen.areas:
+            if area.type == "IMAGE_EDITOR":
+                area.spaces.active.image = image
+        self.report({"INFO"}, "Painting " + image.name + (": Live Link shows each stroke in game" if context.scene.kameo_live_textures else ": press Show in Game to see it there"))
+        return {"FINISHED"}
+
+
+class KameoPlay(bpy.types.Operator):
+    """Start Kameo RePowered as the launcher's Play button does, with your mods switched on"""
+    bl_idname = "kameo.play"
+    bl_label = "Play"
+
+    def execute(self, context):
+        game = game_folder()
+        launcher = os.path.join(game, "KameoLauncher.exe")
+        if not os.path.isfile(launcher):
+            self.report({"ERROR"}, "KameoLauncher.exe is not in the game folder; set it in the add-on's preferences")
+            return {"CANCELLED"}
+        if game_running():
+            self.report({"INFO"}, "The game is already running: painted textures update in it as you go")
+            return {"FINISHED"}
+        if game_images():
+            sync(context)
+        subprocess.Popen([launcher, "--play"], cwd=game, creationflags=NO_WINDOW)
+        self.report({"INFO"}, "Kameo is starting")
+        return {"FINISHED"}
+
+
+# --- panels ----------------------------------------------------------------------------------------------------
+
 class KameoPanel(bpy.types.Panel):
     bl_label = "Kameo"
     bl_space_type = "VIEW_3D"
@@ -199,6 +485,46 @@ class KameoPanel(bpy.types.Panel):
         box.label(text="them to her joint_ bones (or not:")
         box.label(text="the export rigs what isn't). Then:")
         box.operator(KameoExportMod.bl_idname, icon="EXPORT")
+        row = layout.row()
+        row.scale_y = 1.4
+        row.operator(KameoPlay.bl_idname, icon="PLAY")
+
+
+class KameoTexturesPanel(bpy.types.Panel):
+    bl_label = "Kameo Textures"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "TOOLS"
+    bl_category = "Kameo"
+
+    @classmethod
+    def poll(cls, context):
+        return bool(context.scene.get("kameo_model"))
+
+    def draw(self, context):
+        layout = self.layout
+        images = game_images()
+        if not images:
+            layout.label(text="Open the character again to paint", icon="INFO")
+            layout.label(text="its textures.")
+            return
+        column = layout.column(align=True)
+        for image in images:
+            entry = json.loads(image["kameo_game"])
+            row = column.row(align=True)
+            label = "{} {}x{}".format(KIND_LABEL.get(entry["kind"], entry["kind"]), entry["width"], entry["height"])
+            row.label(text=label, icon_value=image.preview.icon_id if getattr(image, "preview", None) else 0)
+            if _sent.get(image.name) is not None:
+                row.label(text="", icon="FILE_TICK")
+            row.operator(KameoPaintTexture.bl_idname, text="", icon="BRUSH_DATA").image = image.name
+        layout.separator()
+        column = layout.column(align=True)
+        column.scale_y = 1.3
+        column.operator(KameoShowTextures.bl_idname, icon="EXPORT")
+        live = context.scene.kameo_live_textures
+        column.operator(KameoLiveLink.bl_idname, text="Live Link: on" if live else "Live Link: off", icon="LINKED" if live else "UNLINKED")
+        layout.operator(KameoRemoveTextures.bl_idname, icon="X")
+        layout.label(text="In game, F8 switches them", icon="INFO")
+        layout.label(text="off and on.")
 
 
 def menu_import(self, context):
@@ -209,12 +535,13 @@ def menu_export(self, context):
     self.layout.operator(KameoExportMod.bl_idname, text="Kameo Mod (.kmod)")
 
 
-CLASSES = (KameoPreferences, KameoImportCharacter, KameoExportMod, KameoPanel)
+CLASSES = (KameoPreferences, KameoImportCharacter, KameoExportMod, KameoShowTextures, KameoRemoveTextures, KameoLiveLink, KameoPaintTexture, KameoPlay, KameoPanel, KameoTexturesPanel)
 
 
 def register():
     for cls in CLASSES:
         bpy.utils.register_class(cls)
+    bpy.types.Scene.kameo_live_textures = BoolProperty(name="Live Link", default=False)
     bpy.types.INFO_MT_file_import.append(menu_import)
     bpy.types.INFO_MT_file_export.append(menu_export)
 
@@ -222,5 +549,6 @@ def register():
 def unregister():
     bpy.types.INFO_MT_file_export.remove(menu_export)
     bpy.types.INFO_MT_file_import.remove(menu_import)
+    del bpy.types.Scene.kameo_live_textures
     for cls in reversed(CLASSES):
         bpy.utils.unregister_class(cls)

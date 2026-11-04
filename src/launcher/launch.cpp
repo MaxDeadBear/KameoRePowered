@@ -70,6 +70,7 @@ bool LaunchGame(App& app) {
     }
     command += L" --game_data_root=\"" + data_root.wstring() + L"\"";
   }
+  if (!app.start_level.empty()) command += L" --kameo_dev_start_level=" + std::filesystem::path(app.start_level).wstring();
   STARTUPINFOW startup = {sizeof(startup)};
   PROCESS_INFORMATION process = {};
   if (!::CreateProcessW(exe.c_str(), command.data(), nullptr, nullptr, FALSE, 0, nullptr, app.folder.c_str(), &startup, &process)) {
@@ -79,6 +80,7 @@ bool LaunchGame(App& app) {
   ::CloseHandle(process.hThread);
   ::CloseHandle(process.hProcess);
   app.status = Tr("Kameo is starting...");
+  for (const std::string& skipped : app.level_mods.Skipped()) app.status += "\n" + skipped;
   return true;
 }
 

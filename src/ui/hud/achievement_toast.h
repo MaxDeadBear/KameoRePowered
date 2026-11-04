@@ -13,5 +13,3 @@ void KameoPushAchievementToast(const rex::system::AchievementEvent& event);
 void KameoTickAchievementToast(PPCContext& ctx, uint8_t* base);
 // levelNameTextWindowReady arriving with a window this toast asked for; true when it was taken.
 bool KameoClaimAchievementToastWindow(PPCContext& ctx, uint8_t* base, uint32_t window, uint32_t owner);
-// Whether a creation is in flight, so the FPS counter and the toast never both wait for the same ready callback.
-bool KameoAchievementToastPending();

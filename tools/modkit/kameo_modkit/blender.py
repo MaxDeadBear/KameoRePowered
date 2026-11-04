@@ -4,7 +4,9 @@
                                      the .blend, the source file remembered on the scene)
   View3D > Sidebar > Kameo          Attach to Character: the selected model becomes a new part of the character, on
                                      the bone nearest it (or one chosen), as a new draw of its own with its own
-                                     textures; and the export button
+                                     textures; the export button; the Textures panel, which shows painted textures
+                                     in the running game (blender_textures.py); and Play
+                                     Kameo Level: new levels for Level Select (blender_level.py)
   File > Export > Kameo Mod         the scene as a .kmod in the launcher's mods folder, switched on there, with any
                                      problem explained
 
@@ -29,22 +31,16 @@ from bpy.props import BoolProperty, EnumProperty, StringProperty
 from bpy_extras.io_utils import ExportHelper
 from mathutils import Vector
 
+from . import blender_level, blender_textures
 from .caff import Caff
 from .graph import Ref, Resolver, rendergraph_roots
 from .material import read_material, texture_palette
+from .names import model_label
 from .texture import read_texture
 from .mesh import BLENDINDICES, TEXCOORD, collect_meshes
 from .skeleton import read_skeleton
 
 ADDON = __package__
-
-# Model files are named by the ELF hash of the object they dress, and a skin number.
-CHARACTERS = {
-    0x007183BF: "Kameo", 0x0CE65812: "Pummel Weed", 0x0A70BAB2: "Snare", 0x037AABBF: "Major Ruin", 0x079B8925: "Rubble",
-    0x0BBEAEDE: "Ash", 0x005C444C: "Deep Blue", 0x05800519: "Chilla", 0x008B5284: "Thermite", 0x08EBDF9E: "Flex", 0x056D64DE: "40 Below",
-}
-KAMEO_OUTFITS = {0: "Classic", 1: "Gothic", 2: "Coyote"}
-
 
 def _preferences():
     return bpy.context.preferences.addons[ADDON].preferences
@@ -70,23 +66,29 @@ def _mods_folder() -> str:
     return os.path.join(os.path.dirname(assets), "mods") if assets else ""
 
 
-def model_label(filename: str) -> str:
-    match = re.match(r"([0-9A-Fa-f]{8})_(\d+)\.mdl$", filename)
-    if not match:
-        return filename
-    who, number = int(match.group(1), 16), int(match.group(2))
-    name = CHARACTERS.get(who, "Unknown character")
-    if who == 0x007183BF:
-        return f"Kameo, {KAMEO_OUTFITS.get(number, f'outfit {number}')}"
-    return f"{name}, skin {number}"
+_model_cache: list = []
 
 
 def _model_items(self, context):
+    """The game's character models, then the costumes made here (costume.py), each by name."""
+    from . import costume
+
     folder = _assets_folder()
     files = sorted(f for f in _listdir(folder) if f.lower().endswith(".mdl"))
     items = [(os.path.join(folder, f), model_label(f), f) for f in files]
     items.sort(key=lambda item: item[1])
-    return items or [("", "No models found: set the game folder in the add-on's preferences", "")]
+    costumes = _costumes_folder()
+    names = costume.read_names(costumes) if costumes else {}
+    for f in sorted(f for f in _listdir(costumes) if costume.is_costume(f)):
+        items.append((os.path.join(costumes, f), f"Your costume: {names.get(f, f)}", f))
+    # Blender drops enum strings Python no longer holds.
+    _model_cache[:] = items or [("", "No models found: set the game folder in the add-on's preferences", "")]
+    return _model_cache
+
+
+def _costumes_folder() -> str:
+    assets = _assets_folder()
+    return os.path.join(os.path.dirname(assets), "costumes") if assets else ""
 
 
 class KameoPreferences(bpy.types.AddonPreferences):
@@ -116,14 +118,26 @@ def _import_model(context, path: str) -> set[str]:
     before_images = set(bpy.data.images)
     before_objects = set(bpy.data.objects)
     bpy.ops.import_scene.gltf(filepath=gltf_path)
-    for image in set(bpy.data.images) - before_images:
+    new_images = set(bpy.data.images) - before_images
+    blender_textures.tag_imported_images(new_images, os.path.join(work, "model_textures"))
+    for image in new_images:
         if image.source == "FILE":
             image.pack()
     character = [o for o in bpy.data.objects if o not in before_objects]
     for o in character:
         o["kameo_character"] = True
+    from . import costume
+
     context.scene["kameo_model"] = path
     context.scene["kameo_label"] = model_label(os.path.basename(path))
+    for key in ("kameo_costume", "kameo_costume_name"):
+        if key in context.scene:
+            del context.scene[key]
+    if costume.is_costume(path):
+        name = costume.read_names(os.path.dirname(path)).get(os.path.basename(path), os.path.basename(path))
+        context.scene["kameo_costume"] = os.path.basename(path)
+        context.scene["kameo_costume_name"] = name
+        context.scene["kameo_label"] = name
     return {"FINISHED"}
 
 
@@ -584,7 +598,9 @@ class KAMEO_OT_export_mod(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return bool(context.scene.get("kameo_model"))
+        # A mod replaces one of the game's own files; a costume made here, or a downloadable costume (its file is in the
+        # DLC folder, which the launcher's mods don't reach), is saved as a costume of its own.
+        return _replaceable(context)
 
     def invoke(self, context, event):
         if self.mod_name == "My Kameo Mod" and context.scene.get("kameo_label"):
@@ -615,10 +631,18 @@ class ModError(Exception):
     pass
 
 
-def make_mod(context, original: str, mods: str, name: str, author: str, description: str, enable: bool) -> tuple[str, list[str]]:
-    """The scene's character as a .kmod in `mods` (switched on in the launcher's load order when `enable`): its file
-    name and the importer's notes. Raises ModError, in words a modder can act on."""
-    from . import kmod
+def _replaceable(context) -> bool:
+    """Whether the scene's model is one of the game's own files, which a .kmod can change."""
+    model = context.scene.get("kameo_model", "")
+    assets = _assets_folder()
+    if not model or not assets or context.scene.get("kameo_costume"):
+        return False
+    return os.path.normcase(os.path.dirname(os.path.abspath(model))) == os.path.normcase(os.path.abspath(assets))
+
+
+def build_model(context, original: str) -> tuple[str, list[str]]:
+    """The scene's character written as a copy of `original` with the edits: the new file's path and the importer's
+    notes. Raises ModError, in words a modder can act on."""
     from .importer import ImportError_, import_gltf
 
     armature = _character_armature(context)
@@ -639,6 +663,15 @@ def make_mod(context, original: str, mods: str, name: str, author: str, descript
         notes = import_gltf(original, gltf_path, out)
     except (ImportError_, RuntimeError, ValueError) as error:
         raise ModError(str(error)) from error
+    return out, notes
+
+
+def make_mod(context, original: str, mods: str, name: str, author: str, description: str, enable: bool) -> tuple[str, list[str]]:
+    """The scene's character as a .kmod in `mods` (switched on in the launcher's load order when `enable`): its file
+    name and the importer's notes. Raises ModError, in words a modder can act on."""
+    from . import kmod
+
+    out, notes = build_model(context, original)
     with open(original, "rb") as a, open(out, "rb") as b:
         patch = kmod.diff(os.path.basename(original), a.read(), b.read())
     os.makedirs(mods, exist_ok=True)
@@ -650,6 +683,75 @@ def make_mod(context, original: str, mods: str, name: str, author: str, descript
     return filename, notes
 
 
+class KAMEO_OT_save_costume(bpy.types.Operator):
+    """Save the character as a costume of its own: the game lists it on the Bonus page beside the others, and the one
+    you started from stays as it was"""
+    bl_idname = "kameo.save_costume"
+    bl_label = "Save as Costume"
+    bl_options = {"REGISTER"}
+
+    costume_name: StringProperty(name="Costume name", default="")
+
+    @classmethod
+    def poll(cls, context):
+        return bool(context.scene.get("kameo_model"))
+
+    def invoke(self, context, event):
+        if context.scene.get("kameo_costume"):
+            return self.execute(context)
+        if not self.costume_name:
+            self.costume_name = f"My {context.scene.get('kameo_label', 'Costume')}"
+        return context.window_manager.invoke_props_dialog(self, width=420)
+
+    def draw(self, context):
+        self.layout.prop(self, "costume_name")
+        self.layout.label(text="It becomes a new costume; the original stays as it is.", icon="INFO")
+
+    def execute(self, context):
+        from . import costume
+
+        scene = context.scene
+        original = scene["kameo_model"]
+        assets = _assets_folder()
+        if not assets:
+            self.report({"ERROR"}, "Set the game folder in Edit > Preferences > Add-ons > Kameo Modkit first")
+            return {"CANCELLED"}
+        game = os.path.dirname(assets)
+        updating = bool(scene.get("kameo_costume"))
+        name = scene.get("kameo_costume_name", "") if updating else self.costume_name.strip()
+        if not name:
+            self.report({"ERROR"}, "Give the costume a name")
+            return {"CANCELLED"}
+        file = scene["kameo_costume"] if updating else costume.costume_file(original, name)
+        if not updating and os.path.exists(os.path.join(game, "costumes", file)):
+            self.report({"ERROR"}, f"A costume named '{name}' exists already: open it from File > Import > Kameo Character, or pick another name")
+            return {"CANCELLED"}
+        try:
+            out, notes = build_model(context, original)
+        except ModError as error:
+            self.report({"ERROR"}, f"The costume could not be made: {error}")
+            return {"CANCELLED"}
+        with open(out, "rb") as handle:
+            data = handle.read()
+        # A copy of one of the game's models gets textures of its own; a costume's already has them.
+        if not costume.is_costume(original):
+            data = costume.own_textures(data, costume.costume_id(name))
+        before = blender_textures._replace_folder(context)
+        path = costume.write_costume(game, file, name, data)
+        scene["kameo_model"] = path
+        scene["kameo_costume"] = file
+        scene["kameo_costume_name"] = name
+        scene["kameo_label"] = name
+        blender_textures.rekey_images(context, costume.texture_hashes(path), before)
+        for note in notes:
+            self.report({"INFO"}, note)
+        if updating:
+            self.report({"INFO"}, f"Saved '{name}': the game reloads it on whoever wears it")
+        else:
+            self.report({"INFO"}, f"Made the costume '{name}': restart the game once, then pick it on the Bonus page")
+        return {"FINISHED"}
+
+
 # --- panel and menus -------------------------------------------------------------------------------------------
 
 class KAMEO_PT_panel(bpy.types.Panel):
@@ -657,6 +759,10 @@ class KAMEO_PT_panel(bpy.types.Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "Kameo"
+
+    @classmethod
+    def poll(cls, context):
+        return not context.scene.get("kameo_level_scene")
 
     def draw(self, context):
         layout = self.layout
@@ -675,7 +781,17 @@ class KAMEO_PT_panel(bpy.types.Panel):
         box = layout.box()
         box.label(text="Edit freely: reshape, paint textures,")
         box.label(text="delete parts. Then:")
-        box.operator(KAMEO_OT_export_mod.bl_idname, icon="EXPORT")
+        row = box.row()
+        row.scale_y = 1.3
+        if scene.get("kameo_costume"):
+            row.operator(KAMEO_OT_save_costume.bl_idname, text="Save Costume", icon="FILE_TICK")
+        else:
+            row.operator(KAMEO_OT_save_costume.bl_idname, text="Save as New Costume", icon="ADD")
+            if _replaceable(context):
+                box.operator(KAMEO_OT_export_mod.bl_idname, text="Replace It (Kameo Mod)", icon="EXPORT")
+            else:
+                box.label(text="A downloadable costume can only be", icon="INFO")
+                box.label(text="saved as a costume of its own.")
 
 
 def _menu_import(self, context):
@@ -684,15 +800,18 @@ def _menu_import(self, context):
 
 
 def _menu_export(self, context):
+    self.layout.operator(KAMEO_OT_save_costume.bl_idname, text="Kameo Costume")
     self.layout.operator(KAMEO_OT_export_mod.bl_idname, text="Kameo Mod (.kmod)")
 
 
-CLASSES = (KameoPreferences, KAMEO_OT_import_character, KAMEO_OT_import_file, KAMEO_OT_attach, KAMEO_OT_export_mod, KAMEO_PT_panel)
+CLASSES = (KameoPreferences, KAMEO_OT_import_character, KAMEO_OT_import_file, KAMEO_OT_attach, KAMEO_OT_export_mod, KAMEO_OT_save_costume, KAMEO_PT_panel)
 
 
 def register():
     for cls in CLASSES:
         bpy.utils.register_class(cls)
+    blender_textures.register()
+    blender_level.register()
     bpy.types.TOPBAR_MT_file_import.append(_menu_import)
     bpy.types.TOPBAR_MT_file_export.append(_menu_export)
 
@@ -700,5 +819,7 @@ def register():
 def unregister():
     bpy.types.TOPBAR_MT_file_export.remove(_menu_export)
     bpy.types.TOPBAR_MT_file_import.remove(_menu_import)
+    blender_level.unregister()
+    blender_textures.unregister()
     for cls in reversed(CLASSES):
         bpy.utils.unregister_class(cls)

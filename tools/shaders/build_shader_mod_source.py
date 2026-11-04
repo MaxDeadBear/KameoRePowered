@@ -18,7 +18,7 @@ the game's permutations (a normal map can sit in s_sampler0 and the colour in s_
     albedo          the shader itself, run a second time in a white, unshadowed, fogless world, which leaves its textures
                     with every layer and tint a material has; a mod that doesn't read albedo compiles this copy away
 
-The zip also holds targets.json: which shaders each level and character uses, by the names in sort_textures.py. A
+The zip also holds targets.json: which shaders each level and character uses, by the names in textures/sort_textures.py. A
 character's are those of its model files, its DLC skins and its standard look, a rendergraph of the shared archive.
 """
 
@@ -37,7 +37,7 @@ from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, os.path.join(ROOT, "tools"))
+sys.path.insert(0, os.path.join(ROOT, "tools", "textures"))
 sys.path.insert(0, os.path.join(ROOT, "tools", "modkit"))
 
 from kameo_modkit.caff import Caff  # noqa: E402
@@ -75,6 +75,11 @@ SURFACES = {"lava": [
 ], "fire": [
     "13FFE0BD01E855A3",
 ]}
+# The levels' grass, ferns and leaves, lit: listed by find_grass_shaders.py from the green background materials.
+_GRASS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "grass_shaders.json")
+if os.path.exists(_GRASS):
+    with open(_GRASS) as _grass:
+        SURFACES["grass"] = json.load(_grass)
 # Each character a shader mod can make a costume for, by the model type its skins are listed under in the game: a
 # costume target is that character's standard look alone, Kameo's everyday outfit for her.
 COSTUME_MODELS = {"kameo": "007183BF", "flowerboxer": "0CE65812", "spitter": "0A70BAB2", "rubble": "079B8925", "armadillo": "037AABBF", "watercreature_small": "005C444C", "watercannon": "08EBDF9E", "snow_man": "056D64DE", "ice_b_yeti": "05800519", "fire_ant": "008B5284", "firedragon": "0BBEAEDE"}
@@ -235,13 +240,44 @@ def inject(text: str, common: str) -> tuple[str, Counter]:
 
 
 def patched_common(common: str) -> str:
-    """shader_common.h with c17.w, which the game fills for shader mods alone."""
+    """shader_common.h with c17.w, c19 and c20.x, which the game fills for shader mods alone."""
     vulkan = "#define g_StereoShift              vk::RawBufferLoad<float2>(g_PushConstants.SharedConstants + 276)\n"
     direct = "    float2 g_StereoShift : packoffset(c17.y);\n"
     if vulkan not in common or direct not in common:
         raise ValueError("shader_common.h has changed: update patched_common")
-    common = common.replace(vulkan, vulkan + "#define g_ModTime                  vk::RawBufferLoad<float>(g_PushConstants.SharedConstants + 284)\n")
-    return common.replace(direct, "    float2 g_StereoShift : packoffset(c17.y); \\\n    float g_ModTime : packoffset(c17.w);\n")
+    # c17.w the time; c19 the bindless indices of the game's textures a mod draws with, c20.x their sampler, c20.y how
+    # a see-through mod shows (MOD_SHOW_* in shader_mod.hlsli).
+    common = common.replace(vulkan, vulkan + "#define g_ModTime                  vk::RawBufferLoad<float>(g_PushConstants.SharedConstants + 284)\n"
+                            "#define g_ModTextures              vk::RawBufferLoad<uint4>(g_PushConstants.SharedConstants + 304)\n"
+                            "#define g_ModSampler               vk::RawBufferLoad<uint>(g_PushConstants.SharedConstants + 320)\n"
+                            "#define g_ModShow                  vk::RawBufferLoad<uint>(g_PushConstants.SharedConstants + 324)\n")
+    return common.replace(direct, "    float2 g_StereoShift : packoffset(c17.y); \\\n    float g_ModTime : packoffset(c17.w); \\\n"
+                          "    uint4 g_ModTextures : packoffset(c19); \\\n    uint g_ModSampler : packoffset(c20.x); \\\n"
+                          "    uint g_ModShow : packoffset(c20.y);\n")
+
+
+# Shaders whose constants have names of their own, which inject() can't find its places by, hooked by hand after it.
+# The tall grass (PLiteGrass, found with kameo_dev_find_texture_shaders): lit by SunLightColour and AmbientLightColour,
+# fogged by FogColour, its colour the diffuse texture times the vertex colour, read at r0 (r1 is the shadow map's).
+HAND_HOOKS = {
+    "0C55435391DE66E3": [
+        ("\tmod.lit = false;", "\tmod.lit = true;\n\tmod.derive_light = true;"),
+        ("\tmod.s.uv = r1.xy;", "\tmod.s.uv = r0.xy;"),
+        ("\tr5.xyzw = MOD_FETCH2D(DiffuseSampler_Texture2DDescriptorIndex, DiffuseSampler_SamplerDescriptorIndex, r0.xy, float2(0, 0)).xyzw;",
+         "\tr5.xyzw = MOD_FETCH2D(DiffuseSampler_Texture2DDescriptorIndex, DiffuseSampler_SamplerDescriptorIndex, r0.xy, float2(0, 0)).xyzw;\n"
+         "\tmod.s.albedo = r5.xyz * r3.xyz; mod.s.has_albedo = true;"),
+        ("\toC0.xyz = r1.xyz * r0.yyy + FogColour.xyz;",
+         "\tmod.fog_colour = FogColour.xyz; mod.fog_amount = r0.y; mod.has_fog = true;\n\toC0.xyz = r1.xyz * r0.yyy + FogColour.xyz;"),
+    ],
+}
+
+
+def hand_hooks(shader: str, source: str) -> str:
+    for old, new in HAND_HOOKS.get(shader, []):
+        if source.count(old) != 1:
+            raise ValueError(f"{shader}: its hand hooks no longer match the translation")
+        source = source.replace(old, new)
+    return source
 
 
 def costume_target(character: str) -> str:
@@ -318,6 +354,7 @@ def main() -> int:
         pack.writestr("costumes.json", json.dumps(costumes))
         for shader, text in pool.map(translate, [(shader, folder) for shader in sorted(containers)]):
             source, found = inject(text, common)
+            source = hand_hooks(shader, source)
             tally.update(found)
             pack.writestr(f"{shader}.hlsl", source)
     print(f"{dict(tally)} in {os.path.getsize(arguments.out) / 1e6:.1f} MB")

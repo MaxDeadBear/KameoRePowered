@@ -24,6 +24,7 @@ REXCVAR_DECLARE(bool, kameo_story_splitscreen);
 REXCVAR_DECLARE(bool, kameo_unlock_all_extras);
 REXCVAR_DECLARE(bool, kameo_unlock_all_warriors);
 REXCVAR_DECLARE(bool, kameo_skip_cutscenes);
+REXCVAR_DECLARE(int32_t, kameo_menu_style);
 REXCVAR_DECLARE(int32_t, kameo_language);
 REXCVAR_DECLARE(int32_t, kameo_input_mode);
 REXCVAR_DECLARE(int32_t, kameo_p1_keyboard_device);
@@ -119,6 +120,7 @@ const Option kOptions[] = {
     KAMEO_GAME_OPTION(0x7A5E040A, Page::Coop, TR_NOOP(u"Player Pushing"), [] { return GameSetting(kHostPush) != 0 ? 4125 : 4126; }, [](int, bool) { SetGameSetting(kHostPush, GameSetting(kHostPush) != 0 ? 0 : 1); }, [] { return GameSetting(kNumWantedPlayers) > 1 && g_menuPlayer == 0; }),
     KAMEO_GAME_OPTION(0x7A5E040B, Page::Coop, TR_NOOP(u"Friendly Fire"), [] { return GameSetting(kHostAttack) != 0 ? 4127 : 4128; }, [](int, bool) { SetGameSetting(kHostAttack, GameSetting(kHostAttack) != 0 ? 0 : 1); }, [] { return GameSetting(kNumWantedPlayers) > 1 && g_menuPlayer == 0; }),
     KAMEO_BOOL_OPTION(0x7A5E0205, Page::Gameplay, TR_NOOP(u"Skippable Cutscenes"), kameo_skip_cutscenes),
+    {0x7A5E0208, Page::Gameplay, TR_NOOP(u"Pause Menu"), [] { return std::u16string(REXCVAR_GET(kameo_menu_style) == 1 ? Tr(u"Parchment Card") : Tr(u"Storybook")); }, [](int, bool) { REXCVAR_SET(kameo_menu_style, REXCVAR_GET(kameo_menu_style) == 1 ? 0 : 1); }},
     KAMEO_GAME_OPTION(kItemHints, Page::Gameplay, TR_NOOP(u"Hints"), [] { const uint32_t hints = GameSetting(kOrthoHints); return hints == 0 ? 4442 : hints == 1 ? 4443 : 4444; }, [](int direction, bool) { SetGameSetting(kOrthoHints, Cycle3(GameSetting(kOrthoHints), direction)); }, nullptr),
     {0x7A5E0107, Page::Gameplay, TR_NOOP(u"Language"), [] { const int32_t language = ChosenLanguage(); const std::u16string name = LanguageName(language); return uint32_t(language) != KameoRunningLanguage() ? TrFormat(u"{0} (restart)", {name}) : name; }, [](int direction, bool wrap) { REXCVAR_SET(kameo_language, Step(ChosenLanguage(), {1, 2, 3, 4, 5, 6, 7, 8}, direction, wrap)); }},
     KAMEO_HIDDEN_BOOL_OPTION(0x7A5E0204, Page::Gameplay, TR_NOOP(u"Unlock All Extras"), kameo_unlock_all_extras, KameoUnlockCode::GameCheats),

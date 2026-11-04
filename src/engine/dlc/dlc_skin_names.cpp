@@ -14,6 +14,7 @@
 #include "core/guest.h"
 #include "core/localization.h"
 #include "engine/dlc/dlc.h"
+#include "engine/dlc/mod_costumes.h"
 #include "ui/text_window.h"
 
 namespace {
@@ -232,11 +233,13 @@ std::u16string kameo::engine::KameoSkinDisplayName(PPCContext& ctx, uint8_t* bas
     if (skin.english) return kameo::l10n::Tr(skin.english);
     return kameo::ui::PlainGuestText(base, kameo::ui::LocalisedString(ctx, base, int32_t(skin.string_id)));
   }
+  if (std::u16string name = ModCostumeName(model); !name.empty()) return name;
   return std::u16string(model.begin(), model.end());
 }
 
 std::u16string KameoDlcSkinName(uint32_t string_id) {
   using namespace kameo::engine;
+  if (std::u16string name = ModCostumeNameOfString(string_id); !name.empty()) return name;
   if (string_id >= kShaderSkinString) {
     std::lock_guard<std::mutex> lock(g_shaderSkinMutex);
     const std::vector<std::u16string>& names = SlotOf(kKameoModelType)->names;
@@ -378,6 +381,8 @@ extern "C" REX_FUNC(sub_823C9D78) {
       for (const KameoSkinName& skin : kKameoSkinNames) {
         if (std::strcmp(name, skin.model) == 0) ctx.r6.u64 = skin.string_id;
       }
+      // A costume made in Blender, by the name it was given there (mod_costumes.cpp).
+      if (const uint32_t id = kameo::engine::ModCostumeStringId(name)) ctx.r6.u64 = id;
       break;
     }
   }

@@ -68,6 +68,7 @@ enum class NodeKind {
   kSunVector,
   kSunColour,
   kOutline,
+  kGameTexture,
   kCount,
 };
 
@@ -99,7 +100,8 @@ struct Node {
   // The value an input takes while nothing is wired to it.
   std::vector<Float3> inputs;
   std::vector<float> settings;
-  // A Custom node's HLSL: a function body over ShadeInputs s and float3 a, b, c, d that returns a float3.
+  // A Custom node's HLSL: a function body over ShadeInputs s and float3 a, b, c, d that returns a float3. A Game texture
+  // node's texture (FormatGameTexture).
   std::string code;
   // A constant's parameter name, listed on the Parameters panel; empty for none.
   std::string name;
@@ -147,7 +149,25 @@ struct ShaderGraph {
 // The source of float3 Shade(ShadeInputs s) for shader_mod.hlsli, with any Custom nodes' functions before it.
 std::string GenerateHlsl(const ShaderGraph& graph);
 
-enum class Preset { kGameLook, kCelShade, kToonBands, kFlat, kRimLit, kComicHalftone, kCount };
+// One of the game's textures, as a Game texture node names it: an archive in the game's data folder and the "texture"
+// entry in it, with the size it had and what it belongs to. A mod carries only this; the game reads the picture itself.
+struct GameTextureRef {
+  std::string archive;
+  uint32_t entry = 0;
+  uint32_t width = 0;
+  uint32_t height = 0;
+  std::string label;  // the object type it was found under, for people
+  bool operator==(const GameTextureRef& other) const { return archive == other.archive && entry == other.entry; }
+};
+std::optional<GameTextureRef> ParseGameTexture(const std::string& code);
+std::string FormatGameTexture(const GameTextureRef& texture);
+// The game textures a graph reads, in slot order: the first Game texture nodes' different ones, at most four.
+inline constexpr size_t kGameTextureSlots = 4;
+std::vector<GameTextureRef> GameTextures(const ShaderGraph& graph);
+// Whether the graph's Opacity can be below 1: wired, or a constant under 1, or raw HLSL with a ShadeOpacity of its own.
+bool SeeThrough(const ShaderGraph& graph);
+
+enum class Preset { kGameLook, kCelShade, kToonBands, kFlat, kRimLit, kComicHalftone, kHologram, kShadowTroll, kGrass, kCount };
 const char* PresetName(Preset preset);
 ShaderGraph MakePreset(Preset preset);
 

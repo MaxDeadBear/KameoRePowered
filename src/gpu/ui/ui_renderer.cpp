@@ -44,6 +44,8 @@ bool GraphicsSystem::EnsureUiPipeline() {
   sampler_desc.addressV = plume::RenderTextureAddressMode::CLAMP;
   sampler_desc.addressW = plume::RenderTextureAddressMode::CLAMP;
   ui_sampler_ = device_->createSampler(sampler_desc);
+  sampler_desc.addressU = sampler_desc.addressV = sampler_desc.addressW = plume::RenderTextureAddressMode::WRAP;
+  ui_sampler_repeat_ = device_->createSampler(sampler_desc);
 
   plume::RenderDescriptorRange ranges[] = {
       plume::RenderDescriptorRange(plume::RenderDescriptorRangeType::TEXTURE, 0, 1),
@@ -107,13 +109,14 @@ bool GraphicsSystem::EnsureUiPipeline() {
   return true;
 }
 
-uint32_t GraphicsSystem::CreateUiTexture(uint32_t width, uint32_t height, const uint8_t* rgba) {
+uint32_t GraphicsSystem::CreateUiTexture(uint32_t width, uint32_t height, const uint8_t* rgba, bool repeated) {
   if (!width || !height || !rgba) {
     return 0;
   }
   UiTexture entry;
   entry.width = width;
   entry.height = height;
+  entry.repeated = repeated;
   entry.pixels.assign(rgba, rgba + size_t(width) * height * 4);
   std::lock_guard<std::mutex> lock(ui_mutex_);
   const uint32_t id = ui_next_texture_++;
@@ -186,7 +189,7 @@ void GraphicsSystem::DrawUi(plume::RenderCommandList* list, plume::RenderFramebu
       }
       tex.descriptors->setTexture(0, tex.texture.get(), plume::RenderTextureLayout::SHADER_READ,
                                   tex.view.get());
-      tex.descriptors->setSampler(1, ui_sampler_.get());
+      tex.descriptors->setSampler(1, (tex.repeated ? ui_sampler_repeat_ : ui_sampler_).get());
       const uint32_t pitch = AlignRow(tex.width * 4);
       staged = (staged + kPlacementAlign - 1) & ~(kPlacementAlign - 1);
       pending.push_back({id, staged, pitch});

@@ -8,6 +8,7 @@
 
 #include <rex/logging.h>
 
+#include "gpu/config.h"
 #include "gpu/graphics_system_internal.h"
 #include "gpu/log.h"
 #include "gpu/pipeline/pso_precache.h"
@@ -46,9 +47,9 @@ std::unique_ptr<plume::RenderPipeline> CreateBinkPipeline(plume::RenderDevice* d
 
 }  // namespace
 
-void GraphicsSystem::DrawPendingBink(plume::RenderCommandList* list, uint32_t samples) {
+void GraphicsSystem::DrawPendingBink(plume::RenderCommandList* list, uint32_t samples, uint32_t screen_width, uint32_t screen_height) {
   bink_in_scene_ = true;
-  DrawBink(list, true, samples);
+  DrawBink(list, true, samples, screen_width, screen_height);
 }
 
 void GraphicsSystem::SubmitBinkFrame(const BinkFrame& frame) {
@@ -189,7 +190,7 @@ bool GraphicsSystem::UploadBinkPlanes(const BinkFrame& frame) {
   return true;
 }
 
-void GraphicsSystem::DrawBink(plume::RenderCommandList* list, bool hold_last, uint32_t samples) {
+void GraphicsSystem::DrawBink(plume::RenderCommandList* list, bool hold_last, uint32_t samples, uint32_t screen_width, uint32_t screen_height) {
   // Consume the pending frame rather than copy it, so a frame is drawn only when the guest produced one and a stopped video does not stay frozen under the menu.
   BinkFrame frame;
   bool fresh = false;
@@ -248,6 +249,19 @@ void GraphicsSystem::DrawBink(plume::RenderCommandList* list, bool hold_last, ui
     }
   }
 
+  // A video on the screen fills it, or the 16:9 picture the console showed in the middle of a wider one (an ultrawide
+  // display), with bars at the sides. Its own viewport: the scene's last draw may have left one placed for the HUD.
+  if (screen_width && screen_height) {
+    float x = 0.0f;
+    float w = float(screen_width);
+    const float h = float(screen_height);
+    if (REXCVAR_GET(kameo_gfx_preserve_aspect) && w / h > 16.0f / 9.0f + 0.01f) {
+      w = h * 16.0f / 9.0f;
+      x = (float(screen_width) - w) * 0.5f;
+    }
+    list->setViewports(plume::RenderViewport(x, 0.0f, w, h));
+    list->setScissors(plume::RenderRect(0, 0, int32_t(screen_width), int32_t(screen_height)));
+  }
   if (void* mapped = bink_vertices_[frame_slot_]->map()) {
     std::memcpy(mapped, frame.vertices, sizeof(frame.vertices));
     bink_vertices_[frame_slot_]->unmap();

@@ -1,6 +1,6 @@
 """A sampling profiler for the running game that needs no admin rights, for when WPR can't be used.
 
-    python tools/sample_game.py <seconds> <out.txt>
+    python tools/profiling/sample_game.py <seconds> <out.txt>
 
 Suspends the busiest threads in turn, reads where each one is, and names those places with llvm-symbolizer and the PDB
 beside the exe. It sees the function a thread is in, not who called it. A thread's time in ntdll is mostly waiting.
@@ -12,7 +12,7 @@ TH32CS_SNAPTHREAD = 4
 THREAD_ALL = 0x0002 | 0x0008 | 0x0040 | 0x0010  # suspend, query, get/set context
 PROCESS_ALL = 0x0400 | 0x0010
 CONTEXT_FULL = 0x100000 | 1 | 2 | 8
-EXE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'out', 'build', 'release', 'kameorepowered.exe')
+EXE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'out', 'build', 'release', 'kameorepowered.exe')
 SYMBOLIZER = 'C:/Program Files/LLVM/bin/llvm-symbolizer.exe'
 
 

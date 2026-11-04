@@ -35,6 +35,7 @@ DrawFrame g_submitting;
 DrawFrameExchange g_frameExchange;
 std::atomic<uint64_t> g_framesTaken{0};
 uint64_t g_captureFrame = 0;
+uint8_t g_capturingLoadingLayer = kLoadingNone;
 std::vector<uint32_t> g_frameGuestReads;
 
 namespace {
@@ -178,6 +179,7 @@ void CaptureCommon(uint8_t* base, uint32_t device, uint32_t primitive, uint32_t 
   // Built in place: a DrawCall is over a kilobyte, and moving one into the frame copied all of it on every draw.
   DrawCall& call = frame.draws.emplace_back();
   call.primitive = primitive;
+  call.loading_layer = g_capturingLoadingLayer;
   call.guest_caller = guest_caller;
   call.guest_command = guest_command;
   call.guest_command_stream = guest_command_stream;
@@ -209,7 +211,8 @@ void CaptureCommon(uint8_t* base, uint32_t device, uint32_t primitive, uint32_t 
       call.stream0_stride = Load8(base, device + dev::kStreamStride) << dev::kStreamStrideShift;
     }
   }
-  call.shader_mod_costume = ShaderModCostumeStandIn(ps, call.stream0_address ? GuestData(base, call.stream0_address) : nullptr, ((call.stream0_fetch1 >> 2) & 0xFFFFFFu) * 4);
+  call.shader_mod_costume = ShaderModCostumeStandIn(ps, call.stream0_address ? GuestData(base, call.stream0_address) : nullptr, ((call.stream0_fetch1 >> 2) & 0xFFFFFFu) * 4, &call.shader_mod_textures);
+  if (!call.shader_mod_costume) call.shader_mod_textures = ShaderModTexturesFor(ps);
 
   uint32_t index_base = 0;
   {

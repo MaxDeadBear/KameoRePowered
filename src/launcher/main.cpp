@@ -56,9 +56,11 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int show) {
   std::string switch_build;
   std::filesystem::path unpack_source;
   bool restore_saves = false;
+  bool play = false;
   for (int i = 1; arguments && i < argument_count; ++i) {
     if (std::wstring(arguments[i]) == L"--build-mods") build_mods = true;
     else if (std::wstring(arguments[i]) == L"--restore-cheat-saves") restore_saves = true;
+    else if (std::wstring(arguments[i]) == L"--play") play = true;
     else if (std::wstring(arguments[i]) == L"--list-builds") list_builds = true;
     else if (i + 1 < argument_count && std::wstring(arguments[i]) == L"--page") {
       // Opens on a page by name, for shortcuts and screenshots.
@@ -71,6 +73,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int show) {
     else if (i + 1 < argument_count && std::wstring(arguments[i]) == L"--install-dlc") install_source = arguments[++i];
     else if (i + 1 < argument_count && std::wstring(arguments[i]) == L"--unpack-game") unpack_source = arguments[++i];
     else if (i + 1 < argument_count && std::wstring(arguments[i]) == L"--content-root") content_root_override = arguments[++i];
+    else if (i + 1 < argument_count && std::wstring(arguments[i]) == L"--start-level") app.start_level = std::filesystem::path(arguments[++i]).string();
   }
   if (arguments) ::LocalFree(arguments);
   // KameoLauncher --list-builds prints the published builds and which are downloaded; --switch-build <tag> downloads one if needed and switches the game folder to it.
@@ -121,6 +124,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int show) {
     else if (app.level_mods.Build(data_root, error)) std::printf("--game_data_root=\"%s\"\n", data_root.string().c_str());
     else std::printf("%s\n", error.c_str()), result = 1;
     for (const std::string& conflict : app.level_mods.Conflicts()) std::printf("%s\n", conflict.c_str());
+    for (const std::string& skipped : app.level_mods.Skipped()) std::printf("%s\n", skipped.c_str());
     std::fflush(stdout);
     ::CoUninitialize();
     return result;
@@ -163,6 +167,15 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int show) {
   }
   app.level_mods.Load(app.folder);
   app.has_game_files = HasGameFiles(app.folder);
+  // KameoLauncher --play starts the game as the Play button does, enabled mods included, without opening the window: the Blender add-ons' Play button. With --start-level <name> the game goes on into that level.
+  if (play) {
+    UseConsole();
+    const bool started = LaunchGame(app);
+    std::printf("%s\n", app.status.c_str());
+    std::fflush(stdout);
+    ::CoUninitialize();
+    return started ? 0 : 1;
+  }
   LoadPrefs(app);
   RefreshDlc(app);
   app.builds.Init(app.folder, app.active_build);
