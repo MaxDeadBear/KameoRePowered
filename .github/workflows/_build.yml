@@ -107,7 +107,7 @@ jobs:
         shell: bash
         run: |
           git clone --depth 1 --branch "${SDK_VERSION}" --filter=blob:none --sparse https://github.com/rexglue/rexglue-sdk.git sdk_src
-          git -C sdk_src sparse-checkout set resources/templates thirdparty/stb thirdparty/tomlplusplus
+          git -C sdk_src sparse-checkout set resources/templates thirdparty/stb
           git -C sdk_src submodule update --init --depth 1 thirdparty/tomlplusplus
           test -f sdk_src/resources/templates/codegen/pch_h.inja
           test -f sdk_src/thirdparty/tomlplusplus/include/toml++/toml.hpp
