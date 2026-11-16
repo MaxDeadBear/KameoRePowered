@@ -5,6 +5,7 @@
 // read there through GuestBase(); guest functions cannot be called, because the UI thread has no guest context.
 #pragma once
 
+#include "core/x11_names.h"
 #include <rex/ui/ui_system.h>
 #include <rex/utility.h>
 

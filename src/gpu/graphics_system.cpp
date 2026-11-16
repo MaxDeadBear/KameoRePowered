@@ -9,6 +9,7 @@
 
 #include <rex/logging/log_category.h>
 #include <rex/module.h>
+#include "core/x11_names.h"
 #include <rex/ui/ui_system.h>
 
 #include "core/cvar.h"

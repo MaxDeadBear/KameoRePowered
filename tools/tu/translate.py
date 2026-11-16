@@ -316,6 +316,7 @@ def main() -> int:
     maps = Maps()
     translate_config(maps)
     translate_sources(maps)
+    os.makedirs(OUT, exist_ok=True)
     open(os.path.join(OUT, "translate_report.txt"), "w").write("\n".join(maps.report) + "\n")
     bad = [r for r in maps.report if "NO MATCH" in r or "NOT TRANSLATED" in r or "GUESS" in r]
     print(f"report: {len(maps.report)} notes, {len(bad)} need attention (out/tu/translate_report.txt)")
