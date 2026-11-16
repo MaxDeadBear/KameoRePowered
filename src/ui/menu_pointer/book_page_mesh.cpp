@@ -3,7 +3,7 @@
 #include <cmath>
 #include <iterator>
 
-#include <rex/cvar.h>
+#include "core/cvar.h"
 
 #include "gpu/config.h"
 #include "gpu/graphics_system.h"
@@ -29,7 +29,7 @@ const BookVertex kBookPageTriangles[] = {
 // Maps a layout point onto the page texture through the open book's page meshes, nearest page first; widescreen widens the projection by the display aspect, which the 16:9 capture is scaled back to.
 bool kameo::ui::BookPagePoint(uint8_t* base, float layout_x, float layout_y, float* page_x, float* page_y) {
   float x = layout_x;
-  if (REXCVAR_GET(kameo_gfx_widescreen)) {
+  if (KCVAR_GET(kameo_gfx_widescreen)) {
     if (auto* gfx = kameo::gpu::GraphicsSystem::instance()) x = 320.0f + (layout_x - 320.0f) * float(gfx->DisplayAspect() / (16.0 / 9.0));
   }
   float best_depth = 0.0f;

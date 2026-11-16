@@ -2,8 +2,8 @@
 
 #include <kameorepowered_init.h>
 
-#include <rex/cvar.h>
-#include <rex/logging.h>
+#include "core/cvar.h"
+#include <rex/logging/log_category.h>
 
 #include "gpu/config.h"
 #include "gpu/draw_path.h"
@@ -39,7 +39,7 @@ extern "C" REX_FUNC(sub_820C3460) {
     KAMEO_TIME_CAPTURE();
     kameo::gpu::CaptureResolve(base, ctx.r3.u32, ctx.r4.u32, ctx.r5.u32, ctx.r6.u32, ctx.r7.u32, ctx.r10.u32, float(ctx.f1.f64), uint32_t(ctx.lr));
     // The original only builds resolve packets and, for a resolve that also clears, a nested ClearF; CaptureResolve records that clear from the flags.
-    if (!REXCVAR_GET(kameo_gfx_guest_draw_packets)) return;
+    if (!KCVAR_GET(kameo_gfx_guest_draw_packets)) return;
   }
   __imp__sub_820C3460(ctx, base);
 }
@@ -50,7 +50,7 @@ extern "C" REX_FUNC(sub_820C4F20) {
   if (Active() != nullptr) {
     KAMEO_TIME_CAPTURE();
     if (ctx.r4.u32 & 0x1Fu) kameo::gpu::CaptureDepthClear(base, ctx.r3.u32, ctx.r4.u32, ctx.r5.u32, ctx.r6.u32, float(ctx.f1.f64), uint32_t(ctx.lr));
-    if (!REXCVAR_GET(kameo_gfx_guest_draw_packets)) return;
+    if (!KCVAR_GET(kameo_gfx_guest_draw_packets)) return;
   }
   __imp__sub_820C4F20(ctx, base);
 }
@@ -60,7 +60,7 @@ extern "C" REX_FUNC(sub_820CED48) {
   if (Active() != nullptr) {
     KAMEO_TIME_CAPTURE();
     kameo::gpu::CaptureDraw(base, ctx.r3.u32, ctx.r4.u32, ctx.r5.u32, ctx.r6.u32);
-    if (!REXCVAR_GET(kameo_gfx_guest_draw_packets)) return;
+    if (!KCVAR_GET(kameo_gfx_guest_draw_packets)) return;
   }
   __imp__sub_820CED48(ctx, base);
 }
@@ -73,7 +73,7 @@ extern "C" REX_FUNC(sub_820CEF88) {
     kameo::gpu::CaptureIndexedDraw(base, ctx.r3.u32, ctx.r4.u32, int32_t(ctx.r5.u32), ctx.r6.u32,
                                    ctx.r7.u32, uint32_t(ctx.lr), ctx.r31.u32, ctx.r17.u32);
     // The original only flushes pending shadow state into a command buffer nothing reads and appends a draw packet (processLazyVertexStreams, WriteLazy*, LazyWriteShaders).
-    if (!REXCVAR_GET(kameo_gfx_guest_draw_packets)) return;
+    if (!KCVAR_GET(kameo_gfx_guest_draw_packets)) return;
   }
   __imp__sub_820CEF88(ctx, base);
 }
@@ -92,7 +92,7 @@ extern "C" REX_FUNC(sub_820CE9D8) {
     kameo::gpu::CaptureDrawUP(base, ctx.r3.u32, prim, count, data, stride);
   }
   // The original only copies the vertices into the ring through a nested BeginVertices, and CaptureDrawUP already has them.
-  if (Active() != nullptr && !REXCVAR_GET(kameo_gfx_guest_draw_packets)) return;
+  if (Active() != nullptr && !KCVAR_GET(kameo_gfx_guest_draw_packets)) return;
   // Marks the nested BeginVertices so it can tell internal calls from standalone ones.
   t_inDrawVerticesUP = true;
   __imp__sub_820CE9D8(ctx, base);
@@ -110,7 +110,7 @@ extern "C" REX_FUNC(sub_820CE738) {
 
   if (Active() != nullptr) {
   }
-  if (Active() != nullptr && !REXCVAR_GET(kameo_gfx_guest_draw_packets) && kameo::gpu::hooks::RingSinksReady()) {
+  if (Active() != nullptr && !KCVAR_GET(kameo_gfx_guest_draw_packets) && kameo::gpu::hooks::RingSinksReady()) {
     // The vertices go to the per-frame sink rather than a ring, and the inlined EndVertices restores the write pointer from kBeginVerticesResume, so it is left where it is.
     const uint32_t bytes = count * stride;
     const uint32_t vertices = kameo::gpu::hooks::VertexSinkAlloc(bytes);
@@ -124,7 +124,7 @@ extern "C" REX_FUNC(sub_820CE738) {
 
   // Standalone BeginVertices is the 2D icon system: health and energy bars and the warrior button prompts, which went missing while these were only counted. r3 now holds the ring the guest is about to write through.
   if (standalone && Active() != nullptr) {
-    if (REXCVAR_GET(kameo_gfx_capture_begin_vertices)) {
+    if (KCVAR_GET(kameo_gfx_capture_begin_vertices)) {
       kameo::gpu::CaptureDrawBeginVertices(base, device, prim, count, ctx.r3.u32, stride);
     }
   }
@@ -143,7 +143,7 @@ extern "C" REX_FUNC(sub_820CEA50) {
   args.stride = ctx.r9.u32;
   // drawTube releases texture slots 0-3 (device + 0x31A0) before it returns, so the objects are read while still bound.
   for (uint32_t s = 0; s < 16; ++s) args.texture_objects[s] = REX_LOAD_U32(args.device + 0x31A0 + 4 * s);
-  if (Active() != nullptr && !REXCVAR_GET(kameo_gfx_guest_draw_packets) && kameo::gpu::hooks::RingSinksReady()) {
+  if (Active() != nullptr && !KCVAR_GET(kameo_gfx_guest_draw_packets) && kameo::gpu::hooks::RingSinksReady()) {
     // Sized as the original sizes them; the vertex out-pointer is the ninth argument, on the caller's stack at +0x54.
     const uint32_t vertex_dwords = (8 * args.vertex_count) & 0x3FFFFFF8u;
     const uint32_t index_dwords = (args.index_count + 1) >> 1;

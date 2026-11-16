@@ -7,7 +7,7 @@
 #include <immintrin.h>
 #endif
 
-#include <fmt/format.h>
+#include <format>
 
 #include "gpu/draw/capture.h"
 #include "gpu/draw_path.h"
@@ -73,7 +73,7 @@ void CaptureState(uint8_t* base, uint32_t device, DrawCall* call, bool tally) {
           last_report = g_captureFrame;
           std::string tally;
           for (uint32_t i = 0; i < 8; ++i) {
-            if (unsupported_alpha_func[i]) tally += fmt::format("func{}x{} ", i, unsupported_alpha_func[i]);
+            if (unsupported_alpha_func[i]) tally += std::format("func{}x{} ", i, unsupported_alpha_func[i]);
           }
           KGFX_WARN("ALPHA TEST comparisons this renderer cannot express, so those draws are NOT "
                       "clipped and render solid: {}(ref {:.4f})", tally, ref);

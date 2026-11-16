@@ -4,7 +4,7 @@
 #include <cmath>
 #include <unordered_map>
 
-#include <rex/cvar.h>
+#include "core/cvar.h"
 
 #include "gpu/config.h"
 #include "gpu/graphics_system.h"
@@ -101,7 +101,7 @@ bool DriveMenuWithMouse(PPCContext& ctx, uint8_t* base, uint32_t text_object) {
   float x = pointer_x;
   float y = pointer_y;
   // Widescreen stretches the frame, and the HUD layout draws menu text back at its own shape about the centre.
-  if (pause_menu && REXCVAR_GET(kameo_gfx_widescreen) && REXCVAR_GET(kameo_hud_layout) != 0) {
+  if (pause_menu && KCVAR_GET(kameo_gfx_widescreen) && KCVAR_GET(kameo_hud_layout) != 0) {
     if (auto* gfx = kameo::gpu::GraphicsSystem::instance()) x = 320.0f + (pointer_x - 320.0f) * float(std::max(gfx->DisplayAspect() / (16.0 / 9.0), 1.0));
   }
   if (book_page) {

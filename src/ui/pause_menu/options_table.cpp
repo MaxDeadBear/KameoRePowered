@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <cmath>
 
-#include <rex/cvar.h>
+#include "core/cvar.h"
 
 #include "app/window_mode.h"
 #include "core/localization.h"
@@ -20,23 +20,22 @@
 #include "ui/pause_menu/option_values.h"
 #include "ui/pause_menu/pause_menu_internal.h"
 
-REXCVAR_DECLARE(bool, kameo_story_splitscreen);
-REXCVAR_DECLARE(bool, kameo_unlock_all_extras);
-REXCVAR_DECLARE(bool, kameo_unlock_all_warriors);
-REXCVAR_DECLARE(bool, kameo_skip_cutscenes);
-REXCVAR_DECLARE(int32_t, kameo_menu_style);
-REXCVAR_DECLARE(int32_t, kameo_language);
-REXCVAR_DECLARE(int32_t, kameo_input_mode);
-REXCVAR_DECLARE(int32_t, kameo_p1_keyboard_device);
-REXCVAR_DECLARE(int32_t, kameo_p2_keyboard_device);
-REXCVAR_DECLARE(int32_t, kameo_p1_mouse_device);
-REXCVAR_DECLARE(int32_t, kameo_p2_mouse_device);
-REXCVAR_DECLARE(bool, mnk_mouse);
-REXCVAR_DECLARE(double, mnk_sensitivity);
-REXCVAR_DECLARE(bool, kameo_camera_drift);
-REXCVAR_DECLARE(int32_t, kameo_camera_fov);
-REXCVAR_DECLARE(bool, kameo_camera_auto_level);
-REXCVAR_DECLARE(bool, kameo_fps_counter);
+KCVAR_DECLARE(bool, kameo_story_splitscreen);
+KCVAR_DECLARE(bool, kameo_unlock_all_extras);
+KCVAR_DECLARE(bool, kameo_unlock_all_warriors);
+KCVAR_DECLARE(bool, kameo_skip_cutscenes);
+KCVAR_DECLARE(int32_t, kameo_menu_style);
+KCVAR_DECLARE(int32_t, kameo_language);
+KCVAR_DECLARE(int32_t, kameo_input_mode);
+KCVAR_DECLARE(int32_t, kameo_p1_keyboard_device);
+KCVAR_DECLARE(int32_t, kameo_p2_keyboard_device);
+KCVAR_DECLARE(int32_t, kameo_p1_mouse_device);
+KCVAR_DECLARE(int32_t, kameo_p2_mouse_device);
+#include "input/sdk_settings.h"
+KCVAR_DECLARE(bool, kameo_camera_drift);
+KCVAR_DECLARE(int32_t, kameo_camera_fov);
+KCVAR_DECLARE(bool, kameo_camera_auto_level);
+KCVAR_DECLARE(bool, kameo_fps_counter);
 
 namespace kameo::ui {
 
@@ -48,10 +47,10 @@ using kameo::l10n::TrFormat;
 
 #define KAMEO_GAME_OPTION(id, page, label, game_value, step, shown) {id, page, label, nullptr, step, game_value, shown}
 
-#define KAMEO_BOOL_OPTION(id, page, label, name) {id, page, label, [] { return OnOff(REXCVAR_GET(name)); }, [](int, bool) { REXCVAR_SET(name, !REXCVAR_GET(name)); }}
+#define KAMEO_BOOL_OPTION(id, page, label, name) {id, page, label, [] { return OnOff(KCVAR_GET(name)); }, [](int, bool) { KCVAR_SET(name, !KCVAR_GET(name)); }}
 
 // A setting that only shows once its cheat code has been entered.
-#define KAMEO_HIDDEN_BOOL_OPTION(id, page, label, name, code) {id, page, label, [] { return OnOff(REXCVAR_GET(name)); }, [](int, bool) { REXCVAR_SET(name, !REXCVAR_GET(name)); }, nullptr, [] { return KameoCodeUnlocked(code); }}
+#define KAMEO_HIDDEN_BOOL_OPTION(id, page, label, name, code) {id, page, label, [] { return OnOff(KCVAR_GET(name)); }, [](int, bool) { KCVAR_SET(name, !KCVAR_GET(name)); }, nullptr, [] { return KameoCodeUnlocked(code); }}
 
 #define KAMEO_BIND_OPTION(id, label, cvar) {id, Page::Bindings, label, [] { return BindingValue(cvar); }, [](int, bool) { KameoStartKeyCapture(cvar); }}
 #define KAMEO_PAD_OPTION(id, label, cvar) {id, Page::PadBindings, label, [] { return KameoPadBindingLabel(cvar); }, [](int, bool) { KameoStartPadCapture(cvar); }}
@@ -63,24 +62,24 @@ const Option kOptions[] = {
     {0x7A5E0002, Page::Video, TR_NOOP(u"Resolution"), [] { return ResolutionText(); }, [](int direction, bool wrap) { StepResolution(direction, wrap); }},
     KAMEO_BOOL_OPTION(0x7A5E0001, Page::Video, TR_NOOP(u"Widescreen"), kameo_gfx_widescreen),
     KAMEO_BOOL_OPTION(0x7A5E000F, Page::Video, TR_NOOP(u"VSync"), kameo_gfx_vsync),
-    {0x7A5E000E, Page::Video, TR_NOOP(u"FPS Limit"), [] { const int32_t cap = REXCVAR_GET(kameo_gfx_fps_cap); return cap <= 0 ? std::u16string(Tr(u"Off")) : Number(cap, u""); }, [](int direction, bool wrap) { REXCVAR_SET(kameo_gfx_fps_cap, Step(REXCVAR_GET(kameo_gfx_fps_cap), {0, 30, 60, 120, 144, 165, 240}, direction, wrap)); }},
+    {0x7A5E000E, Page::Video, TR_NOOP(u"FPS Limit"), [] { const int32_t cap = KCVAR_GET(kameo_gfx_fps_cap); return cap <= 0 ? std::u16string(Tr(u"Off")) : Number(cap, u""); }, [](int direction, bool wrap) { KCVAR_SET(kameo_gfx_fps_cap, Step(KCVAR_GET(kameo_gfx_fps_cap), {0, 30, 60, 120, 144, 165, 240}, direction, wrap)); }},
     KAMEO_BOOL_OPTION(0x7A5E000D, Page::Video, TR_NOOP(u"FPS Counter"), kameo_fps_counter),
-    {0x7A5E0024, Page::Hud, TR_NOOP(u"HUD Layout"), [] { const int32_t layout = REXCVAR_GET(kameo_hud_layout); return std::u16string(layout == 0 ? Tr(u"Stretched") : layout == 1 ? Tr(u"Centred 16:9") : Tr(u"Screen Edges")); }, [](int direction, bool wrap) { REXCVAR_SET(kameo_hud_layout, Step(REXCVAR_GET(kameo_hud_layout), {0, 1, 2}, direction, wrap)); }},
-    {0x7A5E0025, Page::Hud, TR_NOOP(u"HUD Scale"), [] { return Number(REXCVAR_GET(kameo_hud_scale), u"%"); }, [](int direction, bool wrap) { REXCVAR_SET(kameo_hud_scale, Step(REXCVAR_GET(kameo_hud_scale), {50, 60, 70, 75, 80, 85, 90, 95, 100, 105, 110, 115, 120, 125, 130, 140, 150}, direction, wrap)); }},
+    {0x7A5E0024, Page::Hud, TR_NOOP(u"HUD Layout"), [] { const int32_t layout = KCVAR_GET(kameo_hud_layout); return std::u16string(layout == 0 ? Tr(u"Stretched") : layout == 1 ? Tr(u"Centred 16:9") : Tr(u"Screen Edges")); }, [](int direction, bool wrap) { KCVAR_SET(kameo_hud_layout, Step(KCVAR_GET(kameo_hud_layout), {0, 1, 2}, direction, wrap)); }},
+    {0x7A5E0025, Page::Hud, TR_NOOP(u"HUD Scale"), [] { return Number(KCVAR_GET(kameo_hud_scale), u"%"); }, [](int direction, bool wrap) { KCVAR_SET(kameo_hud_scale, Step(KCVAR_GET(kameo_hud_scale), {50, 60, 70, 75, 80, 85, 90, 95, 100, 105, 110, 115, 120, 125, 130, 140, 150}, direction, wrap)); }},
     KAMEO_GAME_OPTION(0x7A5E0020, Page::Hud, TR_NOOP(u"Control Display"), [] { const uint32_t prefs = GameSetting(kIconPrefs + 4 * g_menuPlayer); return ControlDisplayLocked() || prefs == 2 ? 661 : prefs == 1 ? 662 : 660; }, [](int direction, bool) { if (!ControlDisplayLocked()) SetGameSetting(kIconPrefs + 4 * g_menuPlayer, Cycle3(GameSetting(kIconPrefs + 4 * g_menuPlayer), direction)); }, nullptr),
     KAMEO_GAME_OPTION(0x7A5E0021, Page::Hud, TR_NOOP(u"Score Display"), [] { const uint32_t score = GameSetting(kScoreDisplay + 4 * g_menuPlayer); return score == 1 ? 941 : score == 2 ? 940 : 939; }, [](int direction, bool) { SetGameSetting(kScoreDisplay + 4 * g_menuPlayer, Cycle3(GameSetting(kScoreDisplay + 4 * g_menuPlayer), direction)); }, nullptr),
     KAMEO_GAME_OPTION(0x7A5E0022, Page::Hud, TR_NOOP(u"Map Display"), [] { return GameSetting(kMapDisplay + 4 * g_menuPlayer) == 1 ? 4464 : 4465; }, [](int, bool) { SetGameSetting(kMapDisplay + 4 * g_menuPlayer, GameSetting(kMapDisplay + 4 * g_menuPlayer) == 1 ? 2 : 1); }, [] { return GameSetting(kNumWantedPlayers) == 1; }),
-    {0x7A5E002A, Page::Graphics, TR_NOOP(u"Renderer"), [] { const std::u16string name = ChosenVulkan() ? u"Vulkan" : u"Direct3D 12"; return ChosenVulkan() != RunningVulkan() ? TrFormat(u"{0} (restart)", {name}) : name; }, [](int, bool) { REXCVAR_SET(kameo_gfx_backend, std::string(ChosenVulkan() ? "d3d12" : "vulkan")); }},
-    {0x7A5E0003, Page::Graphics, TR_NOOP(u"Anti-aliasing"), [] { const int32_t samples = REXCVAR_GET(kameo_gfx_msaa); return samples <= 1 ? std::u16string(Tr(u"Off")) : Number(samples, u"x"); }, [](int direction, bool wrap) { REXCVAR_SET(kameo_gfx_msaa, Step(REXCVAR_GET(kameo_gfx_msaa), {0, 2, 4, 8}, direction, wrap)); }},
-    {0x7A5E0004, Page::Graphics, TR_NOOP(u"Anisotropic Filtering"), [] { const int32_t level = REXCVAR_GET(kameo_gfx_anisotropy); return level <= 1 ? std::u16string(Tr(u"Game")) : Number(level, u"x"); }, [](int direction, bool wrap) { REXCVAR_SET(kameo_gfx_anisotropy, Step(REXCVAR_GET(kameo_gfx_anisotropy), {0, 2, 4, 8, 16}, direction, wrap)); }},
+    {0x7A5E002A, Page::Graphics, TR_NOOP(u"Renderer"), [] { const std::u16string name = ChosenVulkan() ? u"Vulkan" : u"Direct3D 12"; return ChosenVulkan() != RunningVulkan() ? TrFormat(u"{0} (restart)", {name}) : name; }, [](int, bool) { KCVAR_SET(kameo_gfx_backend, std::string(ChosenVulkan() ? "d3d12" : "vulkan")); }},
+    {0x7A5E0003, Page::Graphics, TR_NOOP(u"Anti-aliasing"), [] { const int32_t samples = KCVAR_GET(kameo_gfx_msaa); return samples <= 1 ? std::u16string(Tr(u"Off")) : Number(samples, u"x"); }, [](int direction, bool wrap) { KCVAR_SET(kameo_gfx_msaa, Step(KCVAR_GET(kameo_gfx_msaa), {0, 2, 4, 8}, direction, wrap)); }},
+    {0x7A5E0004, Page::Graphics, TR_NOOP(u"Anisotropic Filtering"), [] { const int32_t level = KCVAR_GET(kameo_gfx_anisotropy); return level <= 1 ? std::u16string(Tr(u"Game")) : Number(level, u"x"); }, [](int direction, bool wrap) { KCVAR_SET(kameo_gfx_anisotropy, Step(KCVAR_GET(kameo_gfx_anisotropy), {0, 2, 4, 8, 16}, direction, wrap)); }},
     KAMEO_BOOL_OPTION(0x7A5E0005, Page::Graphics, TR_NOOP(u"Shadows"), kameo_gfx_shadows),
-    {0x7A5E000C, Page::Graphics, TR_NOOP(u"Shadow Quality"), [] { const int32_t scale = REXCVAR_GET(kameo_gfx_shadow_resolution); return std::u16string(scale >= 4 ? Tr(u"Ultra") : scale >= 2 ? Tr(u"High") : Tr(u"Original")); }, [](int direction, bool wrap) { REXCVAR_SET(kameo_gfx_shadow_resolution, Step(REXCVAR_GET(kameo_gfx_shadow_resolution), {1, 2, 4}, direction, wrap)); }},
-    {0x7A5E0010, Page::Graphics, TR_NOOP(u"Shadow Edges"), [] { return std::u16string(REXCVAR_GET(kameo_gfx_shadow_filtering) ? Tr(u"Smooth") : Tr(u"Pixelated")); }, [](int, bool) { REXCVAR_SET(kameo_gfx_shadow_filtering, !REXCVAR_GET(kameo_gfx_shadow_filtering)); }},
+    {0x7A5E000C, Page::Graphics, TR_NOOP(u"Shadow Quality"), [] { const int32_t scale = KCVAR_GET(kameo_gfx_shadow_resolution); return std::u16string(scale >= 4 ? Tr(u"Ultra") : scale >= 2 ? Tr(u"High") : Tr(u"Original")); }, [](int direction, bool wrap) { KCVAR_SET(kameo_gfx_shadow_resolution, Step(KCVAR_GET(kameo_gfx_shadow_resolution), {1, 2, 4}, direction, wrap)); }},
+    {0x7A5E0010, Page::Graphics, TR_NOOP(u"Shadow Edges"), [] { return std::u16string(KCVAR_GET(kameo_gfx_shadow_filtering) ? Tr(u"Smooth") : Tr(u"Pixelated")); }, [](int, bool) { KCVAR_SET(kameo_gfx_shadow_filtering, !KCVAR_GET(kameo_gfx_shadow_filtering)); }},
     // STEREO: the four 3D rows.
-    {0x7A5E002B, Page::Graphics, TR_NOOP(u"3D Display"), [] { const int32_t mode = REXCVAR_GET(kameo_gfx_stereo); return std::u16string(mode == 1 ? Tr(u"Side by Side") : mode == 2 ? Tr(u"Top and Bottom") : mode == 3 ? Tr(u"Red/Cyan Glasses") : Tr(u"Off")); }, [](int direction, bool wrap) { REXCVAR_SET(kameo_gfx_stereo, Step(REXCVAR_GET(kameo_gfx_stereo), {0, 1, 2, 3}, direction, wrap)); }},
-    {0x7A5E002C, Page::Graphics, TR_NOOP(u"3D Depth"), [] { const int32_t depth = REXCVAR_GET(kameo_gfx_stereo_depth); return Number(depth / 10, u".") + Number(depth % 10, u"%"); }, [](int direction, bool wrap) { REXCVAR_SET(kameo_gfx_stereo_depth, Step(REXCVAR_GET(kameo_gfx_stereo_depth), {5, 10, 15, 20, 25, 30, 35, 40, 50, 60, 80, 100}, direction, wrap)); }, nullptr, [] { return REXCVAR_GET(kameo_gfx_stereo) != 0; }},
-    {0x7A5E002D, Page::Graphics, TR_NOOP(u"3D Focus"), [] { const int32_t focus = REXCVAR_GET(kameo_gfx_stereo_focus); return focus == 100 ? std::u16string(Tr(u"On Kameo")) : Number(focus, u"%"); }, [](int direction, bool wrap) { REXCVAR_SET(kameo_gfx_stereo_focus, Step(REXCVAR_GET(kameo_gfx_stereo_focus), {25, 50, 75, 100, 150, 200, 300, 500}, direction, wrap)); }, nullptr, [] { return REXCVAR_GET(kameo_gfx_stereo) != 0; }},
-    {0x7A5E002E, Page::Graphics, TR_NOOP(u"3D Swap Eyes"), [] { return OnOff(REXCVAR_GET(kameo_gfx_stereo_swap)); }, [](int, bool) { REXCVAR_SET(kameo_gfx_stereo_swap, !REXCVAR_GET(kameo_gfx_stereo_swap)); }, nullptr, [] { return REXCVAR_GET(kameo_gfx_stereo) != 0; }},
+    {0x7A5E002B, Page::Graphics, TR_NOOP(u"3D Display"), [] { const int32_t mode = KCVAR_GET(kameo_gfx_stereo); return std::u16string(mode == 1 ? Tr(u"Side by Side") : mode == 2 ? Tr(u"Top and Bottom") : mode == 3 ? Tr(u"Red/Cyan Glasses") : Tr(u"Off")); }, [](int direction, bool wrap) { KCVAR_SET(kameo_gfx_stereo, Step(KCVAR_GET(kameo_gfx_stereo), {0, 1, 2, 3}, direction, wrap)); }},
+    {0x7A5E002C, Page::Graphics, TR_NOOP(u"3D Depth"), [] { const int32_t depth = KCVAR_GET(kameo_gfx_stereo_depth); return Number(depth / 10, u".") + Number(depth % 10, u"%"); }, [](int direction, bool wrap) { KCVAR_SET(kameo_gfx_stereo_depth, Step(KCVAR_GET(kameo_gfx_stereo_depth), {5, 10, 15, 20, 25, 30, 35, 40, 50, 60, 80, 100}, direction, wrap)); }, nullptr, [] { return KCVAR_GET(kameo_gfx_stereo) != 0; }},
+    {0x7A5E002D, Page::Graphics, TR_NOOP(u"3D Focus"), [] { const int32_t focus = KCVAR_GET(kameo_gfx_stereo_focus); return focus == 100 ? std::u16string(Tr(u"On Kameo")) : Number(focus, u"%"); }, [](int direction, bool wrap) { KCVAR_SET(kameo_gfx_stereo_focus, Step(KCVAR_GET(kameo_gfx_stereo_focus), {25, 50, 75, 100, 150, 200, 300, 500}, direction, wrap)); }, nullptr, [] { return KCVAR_GET(kameo_gfx_stereo) != 0; }},
+    {0x7A5E002E, Page::Graphics, TR_NOOP(u"3D Swap Eyes"), [] { return OnOff(KCVAR_GET(kameo_gfx_stereo_swap)); }, [](int, bool) { KCVAR_SET(kameo_gfx_stereo_swap, !KCVAR_GET(kameo_gfx_stereo_swap)); }, nullptr, [] { return KCVAR_GET(kameo_gfx_stereo) != 0; }},
     KAMEO_BOOL_OPTION(0x7A5E0006, Page::Effects, TR_NOOP(u"Particles"), kameo_gfx_particles),
     KAMEO_BOOL_OPTION(0x7A5E0007, Page::Effects, TR_NOOP(u"Grass"), kameo_gfx_grass),
     KAMEO_BOOL_OPTION(0x7A5E0028, Page::Effects, TR_NOOP(u"Fur"), kameo_gfx_fur),
@@ -97,36 +96,36 @@ const Option kOptions[] = {
     KAMEO_VOLUME_OPTION(0x7A5E0104, TR_NOOP(u"Ambience")),
     KAMEO_VOLUME_OPTION(0x7A5E0105, TR_NOOP(u"Speech")),
     KAMEO_VOLUME_OPTION(0x7A5E0106, TR_NOOP(u"Cutscenes")),
-    {0x7A5E0401, Page::Controls, TR_NOOP(u"Player 1 Input"), [] { return std::u16string(REXCVAR_GET(kameo_input_mode) == 1 ? Tr(u"Gamepad") : Tr(u"Keyboard & Mouse")); }, [](int, bool) { KameoSetPlayerOneInputMode(REXCVAR_GET(kameo_input_mode) == 1 ? 0 : 1); }, nullptr, [] { return REXCVAR_GET(kameo_story_splitscreen); }},
+    {0x7A5E0401, Page::Controls, TR_NOOP(u"Player 1 Input"), [] { return std::u16string(KCVAR_GET(kameo_input_mode) == 1 ? Tr(u"Gamepad") : Tr(u"Keyboard & Mouse")); }, [](int, bool) { KameoSetPlayerOneInputMode(KCVAR_GET(kameo_input_mode) == 1 ? 0 : 1); }, nullptr, [] { return KCVAR_GET(kameo_story_splitscreen); }},
     {0x7A5E0406, Page::Controls, TR_NOOP(u"Controller Preset"), [] { const int preset = KameoPadPreset(); return std::u16string(preset == 0 ? Tr(u"Button Position") : preset == 1 ? Tr(u"Button Labels") : Tr(u"Custom")); }, [](int direction, bool wrap) { const int preset = KameoPadPreset(); KameoSetPadPreset(preset == 2 ? (direction < 0 ? 0 : 1) : Step(preset, {0, 1}, direction, wrap)); }},
-    KAMEO_BOOL_OPTION(0x7A5E0402, Page::Controls, TR_NOOP(u"Mouse Look"), mnk_mouse),
-    {0x7A5E0403, Page::Controls, TR_NOOP(u"Mouse Sensitivity"), [] { return Sensitivity(); }, [](int direction, bool wrap) { int32_t tenths = int32_t(std::lround(REXCVAR_GET(mnk_sensitivity) * 10.0)) + direction; if (tenths > 100) tenths = wrap ? 1 : 100; REXCVAR_SET(mnk_sensitivity, std::clamp(tenths, 1, 100) / 10.0); }},
-    {0x7A5E0430, Page::Controls, TR_NOOP(u"Player 1 Keyboard"), [] { return std::u16string(REXCVAR_GET(kameo_p1_keyboard_device) == 1 ? Tr(u"Keyboard 2") : Tr(u"Keyboard 1")); }, [](int, bool) { REXCVAR_SET(kameo_p1_keyboard_device, REXCVAR_GET(kameo_p1_keyboard_device) == 1 ? 0 : 1); }, nullptr, [] { return KameoPlayerUsesKeyboard(0); }},
-    {0x7A5E0431, Page::Controls, TR_NOOP(u"Player 1 Mouse"), [] { return std::u16string(REXCVAR_GET(kameo_p1_mouse_device) == 1 ? Tr(u"Mouse 2") : Tr(u"Mouse 1")); }, [](int, bool) { REXCVAR_SET(kameo_p1_mouse_device, REXCVAR_GET(kameo_p1_mouse_device) == 1 ? 0 : 1); }, nullptr, [] { return KameoPlayerUsesKeyboard(0); }},
+    KAMEO_BOOL_OPTION(0x7A5E0402, Page::Controls, TR_NOOP(u"Mouse Look"), MnkMouse()),
+    {0x7A5E0403, Page::Controls, TR_NOOP(u"Mouse Sensitivity"), [] { return Sensitivity(); }, [](int direction, bool wrap) { int32_t tenths = int32_t(std::lround(KCVAR_GET(MnkSensitivity()) * 10.0)) + direction; if (tenths > 100) tenths = wrap ? 1 : 100; KCVAR_SET(MnkSensitivity(), std::clamp(tenths, 1, 100) / 10.0); }},
+    {0x7A5E0430, Page::Controls, TR_NOOP(u"Player 1 Keyboard"), [] { return std::u16string(KCVAR_GET(kameo_p1_keyboard_device) == 1 ? Tr(u"Keyboard 2") : Tr(u"Keyboard 1")); }, [](int, bool) { KCVAR_SET(kameo_p1_keyboard_device, KCVAR_GET(kameo_p1_keyboard_device) == 1 ? 0 : 1); }, nullptr, [] { return KameoPlayerUsesKeyboard(0); }},
+    {0x7A5E0431, Page::Controls, TR_NOOP(u"Player 1 Mouse"), [] { return std::u16string(KCVAR_GET(kameo_p1_mouse_device) == 1 ? Tr(u"Mouse 2") : Tr(u"Mouse 1")); }, [](int, bool) { KCVAR_SET(kameo_p1_mouse_device, KCVAR_GET(kameo_p1_mouse_device) == 1 ? 0 : 1); }, nullptr, [] { return KameoPlayerUsesKeyboard(0); }},
     KAMEO_GAME_OPTION(0x7A5E0404, Page::Camera, TR_NOOP(u"Look Left/Right"), [] { return GameSetting(kPlayerControlSettings + 148 * g_menuPlayer) != 0 ? 363 : 364; }, [](int, bool) { SetGameSetting(kPlayerControlSettings + 148 * g_menuPlayer, GameSetting(kPlayerControlSettings + 148 * g_menuPlayer) != 0 ? 0 : 1); }, nullptr),
     KAMEO_GAME_OPTION(0x7A5E0405, Page::Camera, TR_NOOP(u"Look Up/Down"), [] { return GameSetting(kPlayerControlSettings + 4 + 148 * g_menuPlayer) != 0 ? 365 : 366; }, [](int, bool) { SetGameSetting(kPlayerControlSettings + 4 + 148 * g_menuPlayer, GameSetting(kPlayerControlSettings + 4 + 148 * g_menuPlayer) != 0 ? 0 : 1); }, nullptr),
-    {0x7A5E001A, Page::Camera, TR_NOOP(u"Camera Follow"), [] { return std::u16string(REXCVAR_GET(kameo_camera_drift) ? Tr(u"Original (drifts)") : Tr(u"Fixed Distance")); }, [](int, bool) { REXCVAR_SET(kameo_camera_drift, !REXCVAR_GET(kameo_camera_drift)); }},
+    {0x7A5E001A, Page::Camera, TR_NOOP(u"Camera Follow"), [] { return std::u16string(KCVAR_GET(kameo_camera_drift) ? Tr(u"Original (drifts)") : Tr(u"Fixed Distance")); }, [](int, bool) { KCVAR_SET(kameo_camera_drift, !KCVAR_GET(kameo_camera_drift)); }},
     KAMEO_BOOL_OPTION(0x7A5E001C, Page::Camera, TR_NOOP(u"Auto-Level"), kameo_camera_auto_level),
-    {0x7A5E001B, Page::Camera, TR_NOOP(u"Field of View"), [] { const int32_t fov = REXCVAR_GET(kameo_camera_fov); return fov == 0 ? std::u16string(Tr(u"Default")) : Number(fov, u"").insert(0, fov > 0 ? u"+" : u""); }, [](int direction, bool wrap) { REXCVAR_SET(kameo_camera_fov, Step(REXCVAR_GET(kameo_camera_fov), {-10, -5, 0, 5, 10, 15, 20, 25, 30}, direction, wrap)); }},
+    {0x7A5E001B, Page::Camera, TR_NOOP(u"Field of View"), [] { const int32_t fov = KCVAR_GET(kameo_camera_fov); return fov == 0 ? std::u16string(Tr(u"Default")) : Number(fov, u"").insert(0, fov > 0 ? u"+" : u""); }, [](int direction, bool wrap) { KCVAR_SET(kameo_camera_fov, Step(KCVAR_GET(kameo_camera_fov), {-10, -5, 0, 5, 10, 15, 20, 25, 30}, direction, wrap)); }},
     // The joiner of an online game can't open the Bonus pages, so their Kameo's costume is chosen here.
     {0x7A5E0230, Page::Coop, TR_NOOP(u"Costume"), [] { return kameo::engine::JoinerSkinName(); }, [](int direction, bool) { kameo::engine::StepJoinerSkin(direction); }, nullptr, [] { return kameo::engine::JoinerSkinOptionShown(); }},
-    {0x7A5E0203, Page::Coop, TR_NOOP(u"Story Split-screen"), [] { return OnOff(REXCVAR_GET(kameo_story_splitscreen)); }, [](int, bool) { KameoSetCoopEnabled(!REXCVAR_GET(kameo_story_splitscreen)); }, nullptr, [] { return !KameoMenuCoop(); }},
-    {0x7A5E0407, Page::Coop, TR_NOOP(u"Player 2 Input"), [] { return std::u16string(KameoCoopInputMode() == 2 ? Tr(u"Keyboard & Mouse") : Tr(u"Gamepad")); }, [](int, bool) { KameoSetCoopInputMode(KameoCoopInputMode() == 2 ? 1 : 2); }, nullptr, [] { return REXCVAR_GET(kameo_story_splitscreen); }},
+    {0x7A5E0203, Page::Coop, TR_NOOP(u"Story Split-screen"), [] { return OnOff(KCVAR_GET(kameo_story_splitscreen)); }, [](int, bool) { KameoSetCoopEnabled(!KCVAR_GET(kameo_story_splitscreen)); }, nullptr, [] { return !KameoMenuCoop(); }},
+    {0x7A5E0407, Page::Coop, TR_NOOP(u"Player 2 Input"), [] { return std::u16string(KameoCoopInputMode() == 2 ? Tr(u"Keyboard & Mouse") : Tr(u"Gamepad")); }, [](int, bool) { KameoSetCoopInputMode(KameoCoopInputMode() == 2 ? 1 : 2); }, nullptr, [] { return KCVAR_GET(kameo_story_splitscreen); }},
     KAMEO_GAME_OPTION(0x7A5E0023, Page::Coop, TR_NOOP(u"Split-Screen Layout"), [] { return GameSetting(kSplitScreenMode) != 0 ? 4207 : 4208; }, [](int, bool) { SetGameSetting(kSplitScreenMode, (GameSetting(kSplitScreenMode) + 1) % 2); }, [] { return GameSetting(kIsSplitScreenMode) != 0; }),
-    {0x7A5E0432, Page::Coop, TR_NOOP(u"Player 2 Keyboard"), [] { return std::u16string(REXCVAR_GET(kameo_p2_keyboard_device) == 1 ? Tr(u"Keyboard 2") : Tr(u"Keyboard 1")); }, [](int, bool) { REXCVAR_SET(kameo_p2_keyboard_device, REXCVAR_GET(kameo_p2_keyboard_device) == 1 ? 0 : 1); }, nullptr, [] { return KameoPlayerUsesKeyboard(1); }},
-    {0x7A5E0433, Page::Coop, TR_NOOP(u"Player 2 Mouse"), [] { return std::u16string(REXCVAR_GET(kameo_p2_mouse_device) == 1 ? Tr(u"Mouse 2") : Tr(u"Mouse 1")); }, [](int, bool) { REXCVAR_SET(kameo_p2_mouse_device, REXCVAR_GET(kameo_p2_mouse_device) == 1 ? 0 : 1); }, nullptr, [] { return KameoPlayerUsesKeyboard(1); }},
-    {0x7A5E0408, Page::Coop, TR_NOOP(u"Player 2 Aim X"), [] { return std::u16string(GameSetting(kPlayerControlSettings + 148) != 0 ? Tr(u"Inverted") : Tr(u"Normal")); }, [](int, bool) { SetGameSetting(kPlayerControlSettings + 148, GameSetting(kPlayerControlSettings + 148) != 0 ? 0 : 1); }, nullptr, [] { return REXCVAR_GET(kameo_story_splitscreen); }},
-    {0x7A5E0409, Page::Coop, TR_NOOP(u"Player 2 Aim Y"), [] { return std::u16string(GameSetting(kPlayerControlSettings + 152) != 0 ? Tr(u"Inverted") : Tr(u"Normal")); }, [](int, bool) { SetGameSetting(kPlayerControlSettings + 152, GameSetting(kPlayerControlSettings + 152) != 0 ? 0 : 1); }, nullptr, [] { return REXCVAR_GET(kameo_story_splitscreen); }},
+    {0x7A5E0432, Page::Coop, TR_NOOP(u"Player 2 Keyboard"), [] { return std::u16string(KCVAR_GET(kameo_p2_keyboard_device) == 1 ? Tr(u"Keyboard 2") : Tr(u"Keyboard 1")); }, [](int, bool) { KCVAR_SET(kameo_p2_keyboard_device, KCVAR_GET(kameo_p2_keyboard_device) == 1 ? 0 : 1); }, nullptr, [] { return KameoPlayerUsesKeyboard(1); }},
+    {0x7A5E0433, Page::Coop, TR_NOOP(u"Player 2 Mouse"), [] { return std::u16string(KCVAR_GET(kameo_p2_mouse_device) == 1 ? Tr(u"Mouse 2") : Tr(u"Mouse 1")); }, [](int, bool) { KCVAR_SET(kameo_p2_mouse_device, KCVAR_GET(kameo_p2_mouse_device) == 1 ? 0 : 1); }, nullptr, [] { return KameoPlayerUsesKeyboard(1); }},
+    {0x7A5E0408, Page::Coop, TR_NOOP(u"Player 2 Aim X"), [] { return std::u16string(GameSetting(kPlayerControlSettings + 148) != 0 ? Tr(u"Inverted") : Tr(u"Normal")); }, [](int, bool) { SetGameSetting(kPlayerControlSettings + 148, GameSetting(kPlayerControlSettings + 148) != 0 ? 0 : 1); }, nullptr, [] { return KCVAR_GET(kameo_story_splitscreen); }},
+    {0x7A5E0409, Page::Coop, TR_NOOP(u"Player 2 Aim Y"), [] { return std::u16string(GameSetting(kPlayerControlSettings + 152) != 0 ? Tr(u"Inverted") : Tr(u"Normal")); }, [](int, bool) { SetGameSetting(kPlayerControlSettings + 152, GameSetting(kPlayerControlSettings + 152) != 0 ? 0 : 1); }, nullptr, [] { return KCVAR_GET(kameo_story_splitscreen); }},
     KAMEO_GAME_OPTION(0x7A5E040A, Page::Coop, TR_NOOP(u"Player Pushing"), [] { return GameSetting(kHostPush) != 0 ? 4125 : 4126; }, [](int, bool) { SetGameSetting(kHostPush, GameSetting(kHostPush) != 0 ? 0 : 1); }, [] { return GameSetting(kNumWantedPlayers) > 1 && g_menuPlayer == 0; }),
     KAMEO_GAME_OPTION(0x7A5E040B, Page::Coop, TR_NOOP(u"Friendly Fire"), [] { return GameSetting(kHostAttack) != 0 ? 4127 : 4128; }, [](int, bool) { SetGameSetting(kHostAttack, GameSetting(kHostAttack) != 0 ? 0 : 1); }, [] { return GameSetting(kNumWantedPlayers) > 1 && g_menuPlayer == 0; }),
     KAMEO_BOOL_OPTION(0x7A5E0205, Page::Gameplay, TR_NOOP(u"Skippable Cutscenes"), kameo_skip_cutscenes),
-    {0x7A5E0208, Page::Gameplay, TR_NOOP(u"Pause Menu"), [] { return std::u16string(REXCVAR_GET(kameo_menu_style) == 1 ? Tr(u"Parchment Card") : Tr(u"Storybook")); }, [](int, bool) { REXCVAR_SET(kameo_menu_style, REXCVAR_GET(kameo_menu_style) == 1 ? 0 : 1); }},
+    {0x7A5E0208, Page::Gameplay, TR_NOOP(u"Pause Menu"), [] { return std::u16string(KCVAR_GET(kameo_menu_style) == 1 ? Tr(u"Parchment Card") : Tr(u"Storybook")); }, [](int, bool) { KCVAR_SET(kameo_menu_style, KCVAR_GET(kameo_menu_style) == 1 ? 0 : 1); }},
     KAMEO_GAME_OPTION(kItemHints, Page::Gameplay, TR_NOOP(u"Hints"), [] { const uint32_t hints = GameSetting(kOrthoHints); return hints == 0 ? 4442 : hints == 1 ? 4443 : 4444; }, [](int direction, bool) { SetGameSetting(kOrthoHints, Cycle3(GameSetting(kOrthoHints), direction)); }, nullptr),
-    {0x7A5E0107, Page::Gameplay, TR_NOOP(u"Language"), [] { const int32_t language = ChosenLanguage(); const std::u16string name = LanguageName(language); return uint32_t(language) != KameoRunningLanguage() ? TrFormat(u"{0} (restart)", {name}) : name; }, [](int direction, bool wrap) { REXCVAR_SET(kameo_language, Step(ChosenLanguage(), {1, 2, 3, 4, 5, 6, 7, 8}, direction, wrap)); }},
+    {0x7A5E0107, Page::Gameplay, TR_NOOP(u"Language"), [] { const int32_t language = ChosenLanguage(); const std::u16string name = LanguageName(language); return uint32_t(language) != KameoRunningLanguage() ? TrFormat(u"{0} (restart)", {name}) : name; }, [](int direction, bool wrap) { KCVAR_SET(kameo_language, Step(ChosenLanguage(), {1, 2, 3, 4, 5, 6, 7, 8}, direction, wrap)); }},
     KAMEO_HIDDEN_BOOL_OPTION(0x7A5E0204, Page::Gameplay, TR_NOOP(u"Unlock All Extras"), kameo_unlock_all_extras, KameoUnlockCode::GameCheats),
     KAMEO_HIDDEN_BOOL_OPTION(0x7A5E0207, Page::Gameplay, TR_NOOP(u"All Warriors & Upgrades"), kameo_unlock_all_warriors, KameoUnlockCode::Warriors),
-    {0x7A5E0201, Page::Mods, TR_NOOP(u"Texture Replacements"), [] { return OnOff(REXCVAR_GET(kameo_gfx_texture_replacements)); }, [](int, bool) { REXCVAR_SET(kameo_gfx_texture_replacements, !REXCVAR_GET(kameo_gfx_texture_replacements)); kameo::gpu::RefreshAllTextureReplacements(); }},
-    {0x7A5E0202, Page::Mods, TR_NOOP(u"Texture Dumping"), [] { return OnOff(REXCVAR_GET(kameo_gfx_dump_textures)); }, [](int, bool) { REXCVAR_SET(kameo_gfx_dump_textures, !REXCVAR_GET(kameo_gfx_dump_textures)); if (REXCVAR_GET(kameo_gfx_dump_textures)) kameo::gpu::RequestDumpOfLoadedTextures(); }},
+    {0x7A5E0201, Page::Mods, TR_NOOP(u"Texture Replacements"), [] { return OnOff(KCVAR_GET(kameo_gfx_texture_replacements)); }, [](int, bool) { KCVAR_SET(kameo_gfx_texture_replacements, !KCVAR_GET(kameo_gfx_texture_replacements)); kameo::gpu::RefreshAllTextureReplacements(); }},
+    {0x7A5E0202, Page::Mods, TR_NOOP(u"Texture Dumping"), [] { return OnOff(KCVAR_GET(kameo_gfx_dump_textures)); }, [](int, bool) { KCVAR_SET(kameo_gfx_dump_textures, !KCVAR_GET(kameo_gfx_dump_textures)); if (KCVAR_GET(kameo_gfx_dump_textures)) kameo::gpu::RequestDumpOfLoadedTextures(); }},
     KAMEO_BOOL_OPTION(0x7A5E0206, Page::Mods, TR_NOOP(u"Movie Replacements"), kameo_movie_replacements),
     {kItemGammaBar, Page::GameBrightness, TR_NOOP(u"Gamma"), [] { return std::u16string(); }, [](int direction, bool wrap) { int32_t step = GammaBarStep() + direction; if (wrap && step > kGammaBarSegments) step = 0; SetGammaBarStep(step); }},
     KAMEO_BIND_OPTION(0x7A5E0410, TR_NOOP(u"Move Forward"), "keybind_lstick_up"),

@@ -113,7 +113,7 @@ namespace kameo::gpu {
 using namespace detail;
 
 void QueuePipelinePrecacheShaders(GraphicsSystem& gfx) {
-  if (g_pipelinePrecacheQueued || !REXCVAR_GET(kameo_gfx_pipeline_precache)) {
+  if (g_pipelinePrecacheQueued || !KCVAR_GET(kameo_gfx_pipeline_precache)) {
     return;
   }
   g_pipelinePrecacheQueued = true;

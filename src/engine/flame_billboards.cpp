@@ -3,11 +3,11 @@
 
 #include <cmath>
 
-#include <rex/cvar.h>
+#include "core/cvar.h"
 
 #include "engine/guest_addresses.h"
 
-REXCVAR_DEFINE_BOOL(kameo_gfx_flame_billboards, true, "Kameo", "Turn the flames off lava and fire traps to face the camera, so they don't show as flat sheets from the side or above. Off keeps each at the fixed angle the game gives it.");
+KCVAR_DEFINE_BOOL(kameo_gfx_flame_billboards, true, "Kameo", "Turn the flames off lava and fire traps to face the camera, so they don't show as flat sheets from the side or above. Off keeps each at the fixed angle the game gives it.");
 
 using kameo::engine::LoadGuestFloat;
 
@@ -78,7 +78,7 @@ bool AngleToCamera(PPCContext& ctx, uint8_t* base, uint32_t render_object, float
 // D3DXMatrixRotationY; while it runs, that angle is the one facing the camera.
 extern "C" REX_FUNC(sub_824D27E0) {
   float angle = 0.0f;
-  t_facing = REXCVAR_GET(kameo_gfx_flame_billboards) && AngleToCamera(ctx, base, ctx.r3.u32, angle);
+  t_facing = KCVAR_GET(kameo_gfx_flame_billboards) && AngleToCamera(ctx, base, ctx.r3.u32, angle);
   t_facingAngle = angle;
   __imp__sub_824D27E0(ctx, base);
   t_facing = false;

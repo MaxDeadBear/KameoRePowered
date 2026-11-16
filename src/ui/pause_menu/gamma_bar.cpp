@@ -4,8 +4,6 @@
 #include <cmath>
 #include <string>
 
-#include <rex/system/kernel_state.h>
-
 #include "ui/pause_menu/pause_card.h"
 #include "ui/pause_menu/pause_menu_internal.h"
 
@@ -76,7 +74,6 @@ extern "C" REX_FUNC(sub_823EFAF8) {
     __imp__sub_823EFAF8(ctx, base);
     return;
   }
-  auto* memory = rex::system::kernel_state()->memory();
   const uint32_t header = REX_LOAD_U32(pause + 8);
   if (g_gammaBar.pause != pause || !g_gammaBar.model) {
     // modelInitByAsset(header, asset) with the brightness bar's own asset.
@@ -88,11 +85,11 @@ extern "C" REX_FUNC(sub_823EFAF8) {
     g_gammaBar.pause = pause;
   }
   if (!g_gammaBar.fake_pause) {
-    g_gammaBar.fake_pause = memory->SystemHeapAlloc(0x220);
-    g_gammaBar.fake_header = memory->SystemHeapAlloc(kObjectHeaderBytes);
+    g_gammaBar.fake_pause = GuestSystemAlloc(0x220);
+    g_gammaBar.fake_header = GuestSystemAlloc(kObjectHeaderBytes);
     for (int32_t i = 1; i <= kGammaBarSegments; ++i) {
       const std::string name = "|_PART_" + std::to_string(i);
-      g_gammaBar.part_names[i] = memory->SystemHeapAlloc(uint32_t(name.size() + 1));
+      g_gammaBar.part_names[i] = GuestSystemAlloc(uint32_t(name.size() + 1));
       for (size_t c = 0; g_gammaBar.part_names[i] && c <= name.size(); ++c) REX_STORE_U8(g_gammaBar.part_names[i] + uint32_t(c), c < name.size() ? uint8_t(name[c]) : 0);
     }
   }

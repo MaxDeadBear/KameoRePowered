@@ -226,12 +226,12 @@ def translate_config(maps):
                     continue
                 out.append(f"{key} = {json.dumps(value)}\n")
             out.append("\n")
-        if "rexcrt" in data:
-            out.append("[rexcrt]\n")
-            for key, value in data["rexcrt"].items():
+        if "shim" in data:
+            out.append("[shim]\n")
+            for key, value in data["shim"].items():
                 t = maps.code(value)
                 if t is None:
-                    maps.report.append(f"rexcrt {key} {value:08X}: NO MATCH")
+                    maps.report.append(f"shim {key} {value:08X}: NO MATCH")
                     continue
                 out.append(f"{key} = 0x{t:08X}\n")
         open(os.path.join(DEST_CONFIG, "hooks", name), "w", encoding="utf-8").write("".join(out))

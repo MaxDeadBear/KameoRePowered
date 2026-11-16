@@ -1,13 +1,13 @@
 // Player 2 shares player 1's warrior wheel: MorphValid hands us each player's sack, and player 1's slot assignments are mirrored into player 2's.
 
-#include <rex/cvar.h>
-#include <rex/logging/macros.h>
+#include "core/cvar.h"
+#include <rex/logging/log_category.h>
 
 #include "core/hooks.h"
 #include "engine/splitscreen_internal.h"
 
 // Player 2's wheel already opens and sends the morph; MorphValid refuses it only because his sack's slots read FFFF.
-REXCVAR_DEFINE_BOOL(kameo_player2_morph, true, "Kameo",
+KCVAR_DEFINE_BOOL(kameo_player2_morph, true, "Kameo",
                     "Give player 2 the same warriors player 1 has mapped.");
 
 namespace kameo::engine {
@@ -36,7 +36,7 @@ bool PlausibleSackPtr(uint32_t v) {
 }  // namespace
 
 void SyncPlayer2Warriors(uint8_t* base) {
-  if (!REXCVAR_GET(kameo_player2_morph)) {
+  if (!KCVAR_GET(kameo_player2_morph)) {
     return;
   }
   const uint32_t sack1 = g_sack_p1.load(std::memory_order_acquire);

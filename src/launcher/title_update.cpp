@@ -12,15 +12,11 @@
 #include <cwctype>
 #include <fstream>
 #include <memory>
-#include <queue>
 #include <span>
 #include <vector>
 
-#include <rex/filesystem/devices/stfs_container_device.h>
-#include <rex/filesystem/entry.h>
-#include <rex/filesystem/file.h>
-
 #include "core/localization.h"
+#include "launcher/container.h"
 
 namespace kameo::launcher {
 
@@ -94,18 +90,14 @@ std::string BuiltPatchSha1(const std::filesystem::path& exe) {
   return sha1;
 }
 
-bool ReadEntry(rex::filesystem::Entry* entry, std::vector<uint8_t>& data) {
-  rex::filesystem::File* file = nullptr;
-  if (entry->Open(rex::filesystem::FileAccess::kFileReadData, &file) != 0 || !file) return false;
-  data.resize(entry->size());
+bool ReadNodeFully(const rex::filesystem::IContainerImage& image, const rex::filesystem::ContainerNode& node, std::vector<uint8_t>& data) {
+  data.resize(size_t(node.info.size));
   size_t done = 0;
   while (done < data.size()) {
-    size_t read = 0;
-    file->ReadSync(std::span<uint8_t>(data.data() + done, data.size() - done), done, &read);
+    const size_t read = ReadNode(image, node, done, data.data() + done, data.size() - done);
     if (read == 0) break;
     done += read;
   }
-  file->Destroy();
   return done == data.size();
 }
 
@@ -123,15 +115,15 @@ bool TitleUpdateBuildPresent(const std::filesystem::path& game_folder) {
   return std::filesystem::exists(game_folder / kTitleUpdateExe, ec);
 }
 
-bool IsTitleUpdatePackage(rex::filesystem::StfsContainerDevice& device) {
-  return device.ResolvePath("default.xexp") != nullptr;
+bool IsTitleUpdatePackage(const rex::filesystem::IContainerImage& image) {
+  return image.Find("default.xexp") != nullptr;
 }
 
-bool InstallTitleUpdate(rex::filesystem::StfsContainerDevice& device, const std::filesystem::path& game_folder, std::string& message) {
+bool InstallTitleUpdate(const rex::filesystem::IContainerImage& image, const std::filesystem::path& game_folder, std::string& message) {
   if (!TitleUpdateBuildPresent(game_folder)) return message = Tr("This version of Kameo: RePowered was released without its title-update build, so the update can't be played with it."), false;
   std::vector<uint8_t> patch;
-  rex::filesystem::Entry* patch_entry = device.ResolvePath("default.xexp");
-  if (!patch_entry || !ReadEntry(patch_entry, patch)) return message = Tr("The title update's patch could not be read."), false;
+  const rex::filesystem::ContainerNode* patch_node = image.Find("default.xexp");
+  if (!patch_node || !ReadNodeFully(image, *patch_node, patch)) return message = Tr("The title update's patch could not be read."), false;
   const std::vector<uint8_t> game = ReadFile(game_folder / "assets" / "default.xex");
   if (game.empty()) return message = Tr("Install the game first: the title update patches its default.xex."), false;
   if (!PatchFitsGame(patch, game)) return message = Tr("This title update is for a different release of the game (another region's), so it can't patch yours."), false;
@@ -144,25 +136,12 @@ bool InstallTitleUpdate(rex::filesystem::StfsContainerDevice& device, const std:
   std::error_code ec;
   std::filesystem::create_directories(folder, ec);
   if (ec) return message = TrFormat("Could not create {0}: {1}", {folder.string(), ec.message()}), false;
-  std::queue<rex::filesystem::Entry*> queue;
-  queue.push(device.ResolvePath(""));
-  std::vector<uint8_t> data;
-  while (!queue.empty()) {
-    rex::filesystem::Entry* entry = queue.front();
-    queue.pop();
-    if (!entry) continue;
-    for (const auto& child : entry->children()) queue.push(child.get());
-    std::string relative = entry->path();
-    std::replace(relative.begin(), relative.end(), '\\', '/');
-    const std::filesystem::path destination = folder / std::filesystem::u8path(relative);
-    if (entry->attributes() & rex::filesystem::kFileAttributeDirectory) {
-      std::filesystem::create_directories(destination, ec);
-      continue;
-    }
-    if (!ReadEntry(entry, data)) return message = TrFormat("Could not read {0} from the title update.", {relative}), false;
-    std::filesystem::create_directories(destination.parent_path(), ec);
-    std::ofstream out(destination, std::ios::binary | std::ios::trunc);
-    if (!out.write(reinterpret_cast<const char*>(data.data()), std::streamsize(data.size()))) return message = TrFormat("Could not write {0}.", {destination.string()}), false;
+  std::string failed;
+  switch (ExtractImage(image, folder, [](uint64_t) {}, failed)) {
+    case ExtractResult::kOk: break;
+    case ExtractResult::kBadName: return message = TrFormat("Could not read {0} from the title update.", {failed}), false;
+    case ExtractResult::kUnreadable: return message = TrFormat("Could not read {0} from the title update.", {failed}), false;
+    case ExtractResult::kUnwritable: return message = TrFormat("Could not write {0}.", {failed}), false;
   }
   // The title-update build loads assets\TU\default.xex, so the loader finds the patch beside it.
   std::filesystem::copy_file(game_folder / "assets" / "default.xex", folder / "default.xex", std::filesystem::copy_options::overwrite_existing, ec);

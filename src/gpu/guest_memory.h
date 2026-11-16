@@ -4,9 +4,7 @@
 #include <cstdint>
 #include <cstring>
 
-#include <kameorepowered_init.h>
-#include <rex/system/kernel_state.h>
-#include <rex/system/xmemory.h>
+#include "core/guest.h"
 
 namespace kameo::gpu::detail {
 
@@ -16,12 +14,11 @@ inline const uint8_t* GuestData(uint8_t* base, uint32_t addr) { return REX_RAW_A
 #ifndef _WIN32
 // The runtime's own page tables answer this where the host has no cheap query; its Linux one rereads the whole process map.
 inline bool GuestPagesReadable(const uint8_t* p, size_t bytes) {
-  auto* memory = rex::system::kernel_state()->memory();
-  if (p == nullptr || bytes == 0 || p < memory->virtual_membase()) return false;
-  const uint64_t guest = uint64_t(p - memory->virtual_membase());
+  const uint8_t* membase = GuestBase();
+  if (p == nullptr || bytes == 0 || membase == nullptr || p < membase) return false;
+  const uint64_t guest = uint64_t(p - membase);
   if (guest < 0x10000 || guest + bytes > 0x100000000ull) return false;
-  rex::memory::BaseHeap* heap = memory->LookupHeap(uint32_t(guest));
-  return heap && heap->QueryRangeAccess(uint32_t(guest), uint32_t(guest + bytes - 1)) != rex::memory::PageAccess::kNoAccess;
+  return GuestRangeMapped(uint32_t(guest), uint32_t(bytes));
 }
 #endif
 

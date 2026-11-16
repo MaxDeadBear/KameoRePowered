@@ -5,13 +5,14 @@
 
 #include <plume_render_interface.h>
 
-#include <rex/cvar.h>
-#include <rex/logging.h>
+#include "core/cvar.h"
+#include <rex/logging/log_category.h>
 
 #include "gpu/config.h"
 #include "gpu/frame_profile.h"
 #include "gpu/graphics_system_internal.h"
 #include "gpu/log.h"
+#include "gpu/resolve_blit.h"
 #include "gpu/resource_check.h"
 #include "gpu/scene_resolve_state.h"
 #include "gpu/shaders/builtin_shaders.h"
@@ -22,11 +23,11 @@ namespace kameo::gpu {
 void GraphicsSystem::SceneRenderSize(uint32_t window_width, uint32_t window_height, uint32_t* out_width, uint32_t* out_height) const {
   *out_width = window_width;
   *out_height = window_height;
-  const int32_t wanted = REXCVAR_GET(kameo_gfx_render_height);
+  const int32_t wanted = KCVAR_GET(kameo_gfx_render_height);
   if (wanted <= 0 || window_width == 0 || window_height == 0) return;
   const uint32_t height = uint32_t(std::clamp(wanted, 240, 4320));
   *out_height = height;
-  if (const int32_t wanted_width = REXCVAR_GET(kameo_gfx_render_width); wanted_width > 0) {
+  if (const int32_t wanted_width = KCVAR_GET(kameo_gfx_render_width); wanted_width > 0) {
     *out_width = uint32_t(std::clamp(wanted_width, 320, 8192));
     return;
   }
@@ -46,7 +47,7 @@ void GraphicsSystem::SceneRectInWindow(uint32_t window_width, uint32_t window_he
 }
 
 uint32_t GraphicsSystem::SceneSampleCount() const {
-  const int32_t wanted = REXCVAR_GET(kameo_gfx_msaa);
+  const int32_t wanted = KCVAR_GET(kameo_gfx_msaa);
   if (wanted <= 1 || !device_) return 1;
   const plume::RenderSampleCounts supported = device_->getSampleCountsSupported(kColorFormat) & device_->getSampleCountsSupported(kDepthFormat);
   uint32_t count = wanted >= 8 ? 8 : wanted >= 4 ? 4 : 2;
@@ -62,6 +63,7 @@ bool GraphicsSystem::EnsureSceneTarget(uint32_t width, uint32_t height, uint32_t
   scene_framebuffer_.reset();
   scene_color_view_.reset();
   scene_color_.reset();
+  detail::ReleaseDepthResolveViews();
   scene_depth_view_.reset();
   scene_depth_.reset();
   scene_resolved_view_.reset();

@@ -7,7 +7,7 @@
 #include <string>
 #include <unordered_map>
 
-#include <fmt/format.h>
+#include <format>
 
 #include "gpu/config.h"
 #include "gpu/constant_buffers.h"
@@ -25,7 +25,7 @@
 #include "gpu/shaders/shader_mods.h"
 #include "gpu/vertex_declaration.h"
 
-REXCVAR_DEFINE_BOOL(kameo_gfx_stale_pixel_shader, true, "Kameo", "Draw colour draws that bind no pixel shader with the last one bound, as the console's GPU does; this is how fading models such as an absorbed baby warrior draw. Off drops them.");
+KCVAR_DEFINE_BOOL(kameo_gfx_stale_pixel_shader, true, "Kameo", "Draw colour draws that bind no pixel shader with the last one bound, as the console's GPU does; this is how fading models such as an absorbed baby warrior draw. Off drops them.");
 
 namespace kameo::gpu::detail {
 
@@ -92,7 +92,7 @@ void EvictShiftedIndices(uint64_t frame) {
 
 void CaptureCommon(uint8_t* base, uint32_t device, uint32_t primitive, uint32_t first_vertex, uint32_t vertex_count, const uint32_t* indices, uint32_t index_count, const StreamOverride& override_stream = {}, uint32_t deferred_vertex_addr = 0, uint32_t deferred_vertex_stride = 0, const ExpandedIndices* pre_expanded = nullptr, uint32_t guest_caller = 0, uint32_t guest_command = 0, uint32_t guest_command_stream = 0, const uint32_t* texture_objects = nullptr) {
   // Casters skipped while GeneratingShadowMap is set leave the map at its cleared far depth.
-  if (!REXCVAR_GET(kameo_gfx_shadows) && Load8(base, kGeneratingShadowMap) != 0) return;
+  if (!KCVAR_GET(kameo_gfx_shadows) && Load8(base, kGeneratingShadowMap) != 0) return;
   const uint32_t vs_object = Load32(base, device + kDeviceVertexShader);
   uint32_t ps_object = Load32(base, device + kDevicePixelShader);
   const ShaderCacheEntry* vs = nullptr;
@@ -106,7 +106,7 @@ void CaptureCommon(uint8_t* base, uint32_t device, uint32_t primitive, uint32_t 
   if (ps) {
     g_lastPixelShaderObject = ps_object;
     g_lastPixelShader = ps;
-  } else if (ps_object == 0 && vs && g_lastPixelShader && REXCVAR_GET(kameo_gfx_stale_pixel_shader) && Load8(base, kGeneratingShadowMap) == 0 && g_openOcclusionQuery.load(std::memory_order_relaxed) == 0 && (Load32(base, device + kRbModeControl) & 7) != 5) {
+  } else if (ps_object == 0 && vs && g_lastPixelShader && KCVAR_GET(kameo_gfx_stale_pixel_shader) && Load8(base, kGeneratingShadowMap) == 0 && g_openOcclusionQuery.load(std::memory_order_relaxed) == 0 && (Load32(base, device + kRbModeControl) & 7) != 5) {
     ps_object = g_lastPixelShaderObject;
     ps = g_lastPixelShader;
   }

@@ -512,7 +512,7 @@ def _write_draw(resolver: Resolver, edits: Edits, new_blocks, background: _Backg
     edits.u32(resolver.pointer(push, 64), 4 * slot, PRIMITIVE_TRIANGLE_LIST)
     edits.u32(resolver.pointer(push, 68), 4 * slot, len(indices) // 3)
     array = resolver.pointer(push, 60)
-    new_blocks[(array.entry.index, array.offset + 4 * slot)] = struct.pack(f">{len(indices)}H", *indices)
+    new_blocks[(array.entry.index, array.offset + 4 * slot)] = draw.pack_indices(indices)
     for k in range(3):
         edits.f32(push, 84 + 4 * k, lo[k])
         edits.f32(push, 96 + 4 * k, hi[k])

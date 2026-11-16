@@ -1,7 +1,5 @@
 #include "shader_editor/game_textures.h"
 
-#include <d3d11.h>
-
 #include <algorithm>
 #include <cctype>
 #include <chrono>
@@ -9,6 +7,7 @@
 #include <fstream>
 #include <sstream>
 
+#include "shader_editor/editor.h"
 #include "shader_editor/shader_build.h"
 
 namespace kameo::shader_editor {
@@ -47,12 +46,7 @@ GameTextureLibrary::~GameTextureLibrary() {
   for (auto& [key, future] : reading_types_) future.wait();
   for (auto& [key, future] : reading_pixels_) future.wait();
   for (auto& [key, view] : views_)
-    if (view) view->Release();
-}
-
-void GameTextureLibrary::Attach(ID3D11Device* device, ID3D11DeviceContext* context) {
-  device_ = device;
-  context_ = context;
+    if (view) host_.FreeTexture(view);
 }
 
 void GameTextureLibrary::StartIndex() {
@@ -168,7 +162,7 @@ const std::vector<GameTextureRef>* GameTextureLibrary::TexturesOf(const std::str
   return nullptr;
 }
 
-ID3D11ShaderResourceView* GameTextureLibrary::View(const GameTextureRef& texture) {
+ImTextureID GameTextureLibrary::View(const GameTextureRef& texture) {
   const std::string key = Key(texture.archive, texture.entry);
   if (const auto found = views_.find(key); found != views_.end()) return found->second;
   auto reading = reading_pixels_.find(key);
@@ -179,31 +173,12 @@ ID3D11ShaderResourceView* GameTextureLibrary::View(const GameTextureRef& texture
       std::optional<game_archive::Texture> pixels = game_archive::ReadTexture(*a, {texture.entry, 0});
       return pixels ? std::make_shared<game_archive::Texture>(std::move(*pixels)) : nullptr;
     });
-    return nullptr;
+    return 0;
   }
-  if (!Ready(reading->second)) return nullptr;
+  if (!Ready(reading->second)) return 0;
   const std::shared_ptr<game_archive::Texture> pixels = reading->second.get();
   reading_pixels_.erase(reading);
-  ID3D11ShaderResourceView* view = nullptr;
-  if (pixels && device_ && context_) {
-    D3D11_TEXTURE2D_DESC desc{};
-    desc.Width = pixels->width;
-    desc.Height = pixels->height;
-    desc.MipLevels = 0;
-    desc.ArraySize = 1;
-    desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    desc.SampleDesc.Count = 1;
-    desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
-    desc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
-    ID3D11Texture2D* handle = nullptr;
-    device_->CreateTexture2D(&desc, nullptr, &handle);
-    if (handle) {
-      context_->UpdateSubresource(handle, 0, nullptr, pixels->rgba.data(), pixels->width * 4, 0);
-      device_->CreateShaderResourceView(handle, nullptr, &view);
-      if (view) context_->GenerateMips(view);
-      handle->Release();
-    }
-  }
+  const ImTextureID view = pixels ? host_.CreateTexture(pixels->width, pixels->height, pixels->rgba.data()) : 0;
   views_[key] = view;
   return view;
 }

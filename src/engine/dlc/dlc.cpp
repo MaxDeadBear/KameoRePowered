@@ -136,7 +136,10 @@ void OverrideDlcSelector(PPCRegister& r3, PPCRegister& r4, PPCRegister& r1) {
 
 // Entry of objectAlternativeSetFileInUse(model type, suffix): Kameo's suffix is replaced with the active skin's, and a
 // shader mod costume loads as the character's standard look.
-void KameoOverrideDlcSelectorMid(PPCRegister& r3, PPCRegister& r4, PPCRegister& r1) {
+void KameoOverrideDlcSelectorMid(PPCRegister& r3, PPCRegister& r4, PPCContext& ctx) {
+  // A mid-function hook runs with r1 lowered past the red zone; the scratch strings go under the function's own r1.
+  PPCRegister r1 = ctx.r1;
+  r1.u64 += rex::ppc::kRedZone;
   OverrideDlcSelector(r3, r4, r1);
   if (uint8_t* base = GuestBase()) SettingSkin(base, r3.u32, r4, r1);
 }

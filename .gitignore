@@ -24,3 +24,9 @@ guest_image.bin
 
 # Python
 __pycache__/
+
+# RenderDoc captures
+/rdcaps/
+
+# The add-on zips are packed by CI from tools/modkit
+/tools/modkit/*.zip

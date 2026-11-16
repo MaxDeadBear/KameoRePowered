@@ -1,6 +1,6 @@
 // Crash guards inside the game's own render code.
 
-#include <rex/logging/macros.h>
+#include <rex/logging/log_category.h>
 
 #include "core/hooks.h"
 #include "engine/splitscreen_internal.h"

@@ -2,7 +2,7 @@
 
 #include <cstring>
 
-#include <rex/logging.h>
+#include <rex/logging/log_category.h>
 
 #include "core/hooks.h"
 #include "engine/audio.h"

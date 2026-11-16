@@ -6,11 +6,11 @@
 #include <string>
 #include <system_error>
 
-#include <rex/cvar.h>
-#include <rex/filesystem/vfs.h>
-#include <rex/system/flags.h>
+#include <rex/filesystem/file_system.h>
+#include <rex/logging/log_category.h>
 
 #include "app/app.h"
+#include "core/cvar.h"
 
 namespace kameo::app {
 namespace {
@@ -39,7 +39,7 @@ constexpr int kMaxContentSlots = 16;
 }  // namespace
 
 uint32_t ResolveUserLanguage() {
-  uint32_t lang = REXCVAR_GET(user_language);
+  uint32_t lang = uint32_t(kameo::cvar::GetInt("user_language", 1));
   if (lang == 0 || lang >= std::size(kLangFolders) || !kLangFolders[lang]) {
     lang = 1;  // Default to English if the setting is missing or invalid.
   }
@@ -99,17 +99,18 @@ void BuildMergedLanguageDir(const std::filesystem::path& game_root) {
 }
 
 // The VFS only resolves the directory part of an open through symlinks, so only a folder-level link works; each DLC package's own "english" string table shadows the base game's, so those are redirected too.
-void RegisterLanguageRedirects(rex::filesystem::VirtualFileSystem& vfs, uint32_t lang) {
-  vfs.RegisterSymbolicLink(
-      "\\Device\\Harddisk0\\Partition1\\english",
-      std::string("\\Device\\Harddisk0\\Partition1\\") + kMergedDirName);
+void RegisterLanguageRedirects(rex::filesystem::IFileSystem& vfs, uint32_t lang) {
+  const auto link = [&vfs](const std::string& from, const std::string& to) {
+    if (const auto linked = vfs.Link(from, to); !linked) REXLOG_WARN("[kameo] language: {} was not redirected: {}", from, linked.error().message);
+  };
+  link("\Device\Harddisk0\Partition1\english", std::string("\Device\Harddisk0\Partition1\\") + kMergedDirName);
 
   // The dlc<n>: alias keeps a trailing separator, so the doubled-separator form is registered as well as the clean one.
   const std::string lang_folder = kLangFolders[lang];
   for (int n = 1; n <= kMaxContentSlots; ++n) {
     std::string slot = "\\Device\\Content\\" + std::to_string(n) + "\\";
-    vfs.RegisterSymbolicLink(slot + "english", slot + lang_folder);
-    vfs.RegisterSymbolicLink(slot + "\\english", slot + "\\" + lang_folder);
+    link(slot + "english", slot + lang_folder);
+    link(slot + "\\english", slot + "\\" + lang_folder);
   }
 }
 

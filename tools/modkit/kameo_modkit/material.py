@@ -58,7 +58,9 @@ class Material:
         return None
 
 
-def read_material(resolver: Resolver, node: Node) -> Material:
+def read_material(resolver: Resolver, node: Node, texture_slots: dict[int, int] | None = None) -> Material:
+    """The node's material. `texture_slots` (a draw's, mesh.Draw.texture_slots) are the textures an added draw shows in
+    place of the material's own, by texture palette index."""
     material = Material(node)
     pass_set = resolver.pointer(node.ref, 48)
     passes = resolver.pointer(pass_set, 4) if pass_set else None
@@ -72,7 +74,8 @@ def read_material(resolver: Resolver, node: Node) -> Material:
     samplers = resolver.pointer(params, 16)
     for i in range(resolver.u8(params, 20) if samplers else 0):
         item = Ref(samplers.entry, samplers.offset + 36 * i)
-        material.samplers.append(Sampler(i, resolver.u32(item, 0), bool(resolver.u8(item, 29) & 1)))
+        index = resolver.u32(item, 0)
+        material.samplers.append(Sampler(i, (texture_slots or {}).get(index, index), bool(resolver.u8(item, 29) & 1)))
     material.alpha_reference = resolver.u8(params, 24)
     names = resolver.pointer(params, 76)
     for i in range(resolver.u32(params, 80) if names else 0):

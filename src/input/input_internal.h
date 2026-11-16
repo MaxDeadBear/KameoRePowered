@@ -10,22 +10,21 @@
 
 #include <SDL3/SDL.h>
 
-#include <rex/input/input_system.h>
-#include <rex/input/mnk/mnk_input_driver.h>
+#include <rex/hid/input_system.h>
 #include <rex/ui/ui_event.h>
-#include <rex/ui/window_listener.h>
+#include <rex/xam/input.h>
 
 namespace kameo::input::detail {
 
-// The mouse as the game window's input listener sees it.
-class MouseListener final : public rex::ui::WindowInputListener {
+// Wheel travel is counted in 120ths of a detent, as the game's menus count it.
+constexpr int32_t kScrollPerDetent = 120;
+
+// The mouse as the game window's input events show it.
+class MouseListener final : public rex::ui::IUIEventListener {
  public:
-  void OnKeyDown(rex::ui::KeyEvent&) override;
-  void OnMouseMove(rex::ui::MouseEvent& e) override;
-  void OnMouseDown(rex::ui::MouseEvent& e) override;
-  void OnMouseUp(rex::ui::MouseEvent& e) override;
-  void OnMouseWheel(rex::ui::MouseEvent& e) override;
-  void Record(rex::ui::MouseEvent& e);
+  void OnUIEvent(const rex::ui::UIEvent&) override {}
+  void OnInputEvent(rex::InputEvent& e) override;
+  void Record(const rex::InputEvent& e);
 
   std::mutex mutex;
   int32_t x = -1;
@@ -56,8 +55,8 @@ struct PhysicalMouseState {
   bool right = false;
 };
 
-// The device id the runtime's keyboard driver reports its state under.
-constexpr rex::input::DeviceId kKeyboardDevice = static_cast<rex::input::DeviceId>(0x4D4E4B00);
+// The input system; null before the app's modules connect and after shutdown.
+rex::hid::IInputSystem* InputSystem();
 constexpr float kRadiansPerPixel = 0.0025f;
 
 // pointer.cpp
@@ -78,8 +77,8 @@ extern std::atomic<uint32_t> g_padCount;
 bool LevelRunning();
 bool CoopInputRouteActive();
 void TakePhysicalMouseTravel(int player, float* dx, float* dy);
-bool ReadPhysicalKeyboardState(int player, rex::input::X_INPUT_STATE* state);
-// The input mode owns the keyboard driver's switch, so a stale mnk_mode from any config follows it.
+bool ReadPhysicalKeyboardState(int player, rex::xam::X_INPUT_STATE* state);
+// The keyboard and mouse reach the game through the pad conversion in key_bindings.cpp, so the runtime's own keyboard-and-mouse pad stays off whatever a config says.
 void SyncInputMode();
 
 // player_join.cpp
@@ -87,21 +86,32 @@ extern std::atomic<int64_t> g_frontendP2JoinSeen;
 // When the keyboard or mouse and when each player's controller were last pressed, so each player's controls follow what they touch.
 extern std::atomic<int64_t> g_keyboardMouseUsed;
 extern std::array<std::atomic<int64_t>, 2> g_padUsed;
-void SuppressPlayerOneActivation(uint32_t user, rex::input::X_INPUT_GAMEPAD* gamepad);
+void SuppressPlayerOneActivation(uint32_t user, rex::xam::X_INPUT_GAMEPAD* gamepad);
 void ChooseControlsByUse();
 
 // pad_presets.cpp
-rex::input::X_INPUT_GAMEPAD RemapPad(const rex::input::X_INPUT_GAMEPAD& raw);
+rex::xam::X_INPUT_GAMEPAD RemapPad(const rex::xam::X_INPUT_GAMEPAD& raw);
 // Feeds a controller capture; true while the pad's input must be kept from the game.
-bool FeedPadCapture(const rex::input::X_INPUT_GAMEPAD& raw);
+bool FeedPadCapture(const rex::xam::X_INPUT_GAMEPAD& raw);
 
 // key_bindings.cpp
+// Which keys and mouse buttons are down, as virtual-key flags, and which modifiers are held.
+struct HeldKeys {
+  std::array<bool, 256> down{};
+  bool shift = false;
+  bool ctrl = false;
+  bool alt = false;
+};
+// The 25 key bindings turned into a controller state for the keys held.
+rex::xam::X_INPUT_STATE PadFromKeys(const HeldKeys& held);
+// The keys the runtime's input system reports down, all keyboards together.
+HeldKeys SystemHeldKeys();
 // Puts the bindings back once nothing asks for them to be held off and no key is down.
 void ReleaseKeybindsWhenIdle();
 
 // keyboard_mouse.cpp
-// A private copy of the runtime's keyboard driver, read on its own so Keyboard & Mouse mode can leave the controllers the runtime merges into player one out of it.
-extern rex::input::mnk::MnkInputDriver* g_keyboard;
+// All keyboards and mice together as a controller state, apart from the controllers the runtime merges into player one.
+bool ReadAggregateKeyboardState(rex::xam::X_INPUT_STATE* state);
 extern std::atomic<uint32_t> g_standbyPadButtons;
 extern std::array<uint32_t, 2> g_padPolls;
 extern std::array<uint32_t, 2> g_mouseLookPoll;
@@ -110,9 +120,10 @@ extern std::array<uint32_t, 2> g_mouseLookPoll;
 bool WarriorWheelOpen(int player);
 
 // win32_cursor.cpp
-void ApplyCursorVisibility(bool menu_open);
+// Holds the pointer in the window (captured), or shows it (menu_open) or hides it over the window.
+void ApplyPointerMode(bool captured, bool menu_open);
 #ifdef _WIN32
-void InstallKameoCursor(rex::ui::Window* window);
+void InstallKameoCursor();
 #endif
 
 }  // namespace kameo::input::detail

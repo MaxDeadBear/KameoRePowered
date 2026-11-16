@@ -71,6 +71,7 @@ void ReleaseDrawPathCaches() {
   g_textures.clear();
   ReleaseResolveTargets();
   g_offscreen.clear();
+  ReleaseDepthResolveViews();
   g_depthOnly.clear();
   ReleasePlaceholderTextures();
   g_textureGraveyard.drain();

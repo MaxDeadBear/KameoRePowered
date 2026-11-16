@@ -42,7 +42,7 @@ uint64_t FrameSpanHashIn(SpanHash* table, const uint8_t* src, size_t len, uint64
     if (slot.frame != frame) {
       const uint32_t level = g_spanLevel.load(std::memory_order_relaxed);
       const bool continuing = slot.key == key && slot.level == level && frame - slot.frame == 1;
-      if (continuing && slot.stable_frames >= kStableSpanFrames && ((frame + key) & kStableSpanRecheckMask) != 0 && REXCVAR_GET(kameo_gfx_stable_geometry_skip)) {
+      if (continuing && slot.stable_frames >= kStableSpanFrames && ((frame + key) & kStableSpanRecheckMask) != 0 && KCVAR_GET(kameo_gfx_stable_geometry_skip)) {
         slot.frame = frame;
         return slot.hash;
       }

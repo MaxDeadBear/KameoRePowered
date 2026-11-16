@@ -6,7 +6,7 @@
 
 #include <plume_render_interface.h>
 
-#include <rex/logging.h>
+#include <rex/logging/log_category.h>
 
 #include "gpu/config.h"
 #include "gpu/graphics_system_internal.h"
@@ -255,7 +255,7 @@ void GraphicsSystem::DrawBink(plume::RenderCommandList* list, bool hold_last, ui
     float x = 0.0f;
     float w = float(screen_width);
     const float h = float(screen_height);
-    if (REXCVAR_GET(kameo_gfx_preserve_aspect) && w / h > 16.0f / 9.0f + 0.01f) {
+    if (KCVAR_GET(kameo_gfx_preserve_aspect) && w / h > 16.0f / 9.0f + 0.01f) {
       w = h * 16.0f / 9.0f;
       x = (float(screen_width) - w) * 0.5f;
     }

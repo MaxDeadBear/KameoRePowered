@@ -13,6 +13,7 @@
 
 #include "core/localization.h"
 #include "launcher/window.h"
+#include "shader_editor/d3d11_host.h"
 #include "shader_editor/editor.h"
 #include "shader_editor/shader_build.h"
 
@@ -64,13 +65,15 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int show) {
 
   WindowState window;
   const WindowOptions options = {.title = L"Kameo Shader Editor", .width = 1500, .height = 900, .min_width = 1100, .min_height = 640};
-  Editor editor;
+  D3D11EditorHost host;
+  Editor editor(host);
   const bool ran = RunWindow(instance, show, options, window, [&] {
     const ImGuiIO& io = ImGui::GetIO();
     ImGui::SetNextWindowPos(ImVec2(0, 0));
     ImGui::SetNextWindowSize(io.DisplaySize);
     ImGui::Begin("editor", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBringToFrontOnFocus);
-    editor.Draw(window.device, window.context);
+    host.Attach(window.device, window.context);
+    editor.Draw();
     ImGui::End();
   });
   return ran ? 0 : 1;

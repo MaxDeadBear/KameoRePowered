@@ -2,7 +2,7 @@
 # one. Keys and values are hex addresses without 0x. Each entry says how it was checked.
 
 [functions]
-# The CRT routines rexcrt replaces: found by their bytes (branches masked), identical library code in both builds.
+# The CRT routines the SDK shims replace: found by their bytes (branches masked), identical library code in both builds.
 "82527D00" = "8255D400"  # memcpy
 "825266A0" = "8255BDA0"  # memmove
 "82528270" = "8255D970"  # memset

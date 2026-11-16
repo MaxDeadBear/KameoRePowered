@@ -6,8 +6,8 @@
 
 #include <kameorepowered_init.h>
 
-#include <rex/cvar.h>
-#include <rex/logging.h>
+#include "core/cvar.h"
+#include <rex/logging/log_category.h>
 
 #include "engine/audio.h"
 #include "gpu/config.h"
@@ -44,10 +44,10 @@ std::string FmvMovieName(uint8_t* base, uint32_t fmv) {
 // The Bink fmvRenderPlaying is holding under a replacement movie.
 thread_local uint32_t t_heldBink = 0;
 
-// Decoding and waiting on a Bink paced the frames around a movie to about 76 a second; held under a replacement nothing does, and screens that animate per frame (the title's pulsing Press Start) ran at hundreds. Frames are held to 60 a second instead, unless the frame rate limit is already lower.
-void PaceReplacedMovie() {
+// Screens that animate per frame (the title's pulsing Press Start over its background movie) rely on a movie holding the frame rate down, as the console's vertical sync did. Nothing in playing one does: a Bink's own waits are a millisecond long, and a replacement holds the Bink still. Frames are held to 60 a second while a movie plays, unless the frame rate limit is already lower.
+void PaceMovie() {
   constexpr int32_t kMovieFps = 60;
-  const int32_t cap = REXCVAR_GET(kameo_gfx_fps_cap);
+  const int32_t cap = KCVAR_GET(kameo_gfx_fps_cap);
   if (cap > 0 && cap <= kMovieFps) return;
   static std::chrono::steady_clock::time_point deadline;
   static void* timer = kameo::gpu::CreatePreciseTimer();
@@ -86,6 +86,7 @@ extern "C" REX_FUNC(sub_82264518) {
   const kameo::gpu::MovieDrive drive = kameo::gpu::DriveReplacementMovie(FmvMovieName(base, fmv), bink, has_alpha, gain);
   if (drive == kameo::gpu::MovieDrive::Bink) {
     __imp__sub_82264518(ctx, base);
+    PaceMovie();
     return;
   }
   static uint32_t silenced = 0;
@@ -101,7 +102,7 @@ extern "C" REX_FUNC(sub_82264518) {
   t_heldBink = bink;
   __imp__sub_82264518(ctx, base);
   t_heldBink = outer_held;
-  PaceReplacedMovie();
+  PaceMovie();
   if (drive != kameo::gpu::MovieDrive::Finished) return;
   // Looping (+216) starts the replacement over; otherwise the end the Bink's last frame would have signalled: status 6 through the render-thread buffer when the object has an ending (+248), else status 8.
   if (REX_LOAD_U32(fmv + 216)) {

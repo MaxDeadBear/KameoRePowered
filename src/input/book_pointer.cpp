@@ -4,14 +4,14 @@
 #include <atomic>
 #include <mutex>
 
-#include <rex/cvar.h>
+#include "core/cvar.h"
 
 #include "core/time.h"
 #include "input/guest_controls.h"
 #include "input/input.h"
 #include "input/input_internal.h"
 
-REXCVAR_DECLARE(double, mnk_sensitivity);
+#include "input/sdk_settings.h"
 
 using namespace kameo::input;
 using namespace kameo::input::detail;
@@ -51,7 +51,7 @@ extern "C" REX_FUNC(sub_823CACB8) {
     }
     if ((dx != 0.0f || dy != 0.0f) && width > 0) {
       // Half the window's width carries the wisp from the middle of the book to a page edge.
-      const float units_per_pixel = 5.1f / float(width) * float(REXCVAR_GET(mnk_sensitivity));
+      const float units_per_pixel = 5.1f / float(width) * float(KCVAR_GET(MnkSensitivity()));
       const float x = std::clamp(LoadFloat(base, pointer + 244) + dx * units_per_pixel, -2.9f, 2.9f);
       const float y = std::clamp(LoadFloat(base, pointer + 248) - dy * units_per_pixel, -2.3f, 2.3f);
       StoreFloat(base, pointer + 244, x);

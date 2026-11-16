@@ -7,10 +7,11 @@
 #include <SDL3/SDL.h>
 #endif
 
-#include <rex/cvar.h>
-#include <rex/logging.h>
-#include <rex/system/xtypes.h>
-#include <rex/ui/window.h>
+#include <rex/logging/log_category.h>
+#include <rex/module.h>
+#include <rex/ui/ui_system.h>
+
+#include "core/cvar.h"
 
 #include "gpu/d3d12_debug.h"
 #include "gpu/draw_path.h"
@@ -24,9 +25,6 @@ extern std::unique_ptr<RenderInterface> CreateD3D12Interface();
 #endif
 extern std::unique_ptr<RenderInterface> CreateVulkanInterface();
 }  // namespace plume
-
-// The X_STATUS_* macros cast to an unqualified `X_STATUS`, so they only compile where that name is visible.
-using rex::X_STATUS;
 
 namespace kameo::gpu {
 
@@ -47,20 +45,15 @@ const char* VendorName(plume::RenderDeviceVendor vendor) {
 
 }  // namespace
 
-// The runtime only hands out a native handle on Windows; elsewhere the SDL window stands in for it, and this app opens exactly one.
-void* NativeWindowHandle(rex::ui::Window* window) {
+void* NativeWindowHandle() {
+  rex::ui::IUISystem* ui = REX_INTERFACE(rex::ui::IUISystem);
+  if (!ui) return nullptr;
+  const auto window = ui->GetNativeWindow();
   if (!window) return nullptr;
 #ifdef _WIN32
-  return window->GetNativeWindowHandle();
+  return window->window;
 #else
-  static std::atomic<SDL_Window*> found{nullptr};
-  if (SDL_Window* known = found.load()) return known;
-  int count = 0;
-  SDL_Window** windows = SDL_GetWindows(&count);
-  SDL_Window* first = windows && count > 0 ? windows[0] : nullptr;
-  SDL_free(windows);
-  found.store(first);
-  return first;
+  return window->sdl;
 #endif
 }
 
@@ -107,22 +100,20 @@ bool GraphicsSystem::CreateInterface() {
   }
 }
 
-rex::X_STATUS GraphicsSystem::SetupPresentation(rex::ui::WindowedAppContext* app_context) {
-  (void)app_context;
-
+bool GraphicsSystem::Initialize() {
   if (swap_chain_) {
-    return X_STATUS_SUCCESS;  // idempotent, as the interface requires
+    return true;
   }
 
   if (!CreateInterface()) {
     KGFX_ERROR("no usable graphics backend");
-    return X_STATUS_UNSUCCESSFUL;
+    return false;
   }
 
   device_ = interface_->createDevice();
   if (!device_) {
     KGFX_ERROR("createDevice failed ({})", using_vulkan_ ? "vulkan" : "d3d12");
-    return X_STATUS_UNSUCCESSFUL;
+    return false;
   }
 
   const plume::RenderDeviceDescription& desc = device_->getDescription();
@@ -132,21 +123,12 @@ rex::X_STATUS GraphicsSystem::SetupPresentation(rex::ui::WindowedAppContext* app
   queue_ = device_->createCommandQueue(plume::RenderCommandListType::DIRECT);
   if (!queue_) {
     KGFX_ERROR("createCommandQueue failed");
-    return X_STATUS_UNSUCCESSFUL;
+    return false;
   }
 
-  // ReXApp::SetupPresentation calls this before it creates the window, so the swap chain waits for the first present.
   s_instance = this;
   KGFX_INFO("device ready; swap chain deferred until the window exists");
-  return X_STATUS_SUCCESS;
-}
-
-// Deliberately empty: there is no vsync worker or interrupt callback, because the hooks replace the guest functions that would wait on them.
-rex::X_STATUS GraphicsSystem::SetupGuestGpu(rex::runtime::FunctionDispatcher* function_dispatcher, rex::system::KernelState* kernel_state) {
-  (void)function_dispatcher;
-  (void)kernel_state;
-  KGFX_INFO("guest GPU not emulated (no ring buffer, no interrupts)");
-  return X_STATUS_SUCCESS;
+  return true;
 }
 
 void GraphicsSystem::Shutdown() {
@@ -165,6 +147,7 @@ void GraphicsSystem::Shutdown() {
   {
     std::lock_guard<std::mutex> lock(ui_mutex_);
     ui_textures_.clear();
+    ui_retired_.clear();
   }
   for (auto& buffer : ui_upload_) buffer.reset();
   for (auto& buffer : ui_vertices_) buffer.reset();

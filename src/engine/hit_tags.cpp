@@ -11,11 +11,11 @@
 #include <cmath>
 #include <unordered_map>
 
-#include <rex/cvar.h>
+#include "core/cvar.h"
 
 #include "engine/guest_addresses.h"
 
-REXCVAR_DEFINE_BOOL(kameo_fix_hit_tags, true, "Kameo", "Let an attack's hit tag (which stops it hitting the same target twice) run out by time rather than per frame, so attacks don't hit more often at high frame rates. Off restores the per-frame count, which runs tags out faster the higher the frame rate.");
+KCVAR_DEFINE_BOOL(kameo_fix_hit_tags, true, "Kameo", "Let an attack's hit tag (which stops it hitting the same target twice) run out by time rather than per frame, so attacks don't hit more often at high frame rates. Off restores the per-frame count, which runs tags out faster the higher the frame rate.");
 
 namespace {
 
@@ -36,7 +36,7 @@ std::unordered_map<uint32_t, float> g_pending;
 // hitsTagTick(hits)
 extern "C" REX_FUNC(sub_822DC8B0) {
   const uint32_t hits = ctx.r3.u32;
-  if (!hits || !REXCVAR_GET(kameo_fix_hit_tags)) {
+  if (!hits || !KCVAR_GET(kameo_fix_hit_tags)) {
     __imp__sub_822DC8B0(ctx, base);
     return;
   }

@@ -5,8 +5,8 @@
 
 #include <plume_render_interface.h>
 
-#include <rex/cvar.h>
-#include <rex/logging.h>
+#include "core/cvar.h"
+#include <rex/logging/log_category.h>
 
 #include "gpu/config.h"
 #include "gpu/graphics_system.h"
@@ -20,8 +20,8 @@ std::atomic<float> g_guestGammaExponent{1.0f};
 
 float GraphicsSystem::GammaExponent() const {
   // Sample once for the frame: the guest may install a new ramp during replay.
-  const float user_gamma = float(std::clamp(REXCVAR_GET(kameo_gfx_user_gamma), 20, 400)) / 100.0f;
-  return (REXCVAR_GET(kameo_gfx_gamma) ? g_guestGammaExponent.load() : 1.0f) / user_gamma;
+  const float user_gamma = float(std::clamp(KCVAR_GET(kameo_gfx_user_gamma), 20, 400)) / 100.0f;
+  return (KCVAR_GET(kameo_gfx_gamma) ? g_guestGammaExponent.load() : 1.0f) / user_gamma;
 }
 
 // Compose directly into a native-size UNORM target, then apply the scanout curve

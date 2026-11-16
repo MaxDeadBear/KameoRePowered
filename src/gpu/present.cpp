@@ -8,11 +8,12 @@
 #include <plume_d3d12.h>
 #endif
 
-#include <rex/cvar.h>
-#include <rex/logging.h>
+#include "core/cvar.h"
+#include <rex/logging/log_category.h>
 
 #include "gpu/config.h"
 #include "gpu/d3d12_debug.h"
+#include "gpu/device_removed.h"
 #include "gpu/draw_path.h"
 #include "gpu/frame_profile.h"
 #include "gpu/graphics_system_internal.h"
@@ -109,7 +110,8 @@ void GraphicsSystem::PresentClear() {
   }
   PublishOcclusionResults(frame_slot_, retired);
   // The slot's last frame has retired, so its two timestamps are the GPU time that frame took.
-  if (frame.timestamps_written && frame.timestamps) {
+  // A removed device maps nothing, and plume copies out of the mapping unchecked, so the read is skipped then.
+  if (frame.timestamps_written && frame.timestamps && !detail::CheckDeviceRemoved(device_.get())) {
     frame.timestamps_written = false;
     frame.timestamps->queryResults();
     const uint64_t* stamps = frame.timestamps->getResults();
@@ -236,7 +238,7 @@ void GraphicsSystem::PresentClear() {
   queue_->executeCommandLists(&lists, 1, &wait, 1, &signal, 1, frame.fence.get());
   frame.pending = true;
 
-  swap_chain_->setVsyncEnabled(REXCVAR_GET(kameo_gfx_vsync));
+  swap_chain_->setVsyncEnabled(KCVAR_GET(kameo_gfx_vsync));
 #ifdef _WIN32
   // Exclusive fullscreen rejects DXGI_PRESENT_ALLOW_TEARING, which plume adds whenever vsync is off, so the flag is hidden from that present only.
   plume::D3D12SwapChain* native_chain = !using_vulkan_ ? static_cast<plume::D3D12SwapChain*>(swap_chain_.get()) : nullptr;

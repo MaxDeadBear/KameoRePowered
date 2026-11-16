@@ -7,7 +7,7 @@ import os, shutil, subprocess, sys
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 WS = os.path.join(ROOT, "generated", "tu")
-SDK = os.environ.get("REXGLUE_SDK", "F:/rexglue-sdk/out/install/win-amd64")
+SDK = os.environ.get("REXGLUE_SDK", "F:/rexglue-sdk-0.11.0/win-amd64")
 
 
 def copy_if_changed(src, dst):
@@ -33,14 +33,17 @@ def main() -> int:
     includes = ["config/functions.toml"] + sorted(f"config/hooks/{n}" for n in (os.listdir(hooks) if os.path.isdir(hooks) else []))
     manifest = (
         "# Written by tools/tu/prepare.py for the title-update build.\n"
-        "[project]\nname = \"kameorepowered\"\nsdk_version = \"0.10.0\"\ngame_root = \"assets\"\n\n"
+        "[project]\nname = \"kameorepowered\"\nsdk_version = \"0.11.0\"\ngame_root = \"assets\"\n\n"
         "[entrypoint]\nfile_path = \"assets/default.xex\"\nout_directory_path = \"generated/default\"\n"
+        # The templates RexFabric composes for the project (generated/templates), from this workspace.
+        "template_dir = \"../templates\"\n"
         "includes = [\n" + "".join(f"  \"{i}\",\n" for i in includes) + "]\n")
     path = os.path.join(WS, "kameorepowered_manifest.toml")
     if not os.path.exists(path) or open(path).read() != manifest:
         open(path, "w").write(manifest)
     if "--codegen" in sys.argv:
-        code = subprocess.call([os.path.join(SDK, "bin", "rexglue.exe"), "codegen", "kameorepowered_manifest.toml"], cwd=WS)
+        tool = os.path.join(SDK, "bin", "rexglue.exe" if os.name == "nt" else "rexglue")
+        code = subprocess.call([tool, "codegen", "kameorepowered_manifest.toml"], cwd=WS)
         if code:
             return code
     return subprocess.call([sys.executable, os.path.join(os.path.dirname(__file__), "translate.py"), "--sources"])

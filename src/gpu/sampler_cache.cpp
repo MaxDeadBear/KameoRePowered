@@ -14,7 +14,7 @@
 namespace kameo::gpu::detail {
 namespace {
 
-namespace xe = rex::graphics::xenos;
+namespace xe = rex::xenos;
 
 struct CachedSampler {
   std::unique_ptr<plume::RenderSampler> sampler;
@@ -47,7 +47,7 @@ uint32_t EnsureSampler(GraphicsSystem::DrawPathContext& ctx, const GuestTextureF
                        (uint64_t(fetch.words[3] >> 19) << 12) |
                        (uint64_t(fetch.lod_bias() & 0x3FF) << 26) |
                        (uint64_t(fetch.border_color()) << 36) |
-                       (uint64_t(std::clamp(REXCVAR_GET(kameo_gfx_anisotropy), 0, 16)) << 38) |
+                       (uint64_t(std::clamp(KCVAR_GET(kameo_gfx_anisotropy), 0, 16)) << 38) |
                        (uint64_t(linear_depth) << 43);
   // Most draws bind the same few samplers, so a direct-mapped memo answers before the map is searched.
   SamplerMemo& memo = g_samplerMemo[(key * 0x9E3779B97F4A7C15ull) >> 56];
@@ -82,8 +82,8 @@ uint32_t EnsureSampler(GraphicsSystem::DrawPathContext& ctx, const GuestTextureF
 
   // AnisoFilter is a max ratio (kMax_2_1 = 2 means 2x); only over an all-LINEAR sampler, since D3D12's FILTER_ANISOTROPIC forces linear min/mag where Vulkan does not.
   const uint32_t aniso = fetch.aniso_filter();
-  const bool aniso_ok = aniso >= uint32_t(xe::AnisoFilter::kMax_2_1) &&
-                        aniso <= uint32_t(xe::AnisoFilter::kMax_16_1) &&
+  const bool aniso_ok = aniso >= uint32_t(xe::AnisoFilter::kMax21) &&
+                        aniso <= uint32_t(xe::AnisoFilter::kMax161) &&
                         desc.minFilter == plume::RenderFilter::LINEAR &&
                         desc.magFilter == plume::RenderFilter::LINEAR &&
                         desc.mipmapMode == plume::RenderMipmapMode::LINEAR;
@@ -97,7 +97,7 @@ uint32_t EnsureSampler(GraphicsSystem::DrawPathContext& ctx, const GuestTextureF
     desc.anisotropyEnabled = false;
     desc.maxAnisotropy = 1;
   }
-  const uint32_t forced_aniso = uint32_t(std::clamp(REXCVAR_GET(kameo_gfx_anisotropy), 0, 16));
+  const uint32_t forced_aniso = uint32_t(std::clamp(KCVAR_GET(kameo_gfx_anisotropy), 0, 16));
   // Forcing it also makes the mip filter trilinear, since D3D12's anisotropic filter always is.
   if (forced_aniso > 1 && desc.minFilter == plume::RenderFilter::LINEAR && desc.magFilter == plume::RenderFilter::LINEAR) {
     desc.mipmapMode = plume::RenderMipmapMode::LINEAR;

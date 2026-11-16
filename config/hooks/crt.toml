@@ -1,5 +1,5 @@
 # Guest CRT routines the SDK replaces with host implementations.
-[rexcrt]
+[shim]
 memcpy      = 0x82527D00
 memmove     = 0x825266A0
 memset      = 0x82528270

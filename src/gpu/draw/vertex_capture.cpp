@@ -133,7 +133,7 @@ bool CaptureVertices(uint8_t* base, uint32_t device, const HostLayout& layout, u
       reuse_key = MixGeometryKey(reuse_key, uint32_t(std::lround(viewport[i])));
     }
   }
-  if (reusable && out_source && REXCVAR_GET(kameo_gfx_defer_vertices)) {
+  if (reusable && out_source && KCVAR_GET(kameo_gfx_defer_vertices)) {
     DeferredVertexSource source;
     source.layout = &layout;
     source.reuse_key = reuse_key;

@@ -77,3 +77,8 @@
 0x8266FCB8 = {}
 0x8266FD08 = {}
 0x8269E6B0 = {}
+
+# Tail-call targets the 0.11 analyzer no longer discovers on its own.
+0x82319208 = {}
+0x82319218 = {}
+0x82319220 = {}

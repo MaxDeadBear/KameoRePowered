@@ -3,11 +3,11 @@
 #include <cstdint>
 #include <string>
 
-#include <rex/cvar.h>
+#include "core/cvar.h"
 
 #include "gpu/movie/bink_frame.h"
 
-REXCVAR_DECLARE(bool, kameo_movie_replacements);
+KCVAR_DECLARE(bool, kameo_movie_replacements);
 
 namespace kameo::gpu {
 

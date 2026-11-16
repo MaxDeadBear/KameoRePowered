@@ -5,15 +5,14 @@
 #include <mutex>
 #include <string>
 
-#include <rex/cvar.h>
-#include <rex/system/kernel_state.h>
+#include "core/cvar.h"
 
 #include "core/localization.h"
 #include "input/guest_controls.h"
 #include "ui/hud/fps_counter.h"
 #include "ui/text_window.h"
 
-REXCVAR_DEFINE_BOOL(kameo_toast_test, false, "Kameo", "Show a sample achievement notice once, to check the text box without earning one; clears itself.");
+KCVAR_DEFINE_BOOL(kameo_toast_test, false, "Kameo", "Show a sample achievement notice once, to check the text box without earning one; clears itself.");
 
 using namespace kameo::ui;
 using kameo::input::kFrameTime;
@@ -83,20 +82,20 @@ bool WindowAlive(uint8_t* base, uint32_t window, uint32_t owner) {
 
 }  // namespace
 
-void KameoPushAchievementToast(const rex::system::AchievementEvent& event) {
+void KameoPushAchievementToast(const rex::xam::AchievementEvent& event) {
   std::lock_guard<std::mutex> lock(g_queueMutex);
   g_queue.push_back({Widen(event.achievement.label), event.achievement.gamerscore});
 }
 
 void KameoTickAchievementToast(PPCContext& ctx, uint8_t* base) {
-  if (REXCVAR_GET(kameo_toast_test)) {
-    REXCVAR_SET(kameo_toast_test, false);
+  if (KCVAR_GET(kameo_toast_test)) {
+    KCVAR_SET(kameo_toast_test, false);
     std::lock_guard<std::mutex> lock(g_queueMutex);
     g_queue.push_back({u"Sample Achievement", 20});
   }
   Toast& toast = g_toast;
   if (!toast.slot) {
-    toast.slot = rex::system::kernel_state()->memory()->SystemHeapAlloc(4);
+    toast.slot = GuestSystemAlloc(4);
     if (!toast.slot) return;
     REX_STORE_U32(toast.slot, 0);
   }

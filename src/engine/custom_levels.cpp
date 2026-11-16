@@ -15,7 +15,7 @@
 
 #include <toml++/toml.hpp>
 
-#include <rex/logging.h>
+#include <rex/logging/log_category.h>
 
 #include "engine/guest_addresses.h"
 

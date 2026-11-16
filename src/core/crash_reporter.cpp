@@ -14,18 +14,30 @@
 #include <cstring>
 #include <string>
 
-#include <rex/cvar.h>
-#include <rex/filesystem.h>
-#include <rex/logging.h>
-#include <rex/ppc/func.h>
+#include "core/cvar.h"
+#include <rex/platform/file.h>
+#include <rex/logging/log_category.h>
+#include <rex/ppc/hook.h>
+#if KAMEO_SENTRY
 #include <sentrywork/sentrywork.h>
+#endif
 
 #include "crash_dialog/crash_dialog.h"
 
-REXCVAR_DEFINE_BOOL(kameo_crash_test, false, "Kameo", "Crash on purpose once the game is set up, to check that the crash report is written.");
-REXCVAR_DEFINE_BOOL(kameo_crash_key, false, "Kameo", "Ctrl+Shift+F12 crashes the game on purpose, to try the crash report during play.");
+KCVAR_DEFINE_BOOL(kameo_crash_test, false, "Kameo", "Crash on purpose once the game is set up, to check that the crash report is written.");
+KCVAR_DEFINE_BOOL(kameo_crash_key, false, "Kameo", "Ctrl+Shift+F12 crashes the game on purpose, to try the crash report during play.");
 
 namespace {
+
+// A build without SentryWork (KAMEO_SENTRY off) reports nowhere.
+bool SentryEnabled() {
+#if KAMEO_SENTRY
+  return sentrywork::Enabled();
+#else
+  return false;
+#endif
+}
+
 
 // Everything in the filter runs inside a crashed process, so it keeps to fixed buffers and raw Win32 calls, and touches the logger last.
 wchar_t g_crash_dir[MAX_PATH] = {};
@@ -71,9 +83,9 @@ bool DescribeGuestFunction(uint64_t address, char* out, size_t out_size) {
   const RUNTIME_FUNCTION* function = RtlLookupFunctionEntry(address, &image_base, nullptr);
   if (function == nullptr) return false;
   const uint64_t start = image_base + function->BeginAddress;
-  for (const PPCFuncMapping* mapping = PPCFuncMappings; mapping->host != nullptr; ++mapping) {
+  for (const PPCFuncMapping* mapping = kPPCFuncMappings; mapping->host != nullptr; ++mapping) {
     if (reinterpret_cast<uint64_t>(mapping->host) != start) continue;
-    snprintf(out, out_size, "sub_%08llX+0x%llX", static_cast<unsigned long long>(mapping->guest), static_cast<unsigned long long>(address - start));
+    snprintf(out, out_size, "sub_%08llX+0x%llX", static_cast<unsigned long long>(mapping->address), static_cast<unsigned long long>(address - start));
     return true;
   }
   return false;
@@ -221,7 +233,7 @@ LONG WINAPI ReportCrash(EXCEPTION_POINTERS* exception) {
   REXLOG_ERROR("crash report written to {}.txt{}", base_utf8, dumped ? " and .dmp (for a bug report, send the .txt with this log; the .dmp can hold sign-in details, so never post it publicly)" : " (the minidump failed)");
 
   // Sentry's filter is the one that sends, and it is the filter below this one, so a crash reaches it only if the player says yes.
-  if (sentrywork::Enabled()) {
+  if (SentryEnabled()) {
     // Without this Windows puts a "Not Responding" copy of the window back up while the player reads.
     DisableProcessWindowsGhosting();
     EnumWindows(CloakWindow, 0);
@@ -252,7 +264,7 @@ void ReportAbort(int) {
 
 void InstallCrashReporter() {
   // Beside the log, which the SDK keeps in logs/ next to the executable.
-  const std::wstring dir = (rex::filesystem::GetExecutableFolder() / "logs").wstring();
+  const std::wstring dir = (rex::platform::GetExecutableFolder() / "logs").wstring();
   wcsncpy_s(g_crash_dir, dir.c_str(), _TRUNCATE);
   const LPTOP_LEVEL_EXCEPTION_FILTER previous = SetUnhandledExceptionFilter(ReportCrash);
   if (previous != ReportCrash) g_previous_filter = previous;
@@ -260,18 +272,18 @@ void InstallCrashReporter() {
 }
 
 void CrashForTestIfAsked() {
-  if (!REXCVAR_GET(kameo_crash_test)) return;
+  if (!KCVAR_GET(kameo_crash_test)) return;
   // The guest lookup is checked on a known entry, since the test crash itself is in host code.
   char where[MAX_PATH + 96];
-  DescribeAddress(reinterpret_cast<uint64_t>(PPCFuncMappings[1].host) + 0x10, where, sizeof(where));
-  REXLOG_WARN("kameo_crash_test: guest lookup self-check (expect sub_{:08X}+0x10): {}", static_cast<unsigned long long>(PPCFuncMappings[1].guest), where);
+  DescribeAddress(reinterpret_cast<uint64_t>(kPPCFuncMappings[1].host) + 0x10, where, sizeof(where));
+  REXLOG_WARN("kameo_crash_test: guest lookup self-check (expect sub_{:08X}+0x10): {}", static_cast<unsigned long long>(kPPCFuncMappings[1].address), where);
   REXLOG_WARN("kameo_crash_test: crashing on purpose");
   volatile int* nowhere = nullptr;
   *nowhere = 1;
 }
 
 void CrashIfTestKeyHeld() {
-  if (!REXCVAR_GET(kameo_crash_key)) return;
+  if (!KCVAR_GET(kameo_crash_key)) return;
   const auto held = [](int key) { return (GetAsyncKeyState(key) & 0x8000) != 0; };
   if (!held(VK_CONTROL) || !held(VK_SHIFT) || !held(VK_F12)) return;
   // Asked of Windows rather than ImGui, so only this game being in front counts.

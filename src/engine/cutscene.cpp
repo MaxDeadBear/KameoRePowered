@@ -3,13 +3,13 @@
 #include <algorithm>
 #include <vector>
 
-#include <rex/cvar.h>
+#include "core/cvar.h"
 
 #include "core/time.h"
 #include "engine/cutscene.h"
 #include "engine/guest_addresses.h"
 
-REXCVAR_DEFINE_BOOL(kameo_skip_cutscenes, true, "Kameo", "true lets Start skip in-engine cutscenes and every FMV (A also skips FMVs, as the game already allowed for some).");
+KCVAR_DEFINE_BOOL(kameo_skip_cutscenes, true, "Kameo", "true lets Start skip in-engine cutscenes and every FMV (A also skips FMVs, as the game already allowed for some).");
 
 using namespace kameo::engine;
 
@@ -62,7 +62,7 @@ bool StartPressed(uint8_t* base) {
 // blend) that far past its end, which left the screen black with the picture squeezed to its edges.
 extern "C" REX_FUNC(sub_822D85F8) {
   const uint32_t movie = ctx.r3.u32;
-  if (!movie || !REXCVAR_GET(kameo_skip_cutscenes) || REX_LOAD_U8(movie + kMovieCameraMode) != kMovieHasCamera || REX_LOAD_U8(movie + kMovieLoops) != 0 || !StartPressed(base)) {
+  if (!movie || !KCVAR_GET(kameo_skip_cutscenes) || REX_LOAD_U8(movie + kMovieCameraMode) != kMovieHasCamera || REX_LOAD_U8(movie + kMovieLoops) != 0 || !StartPressed(base)) {
     __imp__sub_822D85F8(ctx, base);
     return;
   }
@@ -115,7 +115,7 @@ extern "C" REX_FUNC(sub_82264B80) {
     }
   }
   __imp__sub_82264B80(ctx, base);
-  if (fmv && REXCVAR_GET(kameo_skip_cutscenes)) {
+  if (fmv && KCVAR_GET(kameo_skip_cutscenes)) {
     if (const uint32_t record = REX_LOAD_U32(fmv + 16)) REX_STORE_U32(record + kFmvSkippable, 1);
   }
 }
@@ -124,7 +124,7 @@ extern "C" REX_FUNC(sub_82264B80) {
 extern "C" REX_FUNC(sub_82264AA8) {
   const uint32_t fmv = ctx.r3.u32;
   __imp__sub_82264AA8(ctx, base);
-  if (fmv && REXCVAR_GET(kameo_skip_cutscenes)) {
+  if (fmv && KCVAR_GET(kameo_skip_cutscenes)) {
     if (const uint32_t record = REX_LOAD_U32(fmv + 16)) REX_STORE_U32(record + kFmvSkippable, 1);
   }
 }

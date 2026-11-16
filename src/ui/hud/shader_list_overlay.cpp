@@ -23,7 +23,7 @@ bool Matches(const kameo::gpu::ShaderListRow& row, const std::string& filter) {
 
 }  // namespace
 
-KameoShaderListOverlay::KameoShaderListOverlay(rex::ui::ImGuiDrawer* drawer) : rex::ui::ImGuiDialog(drawer) { kameo::gpu::ShaderListSetRecording(true); }
+KameoShaderListOverlay::KameoShaderListOverlay() { kameo::gpu::ShaderListSetRecording(true); }
 
 KameoShaderListOverlay::~KameoShaderListOverlay() { kameo::gpu::ShaderListSetRecording(false); }
 

@@ -181,7 +181,7 @@ plume::RenderPipeline* EnsurePipeline(GraphicsSystem::DrawPathContext& ctx, cons
 
   // The guest's offset is absolute normalised depth; D3D12's DepthBias is an integer scaled by 2^(zexp - 23) against a float target, so 2^24 converts near the far plane, approximately but enough to stop decals z-fighting.
   if (call.poly_offset != 0.0f || call.poly_offset_scale != 0.0f) {
-    const float tune = float(REXCVAR_GET(kameo_gfx_depth_bias_scale));
+    const float tune = float(KCVAR_GET(kameo_gfx_depth_bias_scale));
     desc.depthBias = int32_t(call.poly_offset * 16777216.0f * tune);
     desc.slopeScaledDepthBias = call.poly_offset_scale * tune;
   }

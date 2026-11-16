@@ -6,9 +6,8 @@
 #include <string>
 #include <vector>
 
-#include <rex/cvar.h>
+#include "core/cvar.h"
 
-#include <rex/system/kernel_state.h>
 
 #include "core/guest.h"
 #include "core/localization.h"
@@ -234,7 +233,7 @@ void StartPendingLevelJump(PPCContext& ctx, uint8_t* base) {
 void ChangeToLevel(PPCContext& ctx, uint8_t* base, const std::string& level, uint32_t setup_point) {
   // In guest memory of its own: LevelChange copies the name, but only once its fade has started.
   static uint32_t name = 0;
-  if (!name) name = rex::system::kernel_state()->memory()->SystemHeapAlloc(64);
+  if (!name) name = GuestSystemAlloc(64);
   if (!name || level.empty()) return;
   WriteGuestStringAt(base, name, level.substr(0, 42).c_str());
   // As a level exit does (doLevelChangeAction): the setup point by number, and Kai as the player.
@@ -248,19 +247,19 @@ void ChangeToLevel(PPCContext& ctx, uint8_t* base, const std::string& level, uin
 
 }  // namespace kameo::ui
 
-REXCVAR_DEFINE_INT32(kameo_dev_start_task, -1, "Kameo", "For testing: jump to this story task a few seconds after a level starts, as the pause menu's level select does. -1 is off. Keep it off with a save you care about.");
+KCVAR_DEFINE_INT32(kameo_dev_start_task, -1, "Kameo", "For testing: jump to this story task a few seconds after a level starts, as the pause menu's level select does. -1 is off. Keep it off with a save you care about.");
 
-REXCVAR_DEFINE_STRING(kameo_dev_skin, "", "Kameo", "For testing: put Kameo in this skin, by file suffix (00 is Classic), some seconds after a level starts.");
+KCVAR_DEFINE_STRING(kameo_dev_skin, "", "Kameo", "For testing: put Kameo in this skin, by file suffix (00 is Classic), some seconds after a level starts.");
 
-REXCVAR_DEFINE_STRING(kameo_dev_start_level, "", "Kameo", "For testing: change to this level a few seconds after a level starts, by name (its file is the ELF hash of the name in hex, .lvl), with :N after it for its player setup point (0 when left out). Empty is off.");
+KCVAR_DEFINE_STRING(kameo_dev_start_level, "", "Kameo", "For testing: change to this level a few seconds after a level starts, by name (its file is the ELF hash of the name in hex, .lvl), with :N after it for its player setup point (0 when left out). Empty is off.");
 
 void KameoDevStartTaskTick(PPCContext& ctx, uint8_t* base) {
   constexpr uint32_t kTaskTick = 300;
   constexpr uint32_t kSkinTick = 900;
   static uint32_t ticks = 0;
-  const int32_t task = REXCVAR_GET(kameo_dev_start_task);
-  const std::string skin = REXCVAR_GET(kameo_dev_skin);
-  const std::string target = REXCVAR_GET(kameo_dev_start_level);
+  const int32_t task = KCVAR_GET(kameo_dev_start_task);
+  const std::string skin = KCVAR_GET(kameo_dev_skin);
+  const std::string target = KCVAR_GET(kameo_dev_start_level);
   if (task < 0 && skin.empty() && target.empty()) return;
   const std::string level = KameoCurrentLevelName();
   if (level.empty() || level == "FrontEndLevel") return;

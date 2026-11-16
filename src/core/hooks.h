@@ -1,11 +1,11 @@
 // The midasm hooks config/hooks/*.toml names; the generated code calls them by these exact global names and signatures.
 #pragma once
 
-#include <rex/ppc.h>
+#include <rex/ppc/context.h>
 
 void KameoUnlockDlc(PPCRegister& r3);
 void KameoGameTick();
-void KameoOverrideDlcSelectorMid(PPCRegister& r3, PPCRegister& r4, PPCRegister& r1);
+void KameoOverrideDlcSelectorMid(PPCRegister& r3, PPCRegister& r4, PPCContext& ctx);
 bool KameoShouldSkipNextDlcModelLoad();
 void KameoInfiniteEnergy(PPCRegister& r3);
 void KameoInfiniteEnergyCurrent(PPCRegister& r3);

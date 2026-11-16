@@ -114,7 +114,7 @@ void FinishIndexMerge() {
 }
 
 bool TryMergeIndexedDraw(uint8_t* base, uint32_t device, uint32_t primitive, const ExpandedIndices& pre) {
-  if (!REXCVAR_GET(kameo_gfx_merge_indexed)) return false;
+  if (!KCVAR_GET(kameo_gfx_merge_indexed)) return false;
   if (!pre.valid() || pre.blob->empty() || g_capturing.draws.empty()) return false;
   DrawCall& target = g_capturing.draws.back();
   // An un-rebased index_blob proves the target's indices address the whole vertex buffer, so this list shares its vertex space; a re-based one addresses only the target's own window.
@@ -140,7 +140,7 @@ bool TryMergeIndexedDraw(uint8_t* base, uint32_t device, uint32_t primitive, con
 }
 
 bool TryMergeBeginVertices(uint8_t* base, uint32_t device, uint32_t primitive, uint32_t vertex_count, uint32_t ring, uint32_t stride) {
-  if (!REXCVAR_GET(kameo_gfx_merge_begin_vertices)) return false;
+  if (!KCVAR_GET(kameo_gfx_merge_begin_vertices)) return false;
   const uint32_t unit = primitive == kPrimQuadList ? 4 : primitive == kPrimTriangleList ? 3 : 0;
   if (!unit || vertex_count % unit != 0) return false;
   if (g_pendingDeferred.size() != 1 || g_capturing.draws.empty() || g_pendingDeferred.back() != g_capturing.draws.size() - 1) return false;

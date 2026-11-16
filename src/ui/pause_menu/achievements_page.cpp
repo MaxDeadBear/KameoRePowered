@@ -4,7 +4,8 @@
 #include <string>
 #include <vector>
 
-#include <rex/system/kernel_state.h>
+#include <rex/kernel/title_runtime.h>
+#include <rex/xam/achievement_manager.h>
 
 #include "core/localization.h"
 #include "ui/pause_menu/pause_menu.h"
@@ -61,8 +62,8 @@ std::u16string Widen(const std::string& text) {
 bool AddAchievementRows(PPCContext& ctx, uint8_t* base, uint32_t window, Page page) {
   if (page != Page::Achievements) return false;
   AddPageTitle(ctx, base, window, kameo::l10n::Tr(u"Achievements"));
-  rex::system::KernelState* kernel = rex::system::kernel_state();
-  const std::vector<rex::system::AchievementInfo> achievements = kernel ? kernel->achievements().ListAchievements() : std::vector<rex::system::AchievementInfo>{};
+  rex::kernel::TitleRuntime* runtime = REX_RUNTIME();
+  const std::vector<rex::Achievement> achievements = runtime ? runtime->GetAchievementManager().ListAchievements() : std::vector<rex::Achievement>{};
   if (achievements.empty()) {
     if (const uint32_t note = GuestWideString(kameo::l10n::Tr(u"No achievement data was found in the game's files."))) AddTextItem(ctx, base, window, 0, GuestWideString(kSummaryStyle), note, 0, false);
     return true;
@@ -72,7 +73,7 @@ bool AddAchievementRows(PPCContext& ctx, uint8_t* base, uint32_t window, Page pa
   uint32_t total_score = 0;
   for (const auto& a : achievements) {
     total_score += a.gamerscore;
-    if (kernel->achievements().IsUnlocked(a.id)) {
+    if (runtime->GetAchievementManager().IsUnlocked(a.id)) {
       ++unlocked;
       score += a.gamerscore;
     }
@@ -84,7 +85,7 @@ bool AddAchievementRows(PPCContext& ctx, uint8_t* base, uint32_t window, Page pa
   uint32_t row = 0;
   for (const auto& a : achievements) {
     if (row >= 200) break;
-    const bool is_unlocked = kernel->achievements().IsUnlocked(a.id);
+    const bool is_unlocked = runtime->GetAchievementManager().IsUnlocked(a.id);
     icon_rows.push_back({a.id, is_unlocked});
     // The gamerscore is the row's value; locked or unlocked shows in the icon drawn beside the row, dimmed or not.
     AddToggleRow(ctx, base, window, kItemAchievementRow + row++, std::u16string(kLabelIndent) + Widen(a.label), GuestWideString(Number(int32_t(a.gamerscore), u"G")));

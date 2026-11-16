@@ -4,11 +4,11 @@
 #include <atomic>
 #include <cstdint>
 
-#include <rex/cvar.h>
+#include "core/cvar.h"
 
 #include "engine/guest_addresses.h"
 
-REXCVAR_DECLARE(bool, kameo_story_splitscreen);
+KCVAR_DECLARE(bool, kameo_story_splitscreen);
 
 namespace kameo::engine {
 

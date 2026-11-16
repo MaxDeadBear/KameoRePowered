@@ -10,6 +10,8 @@ Kameo: RePowered loads two kinds of mod:
 
 Mods need the Windows launcher, `KameoLauncher.exe`, beside the game.
 
+Mods that change how the game behaves are written in Lua: see [Script mods](scripting.md).
+
 ## Installing a mod
 
 1. Open the launcher and go to the **Mods** page.
@@ -80,6 +82,70 @@ Attach offers four choices (in the operator panel, bottom left, after clicking i
 
 A part that follows more bones than one draw can hold is split automatically.
 
+**Tidy the weights** (on by default, for parts that bend with the body) puts right what copying her weights gets
+wrong on a model that isn't shaped like her:
+
+- A skirt follows the thighs and hips, not the shins, and doesn't tear between the legs when she strides.
+- Small separate pieces (bracelets, a pouch, jewels) each move as one piece.
+- Her ponytail, ear and chest bones are left out, so a new body's hair doesn't swing with a ponytail it doesn't have.
+
+It is a starting point, not a finished rig: check knees, elbows and anything stiff that crosses a joint, and repaint
+there in Weight Paint.
+
+### Watching it move
+
+**Play Her Animation** (Kameo tab) plays one of Kameo's own animations from the game on the armature, so you can see
+how a model bends in a run, a jump or a fight without starting the game, and repaint weights while it plays.
+
+- Pick a clip from the list. The game's files give clips no names, so they are listed by number and length; type a
+  number to find one again.
+- Space stops and starts it. The button beside it stands her in her T-pose again.
+- She stays in place: a clip's travel across the ground isn't read.
+- A handful of clips show a joint snapping for a single frame. That is in how the clip is read here, not in your
+  model.
+- Only Kameo's clips are found so far, not the warriors'.
+
+### Spring bones
+
+Kameo's skeleton is fixed, and her animations move only her own joints. What you can add are **spring bones**: bones
+of your own that swing on a spring in the game, for hair, tails, skirts, ears, capes and anything that dangles.
+
+1. Select the character's armature, enter Edit Mode and add bones where the part is. Name each `spring_` and anything
+   you like (`spring_tail_1`), and parent it to one of her `joint_` bones or to another spring bone, so a chain hangs
+   link from link.
+2. Weight the part to those bones, as you would to any bone.
+3. Attach it with **Keep its weights**, and save the costume.
+
+In the game each spring bone follows the bone it hangs from and lags, swings and settles as she moves. In Blender
+they stay still, including while her animations play.
+
+- A model can add up to 96.
+- How they swing is set for all of them at once, in `kameo_settings.toml`: `kameo.spring_stiffness`,
+  `kameo.spring_damping`, `kameo.spring_gravity` and `kameo.spring_limit` (the furthest swing, in degrees).
+  `kameo.spring_bones = false` holds them rigid.
+- They need a game build that knows them. An older build shows the part frozen where it was modelled.
+- **Attach with Its Rig** can make them for you: tick **Its extra bones become spring bones**, and the model's hair,
+  skirt and tail bones are added to her skeleton as spring bones with their weights.
+
+### A model with its own rig
+
+A model that comes rigged keeps the weights its artist painted. Select it (its meshes or its armature) and click
+**Attach with Its Rig** instead of Attach to Character.
+
+- Its bones are matched to hers by name. Mixamo, Unreal, Unity and VRM humanoids, Rigify and 3ds Max Biped names are
+  recognised.
+- The model is turned, scaled and moved onto her, and each of its joints is moved onto hers, so an A-pose becomes her
+  T-pose and its elbows and knees bend where hers do. Both steps can be switched off in the operator panel.
+- Bones she has no joint for (twist bones, hair, skirt and cloth bones) give their weights to the bone they hang
+  from. Her skeleton can't gain bones, so those parts move with the body and don't swing on their own.
+- If the names say nothing (`Bone.001`), each bone goes to her nearest joint. Stand the model exactly on her, in her
+  pose, first, and check the result.
+
+**Import a Game Model as a Part** opens any of the game's models to put on her: a `.mdl`, or one model out of a level
+archive (`.lvl`), where the townsfolk and bosses are. Give the model's number in the archive;
+`python -m kameo_modkit gltf --graph N file.lvl out.gltf` exports one the same way. Its bones are named `src_NN`,
+since its joints aren't hers, and it attaches with its rig by nearest joint.
+
 ### Replacing the whole character
 
 1. Import the character and delete her meshes (keep the armature).
@@ -126,6 +192,46 @@ Painted textures go to `textures/replace/blender/<model>/` in the game folder, n
 them, at any size. They aren't part of the `.kmod`. To ship a texture inside a mod, use **Export Kameo Mod** as usual.
 To share a texture pack, hand out that folder.
 
+### Editing the model in the running game
+
+A costume of your own is the one kind of model the game takes while it runs, so shape and weight edits can be watched
+there as you make them.
+
+1. Open a character and click **Save as New Costume**. Restart the game once so it lists the costume, and choose it on
+   the storybook's **Bonus** pages.
+2. Back in Blender, switch on **Live Link to the Game** under **Save Costume**.
+3. Edit: move vertices, sculpt, paint weights, change UVs. About a second after you stop, the costume is saved and the
+   game reloads it on the character wearing it. The line under the button says when it was last sent, or why it
+   wasn't.
+
+Each send builds the whole model, which takes a second or two, and it has to leave Edit Mode for a moment to read the
+mesh; it puts your mode and selection back. Posing the armature sends nothing, since a pose isn't part of the model.
+Live Link needs Blender 3.6 or newer.
+
+### The Models window
+
+Press **F11** in the game to open the Models window, and again to close it (it keeps what you did). It lists your
+costumes, each with its character, its file in `costumes`, and whether it is on the character now. Each has four
+buttons:
+
+- **Wear** puts Kameo in that costume.
+- **Reload** has the game read the costume's file again and reload it on the character wearing it, even if the file
+  didn't change.
+- **Import...** picks a model file and puts it on the costume. An `.mdl` is copied over the costume's file. A `.gltf`
+  or `.glb` is converted first, using the costume's current model as the original. Either way the game then reloads it
+  on the character. While **Reload when the file changes** is ticked, saving the file again imports it again.
+- **Export glTF...** saves the costume's model as a glTF file you can open in any modelling program. It writes a `.bin`
+  and a textures folder beside the file, so pick an empty folder.
+
+So the loop is: export once, edit and save in your program, and watch the character change.
+
+**New costume...** takes a name and one of Kameo's own skins to copy, and adds the costume to `costumes`. The game
+makes its list of costumes before it loads its content, so a new costume shows up only after you close the game and
+start it again.
+
+Converting a glTF needs Python 3.10 or newer with NumPy (`py -m pip install numpy`) and the `modkit` folder beside
+`kameorepowered.exe`. The window says what is missing. Importing an `.mdl` needs neither.
+
 ### Rules underneath
 
 These matter if you edit the exported files by hand or something looks off:
@@ -134,8 +240,8 @@ These matter if you edit the exported files by hand or something looks off:
   `graph<g>_mesh<m>_draw<d>`; triangles go wherever their material says, so objects can be joined or split freely.
   A copy of one (`….001`) becomes a new draw with its own textures and bones. A draw left with no triangles is
   hidden.
-- **The skeleton is the game's.** Weight to the existing `joint_NN` bones. Bones can't be added, and moving them
-  changes nothing in game.
+- **The skeleton is the game's.** Weight to the existing `joint_NN` bones. Moving them changes nothing in game. The
+  bones you can add are spring bones (above).
 - **Bone budget.** Each draw holds up to 12 bones; parts using more are split into extra draws.
 - **Limits.** 65535 vertices per mesh. A mesh can't reach further from the character than the original did.
 
@@ -207,6 +313,14 @@ in HLSL.
 4. Run the game alongside it. With **Live Update** on, the game picks up each change a moment after you stop editing,
    with no restart.
 5. Press **Save**. It compiles for both renderers and keeps your graph, so **Open...** can bring it back.
+
+The editor also opens inside the game: press **F1** (again, or its close button, to put it away). It is the same editor,
+without the preview panel, because the game itself is the preview: with **Live Update** on, an edit shows on the
+character within moments. While it is open the game does not get your keyboard, mouse or controller. Putting it away
+only hides it: the graph you were working on stays for the rest of the session, a build under way finishes, and an edit
+still waiting for its live update gets it, so you can hide the window and watch the change. **Game's Look** takes the
+mod's shaders back out of the game, which shows its own look again; your graph stays, and **Save** puts them back. It
+needs the `editor_shaders` folder that ships with the Windows download; without it the window says what is missing.
 
 The graph works like Unreal's material editor: drag nodes in from the palette, or right-click the canvas to search for
 one. Everything ends in **Output**, the colour drawn. Hover a node for what it does. Name a Number or Colour node to

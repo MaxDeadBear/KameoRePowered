@@ -153,11 +153,13 @@ def main() -> None:
     gltf = commands.add_parser("gltf")
     gltf.add_argument("file")
     gltf.add_argument("out")
+    gltf.add_argument("--graph", type=int, action="append", metavar="N", help="export only this model of the archive (repeatable); `info` lists them")
     imp = commands.add_parser("import")
     imp.add_argument("original")
     imp.add_argument("gltf")
     imp.add_argument("out")
     imp.add_argument("--keep-missing", action="store_true", help="keep the old geometry of meshes the glTF has no triangles for")
+    imp.add_argument("--try-models", metavar="FOLDER", help="when the glTF was made from another of the character's models, find that model in this folder of the game's files and build from it instead")
     pack = commands.add_parser("kmod", help="package edited archives as a mod for the launcher's Mods page")
     pack.add_argument("out")
     pack.add_argument("pairs", nargs="+", metavar="original=edited", help="a shipped archive and its edited copy")
@@ -184,7 +186,24 @@ def main() -> None:
         try:
             notes = import_gltf(args.original, args.gltf, args.out, args.keep_missing)
         except ImportError_ as error:
-            raise SystemExit(f"import failed: {error}")
+            # A glTF names the draws of the model it was exported from. One made from another of the character's
+            # models (the Gothic costume, say, brought onto a copy of Classic) fits that model and no other.
+            notes = None
+            if args.try_models and "draws the model does not have" in str(error):
+                import glob
+                import os
+
+                character = os.path.basename(args.original)[:8]
+                for candidate in sorted(glob.glob(os.path.join(args.try_models, character + "_*.mdl"))):
+                    try:
+                        notes = import_gltf(candidate, args.gltf, args.out, args.keep_missing)
+                    except ImportError_:
+                        continue
+                    notes = [f"the file was made from {os.path.basename(candidate)}, not from this costume's model, so the costume is now built on that one"] + list(notes)
+                    break
+            if notes is None:
+                hint = " The file was exported from a different model than this costume was made from: import it onto a costume made from the same model, or export this costume and edit that." if "draws the model does not have" in str(error) else ""
+                raise SystemExit(f"import failed: {error}.{hint}")
         for note in notes:
             print(f"note: {note}")
         print(f"wrote {args.out}")
@@ -193,7 +212,7 @@ def main() -> None:
     elif args.command == "gltf":
         from .gltf import export_gltf
 
-        export_gltf(args.file, args.out)
+        export_gltf(args.file, args.out, set(args.graph) if args.graph else None)
     else:
         export_obj(args.file, args.out)
 

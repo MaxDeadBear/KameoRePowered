@@ -5,8 +5,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include <rex/system/kernel_state.h>
-
 namespace kameo::ui {
 
 namespace {
@@ -22,8 +20,7 @@ uint32_t GuestWideString(const std::u16string& text) {
   static std::unordered_map<std::u16string, uint32_t> cache;
   std::lock_guard<std::mutex> lock(mutex);
   if (const auto found = cache.find(text); found != cache.end()) return found->second;
-  auto* memory = rex::system::kernel_state()->memory();
-  const uint32_t address = memory ? memory->SystemHeapAlloc(uint32_t(text.size() + 1) * 2) : 0;
+  const uint32_t address = GuestSystemAlloc(uint32_t(text.size() + 1) * 2);
   if (!address) return 0;
   uint8_t* base = GuestBase();
   for (size_t i = 0; i <= text.size(); ++i) REX_STORE_U16(address + uint32_t(i) * 2, i < text.size() ? uint16_t(text[i]) : 0);

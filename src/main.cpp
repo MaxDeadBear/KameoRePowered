@@ -1,5 +1,10 @@
-#include "kameorepowered_init.h"
-
 #include "app/app.h"
 
-REX_DEFINE_APP(kameorepowered, KameoApp::Create)
+// The steps REX_TITLE_APP runs, with one of ours before Shutdown, which unloads the title before any hook of the app runs.
+static int KameoMain(KameoApp& app, const rex::CLIArgList& args) {
+  if (app.Init(args) && app.LaunchTitle()) app.Run();
+  app.ReleaseTitleListeners();
+  return app.Shutdown();
+}
+
+REX_TITLE_APP_MAIN(KameoApp, KameoMain)

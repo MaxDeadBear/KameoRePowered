@@ -10,7 +10,7 @@
 #include <cstdint>
 #include <string>
 
-#include <rex/logging.h>
+#include <rex/logging/log_category.h>
 
 #include "core/guest.h"
 #include "engine/dlc/dlc.h"

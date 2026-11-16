@@ -4,7 +4,7 @@
 #include <atomic>
 #include <cstdint>
 
-#include <rex/ppc.h>
+#include <rex/ppc/context.h>
 
 extern std::atomic<int32_t> g_kameo_master_volume;
 extern std::atomic<int32_t> g_kameo_sfx_volume;

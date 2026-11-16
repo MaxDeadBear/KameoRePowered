@@ -1,6 +1,6 @@
 #include "engine/kept_progress.h"
 
-#include <rex/logging.h>
+#include <rex/logging/log_category.h>
 
 #include "engine/guest_addresses.h"
 

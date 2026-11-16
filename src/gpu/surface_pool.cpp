@@ -50,7 +50,7 @@ DepthOnlyTarget* EnsureDepthOnly(GraphicsSystem::DrawPathContext& ctx, uint32_t 
 // A target no pass has drawn into for this long is freed; one a pass needs again is simply recreated, and a resolve only reads a pass at most kameo_gfx_stale_offscreen_frames old.
 void SweepIdleOffscreen(GraphicsSystem::DrawPathContext& ctx) {
   constexpr uint64_t kIdleFrames = 600;
-  if (REXCVAR_GET(kameo_gfx_stale_offscreen_frames) < 0) return;  // unbounded reuse keeps every pass on purpose
+  if (KCVAR_GET(kameo_gfx_stale_offscreen_frames) < 0) return;  // unbounded reuse keeps every pass on purpose
   uint32_t freed = 0;
   for (auto it = g_offscreen.begin(); it != g_offscreen.end();) {
     if (it->second.cleared_frame != ~0ull && FramesSince(it->second.cleared_frame) > kIdleFrames) {

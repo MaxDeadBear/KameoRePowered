@@ -13,6 +13,7 @@
 #include "core/localization.h"
 #include "imgui_backends/imgui_impl_win32.h"
 #include "launcher/app.h"
+#include "launcher/container.h"
 
 namespace {
 
@@ -40,6 +41,10 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int show) {
   ImGui_ImplWin32_EnableDpiAwareness();
   ::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 
+  // Declared before the app, so the installers' threads are joined before the runtime's module is stopped.
+  struct FileSystemGuard {
+    ~FileSystemGuard() { ShutdownFileSystem(); }
+  } file_system_guard;
   App app;
   wchar_t module[MAX_PATH];
   ::GetModuleFileNameW(nullptr, module, MAX_PATH);

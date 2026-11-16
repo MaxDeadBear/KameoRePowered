@@ -10,7 +10,7 @@
 
 #include <kameorepowered_init.h>
 
-#include <rex/logging.h>
+#include <rex/logging/log_category.h>
 
 #include "gpu/graphics_system.h"
 #include "gpu/log.h"

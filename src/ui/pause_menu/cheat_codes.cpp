@@ -2,7 +2,7 @@
 
 #include <array>
 
-#include <rex/logging.h>
+#include <rex/logging/log_category.h>
 
 #include "core/unlock_codes.h"
 #include "input/guest_controls.h"

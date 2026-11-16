@@ -1,7 +1,7 @@
 // Left and right on a skin line step back and forward through the skins, where A only steps forward: Kameo's costume
 // line on the Bonus pages, and Change Skin on a warrior's page.
 
-#include <rex/logging.h>
+#include <rex/logging/log_category.h>
 
 #include "engine/dlc/dlc.h"
 #include "input/guest_controls.h"

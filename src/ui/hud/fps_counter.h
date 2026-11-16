@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-#include <rex/ppc.h>
+#include <rex/ppc/context.h>
 
 // Keeps the in-game FPS counter's text box alive and up to date; called once per game tick.
 void KameoTickFpsCounter(PPCContext& ctx, uint8_t* base);

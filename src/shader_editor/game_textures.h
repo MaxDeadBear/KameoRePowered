@@ -12,19 +12,20 @@
 #include <string>
 #include <vector>
 
+#include <imgui.h>
+
 #include "core/game_archive.h"
 #include "shader_editor/shader_graph.h"
 
-struct ID3D11Device;
-struct ID3D11DeviceContext;
-struct ID3D11ShaderResourceView;
-
 namespace kameo::shader_editor {
+
+class EditorHost;
 
 class GameTextureLibrary {
  public:
   ~GameTextureLibrary();
-  void Attach(ID3D11Device* device, ID3D11DeviceContext* context);
+  // `host` makes the thumbnails and must outlive the library.
+  explicit GameTextureLibrary(EditorHost& host) : host_(host) {}
 
   // Which object types each level holds, read in the background.
   void StartIndex();
@@ -40,15 +41,14 @@ class GameTextureLibrary {
 
   // The textures one type draws with, read in the background: null until they are, empty when it has none.
   const std::vector<GameTextureRef>* TexturesOf(const std::string& archive, const std::string& type);
-  // A view of one texture, made once its pixels are read; null until then, or when it can't be read.
-  ID3D11ShaderResourceView* View(const GameTextureRef& texture);
+  // A thumbnail of one texture, made once its pixels are read; 0 until then, or when it can't be read.
+  ImTextureID View(const GameTextureRef& texture);
 
  private:
   std::shared_ptr<const game_archive::Archive> Open(const std::string& archive);
   void Collect();
 
-  ID3D11Device* device_ = nullptr;
-  ID3D11DeviceContext* context_ = nullptr;
+  EditorHost& host_;
   std::mutex mutex_;
   // The index: archive file -> its types.
   std::map<std::string, std::vector<std::string>> types_;
@@ -59,7 +59,7 @@ class GameTextureLibrary {
   std::map<std::string, std::future<std::vector<GameTextureRef>>> reading_types_;
   std::map<std::string, std::vector<GameTextureRef>> type_textures_;
   std::map<std::string, std::future<std::shared_ptr<game_archive::Texture>>> reading_pixels_;
-  std::map<std::string, ID3D11ShaderResourceView*> views_;
+  std::map<std::string, ImTextureID> views_;
   std::vector<std::pair<std::string, std::shared_ptr<const game_archive::Archive>>> open_;
 };
 

@@ -14,8 +14,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include <rex/logging.h>
-#include <rex/system/kernel_state.h>
+#include <rex/logging/log_category.h>
 
 #include "core/guest.h"
 #include "core/localization.h"
@@ -276,7 +275,7 @@ void Choose(const std::string& suffix) {
 }
 
 void SendChoice(PPCContext& ctx, uint8_t* base) {
-  if (!g_guestSuffix) g_guestSuffix = rex::system::kernel_state()->memory()->SystemHeapAlloc(64);
+  if (!g_guestSuffix) g_guestSuffix = GuestSystemAlloc(64);
   if (!g_guestSuffix) return;
   WriteGuestStringAt(base, g_guestSuffix, g_skin.suffix.c_str());
   // The update's skin-sync send (kind, model type, suffix, have, flag).
@@ -324,7 +323,7 @@ extern "C" REX_FUNC(sub_8225E838) {
   static std::unordered_map<uint32_t, uint32_t> logged;
   if (!logged.count(object) || logged[object] != model_type) {
     logged[object] = model_type;
-    REXLOG_INFO("[kameo] joiner skin: {:08X} model {:08X} player {} on the {} is {}", object, model_type, REX_LOAD_U8(object + 146),
+    REXLOG_INFO("[kameo] joiner skin: {:08X} model {:08X} player {} on the {} is {}", object, model_type, uint32_t(REX_LOAD_U8(object + 146)),
                 IsHost(base) ? "host" : "joiner", joiners ? "the joiner's" : "the host's");
   }
   if (!joiners) {

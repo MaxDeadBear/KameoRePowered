@@ -5,7 +5,10 @@ ndSkeleton (modelGetMaxModelAnimJointsAndSkeleton, BuildMatricesFromJoints, skel
     +0  translation from the parent joint (3 floats)
     +12 pivot: the joint's bind position in model space (3 floats)
     +24 parent joint index (u16, 0xFFFF for a root)
+    +26 first child, +28 next sibling, +30 its own index, +32 its mirror joint (u16 each, 0xFFFF for none)
     +34 scale compensation flag (u8)
+    +35 0x53 on a joint the importer added (extend.add_bones): a spring bone, which no animation drives and the
+        game's own code never visits; src/engine/spring_bones.cpp gives it its matrix
   The bind pose has no rotation: a joint's world matrix is its parent's times its translation, and the skinning
   matrix subtracts the pivot (skeletonSubtractPivots), so vertices are stored in model space and a joint's inverse
   bind matrix is a translation by minus its pivot. An animation adds its own offset to the stored translation
@@ -22,12 +25,16 @@ from dataclasses import dataclass
 from .graph import Node, Ref, Resolver
 
 
+SPRING_MARK = 0x53
+
+
 @dataclass
 class Joint:
     index: int
     parent: int  # -1 for a root
     translation: tuple[float, float, float]
     pivot: tuple[float, float, float]
+    spring: bool = False  # added by the importer
 
 
 @dataclass
@@ -64,7 +71,7 @@ def read_skeleton(resolver: Resolver, roots: list[Node]) -> Skeleton | None:
         translation = tuple(resolver.f32(array, base + 4 * k) for k in range(3))
         pivot = tuple(resolver.f32(array, base + 12 + 4 * k) for k in range(3))
         parent = resolver.u16(array, base + 24)
-        joints.append(Joint(i, -1 if parent == 0xFFFF or parent >= count else parent, translation, pivot))
+        joints.append(Joint(i, -1 if parent == 0xFFFF or parent >= count else parent, translation, pivot, resolver.u8(array, base + 35) == SPRING_MARK))
     matrix_joints: list[int] = []
     mtx = _find(node.children, "ndMtxArray")
     if mtx is not None:

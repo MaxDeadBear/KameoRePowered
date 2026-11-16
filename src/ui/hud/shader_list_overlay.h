@@ -3,14 +3,15 @@
 #include <string>
 
 #include <imgui.h>
-#include <rex/rex_app.h>
+
+#include "ui/dialog.h"
 
 // F7: every pixel shader the scene is drawing, with a switch for each, to find which one draws something (a shader
 // switched off draws nothing). The hashes are what a shader mod targets, and the textures each samples are named by
 // the hashes the texture dump uses.
-class KameoShaderListOverlay : public rex::ui::ImGuiDialog {
+class KameoShaderListOverlay : public KameoDialog {
  public:
-  explicit KameoShaderListOverlay(rex::ui::ImGuiDrawer* drawer);
+  KameoShaderListOverlay();
   ~KameoShaderListOverlay() override;
 
  protected:

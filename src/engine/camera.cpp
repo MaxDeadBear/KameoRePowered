@@ -3,14 +3,14 @@
 #include <algorithm>
 #include <cmath>
 
-#include <rex/cvar.h>
+#include "core/cvar.h"
 
 #include "engine/guest_addresses.h"
 #include "gpu/stereo/stereo.h"  // STEREO:
 
-REXCVAR_DEFINE_BOOL(kameo_camera_drift, false, "Kameo", "true restores the original follow camera, which falls further behind and higher the longer you run; false keeps it at its default distance.");
-REXCVAR_DEFINE_BOOL(kameo_camera_auto_level, false, "Kameo", "true lets the follow camera tilt itself back to its default angle while you move, as the original game did.");
-REXCVAR_DEFINE_INT32(kameo_camera_fov, 0, "Kameo", "Degrees added to the gameplay camera's vertical field of view, -10 to 30; cutscenes keep their own.");
+KCVAR_DEFINE_BOOL(kameo_camera_drift, false, "Kameo", "true restores the original follow camera, which falls further behind and higher the longer you run; false keeps it at its default distance.");
+KCVAR_DEFINE_BOOL(kameo_camera_auto_level, false, "Kameo", "true lets the follow camera tilt itself back to its default angle while you move, as the original game did.");
+KCVAR_DEFINE_INT32(kameo_camera_fov, 0, "Kameo", "Degrees added to the gameplay camera's vertical field of view, -10 to 30; cutscenes keep their own.");
 
 namespace {
 
@@ -33,7 +33,7 @@ extern "C" REX_FUNC(sub_82440D28) {
   const uint32_t camera = ctx.r3.u32;
   const uint32_t out = ctx.r4.u32;
   // While the player moves with the camera stick at rest, this eases the pitch at camera+200 back to its default, which drags a camera the player tilted up or down back toward it.
-  const bool keep_pitch = camera && !REXCVAR_GET(kameo_camera_drift) && !REXCVAR_GET(kameo_camera_auto_level);
+  const bool keep_pitch = camera && !KCVAR_GET(kameo_camera_drift) && !KCVAR_GET(kameo_camera_auto_level);
   const uint32_t pitch_bits = keep_pitch ? REX_LOAD_U32(camera + 200) : 0;
   __imp__sub_82440D28(ctx, base);
   if (keep_pitch) REX_STORE_U32(camera + 200, pitch_bits);
@@ -44,7 +44,7 @@ extern "C" REX_FUNC(sub_82440D28) {
     const float ez = LoadGuestFloat(base, out + 8) - LoadGuestFloat(base, camera + 180);
     kameo::gpu::NoteStereoFocusDistance(std::sqrt(ex * ex + ey * ey + ez * ez));
   }
-  if (REXCVAR_GET(kameo_camera_drift) || !camera || !out) return;
+  if (KCVAR_GET(kameo_camera_drift) || !camera || !out) return;
   const uint32_t record = REX_LOAD_U32(camera + 252);
   if (!record) return;
   const float distance = LoadGuestFloat(base, record + 92) * LoadGuestFloat(base, kDefaultDistanceScale);
@@ -77,7 +77,7 @@ extern "C" REX_FUNC(sub_82440D28) {
 extern "C" REX_FUNC(sub_82275620) {
   const uint32_t player = ctx.r3.u32;
   __imp__sub_82275620(ctx, base);
-  const int32_t offset = std::clamp(REXCVAR_GET(kameo_camera_fov), -10, 30);
+  const int32_t offset = std::clamp(KCVAR_GET(kameo_camera_fov), -10, 30);
   if (offset == 0) return;
   PPCContext active = ctx;
   active.r3.u64 = player;

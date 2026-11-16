@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 
-#include <rex/logging.h>
+#include <rex/logging/log_category.h>
 
 #include "core/guest.h"
 #include "core/localization.h"

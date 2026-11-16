@@ -46,11 +46,11 @@ The launcher also edits every setting, installs DLC and level mods, and switches
 
 ### Mods
 
-Install mods from the launcher's Mods page: put `.kmod` files in its mods folder and switch them on, or make your own looks in the Shader Editor, which previews them on any character and costume and updates the running game as you edit. Make your own character skins and add-ons with the Blender add-on in the Windows download's `modkit` folder. See [docs/modding.md](docs/modding.md).
+Install mods from the launcher's Mods page: put `.kmod` files in its mods folder and switch them on, or make your own looks in the Shader Editor, which previews them on any character and costume and updates the running game as you edit. Make your own character skins and add-ons with the Blender add-on in the Windows download's `modkit` folder. See [docs/modding.md](docs/modding.md). Mods can also change how the game behaves with Lua scripts in the `mods` folder (F5 in game): see [docs/scripting.md](docs/scripting.md).
 
 ## Building from source
 
-The short version, assuming the SDK is unpacked and `REXGLUE_SDK` points at it:
+The short version, assuming [ReXGlue SDK 0.11.0](https://github.com/rexglue/rexglue-sdk/releases/tag/v0.11.0) is unpacked and `REXGLUE_SDK` points at it (the folder that holds `bin`, `include` and `lib`), with Clang 20 or newer, CMake, Ninja and Git LFS installed:
 
 ```bash
 git clone --recurse-submodules https://github.com/MaxDeadBear/KameoRePowered.git

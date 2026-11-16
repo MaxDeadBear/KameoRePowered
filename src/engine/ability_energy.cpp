@@ -11,13 +11,13 @@
 
 #include <algorithm>
 
-#include <rex/cvar.h>
-#include <rex/logging.h>
+#include "core/cvar.h"
+#include <rex/logging/log_category.h>
 
 #include "engine/ability_energy.h"
 #include "engine/guest_addresses.h"
 
-REXCVAR_DEFINE_BOOL(kameo_fix_ability_energy, true, "Kameo", "Spend the elemental warriors' energy by time rather than per frame in the abilities that drain it while held (Pummel Weed underground and shell attack, super spin, freeze breath, flamethrower, water cannon, electrocute, suck, snare hold, spitter carry), so the meter lasts as long as on the console at any frame rate. Off restores the per-frame drain, which empties it faster the higher the frame rate.");
+KCVAR_DEFINE_BOOL(kameo_fix_ability_energy, true, "Kameo", "Spend the elemental warriors' energy by time rather than per frame in the abilities that drain it while held (Pummel Weed underground and shell attack, super spin, freeze breath, flamethrower, water cannon, electrocute, suck, snare hold, spitter carry), so the meter lasts as long as on the console at any frame rate. Off restores the per-frame drain, which empties it faster the higher the frame rate.");
 
 namespace {
 
@@ -42,7 +42,7 @@ kameo::engine::PerTickEnergyDrainScope::~PerTickEnergyDrainScope() { t_perTickDr
 // ObjPlaySetValue(status, kind, mode, value): kind 0 mode 1 sets the energy.
 extern "C" REX_FUNC(sub_8217EBA8) {
   const uint32_t status = ctx.r3.u32;
-  if (t_perTickDrain && status && ctx.r4.u32 == 0 && ctx.r5.u32 == 1 && REXCVAR_GET(kameo_fix_ability_energy)) {
+  if (t_perTickDrain && status && ctx.r4.u32 == 0 && ctx.r5.u32 == 1 && KCVAR_GET(kameo_fix_ability_energy)) {
     const float current = LoadGuestFloat(base, status + kStatusEnergy);
     const float spent = current - float(ctx.f1.f64);
     if (spent > 0.0f && spent < kLargestPerTickSpend) {

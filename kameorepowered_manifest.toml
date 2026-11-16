@@ -1,11 +1,13 @@
 [project]
 name = "kameorepowered"
-sdk_version = "0.10.0"
+sdk_version = "0.11.0"
 game_root = "assets"
 
 [entrypoint]
 file_path = "assets/default.xex"
 out_directory_path = "generated/default"
+# RexFabric composes the codegen templates here when the project configures (its hook slots).
+template_dir = "generated/templates"
 includes = [
   "config/functions.toml",
   "config/hooks/audio.toml",

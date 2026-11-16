@@ -14,12 +14,11 @@
 #include <dlfcn.h>
 #endif
 
-#include <kameorepowered_init.h>
+#include "core/guest.h"
 
-#include <rex/cvar.h>
-#include <rex/logging.h>
-#include <rex/system/kernel_state.h>
-#include <rex/system/xmemory.h>
+#include "core/cvar.h"
+#include <rex/logging/log_category.h>
+#include <rex/kernel/heap.h>
 
 #include "gpu/config.h"
 #include "gpu/draw_path.h"
@@ -43,10 +42,16 @@ void WaitForRenderReadsOfRegion(uint32_t address, uint32_t bytes, const char* re
   // A sized free decommits exactly that range; only a size of zero releases the whole region around the address.
   uint32_t region = address;
   uint32_t region_bytes = bytes;
-  rex::memory::BaseHeap* heap = rex::system::kernel_state()->memory()->LookupHeap(address);
-  if (bytes == 0 && (!heap || !heap->QueryBaseAndSize(&region, &region_bytes))) {
-    gfx->WaitForRenderIdle(reason);
-    return;
+  rex::kernel::GuestAddressSpace* memory = CurrentGuestAddressSpace();
+  rex::kernel::BaseHeap* heap = memory ? memory->LookupHeap(address) : nullptr;
+  if (bytes == 0) {
+    rex::kernel::HeapAllocation info{};
+    if (!heap || !heap->QueryRegionInfo(address, &info)) {
+      gfx->WaitForRenderIdle(reason);
+      return;
+    }
+    region = info.allocation_base;
+    region_bytes = info.allocation_size;
   }
   const uint32_t begin = region;
   const uint64_t end = uint64_t(region) + region_bytes;
@@ -65,14 +70,14 @@ void MmFreePhysicalMemoryAfterRender(PPCContext& ctx, uint8_t* base) {
 }
 
 #ifdef _WIN32
-// The recompiled code calls these kernel exports straight through the exe's import table, so that is the one place they can be wrapped without touching rexglue.
+// The recompiled code calls these kernel exports straight through the exe's import table, so that is the one place they can be wrapped without touching the SDK.
 void RedirectGuestMemoryFrees() {
   auto* image = reinterpret_cast<uint8_t*>(GetModuleHandleA(nullptr));
   auto* nt = reinterpret_cast<IMAGE_NT_HEADERS*>(image + reinterpret_cast<IMAGE_DOS_HEADER*>(image)->e_lfanew);
   const IMAGE_DATA_DIRECTORY& dir = nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
   uint32_t redirected = 0;
   for (auto* desc = reinterpret_cast<IMAGE_IMPORT_DESCRIPTOR*>(image + dir.VirtualAddress); dir.VirtualAddress && desc->Name; ++desc) {
-    if (_stricmp(reinterpret_cast<const char*>(image + desc->Name), "rexruntimerd.dll") != 0 && _stricmp(reinterpret_cast<const char*>(image + desc->Name), "rexruntime.dll") != 0) continue;
+    // Whichever SDK library exports them (rexkernel, under its per-configuration name): the names are unique to it.
     auto* names = reinterpret_cast<IMAGE_THUNK_DATA*>(image + (desc->OriginalFirstThunk ? desc->OriginalFirstThunk : desc->FirstThunk));
     auto* slots = reinterpret_cast<IMAGE_THUNK_DATA*>(image + desc->FirstThunk);
     for (; names->u1.AddressOfData; ++names, ++slots) {

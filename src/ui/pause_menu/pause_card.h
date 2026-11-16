@@ -14,8 +14,10 @@
 #include <unordered_map>
 
 #include <imgui.h>
-#include <rex/rex_app.h>
-#include <rex/ui/overlay/achievement_icon_cache.h>
+
+#include "gpu/ui/ui_image.h"
+#include "ui/dialog.h"
+#include "ui/hud/achievement_icon_set.h"
 
 struct PPCContext;
 
@@ -31,26 +33,19 @@ void KameoPauseCardTick(PPCContext& ctx, uint8_t* base, uint32_t pause, uint32_t
 // open it takes that input and leaves the game a pad at rest. Returns whether it took it.
 bool KameoPauseCardTakePad(PPCContext& ctx, uint8_t* base, uint32_t user, uint32_t state);
 
-class KameoPauseCard : public rex::ui::ImGuiDialog {
- public:
-  KameoPauseCard(rex::ui::ImGuiDrawer* drawer, rex::ui::ImmediateDrawer* immediate_drawer) : rex::ui::ImGuiDialog(drawer), immediate_drawer_(immediate_drawer) {}
-  // The achievements' art comes out of the title's XDBF through the runtime, which exists only after setup.
-  void SetRuntime(rex::Runtime* runtime) { runtime_ = runtime; }
-
+class KameoPauseCard : public KameoDialog {
  protected:
   void OnDraw(ImGuiIO& io) override;
 
  private:
   // The art as textures, made once each has loaded.
-  rex::ui::ImmediateTexture* Art(uint64_t hash);
-  rex::ui::ImmediateTexture* AchievementIcon(uint32_t id);
+  kameo::gpu::UiImage* Art(uint64_t hash);
+  kameo::gpu::UiImage* AchievementIcon(uint32_t id) { return icons_.Get(id); }
   // The cards made for this menu (res/ui): 0 the main page's, 1 Options'. Each is loaded once.
-  rex::ui::ImmediateTexture* OwnCard(int which);
-  rex::ui::ImmediateDrawer* immediate_drawer_;
-  rex::Runtime* runtime_ = nullptr;
-  std::unique_ptr<rex::ui::AchievementIconCache> icons_;
-  std::unordered_map<uint64_t, std::unique_ptr<rex::ui::ImmediateTexture>> art_;
-  std::unique_ptr<rex::ui::ImmediateTexture> own_cards_[2];
+  kameo::gpu::UiImage* OwnCard(int which);
+  KameoAchievementIconSet icons_;
+  std::unordered_map<uint64_t, std::unique_ptr<kameo::gpu::UiImage>> art_;
+  std::unique_ptr<kameo::gpu::UiImage> own_cards_[2];
   bool own_card_tried_[2] = {};
   // Eased positions, so the highlight glides between lines.
   float main_mark_ = -1.0f;

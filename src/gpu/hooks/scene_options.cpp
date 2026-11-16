@@ -1,11 +1,9 @@
 #include "gpu/hooks/hooks_internal.h"
 
-#include <kameorepowered_init.h>
+#include "core/guest.h"
 
-#include <rex/cvar.h>
-#include <rex/logging.h>
-#include <rex/system/kernel_state.h>
-#include <rex/system/xmemory.h>
+#include "core/cvar.h"
+#include <rex/logging/log_category.h>
 
 #include "gpu/config.h"
 #include "gpu/log.h"
@@ -29,7 +27,7 @@ constexpr uint32_t kShadowSmallMemory = 0x82B71968;
 constexpr uint32_t kD3DFmtD24S8 = 0x2D200196;
 
 int32_t ShadowResolutionScale() {
-  const int32_t scale = REXCVAR_GET(kameo_gfx_shadow_resolution);
+  const int32_t scale = KCVAR_GET(kameo_gfx_shadow_resolution);
   return scale >= 4 ? 4 : scale >= 2 ? 2 : 1;
 }
 
@@ -39,10 +37,7 @@ uint32_t ShadowMemory(uint32_t size, int32_t scale, bool large) {
   static uint32_t blocks[2][5] = {};
   uint32_t& block = blocks[large ? 1 : 0][scale];
   if (!block) {
-    if (rex::memory::BaseHeap* heap = rex::system::kernel_state()->memory()->LookupHeapByType(true, 4096)) {
-      uint32_t address = 0;
-      if (heap->Alloc(size * size * 4, 4096, rex::memory::kMemoryAllocationReserve | rex::memory::kMemoryAllocationCommit, rex::memory::kMemoryProtectRead | rex::memory::kMemoryProtectWrite, false, &address)) block = address;
-    }
+    block = GuestPhysicalAlloc(size * size * 4);
     if (!block) KGFX_WARN("shadow map: no memory for a {}x{} map; using a smaller one", size, size);
   }
   return block;
@@ -50,7 +45,7 @@ uint32_t ShadowMemory(uint32_t size, int32_t scale, bool large) {
 
 void CreateShadowSurface(PPCContext& ctx, uint8_t* base, uint32_t size, uint32_t screens, uint32_t store_at) {
   static uint32_t parameters = 0;
-  if (!parameters) parameters = rex::system::kernel_state()->memory()->SystemHeapAlloc(12);
+  if (!parameters) parameters = GuestSystemAlloc(12);
   if (!parameters) return;
   uint32_t edram_base = 0;
   if (screens == 2) {
@@ -78,13 +73,13 @@ void CreateShadowSurface(PPCContext& ctx, uint8_t* base, uint32_t size, uint32_t
 // With fur off the shell iterators run with NumFurShells at zero, the path the game takes for a furry model out of range.
 void RunFurIterator(PPCContext& ctx, uint8_t* base, void (*iterator)(PPCContext&, uint8_t*)) {
   constexpr uint32_t kNumFurShells = 0x8270BA1F;
-  const int32_t max_shells = REXCVAR_GET(kameo_gfx_fur) ? REXCVAR_GET(kameo_gfx_fur_max_shells) : 0;
+  const int32_t max_shells = KCVAR_GET(kameo_gfx_fur) ? KCVAR_GET(kameo_gfx_fur_max_shells) : 0;
   const uint8_t shells = REX_LOAD_U8(kNumFurShells);
-  if (REXCVAR_GET(kameo_gfx_fur) && (max_shells <= 0 || shells <= uint8_t(max_shells))) {
+  if (KCVAR_GET(kameo_gfx_fur) && (max_shells <= 0 || shells <= uint8_t(max_shells))) {
     iterator(ctx, base);
     return;
   }
-  REX_STORE_U8(kNumFurShells, REXCVAR_GET(kameo_gfx_fur) ? uint8_t(max_shells) : uint8_t(0));
+  REX_STORE_U8(kNumFurShells, KCVAR_GET(kameo_gfx_fur) ? uint8_t(max_shells) : uint8_t(0));
   iterator(ctx, base);
   REX_STORE_U8(kNumFurShells, shells);
 }
@@ -131,19 +126,19 @@ extern "C" REX_FUNC(sub_822605D0) {
 
 // renderShadowVolumeRecord(light, record) -- one stencil shadow volume.
 extern "C" REX_FUNC(sub_82262C00) {
-  if (!REXCVAR_GET(kameo_gfx_shadows)) return;
+  if (!KCVAR_GET(kameo_gfx_shadows)) return;
   __imp__sub_82262C00(ctx, base);
 }
 
 // pliteSmoke_coreRender(smoke, _, _) -- smoke plume state setup and draw.
 extern "C" REX_FUNC(sub_8234BEF0) {
-  if (!REXCVAR_GET(kameo_gfx_particles)) return;
+  if (!KCVAR_GET(kameo_gfx_particles)) return;
   __imp__sub_8234BEF0(ctx, base);
 }
 
 // _dustMote_coreRender(dustMote, _, _) -- the point-list field of floating motes.
 extern "C" REX_FUNC(sub_8235BD60) {
-  if (!REXCVAR_GET(kameo_gfx_dust_motes)) return;
+  if (!KCVAR_GET(kameo_gfx_dust_motes)) return;
   __imp__sub_8235BD60(ctx, base);
 }
 

@@ -1,0 +1,4 @@
+name = "Hello Kameo"
+description = "Shows the level's name when it changes, and a hotkey that widens the camera."
+version = "1.0"
+author = "Kameo: RePowered"

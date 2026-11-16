@@ -193,7 +193,7 @@ void PerformResolve(GraphicsSystem::DrawPathContext& ctx, plume::RenderCommandLi
   const ResolveKey colour_key{call.resolve_address, uint16_t(texture_width), uint16_t(texture_height), false};
   // The post chain resolves the whole frame and composites it back over the screen, so a guest-sized copy would squeeze the scene through 720p whatever the window is.
   // The guest names an explicit 1280x720 rect here, so the test is that the rect covers the whole guest frame, not that it is absent.
-  const bool full_scene_copy = source_is_scene && call.resolve_x <= 0 && call.resolve_y <= 0 && call.resolve_dest_x <= 0 && call.resolve_dest_y <= 0 && call.resolve_width == kGuestWidth && call.resolve_height == kGuestHeight && texture_width == kGuestWidth && texture_height == kGuestHeight && REXCVAR_GET(kameo_gfx_native_resolve);
+  const bool full_scene_copy = source_is_scene && call.resolve_x <= 0 && call.resolve_y <= 0 && call.resolve_dest_x <= 0 && call.resolve_dest_y <= 0 && call.resolve_width == kGuestWidth && call.resolve_height == kGuestHeight && texture_width == kGuestWidth && texture_height == kGuestHeight && KCVAR_GET(kameo_gfx_native_resolve);
   const uint32_t dest_width = full_scene_copy ? width : texture_width;
   const uint32_t dest_height = full_scene_copy ? height : texture_height;
   const bool wide = !source_is_scene && (WideGuestFormat(call.resolve_format) || g_wideResolveAddresses.count(call.resolve_address));

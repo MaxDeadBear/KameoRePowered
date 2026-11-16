@@ -95,6 +95,10 @@ bool GameUsesVulkan() {
 bool ShaderSource::Prepare(std::string& error) {
   const fs::path pack = EditorFolder() / kToolsFolder / kSourcePack;
   std::error_code ec;
+  if (!fs::exists(EditorFolder() / kToolsFolder / "dxc.exe", ec)) {
+    error = TrFormat("The shader compiler is missing from {0}; reinstall the game.", {pack.parent_path().string()});
+    return false;
+  }
   const auto size = fs::file_size(pack, ec);
   if (ec) {
     error = TrFormat("The game's shaders are missing from {0}; reinstall the game.", {pack.parent_path().string()});

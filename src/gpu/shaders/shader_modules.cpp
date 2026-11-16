@@ -3,7 +3,7 @@
 #include <plume_render_interface.h>
 #include <smolv.h>
 
-#include <rex/logging.h>
+#include <rex/logging/log_category.h>
 
 #include "gpu/log.h"
 #include "gpu/shaders/shader_cache.h"

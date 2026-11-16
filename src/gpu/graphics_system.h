@@ -1,6 +1,7 @@
 #pragma once
 
-// The native renderer: a plume-backed rex::system::IGraphicsSystem injected through RuntimeConfig::graphics in place of the xenos plugin.
+// The native renderer, on plume. The app runs it in place of an SDK graphics driver: it asks the SDK for no graphics
+// family, creates this, and presents with it.
 // It does not emulate the guest GPU; draws arrive through hooks on the game's own D3D entry points (gpu/hooks/), as in UnleashedRecomp.
 
 #include <atomic>
@@ -17,7 +18,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include <rex/system/interfaces/graphics.h>
 
 #include "gpu/config.h"
 #include "gpu/movie/bink_frame.h"
@@ -46,13 +46,10 @@ struct RenderQueryPool;
 // Declared in the generated shader_cache.h, at global scope.
 struct ShaderCacheEntry;
 
-namespace rex::ui {
-class Window;
-}  // namespace rex::ui
-
 namespace kameo::gpu {
 
-void* NativeWindowHandle(rex::ui::Window* window);
+// The window to present to: the HWND on Windows, the SDL_Window elsewhere; null while the UI system has no window.
+void* NativeWindowHandle();
 
 // How many frames the CPU may run ahead of the GPU; the upload rings are sliced by it, so raising it needs the ring sizes raised with it.
 inline constexpr uint32_t kFramesInFlight = 2;
@@ -73,20 +70,18 @@ struct UiVertex {
   float r, g, b, a;
 };
 
-class GraphicsSystem final : public rex::system::IGraphicsSystem {
+class GraphicsSystem final {
  public:
-  // `get_native_window` is called lazily because RuntimeConfig::graphics is populated in OnPreSetup, before the window exists.
+  // `get_native_window` is called at the first present, on the render thread.
   explicit GraphicsSystem(std::function<void*()> get_native_window, Backend backend = Backend::Auto);
-  ~GraphicsSystem() override;
+  ~GraphicsSystem();
 
-  rex::X_STATUS SetupPresentation(rex::ui::WindowedAppContext* app_context) override;
-  rex::X_STATUS SetupGuestGpu(rex::runtime::FunctionDispatcher* function_dispatcher, rex::system::KernelState* kernel_state) override;
-  bool has_presentation() const override { return device_ != nullptr; }
-  void Shutdown() override;
-
-  // Null on purpose: these hand out the SDK's own presenter and overlay objects, which a plume-backed system does not own, and ReXApp tolerates null.
-  rex::ui::GraphicsProvider* provider() const override { return nullptr; }
-  rex::ui::Presenter* presenter() const override { return nullptr; }
+  // Creates the device and its command queue; the swap chain waits for the first present. False when no backend works.
+  bool Initialize();
+  bool has_presentation() const { return device_ != nullptr; }
+  // Ends the render thread once the frame it is recording is done; frames handed over afterwards are dropped. Called before the title unloads, since a frame being recorded reads guest memory and writes the guest's fence word.
+  void StopRendering() { StopRenderThread(); }
+  void Shutdown();
 
   // The draw path's device-removal and info-queue diagnostics are D3D12-only and cast RenderDevice* to plume::D3D12Device*.
   bool using_vulkan() const { return using_vulkan_; }
@@ -137,7 +132,7 @@ class GraphicsSystem final : public rex::system::IGraphicsSystem {
   void StashStereoEye(plume::RenderCommandList* list, plume::RenderTexture* scene_texture, const plume::RenderFramebuffer* scene_framebuffer, uint32_t scene_width, uint32_t scene_height);
   uint32_t SceneSamples() const { return SceneSampleCount(); }
 
-  // The app drives the ImGui drawer itself (a plume-backed system exposes no presenter) and hands its geometry here, already in clip space.
+  // The UI system builds the ImGui frame and the overlay renderer (gpu/ui/overlay_renderer.h) hands its geometry here, already in clip space.
   struct UiDraw {
     uint32_t first_vertex = 0;
     uint32_t vertex_count = 0;
@@ -155,8 +150,11 @@ class GraphicsSystem final : public rex::system::IGraphicsSystem {
   // Takes RGBA8 and keeps all four channels, since the achievement icons carry their own colour; callable from any thread, uploaded at present.
   // `repeated` wraps coordinates outside 0 to 1 around the texture, for patterns drawn scrolling.
   uint32_t CreateUiTexture(uint32_t width, uint32_t height, const uint8_t* rgba, bool repeated = false);
+  // New pixels for the whole of a texture, of its own size; uploaded at the next present.
+  void UpdateUiTexture(uint32_t id, const uint8_t* rgba);
+  void DestroyUiTexture(uint32_t id);
   void SubmitUi(UiFrame&& frame);
-  // Called once per presented frame with the render target size, just before the UI geometry is consumed; the app runs the ImGui drawer here.
+  // Called once per presented frame with the render target size, just before the UI geometry is consumed; the app draws the overlays here.
   void SetUiFrameCallback(std::function<void(uint32_t, uint32_t)> callback);
 
   // Queues a resolved shader for module creation; called from the guest-thread creation hooks, built later on the render thread.
@@ -450,6 +448,8 @@ class GraphicsSystem final : public rex::system::IGraphicsSystem {
   UiFrame ui_current_;
   std::map<uint32_t, UiTexture> ui_textures_;
   uint32_t ui_next_texture_ = 1;
+  // Destroyed textures, each with the frame it was destroyed in, kept until the frames in flight then have finished.
+  std::vector<std::pair<uint64_t, UiTexture>> ui_retired_;
   std::unique_ptr<plume::RenderBuffer> ui_vertices_[kFramesInFlight];
   std::unique_ptr<plume::RenderBuffer> ui_upload_[kFramesInFlight];
   uint32_t ui_vertex_capacity_[kFramesInFlight] = {};

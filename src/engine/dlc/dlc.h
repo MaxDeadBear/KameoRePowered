@@ -6,7 +6,7 @@
 #include <utility>
 #include <vector>
 
-#include <rex/ppc.h>
+#include <rex/ppc/context.h>
 
 // The English name of a downloadable Kameo skin for a string id only the title update's string tables carry, or of the
 // shader mod's costume; empty for any other id.

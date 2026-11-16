@@ -6,37 +6,37 @@
 #include <cmath>
 #include <string>
 
-#include <rex/cvar.h>
+#include "core/cvar.h"
 
 #include "core/localization.h"
 #include "input/input.h"
 #include "input/input_internal.h"
 
-REXCVAR_DECLARE(int32_t, kameo_input_mode);
-REXCVAR_DEFINE_STRING(padbind_a, "face_bottom", "Kameo", "Physical controller input for A.");
-REXCVAR_DEFINE_STRING(padbind_b, "face_right", "Kameo", "Physical controller input for B.");
-REXCVAR_DEFINE_STRING(padbind_x, "face_left", "Kameo", "Physical controller input for X.");
-REXCVAR_DEFINE_STRING(padbind_y, "face_top", "Kameo", "Physical controller input for Y.");
-REXCVAR_DEFINE_STRING(padbind_left_shoulder, "left_shoulder", "Kameo", "Physical controller input for the left shoulder.");
-REXCVAR_DEFINE_STRING(padbind_right_shoulder, "right_shoulder", "Kameo", "Physical controller input for the right shoulder.");
-REXCVAR_DEFINE_STRING(padbind_left_trigger, "left_trigger", "Kameo", "Physical controller input for the left trigger.");
-REXCVAR_DEFINE_STRING(padbind_right_trigger, "right_trigger", "Kameo", "Physical controller input for the right trigger.");
-REXCVAR_DEFINE_STRING(padbind_left_stick_press, "left_stick_press", "Kameo", "Physical controller input for the left stick press.");
-REXCVAR_DEFINE_STRING(padbind_right_stick_press, "right_stick_press", "Kameo", "Physical controller input for the right stick press.");
-REXCVAR_DEFINE_STRING(padbind_dpad_up, "dpad_up", "Kameo", "Physical controller input for D-pad up.");
-REXCVAR_DEFINE_STRING(padbind_dpad_down, "dpad_down", "Kameo", "Physical controller input for D-pad down.");
-REXCVAR_DEFINE_STRING(padbind_dpad_left, "dpad_left", "Kameo", "Physical controller input for D-pad left.");
-REXCVAR_DEFINE_STRING(padbind_dpad_right, "dpad_right", "Kameo", "Physical controller input for D-pad right.");
-REXCVAR_DEFINE_STRING(padbind_start, "start", "Kameo", "Physical controller input for Start.");
-REXCVAR_DEFINE_STRING(padbind_back, "back", "Kameo", "Physical controller input for Back.");
-REXCVAR_DEFINE_STRING(padbind_left_up, "left_up", "Kameo", "Physical controller input for left stick up.");
-REXCVAR_DEFINE_STRING(padbind_left_down, "left_down", "Kameo", "Physical controller input for left stick down.");
-REXCVAR_DEFINE_STRING(padbind_left_left, "left_left", "Kameo", "Physical controller input for left stick left.");
-REXCVAR_DEFINE_STRING(padbind_left_right, "left_right", "Kameo", "Physical controller input for left stick right.");
-REXCVAR_DEFINE_STRING(padbind_right_up, "right_up", "Kameo", "Physical controller input for right stick up.");
-REXCVAR_DEFINE_STRING(padbind_right_down, "right_down", "Kameo", "Physical controller input for right stick down.");
-REXCVAR_DEFINE_STRING(padbind_right_left, "right_left", "Kameo", "Physical controller input for right stick left.");
-REXCVAR_DEFINE_STRING(padbind_right_right, "right_right", "Kameo", "Physical controller input for right stick right.");
+KCVAR_DECLARE(int32_t, kameo_input_mode);
+KCVAR_DEFINE_STRING(padbind_a, "face_bottom", "Kameo", "Physical controller input for A.");
+KCVAR_DEFINE_STRING(padbind_b, "face_right", "Kameo", "Physical controller input for B.");
+KCVAR_DEFINE_STRING(padbind_x, "face_left", "Kameo", "Physical controller input for X.");
+KCVAR_DEFINE_STRING(padbind_y, "face_top", "Kameo", "Physical controller input for Y.");
+KCVAR_DEFINE_STRING(padbind_left_shoulder, "left_shoulder", "Kameo", "Physical controller input for the left shoulder.");
+KCVAR_DEFINE_STRING(padbind_right_shoulder, "right_shoulder", "Kameo", "Physical controller input for the right shoulder.");
+KCVAR_DEFINE_STRING(padbind_left_trigger, "left_trigger", "Kameo", "Physical controller input for the left trigger.");
+KCVAR_DEFINE_STRING(padbind_right_trigger, "right_trigger", "Kameo", "Physical controller input for the right trigger.");
+KCVAR_DEFINE_STRING(padbind_left_stick_press, "left_stick_press", "Kameo", "Physical controller input for the left stick press.");
+KCVAR_DEFINE_STRING(padbind_right_stick_press, "right_stick_press", "Kameo", "Physical controller input for the right stick press.");
+KCVAR_DEFINE_STRING(padbind_dpad_up, "dpad_up", "Kameo", "Physical controller input for D-pad up.");
+KCVAR_DEFINE_STRING(padbind_dpad_down, "dpad_down", "Kameo", "Physical controller input for D-pad down.");
+KCVAR_DEFINE_STRING(padbind_dpad_left, "dpad_left", "Kameo", "Physical controller input for D-pad left.");
+KCVAR_DEFINE_STRING(padbind_dpad_right, "dpad_right", "Kameo", "Physical controller input for D-pad right.");
+KCVAR_DEFINE_STRING(padbind_start, "start", "Kameo", "Physical controller input for Start.");
+KCVAR_DEFINE_STRING(padbind_back, "back", "Kameo", "Physical controller input for Back.");
+KCVAR_DEFINE_STRING(padbind_left_up, "left_up", "Kameo", "Physical controller input for left stick up.");
+KCVAR_DEFINE_STRING(padbind_left_down, "left_down", "Kameo", "Physical controller input for left stick down.");
+KCVAR_DEFINE_STRING(padbind_left_left, "left_left", "Kameo", "Physical controller input for left stick left.");
+KCVAR_DEFINE_STRING(padbind_left_right, "left_right", "Kameo", "Physical controller input for left stick right.");
+KCVAR_DEFINE_STRING(padbind_right_up, "right_up", "Kameo", "Physical controller input for right stick up.");
+KCVAR_DEFINE_STRING(padbind_right_down, "right_down", "Kameo", "Physical controller input for right stick down.");
+KCVAR_DEFINE_STRING(padbind_right_left, "right_left", "Kameo", "Physical controller input for right stick left.");
+KCVAR_DEFINE_STRING(padbind_right_right, "right_right", "Kameo", "Physical controller input for right stick right.");
 
 namespace kameo::input::detail {
 
@@ -50,22 +50,22 @@ struct PadBinding {
 };
 
 constexpr PadBinding kPadBindings[] = {
-    {"padbind_a", "face_bottom", TR_NOOP(u"Face Bottom"), rex::input::X_INPUT_GAMEPAD_A},
-    {"padbind_b", "face_right", TR_NOOP(u"Face Right"), rex::input::X_INPUT_GAMEPAD_B},
-    {"padbind_x", "face_left", TR_NOOP(u"Face Left"), rex::input::X_INPUT_GAMEPAD_X},
-    {"padbind_y", "face_top", TR_NOOP(u"Face Top"), rex::input::X_INPUT_GAMEPAD_Y},
-    {"padbind_left_shoulder", "left_shoulder", TR_NOOP(u"Left Shoulder"), rex::input::X_INPUT_GAMEPAD_LEFT_SHOULDER},
-    {"padbind_right_shoulder", "right_shoulder", TR_NOOP(u"Right Shoulder"), rex::input::X_INPUT_GAMEPAD_RIGHT_SHOULDER},
+    {"padbind_a", "face_bottom", TR_NOOP(u"Face Bottom"), rex::xam::kXInputGamepadA},
+    {"padbind_b", "face_right", TR_NOOP(u"Face Right"), rex::xam::kXInputGamepadB},
+    {"padbind_x", "face_left", TR_NOOP(u"Face Left"), rex::xam::kXInputGamepadX},
+    {"padbind_y", "face_top", TR_NOOP(u"Face Top"), rex::xam::kXInputGamepadY},
+    {"padbind_left_shoulder", "left_shoulder", TR_NOOP(u"Left Shoulder"), rex::xam::kXInputGamepadLeftShoulder},
+    {"padbind_right_shoulder", "right_shoulder", TR_NOOP(u"Right Shoulder"), rex::xam::kXInputGamepadRightShoulder},
     {"padbind_left_trigger", "left_trigger", TR_NOOP(u"Left Trigger"), 0},
     {"padbind_right_trigger", "right_trigger", TR_NOOP(u"Right Trigger"), 0},
-    {"padbind_left_stick_press", "left_stick_press", TR_NOOP(u"Left Stick Press"), rex::input::X_INPUT_GAMEPAD_LEFT_THUMB},
-    {"padbind_right_stick_press", "right_stick_press", TR_NOOP(u"Right Stick Press"), rex::input::X_INPUT_GAMEPAD_RIGHT_THUMB},
-    {"padbind_dpad_up", "dpad_up", TR_NOOP(u"D-Pad Up"), rex::input::X_INPUT_GAMEPAD_DPAD_UP},
-    {"padbind_dpad_down", "dpad_down", TR_NOOP(u"D-Pad Down"), rex::input::X_INPUT_GAMEPAD_DPAD_DOWN},
-    {"padbind_dpad_left", "dpad_left", TR_NOOP(u"D-Pad Left"), rex::input::X_INPUT_GAMEPAD_DPAD_LEFT},
-    {"padbind_dpad_right", "dpad_right", TR_NOOP(u"D-Pad Right"), rex::input::X_INPUT_GAMEPAD_DPAD_RIGHT},
-    {"padbind_start", "start", TR_NOOP(u"Start"), rex::input::X_INPUT_GAMEPAD_START},
-    {"padbind_back", "back", TR_NOOP(u"Back"), rex::input::X_INPUT_GAMEPAD_BACK},
+    {"padbind_left_stick_press", "left_stick_press", TR_NOOP(u"Left Stick Press"), rex::xam::kXInputGamepadLeftThumb},
+    {"padbind_right_stick_press", "right_stick_press", TR_NOOP(u"Right Stick Press"), rex::xam::kXInputGamepadRightThumb},
+    {"padbind_dpad_up", "dpad_up", TR_NOOP(u"D-Pad Up"), rex::xam::kXInputGamepadDPadUp},
+    {"padbind_dpad_down", "dpad_down", TR_NOOP(u"D-Pad Down"), rex::xam::kXInputGamepadDPadDown},
+    {"padbind_dpad_left", "dpad_left", TR_NOOP(u"D-Pad Left"), rex::xam::kXInputGamepadDPadLeft},
+    {"padbind_dpad_right", "dpad_right", TR_NOOP(u"D-Pad Right"), rex::xam::kXInputGamepadDPadRight},
+    {"padbind_start", "start", TR_NOOP(u"Start"), rex::xam::kXInputGamepadStart},
+    {"padbind_back", "back", TR_NOOP(u"Back"), rex::xam::kXInputGamepadBack},
     {"padbind_left_up", "left_up", TR_NOOP(u"Left Stick Up"), 0},
     {"padbind_left_down", "left_down", TR_NOOP(u"Left Stick Down"), 0},
     {"padbind_left_left", "left_left", TR_NOOP(u"Left Stick Left"), 0},
@@ -92,11 +92,11 @@ int PadBindingIndex(const std::string& name) {
 }
 
 int PadSourceIndex(size_t destination) {
-  const int source = PadBindingIndex(rex::cvar::GetFlagByName(kPadBindings[destination].cvar));
+  const int source = PadBindingIndex(kameo::cvar::GetText(kPadBindings[destination].cvar));
   return source < 0 ? int(destination) : source;
 }
 
-float PadSourceValue(const rex::input::X_INPUT_GAMEPAD& pad, size_t source) {
+float PadSourceValue(const rex::xam::X_INPUT_GAMEPAD& pad, size_t source) {
   if (kPadBindings[source].button) return (pad.buttons & kPadBindings[source].button) ? 1.0f : 0.0f;
   if (source == 6) return float(pad.left_trigger) / 255.0f;
   if (source == 7) return float(pad.right_trigger) / 255.0f;
@@ -111,14 +111,14 @@ int16_t PadAxis(float positive, float negative) {
 
 }  // namespace
 
-rex::input::X_INPUT_GAMEPAD RemapPad(const rex::input::X_INPUT_GAMEPAD& raw) {
+rex::xam::X_INPUT_GAMEPAD RemapPad(const rex::xam::X_INPUT_GAMEPAD& raw) {
   std::array<float, kPadBindingCount> value{};
   uint16_t remapped_buttons = 0;
   for (size_t i = 0; i < kPadBindingCount; ++i) {
     value[i] = PadSourceValue(raw, size_t(PadSourceIndex(i)));
     if (kPadBindings[i].button && value[i] > 0.5f) remapped_buttons |= kPadBindings[i].button;
   }
-  rex::input::X_INPUT_GAMEPAD pad = raw;
+  rex::xam::X_INPUT_GAMEPAD pad = raw;
   constexpr uint16_t kMappedButtons = 0xF3FF;
   pad.buttons = (raw.buttons & ~kMappedButtons) | remapped_buttons;
   pad.left_trigger = uint8_t(std::lround(value[6] * 255.0f));
@@ -130,7 +130,7 @@ rex::input::X_INPUT_GAMEPAD RemapPad(const rex::input::X_INPUT_GAMEPAD& raw) {
   return pad;
 }
 
-bool FeedPadCapture(const rex::input::X_INPUT_GAMEPAD& raw) {
+bool FeedPadCapture(const rex::xam::X_INPUT_GAMEPAD& raw) {
   std::lock_guard<std::mutex> lock(g_padCaptureMutex);
   if (g_padCaptureTarget.empty() && !g_padSuppressUntilRelease) return false;
   uint32_t active = 0;
@@ -165,7 +165,7 @@ int KameoPadPreset() {
 void KameoSetPadPreset(int preset) {
   for (size_t i = 0; i < kPadBindingCount; ++i) {
     const size_t source = preset == 1 && i < 4 ? i ^ 1 : i;
-    rex::cvar::SetFlagByName(kPadBindings[i].cvar, kPadBindings[source].token);
+    kameo::cvar::SetText(kPadBindings[i].cvar, kPadBindings[source].token);
   }
 }
 
@@ -179,8 +179,8 @@ std::u16string KameoPadBindingLabel(const char* cvar) {
 void KameoStartPadCapture(const char* cvar) {
   if (PadBindingIndex(cvar) < 0) return;
   std::lock_guard<std::mutex> lock(g_padCaptureMutex);
-  g_padCapturePreviousMode = REXCVAR_GET(kameo_input_mode);
-  REXCVAR_SET(kameo_input_mode, 1);
+  g_padCapturePreviousMode = KCVAR_GET(kameo_input_mode);
+  KCVAR_SET(kameo_input_mode, 1);
   g_padCaptureTarget = cvar;
   g_padCaptureStarted = std::chrono::steady_clock::now();
   g_padCapturedSource = -1;
@@ -206,7 +206,7 @@ bool KameoTakeCapturedPad(bool& cancelled) {
     g_padCaptureTarget.clear();
     g_padCaptureDone = false;
     g_padSuppressUntilRelease = true;
-    REXCVAR_SET(kameo_input_mode, g_padCapturePreviousMode);
+    KCVAR_SET(kameo_input_mode, g_padCapturePreviousMode);
   }
   cancelled = source < 0;
   if (cancelled) return true;
@@ -214,8 +214,8 @@ bool KameoTakeCapturedPad(bool& cancelled) {
   if (destination < 0) return true;
   const int previous = PadSourceIndex(size_t(destination));
   for (size_t i = 0; i < kPadBindingCount; ++i) {
-    if (int(i) != destination && PadSourceIndex(i) == source) rex::cvar::SetFlagByName(kPadBindings[i].cvar, kPadBindings[previous].token);
+    if (int(i) != destination && PadSourceIndex(i) == source) kameo::cvar::SetText(kPadBindings[i].cvar, kPadBindings[previous].token);
   }
-  rex::cvar::SetFlagByName(target, kPadBindings[size_t(source)].token);
+  kameo::cvar::SetText(target, kPadBindings[size_t(source)].token);
   return true;
 }

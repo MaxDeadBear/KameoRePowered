@@ -4,7 +4,7 @@
 [[midasm_hook]]
 address = 0x8225F088
 name = "KameoOverrideDlcSelectorMid"
-registers = ["r3", "r4", "r1"]
+registers = ["r3", "r4", "ctx"]
 
 [[midasm_hook]]
 address = 0x8225F29C

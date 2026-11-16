@@ -13,15 +13,8 @@
 #include <utility>
 #include <vector>
 
-#include <rex/filesystem.h>
-#include <rex/filesystem/device.h>
-#include <rex/filesystem/devices/disc_image_device.h>
-#include <rex/filesystem/devices/stfs_container_device.h>
-#include <rex/filesystem/entry.h>
-#include <rex/filesystem/file.h>
-#include <rex/system/xcontent.h>
-
 #include "core/localization.h"
+#include "launcher/container.h"
 #include "launcher/dlc_install.h"
 #include "launcher/settings_file.h"
 
@@ -33,7 +26,7 @@ using l10n::TrFormat;
 namespace {
 
 namespace fs = std::filesystem;
-using rex::filesystem::Entry;
+using rex::filesystem::ContainerNode;
 
 constexpr size_t kChunkBytes = 4 * 1024 * 1024;
 // Room left over once the game is out, so the unpack does not fill the drive to the last byte.
@@ -43,13 +36,6 @@ constexpr const char* kSystemUpdate = "$SystemUpdate";
 // The XEX header key of the execution info, which holds the title ID.
 constexpr uint32_t kXexExecutionInfo = 0x00040006;
 
-std::wstring Widen(const std::string& utf8) {
-  if (utf8.empty()) return {};
-  std::wstring out(size_t(::MultiByteToWideChar(CP_UTF8, 0, utf8.data(), int(utf8.size()), nullptr, 0)), L'\0');
-  ::MultiByteToWideChar(CP_UTF8, 0, utf8.data(), int(utf8.size()), out.data(), int(out.size()));
-  return out;
-}
-
 uint32_t BigEndian32(const uint8_t* bytes) { return uint32_t(bytes[0]) << 24 | uint32_t(bytes[1]) << 16 | uint32_t(bytes[2]) << 8 | bytes[3]; }
 
 std::string SizeText(uint64_t bytes) {
@@ -58,48 +44,20 @@ std::string SizeText(uint64_t bytes) {
   return text;
 }
 
-// A name comes from the image, so one that would leave the folder it is written to is treated as a damaged image.
-bool IsSafeName(const std::string& name) {
-  if (name.empty() || name == "." || name == "..") return false;
-  return std::none_of(name.begin(), name.end(), [](char c) { return c == '/' || c == '\\' || c == ':' || uint8_t(c) < 0x20; });
-}
-
-// The runtime maps an image into memory, so a file cut short by a failed download, or a drive pulled out, faults in the read instead of returning an error.
-bool InitializeDevice(rex::filesystem::Device& device) {
-  __try {
-    return device.Initialize();
-  } __except (EXCEPTION_EXECUTE_HANDLER) {
-    return false;
-  }
-}
-
-size_t ReadChunk(rex::filesystem::File& file, uint8_t* buffer, size_t size, size_t offset) {
-  size_t read = 0;
-  __try {
-    file.ReadSync(std::span<uint8_t>(buffer, size), offset, &read);
-  } __except (EXCEPTION_EXECUTE_HANDLER) {
-    return 0;
-  }
-  return read;
-}
-
-std::unique_ptr<rex::filesystem::Device> OpenGame(const fs::path& source) {
-  auto disc = std::make_unique<rex::filesystem::DiscImageDevice>("", source);
-  if (InitializeDevice(*disc)) return disc;
-  const auto header = rex::filesystem::StfsContainerDevice::ReadPackageHeader(source);
-  if (!header || !header->header.is_magic_valid()) return nullptr;
-  if (rex::system::XContentType(header->metadata.content_type) != rex::system::XContentType::kGamesOnDemand) return nullptr;
-  auto package = std::make_unique<rex::filesystem::StfsContainerDevice>("", source);
-  if (!InitializeDevice(*package)) return nullptr;
-  return package;
+// A disc image, or a Games on Demand package.
+std::unique_ptr<rex::filesystem::IContainerImage> OpenGame(const fs::path& source) {
+  auto image = OpenImage(source);
+  if (!image) return nullptr;
+  if (image->GetType() == rex::filesystem::ContainerType::kGDFX) return image;
+  const rex::filesystem::XContentPackageHeader* header = image->GetHeader();
+  if (!header || !header->header.IsMagicValid()) return nullptr;
+  if (static_cast<rex::kernel::XContentType>(header->metadata.content_type) != rex::kernel::XContentType::kGamesOnDemand) return nullptr;
+  return image;
 }
 
 // The title ID in a default.xex's headers, or 0 when it is not one.
-uint32_t XexTitleId(Entry& xex, uint8_t* buffer) {
-  rex::filesystem::File* file = nullptr;
-  if (xex.Open(rex::filesystem::FileAccess::kFileReadData, &file) != 0 || !file) return 0;
-  const size_t read = ReadChunk(*file, buffer, std::min<size_t>(xex.size(), kChunkBytes), 0);
-  file->Destroy();
+uint32_t XexTitleId(const rex::filesystem::IContainerImage& image, const ContainerNode& xex, uint8_t* buffer) {
+  const size_t read = ReadNode(image, xex, 0, buffer, size_t(std::min<uint64_t>(xex.info.size, kChunkBytes)));
   if (read < 0x18 || std::memcmp(buffer, "XEX2", 4) != 0) return 0;
   const uint32_t headers = BigEndian32(buffer + 0x14);
   for (uint32_t i = 0; i < headers && 0x20 + (i + 1) * 8ull <= read; ++i) {
@@ -111,16 +69,18 @@ uint32_t XexTitleId(Entry& xex, uint8_t* buffer) {
   return 0;
 }
 
-bool Collect(Entry& folder, const fs::path& relative, bool top, std::vector<std::pair<fs::path, Entry*>>& files, uint64_t& total) {
-  for (const auto& child : folder.children()) {
-    if (!IsSafeName(child->name())) return false;
-    if (top && _stricmp(child->name().c_str(), kSystemUpdate) == 0) continue;
-    const fs::path path = relative / Widen(child->name());
-    if (child->attributes() & rex::filesystem::kFileAttributeDirectory) {
-      if (!Collect(*child, path, false, files, total)) return false;
+bool Collect(const rex::filesystem::IContainerImage& image, const ContainerNode& folder, const fs::path& relative, bool top, std::vector<std::pair<fs::path, const ContainerNode*>>& files, uint64_t& total) {
+  const auto nodes = image.GetNodes();
+  for (const uint32_t index : folder.children) {
+    const ContainerNode& child = nodes[index];
+    if (!IsSafeName(child.info.name)) return false;
+    if (top && _stricmp(child.info.name.c_str(), kSystemUpdate) == 0) continue;
+    const fs::path path = relative / Widen(child.info.name);
+    if (IsDirectory(child)) {
+      if (!Collect(image, child, path, false, files, total)) return false;
     } else {
-      files.emplace_back(path, child.get());
-      total += child->size();
+      files.emplace_back(path, &child);
+      total += child.info.size;
     }
   }
   return true;
@@ -201,22 +161,22 @@ bool IsoInstaller::Unpack(const fs::path& source, const fs::path& assets, std::s
   if (fs::exists(assets / "default.xex", ec)) return message = TrFormat("The game is already unpacked in {0}.", {assets.string()}), false;
   if (fs::exists(assets, ec) && !fs::is_empty(assets, ec)) return message = Tr("The assets folder already has files in it. Move them somewhere else, then try again."), false;
 
-  const std::unique_ptr<rex::filesystem::Device> device = OpenGame(source);
-  if (!device) return message = TrFormat("{0} could not be read. It may be incomplete, or not an Xbox 360 disc image or Games on Demand package.", {file_name}), false;
-  Entry* root = device->ResolvePath("");
-  Entry* xex = root ? root->ResolvePath("default.xex") : nullptr;
+  const std::unique_ptr<rex::filesystem::IContainerImage> image = OpenGame(source);
+  if (!image) return message = TrFormat("{0} could not be read. It may be incomplete, or not an Xbox 360 disc image or Games on Demand package.", {file_name}), false;
+  const ContainerNode& root = image->GetRoot();
+  const ContainerNode* xex = image->Find("default.xex");
   if (!xex) return message = TrFormat("{0} has no default.xex, so it is not a game disc.", {file_name}), false;
   const auto buffer = std::make_unique<uint8_t[]>(kChunkBytes);
-  const uint32_t title_id = XexTitleId(*xex, buffer.get());
+  const uint32_t title_id = XexTitleId(*image, *xex, buffer.get());
   if (title_id != kKameoTitleId) {
     char text[16];
     std::snprintf(text, sizeof(text), "%08X", title_id);
     return message = title_id == 0 ? TrFormat("{0} is incomplete or damaged: its game program could not be read.", {file_name}) : TrFormat("{0} is a different game (title {1}), not Kameo: Elements of Power.", {file_name, text}), false;
   }
 
-  std::vector<std::pair<fs::path, Entry*>> files;
+  std::vector<std::pair<fs::path, const ContainerNode*>> files;
   uint64_t total = 0;
-  if (!Collect(*root, {}, true, files, total)) return message = TrFormat("{0} looks damaged: it holds a file with an invalid name.", {file_name}), false;
+  if (!Collect(*image, root, {}, true, files, total)) return message = TrFormat("{0} looks damaged: it holds a file with an invalid name.", {file_name}), false;
   total_bytes_.store(total);
 
   const fs::path parent = assets.parent_path();
@@ -234,13 +194,11 @@ bool IsoInstaller::Unpack(const fs::path& source, const fs::path& assets, std::s
     }
     const fs::path destination = staging / relative;
     fs::create_directories(destination.parent_path(), ec);
-    rex::filesystem::File* in_file = nullptr;
-    if (entry->Open(rex::filesystem::FileAccess::kFileReadData, &in_file) != 0 || !in_file) return message = TrFormat("Could not read {0} from {1}.", {relative.string(), file_name}), false;
     std::ofstream out(destination, std::ios::binary | std::ios::trunc);
-    size_t offset = 0;
-    size_t remaining = entry->size();
+    uint64_t offset = 0;
+    uint64_t remaining = entry->info.size;
     while (out && remaining > 0 && !cancel_.load()) {
-      const size_t read = ReadChunk(*in_file, buffer.get(), std::min(remaining, kChunkBytes), offset);
+      const size_t read = ReadNode(*image, *entry, offset, buffer.get(), size_t(std::min<uint64_t>(remaining, kChunkBytes)));
       if (read == 0) break;
       out.write(reinterpret_cast<const char*>(buffer.get()), std::streamsize(read));
       offset += read;
@@ -248,7 +206,6 @@ bool IsoInstaller::Unpack(const fs::path& source, const fs::path& assets, std::s
       written += read;
       done_bytes_.store(written);
     }
-    in_file->Destroy();
     out.close();
     if (cancel_.load()) return message = Tr("Unpacking was cancelled."), false;
     if (remaining > 0 || !out) return message = TrFormat("Could not unpack {0}. The image may be incomplete or damaged, or the drive may be full.", {relative.string()}), false;

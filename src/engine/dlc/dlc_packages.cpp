@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <string>
 
-#include <rex/logging.h>
+#include <rex/logging/log_category.h>
 
 #include "core/guest.h"
 #include "kameorepowered_init.h"

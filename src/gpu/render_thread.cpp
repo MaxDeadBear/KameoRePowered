@@ -10,8 +10,8 @@
 #include <plume_d3d12.h>
 #endif
 
-#include <rex/cvar.h>
-#include <rex/logging.h>
+#include "core/cvar.h"
+#include <rex/logging/log_category.h>
 
 #include "gpu/config.h"
 #include "gpu/draw_path.h"
@@ -45,7 +45,7 @@ void GraphicsSystem::WaitForRenderSlot() {
 }
 
 void GraphicsSystem::KickRenderThread(uint32_t guest_fence, uint32_t* readback_word, std::vector<uint32_t> guest_reads) {
-  if (!REXCVAR_GET(kameo_gfx_render_thread)) {
+  if (!KCVAR_GET(kameo_gfx_render_thread)) {
     published_fence_.store(guest_fence, std::memory_order_release);
     PresentClear();
     completed_fence_.store(guest_fence, std::memory_order_release);

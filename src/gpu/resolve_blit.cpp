@@ -132,6 +132,8 @@ void BeginResolveBlitFrame(uint32_t frame_slot) {
   g_blit.next = frame_slot * kBlitSlotsPerFrame;
   g_depthResolve.next = frame_slot * kDepthResolveSlotsPerFrame;
   g_depthResolve.limit = g_depthResolve.next + kDepthResolveSlotsPerFrame;
+  // The frame that last used this slot range has retired, so its depth views go now, while the textures they were made from still exist. Left until a slot was next needed, a view could outlive its texture (an idle offscreen target is freed after 600 frames), and on Vulkan destroying a view reads its texture.
+  for (uint32_t slot = g_depthResolve.next; slot < g_depthResolve.limit && slot < g_depthResolve.views.size(); ++slot) g_depthResolve.views[slot].reset();
   g_blit.limit = g_blit.next + kBlitSlotsPerFrame;
 }
 
@@ -263,6 +265,10 @@ bool BlitScaledResolve(GraphicsSystem::DrawPathContext& ctx, plume::RenderComman
   list->setGraphicsDescriptorSet(g_blit.sets[slot].get(), 0);
   list->drawInstanced(3, 1, 0, 0);
   return true;
+}
+
+void ReleaseDepthResolveViews() {
+  for (auto& view : g_depthResolve.views) view.reset();
 }
 
 void ReleaseResolveBlits() {

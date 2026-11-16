@@ -3,14 +3,14 @@
 #include <chrono>
 #include <string>
 
-#include <fmt/format.h>
+#include <format>
 
-#include <rex/cvar.h>
+#include "core/cvar.h"
 
 #include "core/fp_guard.h"
 #include "gpu/log.h"
 
-REXCVAR_DEFINE_BOOL(kameo_gfx_frame_profile, false, "Kameo", "Time each draw's texture, pipeline and upload work too, in the frame-time line the log prints every 300 frames. The per-frame stages and the GPU time are always there.");
+KCVAR_DEFINE_BOOL(kameo_gfx_frame_profile, false, "Kameo", "Time each draw's texture, pipeline and upload work too, in the frame-time line the log prints every 300 frames. The per-frame stages and the GPU time are always there.");
 
 namespace kameo::gpu::detail {
 
@@ -44,7 +44,7 @@ void Calibrate() {
 
 }  // namespace
 
-bool FrameProfileDetailed() { return REXCVAR_GET(kameo_gfx_frame_profile); }
+bool FrameProfileDetailed() { return KCVAR_GET(kameo_gfx_frame_profile); }
 
 void ReportFrameProfile() {
   FrameProfile& p = g_frameProfile;
@@ -56,9 +56,9 @@ void ReportFrameProfile() {
   const auto ms = [&](uint64_t ticks) { return double(ticks) * tick_ns * 1e-6 / double(p.frames); };
 
   const double render_total = ms(p.ns_wait + p.ns_prep + p.ns_scene + p.ns_post + p.ns_present);
-  std::string line = fmt::format("frame times, average of {} frames: render thread {:.1f} ms (fence {:.1f}, shaders {:.1f}, scene {:.1f}, post {:.1f}, present {:.1f})", p.frames, render_total, ms(p.ns_wait), ms(p.ns_prep), ms(p.ns_scene), ms(p.ns_post), ms(p.ns_present));
+  std::string line = std::format("frame times, average of {} frames: render thread {:.1f} ms (fence {:.1f}, shaders {:.1f}, scene {:.1f}, post {:.1f}, present {:.1f})", p.frames, render_total, ms(p.ns_wait), ms(p.ns_prep), ms(p.ns_scene), ms(p.ns_post), ms(p.ns_present));
   // GPU time arrives in nanoseconds from the query pool.
-  if (p.gpu_frames > 0) line += fmt::format(" | gpu {:.1f} ms", double(p.ns_gpu) * 1e-6 / double(p.gpu_frames));
+  if (p.gpu_frames > 0) line += std::format(" | gpu {:.1f} ms", double(p.ns_gpu) * 1e-6 / double(p.gpu_frames));
 
   const uint32_t guest_frames = p.guest_frames.exchange(0);
   const uint64_t guest_ticks = p.ns_guest_frame.exchange(0);
@@ -74,24 +74,24 @@ void ReportFrameProfile() {
   const uint64_t cap_textures = p.ns_cap_textures.exchange(0);
   if (guest_frames > 0) {
     const auto gms = [&](uint64_t ticks) { return double(ticks) * tick_ns * 1e-6 / double(guest_frames); };
-    line += fmt::format(" | game thread {:.1f} ms per frame: {:.1f} waiting for the renderer, {:.1f} capturing draws", gms(guest_ticks), gms(stall_ticks), gms(capture_ticks));
-    if (detailed) line += fmt::format(" (indices {:.1f} of which hashing {:.1f}, lookups {:.1f}, vertices {:.1f}, constants {:.1f}, state {:.1f}, textures {:.1f})", gms(cap_indices), gms(cap_hash), gms(cap_lookup), gms(cap_vertices), gms(cap_constants), gms(cap_state), gms(cap_textures));
+    line += std::format(" | game thread {:.1f} ms per frame: {:.1f} waiting for the renderer, {:.1f} capturing draws", gms(guest_ticks), gms(stall_ticks), gms(capture_ticks));
+    if (detailed) line += std::format(" (indices {:.1f} of which hashing {:.1f}, lookups {:.1f}, vertices {:.1f}, constants {:.1f}, state {:.1f}, textures {:.1f})", gms(cap_indices), gms(cap_hash), gms(cap_lookup), gms(cap_vertices), gms(cap_constants), gms(cap_state), gms(cap_textures));
     const uint64_t own = guest_ticks > stall_ticks + capture_ticks + handoff_ticks ? guest_ticks - stall_ticks - capture_ticks - handoff_ticks : 0;
-    line += fmt::format(", {:.1f} handing off, {:.1f} the game's own", gms(handoff_ticks), gms(own));
+    line += std::format(", {:.1f} handing off, {:.1f} the game's own", gms(handoff_ticks), gms(own));
   }
   // Each masked FP exception the guest raises is a kernel trap on the game thread; a count in the thousands per window is a cost of its own.
   static uint64_t fp_exceptions_reported = 0;
   const uint64_t fp_exceptions = g_kameo_fp_exception_count.load(std::memory_order_relaxed);
   if (fp_exceptions != fp_exceptions_reported) {
-    line += fmt::format(" | {} FP exceptions", fp_exceptions - fp_exceptions_reported);
+    line += std::format(" | {} FP exceptions", fp_exceptions - fp_exceptions_reported);
     fp_exceptions_reported = fp_exceptions;
   }
-  line += fmt::format(" | {} draws per frame: vertices {:.1f}", p.draws / p.frames, ms(p.ns_vertices));
-  if (detailed) line += fmt::format(" of which hashing {:.1f}", ms(p.ns_vertex_hash));
-  line += fmt::format(", constants {:.1f}", ms(p.ns_constants));
-  if (detailed) line += fmt::format(", textures {:.1f}, pipelines {:.1f}, uploads {:.1f}", ms(p.ns_textures), ms(p.ns_pipelines), ms(p.ns_uploads));
+  line += std::format(" | {} draws per frame: vertices {:.1f}", p.draws / p.frames, ms(p.ns_vertices));
+  if (detailed) line += std::format(" of which hashing {:.1f}", ms(p.ns_vertex_hash));
+  line += std::format(", constants {:.1f}", ms(p.ns_constants));
+  if (detailed) line += std::format(", textures {:.1f}, pipelines {:.1f}, uploads {:.1f}", ms(p.ns_textures), ms(p.ns_pipelines), ms(p.ns_uploads));
   if (p.msaa_resolves || p.msaa_resolve_reuses) {
-    line += fmt::format(" | MSAA resolves {:.1f}, reused {:.1f} per frame",
+    line += std::format(" | MSAA resolves {:.1f}, reused {:.1f} per frame",
                         double(p.msaa_resolves) / p.frames, double(p.msaa_resolve_reuses) / p.frames);
   }
   KGFX_INFO("{}", line);

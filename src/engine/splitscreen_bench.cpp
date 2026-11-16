@@ -1,6 +1,6 @@
 // Benching player 2 when split-screen is turned off: parked out of sight and switched off through the engine's own passes, never freed.
 
-#include <rex/logging/macros.h>
+#include <rex/logging/log_category.h>
 
 #include "engine/splitscreen_internal.h"
 

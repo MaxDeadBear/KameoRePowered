@@ -3,12 +3,12 @@
 
 #include <cstdint>
 
-#include <rex/system/achievement_manager.h>
+#include <rex/xam/achievement_manager.h>
 
 struct PPCContext;
 
 // From any thread: queues the notice for the game thread to show.
-void KameoPushAchievementToast(const rex::system::AchievementEvent& event);
+void KameoPushAchievementToast(const rex::xam::AchievementEvent& event);
 // Once per game tick: creates, updates and retires the text box.
 void KameoTickAchievementToast(PPCContext& ctx, uint8_t* base);
 // levelNameTextWindowReady arriving with a window this toast asked for; true when it was taken.

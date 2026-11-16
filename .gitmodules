@@ -10,3 +10,7 @@
 [submodule "thirdparty/SentryWork"]
 	path = thirdparty/SentryWork
 	url = https://github.com/masterspike52/SentryWork
+[submodule "thirdparty/RexFabric"]
+	path = thirdparty/RexFabric
+	url = https://github.com/masterspike52/RexFabric.git
+	branch = latest-sdk

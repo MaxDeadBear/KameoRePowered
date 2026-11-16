@@ -4,9 +4,6 @@
 #include <cstdint>
 #include <string>
 
-namespace rex::ui { class Window; }
-namespace rex::system { class IInputSystem; }
-
 struct KameoMouseFrame {
   bool valid = false;
   float x = 0.0f;
@@ -17,7 +14,10 @@ struct KameoMouseFrame {
   int32_t wheel = 0;
 };
 
-void KameoInitInput(rex::ui::Window* window, rex::system::IInputSystem* input_system);
+// Fetches the input and UI systems itself, so call it once both are started and the window is open (OnInit).
+void KameoInitInput();
+// Drops the window event listeners and the SDL watch; call it before the systems shut down.
+void KameoShutdownInput();
 void KameoApplyDefaultControls();
 void KameoTickInput();
 

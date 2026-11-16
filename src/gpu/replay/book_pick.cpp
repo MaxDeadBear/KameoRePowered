@@ -22,7 +22,7 @@
 #include "gpu/shaders/builtin_shaders.h"
 #include "gpu/shaders/embedded_shaders.h"
 
-REXCVAR_DEFINE_BOOL(kameo_gfx_book_pick, true, "Kameo", "Read the storybook page under the mouse pointer back from the GPU, so hovering menu lines on the book stays exact while its pages move. Off falls back to a page mesh captured once.");
+KCVAR_DEFINE_BOOL(kameo_gfx_book_pick, true, "Kameo", "Read the storybook page under the mouse pointer back from the GPU, so hovering menu lines on the book stays exact while its pages move. Off falls back to a page mesh captured once.");
 
 namespace kameo::gpu::detail {
 namespace {
@@ -92,7 +92,7 @@ plume::RenderPipeline* EnsureBookPickPipeline(GraphicsSystem::DrawPathContext& c
 bool BeginBookPickFrame() {
   float book_pick_x = 0.0f;
   float book_pick_y = 0.0f;
-  const bool wanted = REXCVAR_GET(kameo_gfx_book_pick) && !g_bookPick.failed && BookPickWanted(&book_pick_x, &book_pick_y);
+  const bool wanted = KCVAR_GET(kameo_gfx_book_pick) && !g_bookPick.failed && BookPickWanted(&book_pick_x, &book_pick_y);
   g_bookPick.draws.clear();
   return wanted;
 }

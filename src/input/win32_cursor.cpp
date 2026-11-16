@@ -8,11 +8,10 @@
 #include <windows.h>
 #endif
 
-#include <rex/logging/macros.h>
-#include <rex/ui/window.h>
-#include <rex/ui/windowed_app_context.h>
+#include <rex/logging/log_category.h>
+#include <rex/module.h>
+#include <rex/ui/ui_system.h>
 
-#include "app/process.h"
 #include "cursor/cursor_images.inc"
 #include "input/input_internal.h"
 
@@ -20,7 +19,9 @@ namespace kameo::input::detail {
 
 namespace {
 
-std::atomic<bool> g_cursorUpdateQueued{false};
+// Whether the pointer is shown over the window (not hidden or held for looking).
+std::atomic<bool> g_cursorShown{false};
+std::atomic<bool> g_cursorRefreshQueued{false};
 
 #ifdef _WIN32
 // The Kameo arrow from res/cursor/kameo_cursor.webp (tools/build_cursor.py), shown by answering the window's WM_SETCURSOR wherever the runtime would show its own arrow.
@@ -62,10 +63,7 @@ HCURSOR CreateKameoCursor(UINT dpi) {
   return cursor;
 }
 
-bool KameoCursorWanted() {
-  rex::ui::Window* window = kameo::app::MainWindow();
-  return g_kameoCursor && window && window->GetCursorVisibility() == rex::ui::Window::CursorVisibility::kVisible;
-}
+bool KameoCursorWanted() { return g_kameoCursor && g_cursorShown.load(std::memory_order_relaxed); }
 
 LRESULT CALLBACK KameoCursorWindowProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam) {
   if (message == WM_SETCURSOR && LOWORD(lparam) == HTCLIENT && KameoCursorWanted()) {
@@ -95,9 +93,12 @@ void RefreshKameoCursor() {
 }  // namespace
 
 #ifdef _WIN32
-void InstallKameoCursor(rex::ui::Window* window) {
-  window->app_context().CallInUIThreadDeferred([window] {
-    HWND hwnd = static_cast<HWND>(window->GetNativeWindowHandle());
+void InstallKameoCursor() {
+  rex::ui::IUISystem* ui = REX_INTERFACE(rex::ui::IUISystem);
+  if (!ui) return;
+  ui->PostTask([ui] {
+    const auto native = ui->GetNativeWindow();
+    HWND hwnd = native ? static_cast<HWND>(native->window) : nullptr;
     if (!hwnd || g_cursorWindow) return;
     g_kameoCursor = CreateKameoCursor(::GetDpiForWindow(hwnd));
     if (!g_kameoCursor) {
@@ -111,19 +112,22 @@ void InstallKameoCursor(rex::ui::Window* window) {
 }
 #endif
 
-// Shown in every menu and hidden over the client area in play, re-asserted every tick because both keyboard drivers can leave it hidden after a mouse grab.
-void ApplyCursorVisibility(bool menu_open) {
-  rex::ui::Window* window = kameo::app::MainWindow();
-  if (!window) return;
-  const auto wanted = menu_open ? rex::ui::Window::CursorVisibility::kVisible : rex::ui::Window::CursorVisibility::kHidden;
-  if (window->GetCursorVisibility() == wanted || g_cursorUpdateQueued.exchange(true)) return;
-  window->app_context().CallInUIThreadDeferred([window, wanted] {
-    g_cursorUpdateQueued.store(false);
-    window->SetCursorVisibility(wanted);
+// Re-asserted every tick because the runtime applies the mode it was last given again when the window regains focus.
+void ApplyPointerMode(bool captured, bool menu_open) {
+  rex::hid::IInputSystem* input = InputSystem();
+  if (!input) return;
+  const rex::PointerMode mode = captured ? rex::PointerMode::kLocked : menu_open ? rex::PointerMode::kFree : rex::PointerMode::kHidden;
+  input->SetPointerMode(mode);
+  const bool shown = mode == rex::PointerMode::kFree;
+  if (g_cursorShown.exchange(shown) == shown) return;
 #ifdef _WIN32
+  rex::ui::IUISystem* ui = REX_INTERFACE(rex::ui::IUISystem);
+  if (!ui || g_cursorRefreshQueued.exchange(true)) return;
+  ui->PostTask([] {
+    g_cursorRefreshQueued.store(false);
     RefreshKameoCursor();
-#endif
   });
+#endif
 }
 
 }  // namespace kameo::input::detail

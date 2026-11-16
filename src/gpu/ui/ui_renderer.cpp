@@ -7,7 +7,7 @@
 
 #include <plume_render_interface.h>
 
-#include <rex/logging.h>
+#include <rex/logging/log_category.h>
 
 #include "gpu/graphics_system_internal.h"
 #include "gpu/log.h"
@@ -124,6 +124,24 @@ uint32_t GraphicsSystem::CreateUiTexture(uint32_t width, uint32_t height, const 
   return id;
 }
 
+void GraphicsSystem::UpdateUiTexture(uint32_t id, const uint8_t* rgba) {
+  if (!rgba) return;
+  std::lock_guard<std::mutex> lock(ui_mutex_);
+  const auto found = ui_textures_.find(id);
+  if (found == ui_textures_.end()) return;
+  UiTexture& entry = found->second;
+  entry.pixels.assign(rgba, rgba + size_t(entry.width) * entry.height * 4);
+}
+
+// The frames already handed to the GPU may still draw with the texture, so it is only parked here; DrawUi frees it once they are done.
+void GraphicsSystem::DestroyUiTexture(uint32_t id) {
+  std::lock_guard<std::mutex> lock(ui_mutex_);
+  const auto found = ui_textures_.find(id);
+  if (found == ui_textures_.end()) return;
+  ui_retired_.emplace_back(frame_index_, std::move(found->second));
+  ui_textures_.erase(found);
+}
+
 void GraphicsSystem::SetUiFrameCallback(std::function<void(uint32_t, uint32_t)> callback) {
   std::lock_guard<std::mutex> lock(ui_mutex_);
   ui_frame_callback_ = std::move(callback);
@@ -143,6 +161,7 @@ void GraphicsSystem::DrawUi(plume::RenderCommandList* list, plume::RenderFramebu
       ui_pending_ = UiFrame();
       ui_pending_fresh_ = false;
     }
+    std::erase_if(ui_retired_, [this](const auto& retired) { return frame_index_ > retired.first + kFramesInFlight; });
   }
   const UiFrame& frame = ui_current_;
   if (frame.draws.empty() || frame.vertices.empty() || !EnsureUiPipeline()) {
@@ -168,28 +187,33 @@ void GraphicsSystem::DrawUi(plume::RenderCommandList* list, plume::RenderFramebu
       if (tex.pixels.empty()) {
         continue;
       }
-      auto desc = plume::RenderTextureDesc::Texture2D(
-          tex.width, tex.height, 1, plume::RenderFormat::R8G8B8A8_UNORM);
-      tex.texture = device_->createTexture(desc);
+      // A texture given new pixels (UpdateUiTexture) keeps its object: the copy below is ordered after the draws of the frames already submitted.
       if (!tex.texture) {
-        tex.pixels.clear();
-        continue;
+        auto desc = plume::RenderTextureDesc::Texture2D(
+            tex.width, tex.height, 1, plume::RenderFormat::R8G8B8A8_UNORM);
+        tex.texture = device_->createTexture(desc);
+        if (!tex.texture) {
+          tex.pixels.clear();
+          continue;
+        }
+        tex.view = tex.texture->createTextureView(
+            plume::RenderTextureViewDesc::Texture2D(plume::RenderFormat::R8G8B8A8_UNORM));
+        plume::RenderDescriptorRange ranges[] = {
+            plume::RenderDescriptorRange(plume::RenderDescriptorRangeType::TEXTURE, 0, 1),
+            plume::RenderDescriptorRange(plume::RenderDescriptorRangeType::SAMPLER, 1, 1),
+        };
+        plume::RenderDescriptorSetDesc set_desc(ranges, uint32_t(std::size(ranges)));
+        tex.descriptors = device_->createDescriptorSet(set_desc);
+        if (!tex.descriptors) {
+          tex.texture.reset();
+          tex.view.reset();
+          tex.pixels.clear();
+          continue;
+        }
+        tex.descriptors->setTexture(0, tex.texture.get(), plume::RenderTextureLayout::SHADER_READ,
+                                    tex.view.get());
+        tex.descriptors->setSampler(1, (tex.repeated ? ui_sampler_repeat_ : ui_sampler_).get());
       }
-      tex.view = tex.texture->createTextureView(
-          plume::RenderTextureViewDesc::Texture2D(plume::RenderFormat::R8G8B8A8_UNORM));
-      plume::RenderDescriptorRange ranges[] = {
-          plume::RenderDescriptorRange(plume::RenderDescriptorRangeType::TEXTURE, 0, 1),
-          plume::RenderDescriptorRange(plume::RenderDescriptorRangeType::SAMPLER, 1, 1),
-      };
-      plume::RenderDescriptorSetDesc set_desc(ranges, uint32_t(std::size(ranges)));
-      tex.descriptors = device_->createDescriptorSet(set_desc);
-      if (!tex.descriptors) {
-        tex.pixels.clear();
-        continue;
-      }
-      tex.descriptors->setTexture(0, tex.texture.get(), plume::RenderTextureLayout::SHADER_READ,
-                                  tex.view.get());
-      tex.descriptors->setSampler(1, (tex.repeated ? ui_sampler_repeat_ : ui_sampler_).get());
       const uint32_t pitch = AlignRow(tex.width * 4);
       staged = (staged + kPlacementAlign - 1) & ~(kPlacementAlign - 1);
       pending.push_back({id, staged, pitch});

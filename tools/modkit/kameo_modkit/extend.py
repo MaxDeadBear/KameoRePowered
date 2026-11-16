@@ -120,6 +120,77 @@ class Added:
     textures: dict[tuple[int, int], dict[str, tuple[int, int]]] = field(default_factory=dict)  # draw -> slot -> texture asset (entry, offset)
 
 
+def add_bones(archive: Caff, bones: list[tuple[int, tuple[float, float, float]]]) -> Caff:
+    """`archive` with joints added to its skeleton: each a (parent joint, bind position in model space), numbered on
+    from the skeleton's last, parents before children. They are spring bones: no animation has a track for them.
+
+    A new joint is added in three places:
+      the ndSkeleton's joint array, copied longer to the end of the rendergraph (the game's own joints keep their
+      child and sibling links, so nothing of the game's walks into a new one);
+      the ndMtxArray, a skinning matrix for each, so draws' palettes can name them;
+      the command stream's two packets that bake the counts: 0x11 (the joint array and how many joints) and 0x12
+      (the ndMtxArray's entries, through the node's own pointer, and how many)."""
+    from .skeleton import SPRING_MARK, _find
+
+    resolver = Resolver(archive)
+    found = []
+    for entry in archive.entries:
+        if resolver.type_name(entry) != "rendergraph":
+            continue
+        node = _find(rendergraph_roots(resolver, entry), "ndSkeleton")
+        if node is not None and resolver.pointer(node.ref, 52) is not None:
+            found.append((entry, node))
+    if len(found) != 1:
+        raise ValueError("bones can be added to a model with one skeleton; this one has " + str(len(found)))
+    entry, node = found[0]
+    matrices = _find(node.children, "ndMtxArray")
+    if matrices is None or resolver.pointer(matrices.ref, 48) is None:
+        raise ValueError("this model's skeleton has no skinning matrices to add to")
+    builder = Builder(archive)
+    graph = entry.index
+    data = builder.data(graph)
+    count = builder.u32(graph, node.ref.offset + 48)
+    array = builder.u32(graph, node.ref.offset + 52)
+    records = bytearray(data[array:array + 36 * count])
+    pivots = [struct.unpack_from(">3f", records, 36 * j + 12) for j in range(count)]
+    for k, (parent, pivot) in enumerate(bones):
+        index = count + k
+        if not 0 <= parent < index:
+            raise ValueError("a new bone must hang from a joint numbered before it")
+        above = pivots[parent]
+        records += struct.pack(">3f3f5H2B", *(pivot[i] - above[i] for i in range(3)), *pivot, parent, 0xFFFF, 0xFFFF, index, 0xFFFF, 0, SPRING_MARK)
+        pivots.append(tuple(pivot))
+    total = count + len(bones)
+    new_array = builder.append(graph, bytes(records), 16)
+    builder.put(graph, node.ref.offset + 52, new_array)
+    builder.put(graph, node.ref.offset + 48, total)
+
+    field = matrices.ref.offset + 48
+    entries = builder.u32(graph, field)
+    matrix_count = builder.u32(graph, matrices.ref.offset + 52)
+    listed = bytearray(builder.data(graph)[entries:entries + 8 * matrix_count])
+    for k in range(len(bones)):
+        listed += struct.pack(">HHI", count + k, 0xFFFF, 0x7F000000)
+    builder.put(graph, field, builder.append(graph, bytes(listed), 16))
+    builder.put(graph, matrices.ref.offset + 52, matrix_count + len(bones))
+
+    patched = [0, 0]
+    for stream in [e.index for e in archive.entries if archive.sections[e.section - 1].name == ".stream"]:
+        body = builder.data(stream)
+        for offset in list(builder.pointers.get((stream, graph), [])):
+            value = builder.u32(stream, offset)
+            if value == array and offset >= 8 and body[offset - 6] == 0x11 and struct.unpack_from(">H", body, offset + 4)[0] == count:
+                builder.put(stream, offset, new_array)
+                struct.pack_into(">H", body, offset + 4, total)
+                patched[0] += 1
+            elif value == field and offset >= 4 and body[offset - 2] == 0x12 and struct.unpack_from(">H", body, offset + 4)[0] == matrix_count:
+                struct.pack_into(">H", body, offset + 4, matrix_count + len(bones))
+                patched[1] += 1
+    if not patched[0] or not patched[1]:
+        raise ValueError("the model's command stream does not set its skeleton the way the importer knows; bones cannot be added to it")
+    return builder.finish()
+
+
 def _packets(data: bytearray, start: int, stop_at_jump: bool = True):
     offset = start
     while offset + 4 <= len(data):
@@ -239,7 +310,7 @@ def _template_texture(resolver: Resolver, template, palette, slot_name: str):
     """The template's texture for a slot, as the export chose it, and its palette index."""
     from .material import read_material
 
-    for sampler in read_material(resolver, template.material).samplers:
+    for sampler in read_material(resolver, template.material, template.texture_slots).samplers:
         if sampler.dynamic or sampler.lightmap or sampler.palette_index >= len(palette) or palette[sampler.palette_index] is None:
             continue
         normal = read_texture(resolver, palette[sampler.palette_index]).format_name == "DXN"

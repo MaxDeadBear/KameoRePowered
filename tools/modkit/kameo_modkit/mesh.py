@@ -7,8 +7,10 @@ ndVertexBuffer2 (ndVertexBuffer2InitNode, ndVertexBuffer2Render, ndVertexBuffer2
       D3DVERTEXELEMENT9 declaration (+28), vertex shader (+32) and texture samplers (+68, count +72)
   +56 stream count
 ndPushBuffer (ndPushBufferRender): +48 draw count, +52 index buffer headers, +56 vertex counts,
-  +60 index data (16-bit, in .gpu), +64 primitive types, +68 primitive counts; indices are absolute
-  within the vertex buffer the draw sits under.
+  +60 index data (in .gpu, big-endian), +64 primitive types, +68 primitive counts; indices are absolute
+  within the vertex buffer the draw sits under. The byte at +73 is 1 when the buffer's indices are 32-bit, 0 when
+  16-bit: characters are all 16-bit, but a level's large background meshes (the Badlands' terrain) use 32-bit, and
+  read as 16-bit every other index comes out 0 (fans of spikes to the buffer's first vertex).
 """
 
 from __future__ import annotations
@@ -56,6 +58,13 @@ class Draw:
     push: Node | None = None  # the ndPushBuffer holding the draw, and its slot there
     slot: int = 0
     palette_ref: Ref | None = None  # an added draw's own palette list, where the importer gave it one
+    index_size: int = 2  # bytes per index: 4 where the push buffer's +73 flag says 32-bit
+    # An added draw's own textures: the material's texture palette index -> the index this draw shows instead.
+    texture_slots: dict[int, int] = field(default_factory=dict)
+
+    def pack_indices(self, indices: list[int]) -> bytes:
+        """Index data in this draw's width, as the game reads it."""
+        return struct.pack(">%d%s" % (len(indices), "I" if self.index_size == 4 else "H"), *indices)
 
     def triangles(self) -> list[tuple[int, int, int]]:
         out = []
@@ -191,14 +200,16 @@ def read_vertex_buffer(resolver: Resolver, node: Node) -> Mesh:
 def read_push_buffer(resolver: Resolver, node: Node) -> list[Draw]:
     draws = []
     ref = node.ref
+    index_size = 4 if resolver.u8(ref, 73) else 2
     for i in range(resolver.u32(ref, 48)):
         primitive = resolver.u32(resolver.pointer(ref, 64), 4 * i)
         primitive_count = resolver.u32(resolver.pointer(ref, 68), 4 * i)
         vertex_count = resolver.u32(resolver.pointer(ref, 56), 4 * i)
         index_data = resolver.pointer(resolver.pointer(ref, 60), 4 * i)
         index_count = primitive_count * 3 if primitive == PRIMITIVE_TRIANGLE_LIST else primitive_count + 2
-        indices = list(struct.unpack_from(">%dH" % index_count, resolver.data(index_data.entry), index_data.offset))
-        draws.append(Draw(primitive, primitive_count, vertex_count, indices))
+        code = "I" if index_size == 4 else "H"
+        indices = list(struct.unpack_from(">%d%s" % (index_count, code), resolver.data(index_data.entry), index_data.offset))
+        draws.append(Draw(primitive, primitive_count, vertex_count, indices, index_size=index_size))
     return draws
 
 
@@ -214,8 +225,65 @@ def read_palette(resolver: Resolver, skin: Node) -> list[int]:
     return [resolver.u8(first, i) for i in range(count)] if first else []
 
 
+def _stream_draws(resolver: Resolver) -> dict[tuple[int, int], tuple[Ref | None, dict[int, int]]]:
+    """What the command streams give each draw of its own, by its index buffer header (entry, offset): the bone palette
+    list loaded right before it, and the textures bound for it alone.
+
+    A draw the importer added (extend.py) sits in the stream after the draw it copies, as: its textures bound (a 0x16
+    variant jump, then per variant 0x2C packets and a 0x19 jump past the block), its bone palette (0x13), the draw, and
+    the template's textures and palette put back the same way. The rendergraph's nodes know none of this: the added
+    draw is one more slot of the template's push buffer, under the template's skin node and material. Read from the
+    nodes alone it would show the template's bones and textures."""
+    cached = getattr(resolver, "_stream_draws", None)
+    if cached is not None:
+        return cached
+    archive = resolver.archive
+    out: dict[tuple[int, int], tuple[Ref | None, dict[int, int]]] = {}
+    for entry in archive.entries:
+        if archive.sections[entry.section - 1].name != ".stream":
+            continue
+        data = resolver.data(entry)
+        pointers = resolver._pointers.get(entry.index, {})
+        sites, palettes, jumps = [], {}, {}
+        for offset, target in pointers.items():
+            if offset + 4 > len(data):
+                continue
+            value = struct.unpack_from(">I", data, offset)[0]
+            if offset >= 16 and data[offset - 14] in (0x01, 0x30, 0x31) and struct.unpack_from(">H", data, offset - 16)[0] == 20:
+                sites.append((offset - 16, target, value))
+            if offset >= 4 and data[offset - 2] == 0x13:
+                start = offset - 4
+                palettes[start + struct.unpack_from(">H", data, start)[0]] = (start, Ref(archive.entries[target - 1], value))
+            if offset >= 4 and data[offset - 2] == 0x19 and target == entry.index:
+                jumps.setdefault(value, []).append(offset - 4)
+
+        def bound(at: int, backwards: bool) -> dict[int, int]:
+            """The 0x2C packets ending at `at` (or starting there): sampler -> texture palette index."""
+            found = {}
+            offset = at - 16 if backwards else at
+            while 0 <= offset and offset + 16 <= len(data) and struct.unpack_from(">HB", data, offset) == (16, 0x2C):
+                index, _, sampler = struct.unpack_from(">IIH", data, offset + 4)
+                found[sampler] = index
+                offset += -16 if backwards else 16
+            return found
+
+        for site, target, value in sites:
+            start, palette = palettes.get(site, (site, None))
+            slots: dict[int, int] = {}
+            after = site + 20
+            if start in jumps and after + 12 <= len(data) and data[after + 2] == 0x16 and pointers.get(after + 8) == entry.index:
+                new = bound(min(jumps[start]), backwards=True)
+                old = bound(struct.unpack_from(">I", data, after + 8)[0], backwards=False)
+                slots = {old[sampler]: index for sampler, index in new.items() if sampler in old and old[sampler] != index}
+            if palette is not None or slots:
+                out[(target, value)] = (palette, slots)
+    resolver._stream_draws = out
+    return out
+
+
 def collect_meshes(resolver: Resolver, roots: list[Node]) -> list[Mesh]:
     meshes: list[Mesh] = []
+    own = _stream_draws(resolver)
 
     def visit(nodes: list[Node], current: Mesh | None, material: Node | None, skin: Node | None) -> None:
         for node in nodes:
@@ -232,12 +300,20 @@ def collect_meshes(resolver: Resolver, roots: list[Node]) -> list[Mesh]:
             # A level's background geometry draws through ndBGPushBuffer (under ndBGGroup), laid out as ndPushBuffer.
             elif node.type in ("ndPushBuffer", "ndBGPushBuffer") and current is not None:
                 palette = read_palette(resolver, skin) if skin is not None else []
+                skin_list = resolver.pointer(skin.ref, 48) if skin is not None else None
+                headers = resolver.pointer(node.ref, 52)
                 for slot, draw in enumerate(read_push_buffer(resolver, node)):
                     draw.material = material
                     draw.palette = palette
                     draw.skin = skin
                     draw.push = node
                     draw.slot = slot
+                    header = resolver.pointer(headers, 4 * slot) if headers else None
+                    own_palette, slots = own.get((header.entry.index, header.offset), (None, {})) if header else (None, {})
+                    draw.texture_slots = slots
+                    if own_palette is not None and skin_list is not None and (own_palette.entry.index, own_palette.offset) != (skin_list.entry.index, skin_list.offset):
+                        draw.palette_ref = own_palette
+                        draw.palette = [resolver.u8(own_palette, i) for i in range(len(palette))]
                     current.draws.append(draw)
             visit(node.children, owner, owner_material, owner_skin)
 

@@ -5,12 +5,10 @@
 #include <mutex>
 #include <utility>
 
-#include <kameorepowered_init.h>
+#include "core/guest.h"
 
-#include <rex/cvar.h>
-#include <rex/logging.h>
-#include <rex/system/kernel_state.h>
-#include <rex/system/xmemory.h>
+#include "core/cvar.h"
+#include <rex/logging/log_category.h>
 
 #include "gpu/config.h"
 #include "gpu/guest_device.h"
@@ -38,10 +36,8 @@ namespace kameo::gpu::hooks {
 bool RingSinksReady() {
   static std::once_flag once;
   std::call_once(once, [] {
-    rex::memory::BaseHeap* heap = rex::system::kernel_state()->memory()->LookupHeapByType(true, 4096);
     for (auto [sink, bytes] : {std::pair{&g_commandSink, kCommandSinkBytes}, std::pair{&g_vertexSink, kVertexSinkBytes}}) {
-      uint32_t address = 0;
-      if (heap && heap->Alloc(bytes, 4096, rex::memory::kMemoryAllocationReserve | rex::memory::kMemoryAllocationCommit, rex::memory::kMemoryProtectRead | rex::memory::kMemoryProtectWrite, false, &address)) {
+      if (const uint32_t address = GuestPhysicalAlloc(bytes)) {
         sink->base = address;
         sink->size = bytes;
       }

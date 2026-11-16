@@ -9,6 +9,7 @@
 #include "engine/super_jump.h"
 #include "engine/unlocks.h"
 #include "input/input.h"
+#include "mods/mods.h"
 #include "ui/hud/achievement_toast.h"
 #include "ui/hud/fps_counter.h"
 #include "ui/pause_menu/option_values.h"
@@ -41,4 +42,5 @@ void KameoGameTick() {
   KameoTickAchievementToast(*ctx_ptr, base);
   KameoTickMenuHotkeys(*ctx_ptr, base);
   KameoDevStartTaskTick(*ctx_ptr, base);
+  KameoModsTick(*ctx_ptr, base);
 }

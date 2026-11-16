@@ -6,10 +6,11 @@
 #include <fstream>
 #include <vector>
 
-#include <rex/logging/macros.h>
-#include <rex/system/kernel_state.h>
-#include <rex/system/xam/content_manager.h>
-#include <rex/system/xam/user_profile.h>
+#include <rex/logging/log_category.h>
+#include <rex/kernel/title_runtime.h>
+#include <rex/kernel/types/content.h>
+#include <rex/xam/content_manager.h>
+#include <rex/xam/user_profile.h>
 
 namespace {
 
@@ -55,18 +56,19 @@ bool RewriteSaveNames(const std::filesystem::path& folder, const std::u16string&
 }  // namespace
 
 bool kameo::ui::RenameSaveGame(const std::string& file_name, const std::u16string& name) {
-  auto* state = rex::system::kernel_state();
-  auto* content = state ? state->content_manager() : nullptr;
-  if (!content || !state->user_profile() || file_name.empty()) return false;
+  rex::kernel::TitleRuntime* runtime = REX_RUNTIME();
+  if (!runtime || !runtime->IsLoaded() || file_name.empty()) return false;
+  rex::xam::IContentManager* content = &runtime->GetContentManager();
   const std::string new_file_name = SaveFileNameFor(name);
-  const uint64_t user = state->user_profile()->xuid();
+  // The runtime keeps the one signed-in profile to itself; a new one has the same default XUID.
+  const uint64_t user = rex::xam::UserProfile().GetXUID();
   // ResolveGameUserContentPath is root/title/profile/user, and saves live under root/xuid/title/00000001 with headers in root/xuid/title/Headers/00000001.
   const std::filesystem::path root = content->ResolveGameUserContentPath().parent_path().parent_path().parent_path();
   char title[16];
-  std::snprintf(title, sizeof(title), "%08X", state->title_id());
+  std::snprintf(title, sizeof(title), "%08X", runtime->GetTitleID());
   for (const uint64_t xuid : {user, uint64_t(0)}) {
-    for (auto data : content->ListContent(1, xuid, rex::system::XContentType::kSavedGame)) {
-      if (data.file_name() != file_name) continue;
+    for (auto data : content->ListContent(1, xuid, rex::kernel::XContentType::kSavedGame)) {
+      if (data.GetFileName() != file_name) continue;
       if (content->IsContentOpen(data)) return false;
       char owner[24];
       std::snprintf(owner, sizeof(owner), "%016llX", static_cast<unsigned long long>(data.xuid != 0 && data.xuid != uint64_t(-1) ? uint64_t(data.xuid) : xuid));
@@ -82,13 +84,13 @@ bool kameo::ui::RenameSaveGame(const std::string& file_name, const std::u16strin
         std::filesystem::rename(saves / file_name, saves / new_file_name, error);
         if (error) {
           REXLOG_WARN("[kameo] rename save {}: moving the folder failed ({})", file_name, error.message());
-          RewriteSaveNames(saves / file_name, data.display_name(), file_name);
+          RewriteSaveNames(saves / file_name, data.GetDisplayName(), file_name);
           return false;
         }
       }
-      data.set_display_name(name);
-      data.set_file_name(new_file_name);
-      if (XFAILED(content->WriteContentHeaderFile(xuid, data))) return false;
+      data.SetDisplayName(name);
+      data.SetFileName(new_file_name);
+      if (!content->WriteContentHeaderFile(xuid, data).has_value()) return false;
       if (new_file_name != file_name) std::filesystem::remove(headers / (file_name + ".header"), error);
       REXLOG_INFO("[kameo] renamed save {} to {}", file_name, new_file_name);
       return true;

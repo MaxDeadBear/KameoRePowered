@@ -7,7 +7,7 @@
 #include <unordered_set>
 #include <vector>
 
-#include <fmt/format.h>
+#include <format>
 
 #include "gpu/config.h"
 #include "gpu/draw/capture.h"
@@ -97,7 +97,7 @@ void FindTextureShader(const DrawCall& call, uint32_t texture_index) {
   static std::string watched_text;
   static std::unordered_set<uint64_t> watched;
   static std::unordered_set<uint64_t> logged;
-  const std::string& text = REXCVAR_GET(kameo_dev_find_texture_shaders);
+  const std::string& text = KCVAR_GET(kameo_dev_find_texture_shaders);
   if (text.empty()) return;
   if (text != watched_text) {
     watched_text = text;
@@ -143,7 +143,7 @@ bool BuildSharedBlock(ReplayContext& rc, const DrawCall& call, plume::RenderShad
     bool volume = false;
     uint32_t texture_index = EnsureTexture(base, ctx, list, fetch, call.texture_objects[s], call.texture_addresses[s], want_dimension, &volume);
     // DXN is the game's normal map format, so with bump mapping off those samples read the flat normal instead.
-    if (texture_index != 0 && want_dimension == 0 && g_flatNormalSlot != 0 && fetch.format() == kXenosFormat_DXN && !REXCVAR_GET(kameo_gfx_normal_maps)) texture_index = g_flatNormalSlot;
+    if (texture_index != 0 && want_dimension == 0 && g_flatNormalSlot != 0 && fetch.format() == kXenosFormat_DXN && !KCVAR_GET(kameo_gfx_normal_maps)) texture_index = g_flatNormalSlot;
     // A fetch constant with no texture object behind it is a slot the guest left empty, which samples as zero on the console.
     if (texture_index == 0 && call.texture_objects[s] == 0 && want_dimension == 0 && g_emptySlot != 0) texture_index = g_emptySlot;
     if (texture_index == 0) {
@@ -156,7 +156,7 @@ bool BuildSharedBlock(ReplayContext& rc, const DrawCall& call, plume::RenderShad
     shared_words[want_dimension * 16 + s] = texture_index;
     // The two shadow-map texture objects shadowRender resolves into.
     const bool shadow_map = call.texture_objects[s] == 0x8286F160 || call.texture_objects[s] == 0x8286F138;
-    shared_words[48 + s] = EnsureSampler(ctx, fetch, shadow_map && REXCVAR_GET(kameo_gfx_shadow_filtering) && ShadowMapsFilterable(ctx));
+    shared_words[48 + s] = EnsureSampler(ctx, fetch, shadow_map && KCVAR_GET(kameo_gfx_shadow_filtering) && ShadowMapsFilterable(ctx));
   }
   shared_words[64] = call.booleans;                       // c16.x g_Booleans
   shared_words[65] = 0;                                   // c16.y g_SwappedTexcoords
@@ -215,8 +215,8 @@ bool UploadDrawData(ReplayContext& rc, const DrawCall& call, DrawUploads* out) {
   }
   const uint32_t vs_offset = call.vs_ring != kNoData ? call.vs_ring : g_constantRing.writeOnce(call.vs_constants, frame.arena.data() + call.vs_constants, call.vs_constant_bytes, kRootConstantAlign);
   uint32_t ps_offset = kNoData;
-  const bool strip_specular = !REXCVAR_GET(kameo_gfx_specular);
-  const bool strip_bump = !REXCVAR_GET(kameo_gfx_bump_maps);
+  const bool strip_specular = !KCVAR_GET(kameo_gfx_specular);
+  const bool strip_bump = !KCVAR_GET(kameo_gfx_bump_maps);
   const ShaderMaterialRegisters materials = (strip_specular || strip_bump) && call.ps_constants != kNoData ? ShaderMaterialRegistersOf(call.ps) : ShaderMaterialRegisters{};
   const bool patch_specular = strip_specular && materials.specular_power >= 0 && uint32_t(materials.specular_power + 1) * 16 <= call.ps_constant_bytes;
   const bool patch_bump = strip_bump && materials.bump_count > 0;
@@ -399,7 +399,7 @@ void ReplayDraw(ReplayContext& rc, const DrawCall& call, uint32_t off_w, uint32_
   const bool cull_all = (call.mode_control & state::kCullFrontBit) != 0 &&
                         (call.mode_control & state::kCullBackBit) != 0;
   if (cull_all) {
-    if (REXCVAR_GET(kameo_gfx_cull_both)) {
+    if (KCVAR_GET(kameo_gfx_cull_both)) {
       return;
     }
   }

@@ -6,8 +6,8 @@
 #include <cstdint>
 #include <string>
 
-#include <fmt/format.h>
-#include <rex/logging.h>
+#include <format>
+#include <rex/logging/log_category.h>
 
 #include "core/guest.h"
 #include "kameorepowered_init.h"
@@ -21,8 +21,8 @@ constexpr uint32_t kNotifyPrompt = 0x82B70AC4;    // the prompt systemNotify sho
 constexpr uint32_t kSigninSeen = 0x82759D28;      // the sign-in state the notify handler last saw
 
 std::string State(uint8_t* base) {
-  return fmt::format("device {} selector {} without-saving {} prompt {} sign-in seen {}", int32_t(REX_LOAD_U32(kSaveDevice)),
-                     REX_LOAD_U32(kSelectorResult), REX_LOAD_U8(kNoSaving), REX_LOAD_U32(kNotifyPrompt), REX_LOAD_U32(kSigninSeen));
+  return std::format("device {} selector {} without-saving {} prompt {} sign-in seen {}", int32_t(REX_LOAD_U32(kSaveDevice)),
+                     REX_LOAD_U32(kSelectorResult), uint32_t(REX_LOAD_U8(kNoSaving)), REX_LOAD_U32(kNotifyPrompt), REX_LOAD_U32(kSigninSeen));
 }
 
 }  // namespace

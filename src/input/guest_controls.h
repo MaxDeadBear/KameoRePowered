@@ -34,7 +34,7 @@ constexpr uint32_t kButtonB = 0x2000;
 constexpr uint32_t kButtonX = 0x4000;
 constexpr uint32_t kButtonY = 0x8000;
 
-inline float LoadFloat(const uint8_t* base, uint32_t address) {
+inline float LoadFloat(uint8_t* base, uint32_t address) {
   const uint32_t bits = REX_LOAD_U32(address);
   float value;
   std::memcpy(&value, &bits, sizeof(value));
@@ -47,9 +47,9 @@ inline void StoreFloat(uint8_t* base, uint32_t address, float value) {
   REX_STORE_U32(address, bits);
 }
 
-inline uint32_t ControllerStick(const uint8_t* base, uint32_t controller) { return REX_LOAD_U32(kSticks) + controller * kStickBytes; }
+inline uint32_t ControllerStick(uint8_t* base, uint32_t controller) { return REX_LOAD_U32(kSticks) + controller * kStickBytes; }
 
 // The stick record of the controller `player` (clamped to 0-3) reads.
-inline uint32_t PlayerStick(const uint8_t* base, int8_t player) { return ControllerStick(base, REX_LOAD_U8(kPlayerControllers + kPlayerControllerBytes * uint32_t(std::clamp<int8_t>(player, 0, 3)))); }
+inline uint32_t PlayerStick(uint8_t* base, int8_t player) { return ControllerStick(base, REX_LOAD_U8(kPlayerControllers + kPlayerControllerBytes * uint32_t(std::clamp<int8_t>(player, 0, 3)))); }
 
 }  // namespace kameo::input

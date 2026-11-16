@@ -78,7 +78,7 @@ void MaterializeConstantRecord(DrawFrame& frame, uint32_t record, uint32_t* file
 }  // namespace
 
 ConstantSpan SpanOf(ShaderConstantRange range) {
-  if (!REXCVAR_GET(kameo_gfx_constant_range)) return {0, kConstantBytes};
+  if (!KCVAR_GET(kameo_gfx_constant_range)) return {0, kConstantBytes};
   if (range.hi <= range.lo) return {0, 0};
   const uint32_t offset = (uint32_t(range.lo) * 16) & ~127u;
   const uint32_t end = std::min<uint32_t>((uint32_t(range.hi) * 16 + 127) & ~127u, kConstantBytes);
@@ -140,7 +140,7 @@ uint32_t CaptureConstants(uint8_t* base, uint32_t device, ConstantDedup* dedup, 
 }
 
 void MaterializeConstants(DrawFrame& frame) {
-  const bool strip = !REXCVAR_GET(kameo_gfx_specular) || !REXCVAR_GET(kameo_gfx_bump_maps);
+  const bool strip = !KCVAR_GET(kameo_gfx_specular) || !KCVAR_GET(kameo_gfx_bump_maps);
   for (DrawCall& call : frame.draws) {
     MaterializeConstantRecord(frame, call.vs_constants, g_renderConstants[0], call.hud_2d, &call.vs_constants, &call.vs_ring);
     MaterializeConstantRecord(frame, call.ps_constants, g_renderConstants[1], strip, &call.ps_constants, &call.ps_ring);

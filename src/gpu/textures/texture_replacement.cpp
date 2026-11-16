@@ -99,7 +99,7 @@ void ApplyReadyReplacement(GraphicsSystem::DrawPathContext& ctx, plume::RenderCo
 }
 
 void ApplyTexturePackChanges(GraphicsSystem::DrawPathContext& ctx) {
-  if (TakeDumpOfLoadedTexturesRequest() && REXCVAR_GET(kameo_gfx_dump_textures)) {
+  if (TakeDumpOfLoadedTexturesRequest() && KCVAR_GET(kameo_gfx_dump_textures)) {
     uint32_t reloaded = 0;
     for (auto it = g_textures.begin(); it != g_textures.end();) {
       if (!it->second.replaceable || TextureWasDumped(it->second.content_hash)) {

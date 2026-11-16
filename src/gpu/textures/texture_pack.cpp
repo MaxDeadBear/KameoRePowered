@@ -30,18 +30,18 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb/stb_image_write.h"
 
-#include <rex/cvar.h>
-#include <rex/logging.h>
+#include "core/cvar.h"
+#include <rex/logging/log_category.h>
 
 #include "gpu/log.h"
 #include "gpu/textures/texture_codec.h"
 
-REXCVAR_DEFINE_BOOL(kameo_gfx_dump_textures, false, "Kameo", "Write each distinct texture the game draws with to <kameo_gfx_texture_dir>/dump/<level it loaded in, or global>/<width>x<height>/, named by a hash of its contents so a copy placed in replace/ swaps it in.");
-REXCVAR_DEFINE_STRING(kameo_gfx_dump_texture_format, "png", "Kameo", "File format for dumped textures: png or tga.");
-REXCVAR_DEFINE_BOOL(kameo_gfx_texture_replacements, true, "Kameo", "Replace textures with images from <kameo_gfx_texture_dir>/replace/ whose file name starts with the 16-digit hash of a dumped texture; png, tga, jpg and bmp at any resolution.");
-REXCVAR_DEFINE_BOOL(kameo_gfx_texture_live_reload, true, "Kameo", "Watch the replace/ folder while the game runs: an added or edited image swaps in once it has finished saving, and a deleted one restores the original texture.");
-REXCVAR_DEFINE_STRING(kameo_gfx_texture_dir, "textures", "Kameo", "Folder holding the dump/ and replace/ texture folders, relative to the working directory.");
-REXCVAR_DEFINE_COMMAND(kameo_gfx_rescan_textures, []() { kameo::gpu::RescanTextureReplacements(); }, "Kameo", "Re-read the replace/ folder, for images added while the game is running.");
+KCVAR_DEFINE_BOOL(kameo_gfx_dump_textures, false, "Kameo", "Write each distinct texture the game draws with to <kameo_gfx_texture_dir>/dump/<level it loaded in, or global>/<width>x<height>/, named by a hash of its contents so a copy placed in replace/ swaps it in.");
+KCVAR_DEFINE_STRING(kameo_gfx_dump_texture_format, "png", "Kameo", "File format for dumped textures: png or tga.");
+KCVAR_DEFINE_BOOL(kameo_gfx_texture_replacements, true, "Kameo", "Replace textures with images from <kameo_gfx_texture_dir>/replace/ whose file name starts with the 16-digit hash of a dumped texture; png, tga, jpg and bmp at any resolution.");
+KCVAR_DEFINE_BOOL(kameo_gfx_texture_live_reload, true, "Kameo", "Watch the replace/ folder while the game runs: an added or edited image swaps in once it has finished saving, and a deleted one restores the original texture.");
+KCVAR_DEFINE_STRING(kameo_gfx_texture_dir, "textures", "Kameo", "Folder holding the dump/ and replace/ texture folders, relative to the working directory.");
+KCVAR_DEFINE_COMMAND(kameo_gfx_rescan_textures, []() { kameo::gpu::RescanTextureReplacements(); }, "Kameo", "Re-read the replace/ folder, for images added while the game is running.");
 
 namespace kameo::gpu {
 namespace {
@@ -92,7 +92,7 @@ JobQueue& DecodeQueue() {
   return *queue;
 }
 
-std::filesystem::path TextureDir(const char* sub) { return std::filesystem::path(REXCVAR_GET(kameo_gfx_texture_dir)) / sub; }
+std::filesystem::path TextureDir(const char* sub) { return std::filesystem::path(KCVAR_GET(kameo_gfx_texture_dir)) / sub; }
 
 std::mutex g_dumpMutex;
 // Every hash whose pixel hash was registered, and the subset whose file was actually written; dumping can be off the first time a texture is seen.
@@ -243,7 +243,7 @@ void WatchReplaceDir() {
   bool have_previous = false;
   for (;;) {
     std::this_thread::sleep_for(std::chrono::seconds(1));
-    if (!REXCVAR_GET(kameo_gfx_texture_live_reload) || !REXCVAR_GET(kameo_gfx_texture_replacements)) {
+    if (!KCVAR_GET(kameo_gfx_texture_live_reload) || !KCVAR_GET(kameo_gfx_texture_replacements)) {
       have_previous = false;
       continue;
     }
@@ -367,9 +367,9 @@ void KeepIfWanted(uint64_t hash, uint32_t width, uint32_t height, uint32_t forma
 }
 
 void WriteDump(uint64_t hash, const std::string& level, uint32_t width, uint32_t height, uint32_t format, const std::vector<uint8_t>& pixels, uint32_t src_row_bytes, bool block_compressed, bool write_file) {
-  const std::string kind = REXCVAR_GET(kameo_gfx_dump_texture_format) == "tga" ? "tga" : "png";
-  const std::filesystem::path dir = TextureDir("dump") / FolderName(level) / fmt::format("{}x{}", width, height);
-  const std::filesystem::path path = dir / fmt::format("{:016X}_{}x{}_fmt{}.{}", hash, width, height, format, kind);
+  const std::string kind = KCVAR_GET(kameo_gfx_dump_texture_format) == "tga" ? "tga" : "png";
+  const std::filesystem::path dir = TextureDir("dump") / FolderName(level) / std::format("{}x{}", width, height);
+  const std::filesystem::path path = dir / std::format("{:016X}_{}x{}_fmt{}.{}", hash, width, height, format, kind);
   std::error_code ec;
   const std::vector<uint8_t> rgba = ToRgba(width, height, format, pixels, src_row_bytes, block_compressed);
   RegisterPixelHash(hash, XXH3_64bits_withSeed(rgba.data(), rgba.size(), (uint64_t(width) << 32) | height));
@@ -429,7 +429,7 @@ void QueueTextureDump(uint64_t hash, uint32_t object, uint32_t width, uint32_t h
 }
 
 bool HasTextureReplacement(uint64_t hash) {
-  if (!REXCVAR_GET(kameo_gfx_texture_replacements)) return false;
+  if (!KCVAR_GET(kameo_gfx_texture_replacements)) return false;
   std::lock_guard lock(g_packMutex);
   if (!g_indexed) BuildIndexLocked();
   return ResolveReplacementLocked(hash) != nullptr;

@@ -1,5 +1,5 @@
 # Kameo: RePowered - ReXGlue recompilation of Kameo: Elements of Power.
-# SDK boilerplate lives in generated/rexglue.cmake.
+# The SDK package (find_package(rexglue)) provides rexglue_project and the rexglue_setup_* functions.
 
 cmake_minimum_required(VERSION 3.25)
 project(kameorepowered LANGUAGES C CXX)
@@ -35,24 +35,32 @@ if(KAMEO_TITLE_UPDATE AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/assets/TU/default.
 endif()
 configure_file(res/windows/kameo_version.h.in "${CMAKE_CURRENT_BINARY_DIR}/res/kameo_version.h" @ONLY)
 
+# The ReXGlue SDK: an installed package on CMAKE_PREFIX_PATH (the presets take it from the REXGLUE_SDK environment
+# variable), or a source tree in REXSDK_DIR. Keep the version in step with sdk_version in kameorepowered_manifest.toml,
+# SDK_VERSION in .github/workflows/_build.yml and tools/tu/prepare.py.
+set(REXSDK_DIR "" CACHE PATH "Path to a rexglue-sdk source tree, to build the SDK with the game")
+if(REXSDK_DIR)
+    add_subdirectory("${REXSDK_DIR}" rexglue-sdk)
+else()
+    find_package(rexglue 0.11.0 REQUIRED CONFIG)
+endif()
+
 if(KAMEO_TITLE_UPDATE)
     find_package(Python3 REQUIRED COMPONENTS Interpreter)
     execute_process(COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/tu/prepare.py RESULT_VARIABLE _kameo_tu_prepared)
     if(_kameo_tu_prepared)
         message(FATAL_ERROR "tools/tu/prepare.py failed: the title-update build needs assets/TU/default.xexp")
     endif()
-    # The SDK's boilerplate, pointed at the title-update workspace instead of generated/default.
+    # The title-update workspace has its own manifest, game files and codegen output. rexglue_project is a macro that
+    # places all three under CMAKE_CURRENT_SOURCE_DIR, so it runs with that pointed at the workspace.
     set(KAMEO_TU_WS "${CMAKE_CURRENT_SOURCE_DIR}/generated/tu")
-    file(READ generated/rexglue.cmake _kameo_rexglue)
-    string(REPLACE "\${CMAKE_CURRENT_SOURCE_DIR}/generated/default" "${KAMEO_TU_WS}/generated/default" _kameo_rexglue "${_kameo_rexglue}")
-    string(REPLACE "include(generated/default/" "include(${KAMEO_TU_WS}/generated/default/" _kameo_rexglue "${_kameo_rexglue}")
-    string(REPLACE "\${CMAKE_CURRENT_SOURCE_DIR}/kameorepowered_manifest.toml" "${KAMEO_TU_WS}/kameorepowered_manifest.toml" _kameo_rexglue "${_kameo_rexglue}")
-    string(REPLACE "WORKING_DIRECTORY \${CMAKE_CURRENT_SOURCE_DIR}" "WORKING_DIRECTORY ${KAMEO_TU_WS}" _kameo_rexglue "${_kameo_rexglue}")
-    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/rexglue_tu.cmake" "${_kameo_rexglue}")
-    include("${CMAKE_CURRENT_BINARY_DIR}/rexglue_tu.cmake")
+    set(_kameo_source_dir "${CMAKE_CURRENT_SOURCE_DIR}")
+    set(CMAKE_CURRENT_SOURCE_DIR "${KAMEO_TU_WS}")
+    rexglue_project(kameorepowered OUTPUT_DIR generated/default)
+    set(CMAKE_CURRENT_SOURCE_DIR "${_kameo_source_dir}")
     set(KAMEO_SRC_DIR "${KAMEO_TU_WS}/src")
 else()
-    include(generated/rexglue.cmake)
+    rexglue_project(kameorepowered OUTPUT_DIR generated/default)
     set(KAMEO_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
 endif()
 
@@ -60,10 +68,18 @@ if(NOT REXGLUE_ENTRYPOINT_GENERATED_SOURCES)
     message(FATAL_ERROR "No recompiled code. Run codegen first:\n  rexglue codegen kameorepowered_manifest.toml")
 endif()
 
-foreach(submodule plume XenosRecomp RexLiveless SentryWork)
+foreach(submodule plume XenosRecomp RexLiveless SentryWork RexFabric)
     if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/${submodule}/CMakeLists.txt")
         message(FATAL_ERROR "thirdparty/${submodule} is missing:\n  git submodule update --init --recursive")
     endif()
+endforeach()
+# Our changes to submodules whose repositories are not ours to push to: thirdparty/overlay/<submodule>/<path> is our
+# version of that file (SentryWork ported to ReXGlue 0.11, RexFabric's node editor fitted to the window), copied over
+# the submodule's own before it is built. When a submodule is moved to a newer commit, carry its changes to these
+# files into the overlay, or drop the file from it once upstream has ours.
+file(GLOB_RECURSE _kameo_overlay RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/overlay" "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/overlay/*")
+foreach(_kameo_overlay_file IN LISTS _kameo_overlay)
+    configure_file("thirdparty/overlay/${_kameo_overlay_file}" "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/${_kameo_overlay_file}" COPYONLY)
 endforeach()
 add_subdirectory(thirdparty/plume plume EXCLUDE_FROM_ALL)
 
@@ -84,6 +100,11 @@ list(APPEND KAMEO_SOURCES
     src/launcher/kmod_zlib.cpp)
 
 if(WIN32)
+    # The shader editor inside the game (F1): its own sources without the Direct3D 11 host, preview and window.
+    foreach(_editor_file editor node_canvas shader_graph shader_build game_textures)
+        list(APPEND KAMEO_SOURCES "${KAMEO_SRC_DIR}/shader_editor/${_editor_file}.cpp")
+    endforeach()
+    list(APPEND KAMEO_SOURCES src/launcher/zip_extract.cpp)
     add_executable(kameorepowered WIN32 ${KAMEO_SOURCES} res/windows/kameo.rc)
 else()
     add_executable(kameorepowered ${KAMEO_SOURCES})
@@ -110,14 +131,18 @@ target_include_directories(kameorepowered PRIVATE
     res
     "${CMAKE_CURRENT_BINARY_DIR}/res"
     thirdparty
+    thirdparty/tomlplusplus
+    thirdparty/RexLiveless/third_party
     thirdparty/XenosRecomp/thirdparty/xxHash
     thirdparty/XenosRecomp/thirdparty/smol-v/source)
 
 # plume is a static library, so its D3D12 imports are satisfied here; Vulkan is loaded through volk.
 target_link_libraries(kameorepowered PRIVATE plume)
+# The SDK's own SDL, the one that owns the window: input reads its per-device keyboard and mouse events (src/input/device_routing.cpp).
+target_link_libraries(kameorepowered PRIVATE SDL3::SDL3)
 if(WIN32)
     # dbghelp writes the crash reporter's minidump, and dwmapi takes the crashed game's window off the screen.
-    target_link_libraries(kameorepowered PRIVATE d3d12 dbghelp dwmapi mfplat mfreadwrite mfuuid ole32 xaudio2)
+    target_link_libraries(kameorepowered PRIVATE d3d12 dxgi dbghelp dwmapi mfplat mfreadwrite mfuuid ole32 xaudio2)
 elseif(UNIX AND NOT APPLE)
     # plume only builds Xlib surfaces on Linux, and the guest memory-free wrappers find the runtime's exports through dlsym.
     target_link_libraries(kameorepowered PRIVATE X11 ${CMAKE_DL_LIBS})
@@ -129,8 +154,8 @@ if(WIN32 AND CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND NOT MSVC)
     target_link_options(kameorepowered PRIVATE $<$<CONFIG:Release>:-g>)
 endif()
 
-# The xenos plugin stays staged as the reference renderer behind --kameo_native_renderer=false.
-rexglue_setup_target(kameorepowered GPU_PLUGINS xenos)
+# The SDK's Xenos drivers stay staged as the reference renderer behind --kameo.native_renderer=false.
+rexglue_setup_target(kameorepowered)
 if(KAMEO_TITLE_UPDATE)
     # The launcher starts kameorepowered-tu when the update is installed, and the sources pick its addresses by KAMEO_TU.
     set_target_properties(kameorepowered PROPERTIES OUTPUT_NAME kameorepowered-tu)
@@ -146,8 +171,27 @@ endif()
 
 # RexLiveless: the Xbox 360 Guide with sign-in, friends, achievements and online play through rexliveless.xyz. It
 # replaces XAM and network imports, so its sources compile into the executable (src/app/app.cpp installs it).
-include(thirdparty/RexLiveless/CMakeLists.txt)
-rexglue_guide_attach(kameorepowered)
+option(KAMEO_GUIDE "Build the RexLiveless Guide into the game" ON)
+if(KAMEO_GUIDE)
+    include(thirdparty/RexLiveless/CMakeLists.txt)
+    rexglue_guide_attach(kameorepowered)
+    target_compile_definitions(kameorepowered PRIVATE KAMEO_GUIDE=1)
+endif()
+# RexFabric: Lua and native mods from the mods folder, hooks on every recompiled function, and the game's own modding
+# API (src/mods/). Its hook slots come from codegen templates it composes from the SDK's, so it needs the SDK's source
+# pieces: REXFABRIC_SDK_TEMPLATES is <rexglue-sdk>/resources/templates of the same SDK version, with the SDK's
+# thirdparty/tomlplusplus and thirdparty/stb beside resources. The mods menu goes in the Guide when that is built.
+option(KAMEO_MODS "Build RexFabric mod support into the game" ON)
+if(KAMEO_MODS)
+    include(thirdparty/RexFabric/CMakeLists.txt)
+    if(KAMEO_GUIDE)
+        rexfabric_attach(kameorepowered WITH_GUIDE WITH_NODE_EDITOR)
+    else()
+        rexfabric_attach(kameorepowered WITH_NODE_EDITOR)
+    endif()
+    target_compile_definitions(kameorepowered PRIVATE KAMEO_MODS=1)
+endif()
+
 # Sent with leaderboard scores, which the RexLiveless server refuses from a build with no name or an old one.
 string(REGEX REPLACE "^v" "" _kameo_build_name "${KAMEO_VERSION}")
 target_compile_definitions(kameorepowered PRIVATE KAMEO_BUILD_NAME="Kameo: RePowered ${_kameo_build_name}")
@@ -169,8 +213,12 @@ endif()
 if(KAMEO_SENTRY_ORG AND KAMEO_SENTRY_PROJECT)
     list(APPEND _kameo_sentry_args ORG "${KAMEO_SENTRY_ORG}" PROJECT "${KAMEO_SENTRY_PROJECT}")
 endif()
-include(thirdparty/SentryWork/CMakeLists.txt)
-sentrywork_attach(kameorepowered ${_kameo_sentry_args})
+option(KAMEO_SENTRY "Build SentryWork crash reporting into the game" ON)
+if(KAMEO_SENTRY)
+    include(thirdparty/SentryWork/CMakeLists.txt)
+    sentrywork_attach(kameorepowered ${_kameo_sentry_args})
+    target_compile_definitions(kameorepowered PRIVATE KAMEO_SENTRY=1)
+endif()
 # On Windows the helper ships under the game's name with the game's version details, since antivirus scanners treat an
 # unknown exe with no publisher details more harshly; src/core/sentry_setup.cpp points Sentry at it.
 if(WIN32 AND TARGET sentry-crash)
@@ -184,7 +232,7 @@ set_property(SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/SentryWork/src/sentr
 
 # The SDK only stages its shared libraries next to the executable on Windows and macOS.
 if(UNIX AND NOT APPLE)
-    foreach(_kameo_runtime_lib rex::runtime rex::TracyClient)
+    foreach(_kameo_runtime_lib rex::TracyClient)
         if(TARGET ${_kameo_runtime_lib})
             add_custom_command(TARGET kameorepowered POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:${_kameo_runtime_lib}> $<TARGET_FILE_DIR:kameorepowered> VERBATIM)
         endif()
@@ -192,21 +240,22 @@ if(UNIX AND NOT APPLE)
 endif()
 
 # Non-Release SDK builds bump a shared atomic on every indirect guest call; the recompiled code opts out.
-if(TARGET kameorepowered_recomp)
-    target_compile_options(kameorepowered_recomp PRIVATE -UREXGLUE_ENABLE_PERF_COUNTERS)
+if(TARGET kameorepowered_recompiled)
+    target_compile_options(kameorepowered_recompiled PRIVATE -UREXGLUE_ENABLE_PERF_COUNTERS)
 endif()
 
 # fp-contract stays off so separate PPC multiplies and adds are never fused into FMAs that round differently.
 if(KAMEO_X86_64_V3 AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    foreach(_kameo_target kameorepowered kameorepowered_recomp)
+    foreach(_kameo_target kameorepowered kameorepowered_recompiled)
         if(TARGET ${_kameo_target})
             target_compile_options(${_kameo_target} PRIVATE -march=x86-64-v3 -ffp-contract=off)
         endif()
     endforeach()
 endif()
 
-# The launcher edits settings, installs DLC, fetches and switches builds and starts the game, borrowing the game's runtime DLL for ImGui and STFS.
-if(WIN32)
+option(KAMEO_TOOLS "Build the launcher, the crash dialog and the shader editor with the game" ON)
+# The launcher edits settings, installs DLC, fetches and switches builds and starts the game, borrowing the SDK's rexbase library for ImGui and its rexfilesystem module for the package and disc image readers.
+if(WIN32 AND KAMEO_TOOLS)
     file(GLOB_RECURSE KAMEO_LAUNCHER_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/launcher/*.cpp")
     add_executable(KameoLauncher WIN32
         ${KAMEO_LAUNCHER_SOURCES}
@@ -214,21 +263,29 @@ if(WIN32)
         thirdparty/imgui_backends/imgui_impl_win32.cpp
         thirdparty/imgui_backends/imgui_impl_dx11.cpp
         res/windows/kameo.rc)
-    target_include_directories(KameoLauncher PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} src thirdparty "${CMAKE_CURRENT_BINARY_DIR}/res")
-    target_compile_definitions(KameoLauncher PRIVATE $<$<COMPILE_LANGUAGE:RC>:KAMEO_RC_LAUNCHER>)
+    target_include_directories(KameoLauncher PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} src thirdparty thirdparty/tomlplusplus "${CMAKE_CURRENT_BINARY_DIR}/res")
+    # The ImGui backends define their entry points themselves, so they must not take rexbase's dllimport.
+    target_compile_definitions(KameoLauncher PRIVATE IMGUI_IMPL_API= $<$<COMPILE_LANGUAGE:RC>:KAMEO_RC_LAUNCHER>)
     # bcrypt hashes the title update's patch against default.xex before installing it, and version reads which patch
     # kameorepowered-tu.exe was built from.
-    target_link_libraries(KameoLauncher PRIVATE rex::runtime d3d11 dxgi dwmapi d3dcompiler winhttp bcrypt version)
-    target_link_options(KameoLauncher PRIVATE "LINKER:/DELAYLOAD:rexruntime.dll")
+    target_link_libraries(KameoLauncher PRIVATE rex::base d3d11 dxgi dwmapi d3dcompiler winhttp bcrypt version)
+    # The launcher runs on its own copies of the SDK libraries in launcher\ (see src/launcher/runtime_loader.cpp), so
+    # switching builds can replace the game's: rexbase (ImGui, settings, the module loader) is delay-loaded from there,
+    # and it loads rexfilesystem (the STFS and disc image readers) from the folder it was itself loaded from. Those two are all
+    # launcher\ needs: their other imports are system DLLs and the C++ runtime. The file names carry the build configuration's
+    # postfix (d, rd), which rexbase's own name already shows.
+    target_link_options(KameoLauncher PRIVATE "LINKER:/DELAYLOAD:$<TARGET_FILE_NAME:rex::base>")
     target_link_libraries(KameoLauncher PRIVATE delayimp)
-    # The launcher runs on its own copy of the runtime DLL in launcher\ (see src/launcher/runtime_loader.cpp), so switching builds can replace the game's.
+    # rexbase hands out strings and paths allocated by its own operator new, so every program that links it must forward its own
+    # operator new and delete to the same allocator.
+    rexglue_link_host_allocator(KameoLauncher)
     add_custom_command(TARGET KameoLauncher POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:KameoLauncher>/launcher
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:rex::runtime> $<TARGET_FILE_DIR:KameoLauncher>/launcher/
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:rex::base> $<TARGET_FILE_DIR:rex::base>/rexfilesystem$<$<CONFIG:Debug>:d>$<$<CONFIG:RelWithDebInfo>:rd>.dll $<TARGET_FILE_DIR:KameoLauncher>/launcher/
         VERBATIM)
     add_dependencies(kameorepowered KameoLauncher)
 
-    # The window that asks a player whether to send a crash to Sentry (src/core/crash_reporter.cpp starts it), drawn with the launcher's window and theme. Unlike the launcher it runs on the game's runtime DLL, because it ships with each build.
+    # The window that asks a player whether to send a crash to Sentry (src/core/crash_reporter.cpp starts it), drawn with the launcher's window and theme. Unlike the launcher it runs on the SDK's rexbase library beside it, because it ships with each build.
     add_executable(KameoCrashDialog WIN32
         src/crash_dialog/main.cpp
         src/core/localization.cpp
@@ -238,8 +295,9 @@ if(WIN32)
         thirdparty/imgui_backends/imgui_impl_dx11.cpp
         res/windows/kameo.rc)
     target_include_directories(KameoCrashDialog PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} src thirdparty "${CMAKE_CURRENT_BINARY_DIR}/res")
-    target_compile_definitions(KameoCrashDialog PRIVATE $<$<COMPILE_LANGUAGE:RC>:KAMEO_RC_CRASH_DIALOG>)
-    target_link_libraries(KameoCrashDialog PRIVATE rex::runtime d3d11 dxgi dwmapi d3dcompiler)
+    target_compile_definitions(KameoCrashDialog PRIVATE IMGUI_IMPL_API= $<$<COMPILE_LANGUAGE:RC>:KAMEO_RC_CRASH_DIALOG>)
+    target_link_libraries(KameoCrashDialog PRIVATE rex::base d3d11 dxgi dwmapi d3dcompiler)
+    rexglue_link_host_allocator(KameoCrashDialog)
     add_dependencies(kameorepowered KameoCrashDialog)
 
     # The shader editor (docs/modding.md), with the compiler and the game's translated shaders it builds mods from beside it.
@@ -256,9 +314,10 @@ if(WIN32)
         thirdparty/imgui_backends/imgui_impl_dx11.cpp
         res/windows/kameo.rc)
     target_include_directories(KameoShaderEditor PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} src thirdparty thirdparty/RexLiveless/third_party "${CMAKE_CURRENT_BINARY_DIR}/res")
-    target_compile_definitions(KameoShaderEditor PRIVATE $<$<COMPILE_LANGUAGE:RC>:KAMEO_RC_SHADER_EDITOR>)
-    target_link_libraries(KameoShaderEditor PRIVATE rex::runtime d3d11 dxgi dwmapi d3dcompiler shell32 ole32)
+    target_compile_definitions(KameoShaderEditor PRIVATE IMGUI_IMPL_API= $<$<COMPILE_LANGUAGE:RC>:KAMEO_RC_SHADER_EDITOR>)
+    target_link_libraries(KameoShaderEditor PRIVATE rex::base d3d11 dxgi dwmapi d3dcompiler shell32 ole32)
     target_compile_definitions(KameoShaderEditor PRIVATE NOMINMAX)
+    rexglue_link_host_allocator(KameoShaderEditor)
     set(KAMEO_DXC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/XenosRecomp/thirdparty/dxc-bin/bin/x64)
     add_custom_command(TARGET KameoShaderEditor POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:KameoShaderEditor>/editor_shaders

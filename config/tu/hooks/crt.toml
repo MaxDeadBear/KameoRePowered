@@ -1,5 +1,5 @@
 # Translated from config/hooks/crt.toml for the title-update build by tools/tu/translate.py.
-[rexcrt]
+[shim]
 memcpy = 0x8255D400
 memmove = 0x8255BDA0
 memset = 0x8255D970

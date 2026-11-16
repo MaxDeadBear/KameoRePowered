@@ -28,7 +28,7 @@ env:
   ASSET_PATH: default.xex
   ASSET_CACHE_KEY: codegen-assets-v1
   # Keep in step with sdk_version in kameorepowered_manifest.toml.
-  SDK_VERSION: v0.10.0
+  SDK_VERSION: v0.11.0
 
 jobs:
   build:
@@ -100,6 +100,20 @@ jobs:
           chmod +x sdk/bin/rexglue || true
           echo "REXGLUE_SDK=$PWD/sdk" >> "$GITHUB_ENV"
 
+      # RexFabric (mod support) builds its hook slots into the codegen templates, and reads mod.toml and mod icons with
+      # the SDK's own toml++ and stb_image. The SDK's release package carries none of the three, so they come from its
+      # source at the same tag: the templates and stb from the tree, toml++ from its submodule.
+      - name: Fetch the SDK's templates
+        shell: bash
+        run: |
+          git clone --depth 1 --branch "${SDK_VERSION}" --filter=blob:none --sparse https://github.com/rexglue/rexglue-sdk.git sdk_src
+          git -C sdk_src sparse-checkout set resources/templates thirdparty/stb thirdparty/tomlplusplus
+          git -C sdk_src submodule update --init --depth 1 thirdparty/tomlplusplus
+          test -f sdk_src/resources/templates/codegen/pch_h.inja
+          test -f sdk_src/thirdparty/tomlplusplus/include/toml++/toml.hpp
+          test -f sdk_src/thirdparty/stb/stb_image.h
+          echo "REXFABRIC_SDK_TEMPLATES=$PWD/sdk_src/resources/templates" >> "$GITHUB_ENV"
+
       - name: Cache XEX asset for codegen
         id: asset-cache
         uses: actions/cache@v5
@@ -120,9 +134,13 @@ jobs:
           echo "Fetched ${{ env.ASSET_PATH }} ($size bytes)"
           [ "$size" -ge 1048576 ] || { echo "Asset too small, the fetch likely failed"; exit 1; }
 
+      # The manifest's template_dir (generated/templates) has to exist before codegen; CMake writes the same files again
+      # when it configures.
       - name: Codegen
         shell: bash
-        run: '"${REXGLUE_SDK}/bin/rexglue" codegen kameorepowered_manifest.toml'
+        run: |
+          python tools/compose_templates.py "${REXFABRIC_SDK_TEMPLATES}"
+          "${REXGLUE_SDK}/bin/rexglue" codegen kameorepowered_manifest.toml
 
       - name: Build
         shell: bash
@@ -134,7 +152,7 @@ jobs:
           preset="${{ inputs.build_preset }}"
           # The published SDK ships RelWithDebInfo only; the release preset maps onto it.
           cmake --preset "${preset}" ${{ matrix.compilers }} -DCMAKE_CXX_COMPILER_LAUNCHER=sccache -DKAMEO_VERSION="${{ inputs.tag || 'dev' }}" \
-            -DKAMEO_SENTRY_DSN="${SENTRY_DSN}"
+            -DKAMEO_SENTRY_DSN="${SENTRY_DSN}" -DREXFABRIC_SDK_TEMPLATES="${REXFABRIC_SDK_TEMPLATES}"
           cmake --build --preset "${preset}" --parallel
           echo "BUILD_DIR=out/build/${preset}" >> "$GITHUB_ENV"
 
@@ -162,8 +180,10 @@ jobs:
           SENTRY_DSN: ${{ matrix.platform == 'windows' && vars.SENTRY_DSN || '' }}
         run: |
           preset="${{ inputs.build_preset }}"
+          # Configuring needs the recompiled code to be there, so the workspace is made and codegen run first.
+          python tools/tu/prepare.py --codegen
           cmake --preset "${preset}" -B "out/build/${preset}-tu" ${{ matrix.compilers }} -DCMAKE_CXX_COMPILER_LAUNCHER=sccache \
-            -DKAMEO_VERSION="${{ inputs.tag || 'dev' }}" -DKAMEO_SENTRY_DSN="${SENTRY_DSN}" -DKAMEO_TITLE_UPDATE=ON
+            -DKAMEO_VERSION="${{ inputs.tag || 'dev' }}" -DKAMEO_SENTRY_DSN="${SENTRY_DSN}" -DKAMEO_TITLE_UPDATE=ON -DREXFABRIC_SDK_TEMPLATES="${REXFABRIC_SDK_TEMPLATES}"
           cmake --build "out/build/${preset}-tu" --target kameorepowered --parallel
           cp "out/build/${preset}-tu"/kameorepowered-tu* "${BUILD_DIR}/"
 
@@ -225,7 +245,7 @@ jobs:
             cp "${BUILD_DIR}"/KameoShaderEditor.exe pkg/
             cp -r "${BUILD_DIR}"/editor_shaders pkg/
             mkdir -p pkg/launcher
-            cp "${BUILD_DIR}"/launcher/rexruntime.dll pkg/launcher/
+            cp "${BUILD_DIR}"/launcher/*.dll pkg/launcher/
             # The Blender add-on that makes mods (docs/modding.md): one zip for Blender 3.6 and newer, and one for 2.79
             # holding its bridge add-on with the modkit inside it.
             mkdir -p pkg/modkit modkit_stage/kameo_modkit_279

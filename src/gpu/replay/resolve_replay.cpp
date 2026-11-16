@@ -33,7 +33,7 @@ OffscreenTarget* FindOffscreenSource(const DrawCall& call) {
     }
   }
   // A pass from an earlier screen is no longer this surface's content: the console's one eDRAM would have been overwritten (the warrior screen's card frames drawn over the main menu).
-  const int32_t stale_max = REXCVAR_GET(kameo_gfx_stale_offscreen_frames);
+  const int32_t stale_max = KCVAR_GET(kameo_gfx_stale_offscreen_frames);
   if (off_match == nullptr && off_stale != nullptr &&
       (stale_max < 0 ||
        FramesSince(off_stale->cleared_frame) <= uint64_t(stale_max))) {

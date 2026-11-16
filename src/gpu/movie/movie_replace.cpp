@@ -23,13 +23,13 @@
 #include <xaudio2.h>
 #endif
 
-#include <rex/cvar.h>
-#include <rex/logging.h>
+#include "core/cvar.h"
+#include <rex/logging/log_category.h>
 
 #include "gpu/log.h"
 
-REXCVAR_DEFINE_BOOL(kameo_movie_replacements, true, "Kameo", "Play <kameo_movie_dir>/<movie name>.mp4 (or .m4v, .mov, .mkv) in place of the matching Bink movie. One with a soundtrack plays its own sound for its own length; one without only replaces the picture.");
-REXCVAR_DEFINE_STRING(kameo_movie_dir, "movies", "Kameo", "Folder holding replacement movies, relative to the working directory.");
+KCVAR_DEFINE_BOOL(kameo_movie_replacements, true, "Kameo", "Play <kameo_movie_dir>/<movie name>.mp4 (or .m4v, .mov, .mkv) in place of the matching Bink movie. One with a soundtrack plays its own sound for its own length; one without only replaces the picture.");
+KCVAR_DEFINE_STRING(kameo_movie_dir, "movies", "Kameo", "Folder holding replacement movies, relative to the working directory.");
 
 namespace kameo::gpu {
 #ifndef _WIN32
@@ -513,7 +513,7 @@ class MoviePlayer {
 };
 
 std::filesystem::path FindReplacement(const std::string& name) {
-  const std::filesystem::path dir(REXCVAR_GET(kameo_movie_dir));
+  const std::filesystem::path dir(KCVAR_GET(kameo_movie_dir));
   std::error_code ec;
   for (const char* extension : {".mp4", ".m4v", ".mov", ".mkv"}) {
     std::filesystem::path path = dir / (name + extension);
@@ -529,7 +529,7 @@ std::string g_missingName;
 uint32_t g_missingHandle = 0;
 
 MoviePlayer* PlayerFor(const std::string& name, uint32_t handle) {
-  if (!REXCVAR_GET(kameo_movie_replacements) || name.empty()) {
+  if (!KCVAR_GET(kameo_movie_replacements) || name.empty()) {
     g_player.reset();
     return nullptr;
   }

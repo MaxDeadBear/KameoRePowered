@@ -1,4 +1,4 @@
-// Window mode: windowed, borderless or exclusive fullscreen, switched live through the runtime's own window on the UI thread, and the marker that catches a crashed exclusive fullscreen session.
+// Window mode: windowed, borderless or exclusive fullscreen, switched live through the UI system's fullscreen setting, and the marker that catches a crashed exclusive fullscreen session.
 
 #include <chrono>
 #include <filesystem>
@@ -6,82 +6,86 @@
 #include <system_error>
 #include <thread>
 
-#include <rex/cvar.h>
-#include <rex/filesystem.h>
-#include <rex/logging/macros.h>
-#include <rex/ui/flags.h>
-#include <rex/ui/window.h>
-#include <rex/ui/windowed_app_context.h>
+#include <rex/logging/log_category.h>
+#include <rex/module.h>
+#include <rex/platform/file.h>
+#include <rex/ui/ui_system.h>
 
 #include "app/process.h"
 #include "app/window_mode.h"
+#include "core/cvar.h"
 #include "core/settings.h"
 #include "gpu/graphics_system.h"
 
-REXCVAR_DEFINE_INT32(kameo_window_mode, -1, "Kameo", "0 windowed, 1 borderless fullscreen, 2 exclusive fullscreen (native renderer on D3D12); -1 follows the fullscreen setting.");
+KCVAR_DEFINE_INT32(kameo_window_mode, -1, "Kameo", "0 windowed, 1 borderless fullscreen, 2 exclusive fullscreen (native renderer on D3D12); -1 follows the fullscreen setting.");
 
 namespace {
 
 // Present only while the game runs in exclusive fullscreen, so one left behind means that session never shut down cleanly.
 constexpr const char* kFullscreenMarker = "kameo_fullscreen.running";
 
-std::filesystem::path FullscreenMarker() { return rex::filesystem::GetExecutableFolder() / kFullscreenMarker; }
+std::filesystem::path FullscreenMarker() { return rex::platform::GetExecutableFolder() / kFullscreenMarker; }
 
 kameo::gpu::GraphicsSystem* Graphics() { return kameo::gpu::GraphicsSystem::instance(); }
 
-void SetWindowed(rex::ui::Window* window) {
-  window->SetFullscreen(false);
+rex::ui::IUISystem* UI() { return REX_INTERFACE(rex::ui::IUISystem); }
+
+// The UI system applies a change to its fullscreen setting to the window on the UI thread.
+void SetFullscreen(bool fullscreen) {
+  if (rex::ui::IUISystem* ui = UI()) kameo::cvar::Store(ui->GetSettings().fullscreen, fullscreen);
+}
+
+void SetWindowed() {
+  SetFullscreen(false);
   REXLOG_INFO("[kameo] window mode windowed");
 }
 
-// Leaving exclusive fullscreen happens on the render thread, so the window only changes size once that has taken effect; DXGI's SetFullscreenState needs this window's thread pumping messages to finish, so the wait runs on a thread of its own rather than blocking the UI thread into a stand-off that ends with the window resized mid-transition.
-void ApplyWindowed(rex::ui::Window* window) {
+// Leaving exclusive fullscreen happens on the render thread, so the window only changes size once that has taken effect; DXGI's SetFullscreenState needs the window's thread pumping messages to finish, so the wait runs on a thread of its own rather than blocking the UI thread into a stand-off that ends with the window resized mid-transition.
+void ApplyWindowed() {
   if (auto* graphics = Graphics(); graphics && graphics->ExclusiveFullscreenActive()) {
-    std::thread([window] {
+    std::thread([] {
       for (int attempt = 0; attempt < 400; ++attempt) {
         auto* current = Graphics();
         if (!current || !current->ExclusiveFullscreenActive()) break;
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
       }
-      window->app_context().CallInUIThreadDeferred([window] { SetWindowed(window); });
+      if (rex::ui::IUISystem* ui = UI()) ui->PostTask([] { SetWindowed(); });
     }).detach();
     return;
   }
-  SetWindowed(window);
+  SetWindowed();
 }
 
 }  // namespace
 
 int32_t KameoWindowMode() {
-  const int32_t mode = REXCVAR_GET(kameo_window_mode);
+  const int32_t mode = KCVAR_GET(kameo_window_mode);
   if (mode >= 0 && mode <= 2) return mode;
-  return REXCVAR_GET(fullscreen) ? 1 : 0;
+  return kameo::cvar::GetBool("fullscreen", true) ? 1 : 0;
 }
 
-void KameoInitWindowMode(rex::ui::Window* window) {
-  kameo::app::SetMainWindow(window);
-  if (window && REXCVAR_GET(kameo_window_mode) >= 0) KameoApplyWindowMode();
+void KameoInitWindowMode() {
+  if (KCVAR_GET(kameo_window_mode) >= 0) KameoApplyWindowMode();
 }
 
 void KameoSetWindowMode(int32_t mode) {
-  REXCVAR_SET(kameo_window_mode, mode);
+  KCVAR_SET(kameo_window_mode, mode);
   KameoApplyWindowMode();
 }
 
-// The exe links its own copy of SDL that has no windows, so the switch goes through the runtime's Window rather than SDL directly.
 void KameoApplyWindowMode() {
-  rex::ui::Window* window = kameo::app::MainWindow();
-  if (!window) return;
+  rex::ui::IUISystem* ui = UI();
+  if (!ui || !ui->HasWindow()) return;
   const int32_t mode = KameoWindowMode();
   KameoNoteExclusiveFullscreen(mode == 2);
   if (auto* graphics = Graphics(); graphics && mode != 2) graphics->SetExclusiveFullscreen(false);
-  window->app_context().CallInUIThreadDeferred([window, mode] {
+  ui->PostTask([mode] {
     if (mode == 0) {
-      ApplyWindowed(window);
+      ApplyWindowed();
       return;
     }
     // Exclusive fullscreen starts from a borderless window already the display's size, so entering it changes no swap chain dimensions.
-    window->SetFullscreen(true);
+    SetFullscreen(true);
     if (auto* graphics = Graphics(); graphics && mode == 2) graphics->SetExclusiveFullscreen(true);
     REXLOG_INFO("[kameo] window mode {}", mode == 2 ? "exclusive fullscreen" : "borderless fullscreen");
   });
@@ -104,6 +108,6 @@ void kameo::app::RecoverFromCrashedFullscreen() {
   std::filesystem::remove(marker, ec);
   if (KameoWindowMode() != 2) return;
   REXLOG_WARN("[kameo] the last exclusive fullscreen session did not shut down cleanly; starting borderless instead");
-  rex::cvar::SetFlagByName("kameo_window_mode", "1");
+  kameo::cvar::SetText("kameo_window_mode", "1");
   KameoSaveSettings();
 }

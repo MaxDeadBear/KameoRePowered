@@ -1,4 +1,4 @@
-// The game's ReXApp: the native renderer, the ImGui overlay stack, the language redirect and the guest FP-exception guard.
+// The game's app: the native renderer, our ImGui windows over the SDK's overlays, the language redirect and the guest FP-exception guard.
 #pragma once
 
 #include <cstdint>
@@ -6,21 +6,16 @@
 #include <memory>
 #include <string>
 
-#include <rex/logging/sink.h>
-#include <rex/rex_app.h>
-#include <rex/ui/imgui_dialog.h>
-#include <rex/ui/imgui_drawer.h>
+#include <rex/app/title_app.h>
+#include <rex/utility.h>
 
-#include "gpu/graphics_system.h"
-#include "gpu/ui/imgui_drawer.h"
-#include "ui/hud/achievement_icons.h"
-#include "ui/hud/fps_overlay.h"
-#include "ui/hud/loading_overlay.h"
-#include "ui/hud/shader_list_overlay.h"
-#include "ui/name_entry/name_entry_keys.h"
-#include "ui/pause_menu/pause_card.h"
+namespace rex::filesystem { class IFileSystem; }
+namespace kameo::gpu {
+class GraphicsSystem;
+class OverlayRenderer;
+}  // namespace kameo::gpu
 
-namespace rex::filesystem { class VirtualFileSystem; }
+class KameoDialog;
 
 namespace kameo::app {
 
@@ -28,50 +23,50 @@ namespace kameo::app {
 // Without this the window is sized in logical pixels and Windows bitmap-stretches it, which made the game soft on a scaled display.
 void DeclarePerMonitorDpiAwareness();
 #endif
-// The --user_language XLanguage id, or 1 (English) when it is missing or not a shipped language.
+// The user language's XLanguage id, or 1 (English) when it is missing or not a shipped language.
 uint32_t ResolveUserLanguage();
-// Builds the merged language folder the "english" symlink points at; must run before the runtime mounts the game data.
+// Builds the merged language folder the "english" link points at; must run before the game opens its data.
 void BuildMergedLanguageDir(const std::filesystem::path& game_root);
 // Points the game's hardcoded "english" folders, base game and DLC, at the chosen language.
-void RegisterLanguageRedirects(rex::filesystem::VirtualFileSystem& vfs, uint32_t lang);
+void RegisterLanguageRedirects(rex::filesystem::IFileSystem& vfs, uint32_t lang);
 
 }  // namespace kameo::app
 
-class KameoApp : public rex::ReXApp {
+class KameoApp : public rex::app::TitleApp {
  public:
-  using rex::ReXApp::ReXApp;
+  KameoApp();
+  ~KameoApp() override;
 
-  static std::unique_ptr<rex::ui::WindowedApp> Create(rex::ui::WindowedAppContext& ctx);
+  // Drops what is registered with the loaded title (the achievement listeners, ours and the Guide's) while the title still exists. Called once the frame loop has ended, before Shutdown.
+  void ReleaseTitleListeners();
 
-  void OnPreSetup(rex::RuntimeConfig& config) override;
-  bool SetupPresentation() override;
+ protected:
+  rex::AppSysRequirements GetRequirements() const override;
+  rex::Result<void> OnConfigure(rex::SettingsRegistry& settings) override;
+  rex::Result<void> OnInit() override;
+  rex::Result<void> OnTitleLaunch(rex::kernel::TitleRuntime& title) override;
   void OnShutdown() override;
-  void OnPostSetup() override;
-  void OnCreateDialogs(rex::ui::ImGuiDrawer* drawer) override;
-  void OnPostInitLogging() override;
-  void OnConfigurePaths(rex::PathConfig& paths) override;
-#if KAMEO_TU
-  void OnLoadXexImage(std::string& xex_image) override;
-#endif
 
  private:
+  // Whether the native renderer runs this session, decided once the settings are final.
+  bool UseNativeRenderer() const;
+  void ResolveGameFolders();
+  rex::Result<void> StartNativeRenderer();
+  void CreateDialogs();
+
   void* veh_handle_ = nullptr;
-  std::unique_ptr<KameoNameEntryKeys> kameo_name_entry_keys_;
-  std::unique_ptr<KameoFpsOverlay> kameo_fps_overlay_;
-  std::unique_ptr<KameoLoadingOverlay> kameo_loading_overlay_;
-  std::unique_ptr<KameoAchievementIcons> kameo_achievement_icons_;
-  std::unique_ptr<KameoPauseCard> kameo_pause_card_;
-  kameo::gpu::GraphicsSystem* kameo_graphics_ = nullptr;
-  std::unique_ptr<kameo::gpu::PlumeImmediateDrawer> kameo_immediate_drawer_;
-  std::unique_ptr<rex::ui::ImGuiDrawer> kameo_imgui_drawer_;
-  std::shared_ptr<rex::LogCaptureSink> kameo_log_sink_;
-  std::filesystem::path kameo_config_path_;
-  std::string kameo_paths_note_;  // what OnConfigurePaths wants said once logging exists
-  std::unique_ptr<rex::ui::ImGuiDialog> kameo_console_overlay_;
-  std::unique_ptr<rex::ui::ImGuiDialog> kameo_debug_overlay_;
-  std::unique_ptr<rex::ui::ImGuiDialog> kameo_shader_list_overlay_;
+  mutable int native_renderer_ = -1;  // -1 until decided
+  std::unique_ptr<kameo::gpu::GraphicsSystem> kameo_graphics_;
+  std::unique_ptr<kameo::gpu::OverlayRenderer> kameo_overlay_renderer_;
+  // Our ImGui windows, in draw order.
+  std::unique_ptr<KameoDialog> kameo_name_entry_keys_;
+  std::unique_ptr<KameoDialog> kameo_fps_overlay_;
+  std::unique_ptr<KameoDialog> kameo_loading_overlay_;
+  std::unique_ptr<KameoDialog> kameo_achievement_icons_;
+  std::unique_ptr<KameoDialog> kameo_pause_card_;
+  std::unique_ptr<KameoDialog> kameo_hotkeys_;
   // Unlock notices go to the game's own text box; this is the manager's callback registration.
-  uint64_t kameo_achievement_listener_ = 0;
-  // The RexLiveless Guide (kameo_rexliveless), installed with the dialogs.
+  rex::ScopeGuard kameo_achievement_listener_;
+  // The RexLiveless Guide (kameo.rexliveless), installed with the dialogs.
   bool kameo_guide_installed_ = false;
 };

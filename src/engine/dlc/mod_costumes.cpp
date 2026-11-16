@@ -16,10 +16,12 @@
 
 #include <toml++/toml.hpp>
 
-#include <rex/logging.h>
-#include <rex/system/kernel_state.h>
-#include <rex/system/xam/content_device.h>
-#include <rex/system/xam/content_manager.h>
+#include <regex>
+
+#include <rex/logging/log_category.h>
+#include <rex/platform/file.h>
+#include <rex/kernel/types/content.h>
+#include <rex/xam/device.h>
 
 #include "core/guest.h"
 #include "engine/dlc/dlc.h"
@@ -31,6 +33,8 @@ namespace kameo::engine {
 namespace {
 
 constexpr const char* kSource = "costumes";
+// Beside the executable, not in the working directory: a game started from elsewhere would see no costumes at all.
+std::filesystem::path SourceFolder() { return rex::platform::GetExecutableFolder() / kSource; }
 constexpr const char* kNamesFile = "costumes.toml";
 // "KAMEOREPOWEREDCOSTUME" in hex: a content file name of the same 42 characters the downloadable packs have.
 constexpr const char* kPackage = "4B414D454F5245504F5745524544434F5354554D45";
@@ -48,6 +52,9 @@ constexpr uint32_t kSettleTicks = 30;
 struct Costume {
   std::string model;  // "007183BF_m1A2B3C"
   std::u16string name;
+  std::string name_text;  // as written in costumes.toml (UTF-8)
+  bool worn = false;      // seen on the character at the last poll
+  bool force = false;     // a reload asked for from the Models window
   uint32_t model_type = 0;
   bool listed = false;  // seen in the character's skin list, which the package's KameoDLCList.txt fills
   std::filesystem::file_time_type written;
@@ -96,13 +103,13 @@ std::u16string Utf16(const std::string& text) {
 }
 
 void WriteHeader(const std::filesystem::path& path) {
-  rex::system::xam::XCONTENT_AGGREGATE_DATA data;
-  data.device_id = static_cast<uint32_t>(rex::system::xam::DummyDeviceId::HDD);
-  data.content_type = rex::system::XContentType::kMarketplaceContent;
+  rex::kernel::XCONTENT_AGGREGATE_DATA data;
+  data.device_id = static_cast<uint32_t>(rex::xam::DummyDeviceID::kHDD);
+  data.content_type = rex::kernel::XContentType::kMarketplaceContent;
   data.title_id = kKameoTitleId;
   data.xuid = 0;
-  data.set_file_name(kPackage);
-  data.set_display_name(kPackageName);
+  data.SetFileName(kPackage);
+  data.SetDisplayName(kPackageName);
   std::ofstream file(path, std::ios::binary | std::ios::trunc);
   file.write(reinterpret_cast<const char*>(&data), sizeof(data));
   // Every licence bit, so the title update counts the package as owned (dlc_packages.cpp).
@@ -138,7 +145,7 @@ uint32_t SkinRecord(uint8_t* base, uint32_t node, const std::string& model) {
 void SetFileInUse(PPCContext& ctx, uint8_t* base, uint32_t model_type, const std::string& suffix) {
   // In guest memory of its own: below the stack pointer, the function's own frame would write over it.
   static uint32_t text = 0;
-  if (!text) text = rex::system::kernel_state()->memory()->SystemHeapAlloc(64);
+  if (!text) text = GuestSystemAlloc(64);
   if (!text) return;
   PPCContext call = ctx;
   call.r3.u64 = model_type;
@@ -164,9 +171,9 @@ void BuildModCostumePackage(const std::filesystem::path& user_data_root) {
 
   // costumes.toml: "<file>" = "<name>", in the order the costumes were made.
   std::vector<std::pair<std::string, std::string>> named;
-  if (std::filesystem::exists(std::filesystem::path(kSource) / kNamesFile, ec)) {
+  if (std::filesystem::exists(SourceFolder() / kNamesFile, ec)) {
     try {
-      const toml::table table = toml::parse_file((std::filesystem::path(kSource) / kNamesFile).string());
+      const toml::table table = toml::parse_file((SourceFolder() / kNamesFile).string());
       for (const auto& [key, value] : table) {
         if (auto name = value.value<std::string>()) named.emplace_back(std::string(key.str()), *name);
       }
@@ -175,7 +182,7 @@ void BuildModCostumePackage(const std::filesystem::path& user_data_root) {
     }
   }
   std::vector<std::string> files;
-  for (auto it = std::filesystem::directory_iterator(kSource, ec); !ec && it != std::filesystem::directory_iterator(); it.increment(ec)) {
+  for (auto it = std::filesystem::directory_iterator(SourceFolder(), ec); !ec && it != std::filesystem::directory_iterator(); it.increment(ec)) {
     const std::string name = it->path().filename().string();
     if (it->is_regular_file() && CostumeFileName(name)) files.push_back(name);
   }
@@ -202,7 +209,7 @@ void BuildModCostumePackage(const std::filesystem::path& user_data_root) {
   }
   std::ofstream list(folder / "KameoDLCList.txt", std::ios::binary | std::ios::trunc);
   for (const std::string& file : files) {
-    const std::filesystem::path source = std::filesystem::path(kSource) / file;
+    const std::filesystem::path source = SourceFolder() / file;
     std::filesystem::copy_file(source, folder / file, std::filesystem::copy_options::overwrite_existing, ec);
     if (ec) {
       REXLOG_WARN("[kameo] costumes: could not copy {}: {}", file, ec.message());
@@ -213,7 +220,8 @@ void BuildModCostumePackage(const std::filesystem::path& user_data_root) {
     costume.model = file.substr(0, 16);
     costume.model_type = uint32_t(std::stoul(file.substr(0, 8), nullptr, 16));
     const auto name = std::find_if(named.begin(), named.end(), [&](const auto& n) { return n.first == file; });
-    costume.name = Utf16(name != named.end() ? name->second : costume.model);
+    costume.name_text = name != named.end() ? name->second : costume.model;
+    costume.name = Utf16(costume.name_text);
     costume.written = std::filesystem::last_write_time(source, ec);
     costume.size = std::filesystem::file_size(source, ec);
     g_costumes.push_back(std::move(costume));
@@ -246,6 +254,86 @@ std::u16string ModCostumeNameOfString(uint32_t string_id) {
   return g_costumes[string_id - kModCostumeString].name;
 }
 
+std::filesystem::path ModCostumeFolder() { return SourceFolder(); }
+
+std::vector<ModCostumeInfo> ListModCostumes() {
+  std::lock_guard lock(g_mutex);
+  std::vector<ModCostumeInfo> out;
+  for (const Costume& costume : g_costumes) {
+    out.push_back({costume.model + ".mdl", costume.model, costume.name_text, costume.model_type, costume.listed, costume.worn});
+  }
+  return out;
+}
+
+void RequestModCostumeReload(std::string_view model) {
+  std::lock_guard lock(g_mutex);
+  for (Costume& costume : g_costumes) {
+    if (costume.model == model) costume.force = true;
+  }
+}
+
+namespace {
+uint32_t CostumeIdOf(const std::string& name) {
+  uint32_t hash = 2166136261u;
+  for (const char16_t c : Utf16(name)) hash = (hash ^ c) * 16777619u;
+  hash &= 0xFFFFFF;
+  return hash ? hash : 1;
+}
+
+// costumes.toml as the Blender add-on writes it, in order: "<file>" = "<name>".
+std::vector<std::pair<std::string, std::string>> ReadNameLines(const std::filesystem::path& path) {
+  std::vector<std::pair<std::string, std::string>> out;
+  std::ifstream in(path, std::ios::binary);
+  static const std::regex line(R"re(\s*"([^"]+)"\s*=\s*"((?:[^"\\]|\\.)*)")re");
+  std::string text;
+  while (std::getline(in, text)) {
+    std::smatch m;
+    if (!std::regex_search(text, m, line) || m.position() != 0) continue;
+    std::string name;
+    const std::string raw = m[2];
+    for (size_t i = 0; i < raw.size(); ++i) name.push_back(raw[i] == '\\' && i + 1 < raw.size() ? raw[++i] : raw[i]);
+    out.emplace_back(m[1], name);
+  }
+  return out;
+}
+}  // namespace
+
+std::string CreateModCostume(const std::filesystem::path& base_mdl, const std::string& name, std::string* file_out) {
+  if (name.empty()) return "Give the costume a name.";
+  const std::string base = base_mdl.filename().string();
+  if (base.size() < 8 || !std::all_of(base.begin(), base.begin() + 8, [](char c) { return std::isxdigit(static_cast<unsigned char>(c)); })) {
+    return "That file is not one of the game's models (its name should start with eight hex digits).";
+  }
+  std::string type = base.substr(0, 8);
+  for (char& c : type) c = char(std::toupper(static_cast<unsigned char>(c)));
+  char id[8];
+  std::snprintf(id, sizeof(id), "%06X", CostumeIdOf(name));
+  const std::string file = type + "_m" + id + ".mdl";
+  const std::filesystem::path folder = SourceFolder();
+  std::error_code ec;
+  std::filesystem::create_directories(folder, ec);
+  if (std::filesystem::exists(folder / file, ec)) return "A costume with that name (or one that hashes the same) already exists: " + file;
+  std::filesystem::copy_file(base_mdl, folder / (file + ".tmp"), std::filesystem::copy_options::overwrite_existing, ec);
+  if (ec) return "Could not copy " + base + ": " + ec.message();
+  std::filesystem::rename(folder / (file + ".tmp"), folder / file, ec);
+  if (ec) return "Could not write " + file + ": " + ec.message();
+  auto names = ReadNameLines(folder / kNamesFile);
+  names.emplace_back(file, name);
+  const auto quoted = [](const std::string& text) {
+    std::string out = "\"";
+    for (char c : text) {
+      if (c == '\\' || c == '"') out.push_back('\\');
+      out.push_back(c);
+    }
+    return out + "\"";
+  };
+  std::ofstream out(folder / kNamesFile, std::ios::binary | std::ios::trunc);
+  out << "# Costumes made with the Blender add-on: file = the name the game shows.\n";
+  for (const auto& [f, n] : names) out << quoted(f) << " = " << quoted(n) << "\n";
+  if (file_out) *file_out = file;
+  return {};
+}
+
 void TickModCostumes(PPCContext& ctx, uint8_t* base) {
   static uint32_t ticks = 0;
   if (++ticks % kPollTicks == 0) {
@@ -258,18 +346,22 @@ void TickModCostumes(PPCContext& ctx, uint8_t* base) {
           REXLOG_INFO("[kameo] costumes: {} is listed as a costume", costume.model);
         }
       }
+      {
+        const uint32_t node = SkinNode(base, costume.model_type);
+        const uint32_t worn = node ? REX_LOAD_U32(node + 12) : 0;
+        costume.worn = worn && GuestName(base, worn + 51) == costume.model;
+      }
       std::error_code ec;
-      const std::filesystem::path source = std::filesystem::path(kSource) / (costume.model + ".mdl");
+      const std::filesystem::path source = SourceFolder() / (costume.model + ".mdl");
       const auto written = std::filesystem::last_write_time(source, ec);
       const auto size = std::filesystem::file_size(source, ec);
-      if (ec || (written == costume.written && size == costume.size)) continue;
+      if (!costume.force && (ec || (written == costume.written && size == costume.size))) continue;
+      costume.force = false;
       std::filesystem::copy_file(source, g_packageFolder / (costume.model + ".mdl"), std::filesystem::copy_options::overwrite_existing, ec);
       if (ec) continue;  // tried again next time
       costume.written = written;
       costume.size = size;
-      const uint32_t node = SkinNode(base, costume.model_type);
-      const uint32_t worn = node ? REX_LOAD_U32(node + 12) : 0;
-      const bool wearing = worn && GuestName(base, worn + 51) == costume.model;
+      const bool wearing = costume.worn;
       REXLOG_INFO("[kameo] costumes: {} written again{}", costume.model, wearing ? ", reloading it" : "");
       if (wearing && std::none_of(g_reloads.begin(), g_reloads.end(), [&](const Reload& r) { return r.model == costume.model; })) {
         g_reloads.push_back({costume.model_type, costume.model});

@@ -4,8 +4,9 @@
                                      the .blend, the source file remembered on the scene)
   View3D > Sidebar > Kameo          Attach to Character: the selected model becomes a new part of the character, on
                                      the bone nearest it (or one chosen), as a new draw of its own with its own
-                                     textures; the export button; the Textures panel, which shows painted textures
-                                     in the running game (blender_textures.py); and Play
+                                     textures; the export button; Live Link, which sends a costume's mesh and weight
+                                     edits to the running game (blender_live.py); the Textures panel, which shows
+                                     painted textures there (blender_textures.py); and Play
                                      Kameo Level: new levels for Level Select (blender_level.py)
   File > Export > Kameo Mod         the scene as a .kmod in the launcher's mods folder, switched on there, with any
                                      problem explained
@@ -31,7 +32,7 @@ from bpy.props import BoolProperty, EnumProperty, StringProperty
 from bpy_extras.io_utils import ExportHelper
 from mathutils import Vector
 
-from . import blender_level, blender_textures
+from . import blender_anim, blender_fit, blender_level, blender_live, blender_textures
 from .caff import Caff
 from .graph import Ref, Resolver, rendergraph_roots
 from .material import read_material, texture_palette
@@ -204,7 +205,7 @@ def _draw_choices(model_path: str):
             for d, draw in enumerate(mesh.draws):
                 if draw.material is None or not draw.palette:
                     continue
-                samplers = [s for s in read_material(resolver, draw.material).samplers if not s.dynamic and s.palette_index < len(palette) and palette[s.palette_index] is not None]
+                samplers = [s for s in read_material(resolver, draw.material, draw.texture_slots).samplers if not s.dynamic and s.palette_index < len(palette) and palette[s.palette_index] is not None]
                 if not any(s.channel == "colour" for s in samplers):
                     continue
                 normal = any(read_texture(resolver, palette[s.palette_index]).format_name == "DXN" for s in samplers)
@@ -357,10 +358,12 @@ def _joined_copy(context, meshes, originals_only: bool):
     return source
 
 
-def _copy_weights(context, part) -> None:
+def _copy_weights(context, part, tidy: bool = True) -> list[str]:
     """The character's skin weights onto the part, from the nearest point of its surface; four bones a vertex at
-    most, as the game skins."""
+    most, as the game skins. With `tidy`, what that gets wrong on loose cloth and small stiff pieces is put right
+    (blender_fit.tidy_weights); the notes say what was done."""
     source, remove = _weight_source(context)
+    notes: list[str] = []
     try:
         for group in list(part.vertex_groups):
             part.vertex_groups.remove(group)
@@ -376,10 +379,13 @@ def _copy_weights(context, part) -> None:
         modifier.layers_vgroup_select_dst = "NAME"
         bpy.ops.object.datalayout_transfer(modifier=modifier.name)
         bpy.ops.object.modifier_apply(modifier=modifier.name)
+        if tidy:
+            notes = blender_fit.tidy_weights(part, _character_armature(context))
         bpy.ops.object.vertex_group_limit_total(group_select_mode="ALL", limit=4)
         bpy.ops.object.vertex_group_normalize_all(lock_active=False)
     finally:
         remove()
+    return notes
 
 
 def _target_object(context, armature, name: str):
@@ -409,6 +415,7 @@ class KAMEO_OT_attach(bpy.types.Operator):
         ("KEEP", "Keep its weights", "Already weighted to the character's bones (joint_..): keeps them"),
     ], default="AUTO")
     bone: EnumProperty(name="Bone", items=_bone_items, description="The bone the part follows, when it follows one")
+    tidy: BoolProperty(name="Tidy the weights", default=True, description="When bending with the body: smooth the weights of what hangs away from her (skirts, sleeves, hair), keep small separate pieces (jewellery, straps) stiff, and leave her ponytail and ear bones out")
 
     @classmethod
     def poll(cls, context):
@@ -424,9 +431,14 @@ class KAMEO_OT_attach(bpy.types.Operator):
 
         # The part as one object, its transforms applied.
         bpy.ops.object.select_all(action="DESELECT")
-        for o in parts:
+        for number, o in enumerate(parts):
             o.select_set(True)
             o.parent = None
+            # Which object each vertex came from, for telling garments apart once they are one mesh.
+            if blender_fit.PART_ATTRIBUTE in o.data.attributes:
+                o.data.attributes.remove(o.data.attributes[blender_fit.PART_ATTRIBUTE])
+            mark = o.data.attributes.new(blender_fit.PART_ATTRIBUTE, "INT", "POINT")
+            mark.data.foreach_set("value", [number] * len(o.data.vertices))
         context.view_layer.objects.active = parts[0]
         if len(parts) > 1:
             bpy.ops.object.join()
@@ -439,14 +451,18 @@ class KAMEO_OT_attach(bpy.types.Operator):
             self.report({"ERROR"}, "This character has no part a new one can be modelled on")
             return {"CANCELLED"}
         mode = self.mode
-        if mode == "AUTO" and any(g.name.startswith("joint_") for g in part.vertex_groups):
+        if mode == "AUTO" and any(g.name.startswith(("joint_", "spring_")) for g in part.vertex_groups):
             mode = "KEEP"
         if mode == "AUTO":
             height = max((armature.matrix_world @ b.head_local).z for b in armature.data.bones) - min((armature.matrix_world @ b.head_local).z for b in armature.data.bones)
             corners = [part.matrix_world @ Vector(c) for c in part.bound_box]
             mode = "BODY" if max(c.z for c in corners) - min(c.z for c in corners) > 0.25 * height else "BONE"
-        bone = self.bone if self.bone != "AUTO" else _nearest_bone(armature, centre, set())
-        joint = int(bone.split("_")[1])
+        bone = self.bone if self.bone != "AUTO" else _nearest_bone(armature, centre, {b.name for b in armature.data.bones if b.name.startswith("joint_")})
+        # The game joint it follows; for a spring bone of the modder's own, the joint that hangs from.
+        walk = armature.data.bones[bone]
+        while walk is not None and not re.fullmatch(r"joint_\d+", walk.name):
+            walk = walk.parent
+        joint = int(walk.name.split("_")[1]) if walk is not None else 0
 
         # The draw to copy: the ordinary lit material (the body's, which a new part looks right in), with room. A part
         # bending with the body wants the biggest bone palette (fewer splits); one on a bone, a palette following it.
@@ -501,10 +517,11 @@ class KAMEO_OT_attach(bpy.types.Operator):
             colour = part.data.color_attributes.new(source.name, source.data_type, source.domain)
             for c in colour.data:
                 c.color = average
+        notes = []
         if mode == "BODY":
-            _copy_weights(context, part)
+            notes = _copy_weights(context, part, self.tidy)
         elif mode == "KEEP":
-            for group in [g for g in part.vertex_groups if not g.name.startswith("joint_")]:
+            for group in [g for g in part.vertex_groups if not g.name.startswith(("joint_", "spring_"))]:
                 part.vertex_groups.remove(group)
         else:
             for group in list(part.vertex_groups):
@@ -512,12 +529,16 @@ class KAMEO_OT_attach(bpy.types.Operator):
             part.vertex_groups.new(name=bone).add(range(len(part.data.vertices)), 1.0, "REPLACE")
         for modifier in list(part.modifiers):
             part.modifiers.remove(modifier)
+        if blender_fit.PART_ATTRIBUTE in part.data.attributes:
+            part.data.attributes.remove(part.data.attributes[blender_fit.PART_ATTRIBUTE])
 
         bpy.ops.object.select_all(action="DESELECT")
         part.select_set(True)
         target.select_set(True)
         context.view_layer.objects.active = target
         bpy.ops.object.join()
+        for note in notes:
+            self.report({"INFO"}, note[0].upper() + note[1:])
         self.report({"INFO"}, {"BODY": "Attached: it bends with the body", "KEEP": "Attached with its own weights"}.get(mode, f"Attached to {bone}") + ", and is exported with the character")
         return {"FINISHED"}
 
@@ -778,6 +799,12 @@ class KAMEO_PT_panel(bpy.types.Panel):
         box.label(text="   (A whole new body: delete hers first.)")
         box.label(text="2. Select it, then:")
         box.operator(KAMEO_OT_attach.bl_idname, icon="CONSTRAINT_BONE")
+        box.label(text="   A model with its own rig:")
+        box.operator(blender_fit.KAMEO_OT_fit_rig.bl_idname, icon="ARMATURE_DATA")
+        box.operator(blender_fit.KAMEO_OT_import_part.bl_idname, text="Import a Game Model as a Part", icon="IMPORT")
+        box = layout.box()
+        box.label(text="See how it bends in her own moves:")
+        blender_anim.draw(box, scene)
         box = layout.box()
         box.label(text="Edit freely: reshape, paint textures,")
         box.label(text="delete parts. Then:")
@@ -785,6 +812,7 @@ class KAMEO_PT_panel(bpy.types.Panel):
         row.scale_y = 1.3
         if scene.get("kameo_costume"):
             row.operator(KAMEO_OT_save_costume.bl_idname, text="Save Costume", icon="FILE_TICK")
+            blender_live.draw(box, scene)
         else:
             row.operator(KAMEO_OT_save_costume.bl_idname, text="Save as New Costume", icon="ADD")
             if _replaceable(context):
@@ -811,6 +839,9 @@ def register():
     for cls in CLASSES:
         bpy.utils.register_class(cls)
     blender_textures.register()
+    blender_fit.register()
+    blender_anim.register()
+    blender_live.register()
     blender_level.register()
     bpy.types.TOPBAR_MT_file_import.append(_menu_import)
     bpy.types.TOPBAR_MT_file_export.append(_menu_export)
@@ -820,6 +851,9 @@ def unregister():
     bpy.types.TOPBAR_MT_file_export.remove(_menu_export)
     bpy.types.TOPBAR_MT_file_import.remove(_menu_import)
     blender_level.unregister()
+    blender_live.unregister()
+    blender_anim.unregister()
+    blender_fit.unregister()
     blender_textures.unregister()
     for cls in reversed(CLASSES):
         bpy.utils.unregister_class(cls)

@@ -6,8 +6,8 @@
 
 #include <kameorepowered_init.h>
 
-#include <rex/cvar.h>
-#include <rex/logging.h>
+#include "core/cvar.h"
+#include <rex/logging/log_category.h>
 
 #include "gpu/config.h"
 #include "gpu/log.h"
@@ -52,7 +52,7 @@ extern "C" REX_FUNC(sub_82270C30) {
 // mtx44Perspective(float* out, double fovDegrees, double aspect, double nearZ, double farZ)
 // The aspect in f2 divides the matrix's X scale, so handing it the display's widens the view instead of squeezing the image; only the 16:9 scene projections are touched, not the shadow, decal and light passes.
 extern "C" REX_FUNC(sub_820DFD38) {
-  if (REXCVAR_GET(kameo_gfx_widescreen) && !kameo::gpu::detail::g_capturingLoadingLayer) {
+  if (KCVAR_GET(kameo_gfx_widescreen) && !kameo::gpu::detail::g_capturingLoadingLayer) {
     if (auto* gfx = Active()) {
       const double aspect = ctx.f2.f64;
       const double display = gfx->DisplayAspect();
@@ -75,7 +75,7 @@ extern "C" REX_FUNC(sub_820ED110) {
     float aspect = 0.0f;
     std::memcpy(&aspect, &saved, sizeof(aspect));
     double widened = aspect;
-    if (REXCVAR_GET(kameo_gfx_widescreen) && !kameo::gpu::detail::g_capturingLoadingLayer) {
+    if (KCVAR_GET(kameo_gfx_widescreen) && !kameo::gpu::detail::g_capturingLoadingLayer) {
       if (auto* gfx = Active()) {
         const double display = gfx->DisplayAspect();
         if (display > aspect && aspect > 1.6f && aspect < 1.9f) widened = display;

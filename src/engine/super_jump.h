@@ -4,7 +4,7 @@
 #include <atomic>
 #include <cstdint>
 
-#include <rex/ppc.h>
+#include <rex/ppc/context.h>
 
 extern std::atomic<uint32_t> g_kameo_super_jump_enabled;
 // Called from the per-frame game tick.

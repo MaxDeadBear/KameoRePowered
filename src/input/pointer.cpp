@@ -1,11 +1,11 @@
 // The mouse: when it looks around and when it is a pointer, and the pointer's position in the game's 640x480 menu layout.
 
 #include <algorithm>
+#include <cmath>
 #include <mutex>
 
-#include <rex/cvar.h>
-#include <rex/logging/macros.h>
-#include <rex/ui/window.h>
+#include "core/cvar.h"
+#include <rex/logging/log_category.h>
 
 #include "core/time.h"
 #include "gpu/graphics_system.h"
@@ -48,59 +48,76 @@ bool PointerInScene(float* x, float* y, uint32_t* width, uint32_t* height) {
 
 }  // namespace
 
-void MouseListener::OnKeyDown(rex::ui::KeyEvent&) { g_keyboardMouseUsed.store(KameoSteadyMilliseconds(), std::memory_order_relaxed); }
-
-void MouseListener::OnMouseMove(rex::ui::MouseEvent& e) {
-  Record(e);
-  std::lock_guard<std::mutex> lock(mutex);
-  look_dx += e.dx();
-  look_dy += e.dy();
-  pointer_dx += e.dx();
-  pointer_dy += e.dy();
-}
-
-void MouseListener::OnMouseDown(rex::ui::MouseEvent& e) {
-  g_keyboardMouseUsed.store(KameoSteadyMilliseconds(), std::memory_order_relaxed);
-  Record(e);
-  std::lock_guard<std::mutex> lock(mutex);
-  if (e.button() == rex::ui::MouseEvent::Button::kLeft) {
-    ++left_clicks;
-    left_down = true;
+void MouseListener::OnInputEvent(rex::InputEvent& e) {
+  using Type = rex::InputEvent::Type;
+  switch (e.type) {
+    case Type::kKeyDown:
+      g_keyboardMouseUsed.store(KameoSteadyMilliseconds(), std::memory_order_relaxed);
+      break;
+    case Type::kMotion: {
+      Record(e);
+      std::lock_guard<std::mutex> lock(mutex);
+      look_dx += e.dx;
+      look_dy += e.dy;
+      pointer_dx += e.dx;
+      pointer_dy += e.dy;
+      break;
+    }
+    case Type::kButtonDown: {
+      g_keyboardMouseUsed.store(KameoSteadyMilliseconds(), std::memory_order_relaxed);
+      Record(e);
+      std::lock_guard<std::mutex> lock(mutex);
+      if (e.button == rex::MouseButton::kLeft) {
+        ++left_clicks;
+        left_down = true;
+      }
+      if (e.button == rex::MouseButton::kRight) {
+        ++right_clicks;
+        right_down = true;
+      }
+      break;
+    }
+    case Type::kButtonUp: {
+      std::lock_guard<std::mutex> lock(mutex);
+      if (e.button == rex::MouseButton::kLeft) left_down = false;
+      if (e.button == rex::MouseButton::kRight) right_down = false;
+      break;
+    }
+    case Type::kWheel: {
+      g_keyboardMouseUsed.store(KameoSteadyMilliseconds(), std::memory_order_relaxed);
+      const int32_t travel = int32_t(std::lround(e.scroll_y * float(kScrollPerDetent)));
+      std::lock_guard<std::mutex> lock(mutex);
+      wheel += travel;
+      trigger_wheel += travel;
+      break;
+    }
+    case Type::kFocusLost: {
+      std::lock_guard<std::mutex> lock(mutex);
+      left_down = false;
+      right_down = false;
+      break;
+    }
+    default:
+      break;
   }
-  if (e.button() == rex::ui::MouseEvent::Button::kRight) {
-    ++right_clicks;
-    right_down = true;
-  }
 }
 
-void MouseListener::OnMouseUp(rex::ui::MouseEvent& e) {
-  std::lock_guard<std::mutex> lock(mutex);
-  if (e.button() == rex::ui::MouseEvent::Button::kLeft) left_down = false;
-  if (e.button() == rex::ui::MouseEvent::Button::kRight) right_down = false;
-}
-
-void MouseListener::OnMouseWheel(rex::ui::MouseEvent& e) {
-  g_keyboardMouseUsed.store(KameoSteadyMilliseconds(), std::memory_order_relaxed);
-  std::lock_guard<std::mutex> lock(mutex);
-  wheel += e.scroll_y();
-  trigger_wheel += e.scroll_y();
-}
-
-void MouseListener::Record(rex::ui::MouseEvent& e) {
-  const rex::ui::Window* window = e.target();
-  if (!window) return;
+void MouseListener::Record(const rex::InputEvent& e) {
+  rex::hid::IInputSystem* input = InputSystem();
+  if (!input) return;
+  const rex::PointerState pointer = input->GetPointer();
   std::lock_guard<std::mutex> lock(mutex);
   // A locked pointer reports only relative motion, which counts as movement too.
-  if (e.x() != x || e.y() != y || e.dx() != 0.0f || e.dy() != 0.0f) ++moves;
-  x = e.x();
-  y = e.y();
-  width = window->GetActualPhysicalWidth();
-  height = window->GetActualPhysicalHeight();
+  if (e.x != float(x) || e.y != float(y) || e.dx != 0.0f || e.dy != 0.0f) ++moves;
+  x = int32_t(e.x);
+  y = int32_t(e.y);
+  width = pointer.window_width;
+  height = pointer.window_height;
 }
 
 // No selectable menu and no player object is the "Press Start" title screen, or a load between screens.
 bool AtTitleScreen() {
-  const uint8_t* base = GuestBase();
+  uint8_t* base = GuestBase();
   return base && g_ticksSinceMenu > 3 && REX_LOAD_U32(kPlayerList) == 0;
 }
 
@@ -125,15 +142,13 @@ void KameoTickInput() {
   const bool book_pointer = keyboard_mouse && KameoBookPointerActive();
   // An open ImGui window frees the pointer over the game without leaving play, so bindings and prompts stay as they are.
   const bool imgui_pointer = g_imguiPointer.load(std::memory_order_relaxed);
-  ApplyCursorVisibility((menu_open && !book_pointer) || imgui_pointer);
   const bool capture = (look || book_pointer) && !imgui_pointer;
-  if (capture != g_mouseCaptured) {
-    g_mouseCaptured = capture;
-    rex::input::mnk::SetMouseLookActive(capture);
-  }
+  g_mouseCaptured = capture;
+  // The mouse is held in the window only when the player has turned mouse look on; the pointer is otherwise shown in menus and hidden in play.
+  ApplyPointerMode(capture && kameo::cvar::GetBool("mnk_mouse"), (menu_open && !book_pointer) || imgui_pointer);
   if (look != g_mouseLook) {
     g_mouseLook = look;
-    REXLOG_INFO("[kameo] input: mouse {} (menu text object {:08X}), mnk_mode {}, mnk_mouse {}", look ? "looks around" : "is a pointer", g_lastMenuTextObject, rex::cvar::GetFlagByName("mnk_mode"), rex::cvar::GetFlagByName("mnk_mouse"));
+    REXLOG_INFO("[kameo] input: mouse {} (menu text object {:08X}), mnk_mode {}, mnk_mouse {}", look ? "looks around" : "is a pointer", g_lastMenuTextObject, KameoKeyboardMouseMode() ? "on" : "off", kameo::cvar::GetText("mnk_mouse"));
   }
   {
     std::lock_guard<std::mutex> lock(g_mouse.mutex);

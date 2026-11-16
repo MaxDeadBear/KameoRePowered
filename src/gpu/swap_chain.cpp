@@ -9,8 +9,8 @@
 #include <SDL3/SDL.h>
 #endif
 
-#include <rex/cvar.h>
-#include <rex/logging.h>
+#include "core/cvar.h"
+#include <rex/logging/log_category.h>
 
 #include "gpu/config.h"
 #include "gpu/graphics_system_internal.h"
@@ -168,7 +168,7 @@ bool GraphicsSystem::EnsureSwapChain() {
   swap_chain_ = queue_->createSwapChain(swap_desc);
   swap_chain_window_ = native_window;
   // plume's Vulkan chain reports a resize while the present mode it was built with differs from the one asked for, and a new chain starts at FIFO, so asking only at present rebuilt it every frame with vsync off.
-  if (swap_chain_) swap_chain_->setVsyncEnabled(REXCVAR_GET(kameo_gfx_vsync));
+  if (swap_chain_) swap_chain_->setVsyncEnabled(KCVAR_GET(kameo_gfx_vsync));
   // plume's Vulkan swap chain constructor never calls resize() and gives up when the window has no area, so it is sized here and retried next frame without latching swap_chain_failed_.
   if (swap_chain_ && (swap_chain_->getWidth() == 0 || swap_chain_->getHeight() == 0)) {
     swap_chain_->resize();

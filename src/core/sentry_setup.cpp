@@ -1,9 +1,11 @@
 // The Sentry settings SentryWork has no option for. CMakeLists.txt renames its sentry_init call to this function, the only way to reach the options it builds.
 
+#if KAMEO_SENTRY
+
 #include <sentry.h>
 
 #ifdef _WIN32
-#include <rex/filesystem.h>
+#include <rex/platform/file.h>
 #endif
 
 extern "C" int kameo_sentry_init(sentry_options_t* options) {
@@ -13,7 +15,9 @@ extern "C" int kameo_sentry_init(sentry_options_t* options) {
   sentry_options_set_minidump_mode(options, SENTRY_MINIDUMP_MODE_STACK_ONLY);
 #ifdef _WIN32
   // The helper SentryWork names sentry-crash.exe ships as KameoBugReporter.exe (CMakeLists.txt).
-  sentry_options_set_handler_pathw(options, (rex::filesystem::GetExecutableFolder() / L"KameoBugReporter.exe").c_str());
+  sentry_options_set_handler_pathw(options, (rex::platform::GetExecutableFolder() / L"KameoBugReporter.exe").c_str());
 #endif
   return sentry_init(options);
 }
+
+#endif  // KAMEO_SENTRY

@@ -8,7 +8,7 @@
 #include <windows.h>
 #endif
 
-#include <rex/cvar.h>
+#include "core/cvar.h"
 
 #include "gpu/config.h"
 #include "gpu/graphics_system.h"
@@ -74,7 +74,7 @@ void SleepUntilPrecise(std::chrono::steady_clock::time_point deadline, void* tim
 
 // Holds each present to the frame rate cap's interval.
 void GraphicsSystem::LimitFrameRate() {
-  const int32_t cap = REXCVAR_GET(kameo_gfx_fps_cap);
+  const int32_t cap = KCVAR_GET(kameo_gfx_fps_cap);
   if (cap <= 0) {
     fps_cap_deadline_ = {};
     return;

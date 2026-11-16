@@ -1,7 +1,8 @@
 #pragma once
 
 #include <array>
-#include <rex/graphics/xenos.h>
+#include <rex/xenos/fetch.h>
+#include <rex/xenos/texture.h>
 
 // Guest GPU state decoding shared by the draw hooks and the draw path, free of plume so the hooks can include it; offsets come from Kameo's own D3D setters.
 
@@ -159,7 +160,7 @@ struct GuestTextureFetch {
   // Raw dwords because CaptureState fills them word by word; every field comes from the SDK's struct, never hand-written bit math.
   union {
     uint32_t words[6] = {};
-    rex::graphics::xenos::xe_gpu_texture_fetch_t xe;
+    rex::xenos::TextureFetch xe;
   };
 
   bool valid() const { return words[0] != 0 || words[1] != 0; }
@@ -167,8 +168,8 @@ struct GuestTextureFetch {
   // What `dimension()` used to return: bits 0..1 are the fetch constant TYPE,
   // and kTexture is 2, so the old accessor answered "2" for every valid texture
   // and its "2 = 2D" comment looked confirmed for the wrong reason.
-  rex::graphics::xenos::FetchConstantType fetch_type() const { return xe.type; }
-  rex::graphics::xenos::DataDimension dimension() const { return xe.dimension; }
+  rex::xenos::FetchConstantType fetch_type() const { return xe.type; }
+  rex::xenos::DataDimension dimension() const { return xe.dimension; }
 
   uint32_t clamp_x() const { return uint32_t(xe.clamp_x); }
   uint32_t clamp_y() const { return uint32_t(xe.clamp_y); }

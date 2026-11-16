@@ -5,12 +5,12 @@
 
 #include <cstdint>
 
-#include <rex/cvar.h>
+#include "core/cvar.h"
 
-REXCVAR_DECLARE(int32_t, kameo_gfx_stereo);
-REXCVAR_DECLARE(int32_t, kameo_gfx_stereo_depth);
-REXCVAR_DECLARE(int32_t, kameo_gfx_stereo_focus);
-REXCVAR_DECLARE(bool, kameo_gfx_stereo_swap);
+KCVAR_DECLARE(int32_t, kameo_gfx_stereo);
+KCVAR_DECLARE(int32_t, kameo_gfx_stereo_depth);
+KCVAR_DECLARE(int32_t, kameo_gfx_stereo_focus);
+KCVAR_DECLARE(bool, kameo_gfx_stereo_swap);
 
 namespace kameo::gpu {
 

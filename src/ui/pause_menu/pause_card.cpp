@@ -11,9 +11,10 @@
 #include <string>
 #include <vector>
 
-#include <rex/cvar.h>
-#include <rex/logging.h>
-#include <rex/system/kernel_state.h>
+#include "core/cvar.h"
+#include <rex/logging/log_category.h>
+#include <rex/kernel/title_runtime.h>
+#include <rex/xam/achievement_manager.h>
 
 #include <kameorepowered_init.h>
 
@@ -28,7 +29,7 @@
 #include "ui/pause_menu/pause_menu.h"
 #include "ui/pause_menu/pause_menu_internal.h"
 
-REXCVAR_DEFINE_INT32(kameo_menu_style, 0, "Kameo", "The pause menu: 0 = the storybook's own, 1 = the parchment card.");
+KCVAR_DEFINE_INT32(kameo_menu_style, 0, "Kameo", "The pause menu: 0 = the storybook's own, 1 = the parchment card.");
 
 namespace {
 
@@ -234,15 +235,15 @@ void Build(PPCContext& ctx, uint8_t* base) {
 // The title's achievements, read when the page opens.
 void BuildTrophies() {
   g.trophies.clear();
-  rex::system::KernelState* kernel = rex::system::kernel_state();
-  const std::vector<rex::system::AchievementInfo> achievements = kernel ? kernel->achievements().ListAchievements() : std::vector<rex::system::AchievementInfo>{};
+  rex::kernel::TitleRuntime* runtime = REX_RUNTIME();
+  const std::vector<rex::Achievement> achievements = runtime ? runtime->GetAchievementManager().ListAchievements() : std::vector<rex::Achievement>{};
   if (achievements.empty()) {
     g.trophy_summary = Utf8(Tr(u"No achievement data was found in the game's files."));
     return;
   }
   uint32_t unlocked = 0, score = 0, total_score = 0;
   for (const auto& a : achievements) {
-    const bool is_unlocked = kernel->achievements().IsUnlocked(a.id);
+    const bool is_unlocked = runtime->GetAchievementManager().IsUnlocked(a.id);
     total_score += a.gamerscore;
     if (is_unlocked) {
       ++unlocked;
@@ -412,7 +413,7 @@ void KameoKeepPauseCardArt() {
   kameo::gpu::KeepTextureCopies({kCard, kLogo, kDiamond, kTheena, kKalus, kTrainer, kFruit, kFlex, kThermite, kButtonA, kButtonB, kButtonLT, kButtonRT});
 }
 
-bool KameoPauseCardStyle() { return REXCVAR_GET(kameo_menu_style) == 1; }
+bool KameoPauseCardStyle() { return KCVAR_GET(kameo_menu_style) == 1; }
 
 bool KameoPauseCardOpen() { return g_open.load(std::memory_order_relaxed); }
 
@@ -615,31 +616,30 @@ void Spaced(ImDrawList* draw, ImFont* font, float size, float centre_x, float y,
 }
 
 // A thin ink line fading at both ends, with the parchment diamond in its middle.
-void Rule(ImDrawList* draw, rex::ui::ImmediateTexture* diamond, float left, float right, float y, float s, float alpha) {
+void Rule(ImDrawList* draw, kameo::gpu::UiImage* diamond, float left, float right, float y, float s, float alpha) {
   const float mid = (left + right) * 0.5f;
   const float gap = 14 * s;
   draw->AddRectFilledMultiColor(ImVec2(left, y - 0.8f * s), ImVec2(mid - gap, y + 0.8f * s), Colour(kInkSoft, 0.0f), Colour(kInkSoft, 0.8f * alpha), Colour(kInkSoft, 0.8f * alpha), Colour(kInkSoft, 0.0f));
   draw->AddRectFilledMultiColor(ImVec2(mid + gap, y - 0.8f * s), ImVec2(right, y + 0.8f * s), Colour(kInkSoft, 0.8f * alpha), Colour(kInkSoft, 0.0f), Colour(kInkSoft, 0.0f), Colour(kInkSoft, 0.8f * alpha));
-  if (diamond) draw->AddImage(reinterpret_cast<ImTextureID>(diamond), ImVec2(mid - 10 * s, y - 10 * s), ImVec2(mid + 10 * s, y + 10 * s), ImVec2(0, 0), ImVec2(1, 1), Colour(kWhite, alpha));
+  if (diamond) draw->AddImage(diamond->texture_id(), ImVec2(mid - 10 * s, y - 10 * s), ImVec2(mid + 10 * s, y + 10 * s), ImVec2(0, 0), ImVec2(1, 1), Colour(kWhite, alpha));
   else draw->AddQuadFilled(ImVec2(mid, y - 6 * s), ImVec2(mid + 6 * s, y), ImVec2(mid, y + 6 * s), ImVec2(mid - 6 * s, y), Colour(kInkSoft, alpha));
 }
 
 }  // namespace
 
-rex::ui::ImmediateTexture* KameoPauseCard::Art(uint64_t hash) {
+kameo::gpu::UiImage* KameoPauseCard::Art(uint64_t hash) {
   if (const auto found = art_.find(hash); found != art_.end()) return found->second.get();
   uint32_t width = 0, height = 0;
   std::vector<uint8_t> rgba;
-  if (!immediate_drawer_ || !kameo::gpu::KeptTexture(hash, &width, &height, &rgba)) return nullptr;
+  if (!kameo::gpu::KeptTexture(hash, &width, &height, &rgba)) return nullptr;
   if (hash == art::kCard || hash == art::kDiamond) LightParchment(rgba);
-  auto texture = immediate_drawer_->CreateTexture(width, height, rex::ui::ImmediateTextureFilter{}, false, rgba.data());
+  auto texture = kameo::gpu::UiImage::Create(width, height, rgba.data());
   if (!texture) return nullptr;
   return (art_[hash] = std::move(texture)).get();
 }
 
-rex::ui::ImmediateTexture* KameoPauseCard::OwnCard(int which) {
+kameo::gpu::UiImage* KameoPauseCard::OwnCard(int which) {
   if (own_card_tried_[which]) return own_cards_[which].get();
-  if (!immediate_drawer_) return nullptr;
   own_card_tried_[which] = true;
   const std::filesystem::path path = kameo::l10n::ProgramFolder() / "ui" / card_layout::kFiles[which];
   uint32_t width = 0, height = 0;
@@ -648,19 +648,10 @@ rex::ui::ImmediateTexture* KameoPauseCard::OwnCard(int which) {
     REXLOG_WARN("[kameo] pause card: {} is missing or not {}x{}, so that page uses the parchment card", path.string(), card_layout::kWidth, card_layout::kHeight);
     return nullptr;
   }
-  own_cards_[which] = immediate_drawer_->CreateTexture(width, height, rex::ui::ImmediateTextureFilter{}, false, rgba.data());
+  own_cards_[which] = kameo::gpu::UiImage::Create(width, height, rgba.data());
+  // Without the native renderer there is no image yet, so the card is tried again at the next draw.
+  if (!own_cards_[which]) own_card_tried_[which] = false;
   return own_cards_[which].get();
-}
-
-rex::ui::ImmediateTexture* KameoPauseCard::AchievementIcon(uint32_t id) {
-  rex::system::KernelState* kernel = rex::system::kernel_state();
-  if (!kernel) return nullptr;
-  if (!icons_) {
-    if (!runtime_ || !immediate_drawer_) return nullptr;
-    icons_ = std::make_unique<rex::ui::AchievementIconCache>(immediate_drawer_, runtime_);
-  }
-  const auto info = kernel->achievements().FindAchievement(id);
-  return info ? icons_->GetIcon(*info) : nullptr;
 }
 
 void KameoPauseCard::OnDraw(ImGuiIO& io) {
@@ -732,7 +723,7 @@ void KameoPauseCard::OnDraw(ImGuiIO& io) {
   const float cs = ch / 907.0f;  // sizes are set for a card 907 pixels tall, as on a 1080-line screen
   // The main page and Options have cards of their own, nearly square, drawn a little taller; `px` is one of their images'
   // pixels on screen.
-  rex::ui::ImmediateTexture* own_card = sheet == Sheet::Main ? OwnCard(0) : sheet == Sheet::Options ? OwnCard(1) : nullptr;
+  kameo::gpu::UiImage* own_card = sheet == Sheet::Main ? OwnCard(0) : sheet == Sheet::Options ? OwnCard(1) : nullptr;
   float px = 0.0f;
   if (own_card) {
     using namespace card_layout;
@@ -747,9 +738,9 @@ void KameoPauseCard::OnDraw(ImGuiIO& io) {
   const auto card_at = [&](float x, float y) { return ImVec2(cmin.x + (x - card_layout::kFrameL) * px, cmin.y + (y - card_layout::kFrameT) * px); };
   for (int ring = 6; ring > 0; --ring) draw->AddRectFilled(ImVec2(cmin.x - ring * 3 * cs, cmin.y + ring * 4 * cs), ImVec2(cmax.x + ring * 3 * cs, cmax.y + ring * 6 * cs), Colour(ImVec4(0, 0, 0, 1), 0.07f * t), 24 * cs);
   if (own_card) {
-    draw->AddImage(reinterpret_cast<ImTextureID>(own_card), card_at(0, 0), card_at(float(card_layout::kWidth), float(card_layout::kHeight)), ImVec2(0, 0), ImVec2(1, 1), white);
+    draw->AddImage(own_card->texture_id(), card_at(0, 0), card_at(float(card_layout::kWidth), float(card_layout::kHeight)), ImVec2(0, 0), ImVec2(1, 1), white);
   } else if (auto* card = Art(art::kCard)) {
-    draw->AddImage(reinterpret_cast<ImTextureID>(card), cmin, cmax, ImVec2(0, 0), ImVec2(1, 1), white);
+    draw->AddImage(card->texture_id(), cmin, cmax, ImVec2(0, 0), ImVec2(1, 1), white);
   } else {
     static bool warned = false;
     if (!warned) REXLOG_WARN("[kameo] pause card: the parchment texture {:016X} has not been kept, so the card is drawn plain", art::kCard);
@@ -776,7 +767,7 @@ void KameoPauseCard::OnDraw(ImGuiIO& io) {
     const float strength = lit ? 0.75f * glow : glow;
     draw->AddRectFilledMultiColor(ImVec2(l, y0), ImVec2(r, y1), Colour(tone, strength * t), Colour(tone, 0.0f), Colour(tone, 0.0f), Colour(tone, strength * t));
     const float d = (y1 - y0) * 0.22f, cy = (y0 + y1) * 0.5f;
-    if (diamond) draw->AddImage(reinterpret_cast<ImTextureID>(diamond), ImVec2(l + 8 * cs, cy - d), ImVec2(l + 8 * cs + 2 * d, cy + d), ImVec2(0, 0), ImVec2(1, 1), white);
+    if (diamond) draw->AddImage(diamond->texture_id(), ImVec2(l + 8 * cs, cy - d), ImVec2(l + 8 * cs + 2 * d, cy + d), ImVec2(0, 0), ImVec2(1, 1), white);
   };
   // A sheet's heading in engraved capitals between dots, with a rule under it; returns where the rule is.
   const auto heading = [&](const std::string& title) {
@@ -789,7 +780,7 @@ void KameoPauseCard::OnDraw(ImGuiIO& io) {
   // A controller button's face, or while the game has not loaded that one, its name on a small dark key.
   const auto button = [&](uint64_t face, const char* name, ImVec2 p0, float size) {
     if (auto* f = Art(face)) {
-      draw->AddImage(reinterpret_cast<ImTextureID>(f), p0, ImVec2(p0.x + size, p0.y + size), ImVec2(0, 0), ImVec2(1, 1), white);
+      draw->AddImage(f->texture_id(), p0, ImVec2(p0.x + size, p0.y + size), ImVec2(0, 0), ImVec2(1, 1), white);
       return;
     }
     const float inset = size * 0.12f;
@@ -846,7 +837,7 @@ void KameoPauseCard::OnDraw(ImGuiIO& io) {
       if (i < int(faces.size())) {
         if (auto* face = Art(faces[i])) {
           const float fs = pitch * 0.86f;
-          draw->AddImage(reinterpret_cast<ImTextureID>(face), ImVec2(list_l + 34 * cs, cy - fs * 0.5f), ImVec2(list_l + 34 * cs + fs, cy + fs * 0.5f), ImVec2(0, 0), ImVec2(1, 1), white);
+          draw->AddImage(face->texture_id(), ImVec2(list_l + 34 * cs, cy - fs * 0.5f), ImVec2(list_l + 34 * cs + fs, cy + fs * 0.5f), ImVec2(0, 0), ImVec2(1, 1), white);
         }
       }
       const float size = 44 * cs;
@@ -869,14 +860,14 @@ void KameoPauseCard::OnDraw(ImGuiIO& io) {
     if (own_card) {
       // The logo over the gap the card leaves for it at the top of its panel, the list centred in the panel below it.
       using namespace card_layout;
-      if (auto* logo = Art(art::kLogo)) draw->AddImage(reinterpret_cast<ImTextureID>(logo), card_at(kLogoX, kLogoY), card_at(kLogoX + kLogoSize, kLogoY + kLogoSize), ImVec2(0, 0), ImVec2(1, 1), white);
+      if (auto* logo = Art(art::kLogo)) draw->AddImage(logo->texture_id(), card_at(kLogoX, kLogoY), card_at(kLogoX + kLogoSize, kLogoY + kLogoSize), ImVec2(0, 0), ImVec2(1, 1), white);
       const float list_top = card_at(0, kLogoBottom).y + 12 * cs, list_bottom = inner_bottom - 40 * cs - 24 * cs;
       const float pitch = std::min(ch * 0.066f, (list_bottom - list_top) / float(std::max<size_t>(1, lines.size())));
       choices(labels, line, list_top + (list_bottom - list_top - pitch * float(lines.size())) * 0.5f, pitch, centre_x - 300 * cs, centre_x + 300 * cs, faces);
     } else {
       if (auto* logo = Art(art::kLogo)) {
         const float lw = cw * 0.40f;
-        draw->AddImage(reinterpret_cast<ImTextureID>(logo), ImVec2(centre_x - lw * 0.5f, inner_top - ch * 0.065f), ImVec2(centre_x + lw * 0.5f, inner_top - ch * 0.065f + lw), ImVec2(0, 0), ImVec2(1, 1), white);
+        draw->AddImage(logo->texture_id(), ImVec2(centre_x - lw * 0.5f, inner_top - ch * 0.065f), ImVec2(centre_x + lw * 0.5f, inner_top - ch * 0.065f + lw), ImVec2(0, 0), ImVec2(1, 1), white);
       }
       const float pitch = ch * 0.066f;
       choices(labels, line, inner_bottom - ch * 0.075f - pitch * float(lines.size()), pitch, cmin.x + cw * 0.27f, cmax.x - cw * 0.27f, faces);
@@ -888,7 +879,7 @@ void KameoPauseCard::OnDraw(ImGuiIO& io) {
     float rule_y = 0.0f;
     if (own_card) {
       using namespace card_layout;
-      if (auto* logo = Art(art::kLogo)) draw->AddImage(reinterpret_cast<ImTextureID>(logo), card_at(kLogoX, kLogoY), card_at(kLogoX + kLogoSize, kLogoY + kLogoSize), ImVec2(0, 0), ImVec2(1, 1), white);
+      if (auto* logo = Art(art::kLogo)) draw->AddImage(logo->texture_id(), card_at(kLogoX, kLogoY), card_at(kLogoX + kLogoSize, kLogoY + kLogoSize), ImVec2(0, 0), ImVec2(1, 1), white);
       rule_y = card_at(0, kLogoBottom).y - 6 * cs;
     } else {
       rule_y = heading(Utf8(Tr(u"Options")));
@@ -1013,7 +1004,7 @@ void KameoPauseCard::OnDraw(ImGuiIO& io) {
       const float icon = pitch - 22 * cs;
       const float icon_x = inner_l + 44 * cs, icon_y = ry + (pitch - 6 * cs - icon) * 0.5f;
       draw->AddRect(ImVec2(icon_x - 2 * cs, icon_y - 2 * cs), ImVec2(icon_x + icon + 2 * cs, icon_y + icon + 2 * cs), Colour(kInkSoft, 0.9f * t), 3 * cs, 0, 2 * cs);
-      if (auto* art = AchievementIcon(a.id)) draw->AddImage(reinterpret_cast<ImTextureID>(art), ImVec2(icon_x, icon_y), ImVec2(icon_x + icon, icon_y + icon), ImVec2(0, 0), ImVec2(1, 1), a.unlocked ? white : Colour(ImVec4(0.45f, 0.42f, 0.38f, 1), 0.85f * t));
+      if (auto* art = AchievementIcon(a.id)) draw->AddImage(art->texture_id(), ImVec2(icon_x, icon_y), ImVec2(icon_x + icon, icon_y + icon), ImVec2(0, 0), ImVec2(1, 1), a.unlocked ? white : Colour(ImVec4(0.45f, 0.42f, 0.38f, 1), 0.85f * t));
       const float score_size = 34 * cs;
       const float score_w = Width(caps, score_size, a.score);
       const float text_x = icon_x + icon + 20 * cs, text_r = inner_r - 24 * cs - score_w - 24 * cs;

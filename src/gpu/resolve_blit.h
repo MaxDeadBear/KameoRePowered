@@ -16,5 +16,7 @@ bool BlitScaledResolve(GraphicsSystem::DrawPathContext& ctx, plume::RenderComman
 // Draws a depth buffer's rectangle at an origin into an R32F resolve target.
 bool DrawDepthResolve(GraphicsSystem::DrawPathContext& ctx, plume::RenderCommandList* list, plume::RenderTexture* depth, CachedTexture& dest, int32_t origin_x, int32_t origin_y, bool multisampled);
 void ReleaseResolveBlits();
+// Drops the depth views the resolve slots hold. Called before depth textures are destroyed outright (a scene target rebuild, shutdown), since a view must not outlive its texture.
+void ReleaseDepthResolveViews();
 
 }  // namespace kameo::gpu::detail

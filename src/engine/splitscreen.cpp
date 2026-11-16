@@ -1,21 +1,21 @@
 // Story split-screen: the per-frame lifecycle that spawns, benches and restores player 2, and the gates that keep saves single-player.
 
-#include <rex/cvar.h>
-#include <rex/logging/macros.h>
+#include "core/cvar.h"
+#include <rex/logging/log_category.h>
 
 #include "core/hooks.h"
 #include "engine/splitscreen_internal.h"
 
-REXCVAR_DEFINE_BOOL(kameo_story_splitscreen, false, "Kameo",
+KCVAR_DEFINE_BOOL(kameo_story_splitscreen, false, "Kameo",
                     "Force split-screen on in the story campaign.");
 
 // PlayerReady's own chain spawns "Kai", who has no warrior wheel because warriors belong to Kameo.
-REXCVAR_DEFINE_BOOL(kameo_player2_as_kameo, false, "Kameo",
+KCVAR_DEFINE_BOOL(kameo_player2_as_kameo, false, "Kameo",
                     "Spawn player 2 as player 1's character type instead of Kai "
                     "(gives access to the warrior wheel).");
 
 // Manual override; normally the triple-tap toggle manages player 2 on its own.
-REXCVAR_DEFINE_BOOL(kameo_join_player2, false, "Kameo",
+KCVAR_DEFINE_BOOL(kameo_join_player2, false, "Kameo",
                     "Force a player 2 (Kai) spawn now, then self-clear.");
 
 namespace kameo::engine {
@@ -62,7 +62,7 @@ bool SpawnPlayer2(uint8_t* base) {
   WriteGuestStringAt(base, str_addr, "Kai");
 
   uint32_t objtype = str_addr;
-  if (REXCVAR_GET(kameo_player2_as_kameo)) {
+  if (KCVAR_GET(kameo_player2_as_kameo)) {
     // The buffer's address, not its contents; see KameoOverridePlayer2Type.
     if (REX_LOAD_U8(kNextLevelPlayerObject) != 0) {
       objtype = kNextLevelPlayerObject;
@@ -116,14 +116,14 @@ void KameoSplitScreenTick() {
   ServiceTeleportRequests(base);
   SyncPlayer2Warriors(base);
 
-  if (REXCVAR_GET(kameo_join_player2)) {
-    REXCVAR_SET(kameo_join_player2, false);
+  if (KCVAR_GET(kameo_join_player2)) {
+    KCVAR_SET(kameo_join_player2, false);
     SpawnPlayer2(base);
   }
 
   // Spawning reports in through PlayerReady frames later, so each direction issues one request and waits for player_list[1] to change.
   static bool s_spawn_pending = false;
-  const bool want_split = REXCVAR_GET(kameo_story_splitscreen);
+  const bool want_split = KCVAR_GET(kameo_story_splitscreen);
   const bool level_running = REX_LOAD_U32(kPlayerList + 0) != 0;
   const bool have_p2 = REX_LOAD_U32(kPlayerList + 4) != 0;
   // objectKillAll empties player_list before freeing every object, so no player 2 we remember outlives the level.
@@ -161,7 +161,7 @@ void KameoSplitScreenTick() {
   }
 
   // isSplitScreenMode is never cleared again: dropping it tears down per-viewport render state that crashes when the split comes back.
-  if (REXCVAR_GET(kameo_story_splitscreen)) {
+  if (KCVAR_GET(kameo_story_splitscreen)) {
     REX_STORE_U32(kIsSplitScreenMode, 1);
     // Raising numWantedPlayers mid-level renders a viewport with no camera, so it is only raised before any player has spawned.
     const bool players_spawned = REX_LOAD_U32(kPlayerList + 0) != 0;
@@ -178,7 +178,7 @@ void KameoSplitScreenTick() {
 // PlayerReady(player, playerNo) chains levelCreatePlayerSetup("Kai") for the next player while numPlayers < numWantedPlayers, so with split-screen off a level load stops at player 1 instead of rebuilding player 2.
 // An online game's player 2 is the other console's player, built by the same chain, so KamNetworkIsNetGame leaves it alone.
 extern "C" REX_FUNC(sub_8226CE68) {
-  if (!REXCVAR_GET(kameo_story_splitscreen) && ctx.r4.u32 == 0 && REX_LOAD_U32(kNumWantedPlayers) > 1) {
+  if (!KCVAR_GET(kameo_story_splitscreen) && ctx.r4.u32 == 0 && REX_LOAD_U32(kNumWantedPlayers) > 1) {
     PPCContext net = ctx;
     sub_8229F978(net, base);
     if (net.r3.u32 == 0) {
@@ -191,21 +191,21 @@ extern "C" REX_FUNC(sub_8226CE68) {
 
 // saveGameFileOpenedForWriting writes campaign progress only when !isSplitScreenMode, so the loaded flag is forced to 0 there.
 void KameoSaveGameSplitGate(PPCRegister& r11) {
-  if (REXCVAR_GET(kameo_story_splitscreen)) {
+  if (KCVAR_GET(kameo_story_splitscreen)) {
     r11.u64 = 0;
   }
 }
 
 // storybookCurrentGameDisplayCorrupt tests the same flag and would report the profile corrupt.
 void KameoStorybookSplitGate(PPCRegister& r11) {
-  if (REXCVAR_GET(kameo_story_splitscreen)) {
+  if (KCVAR_GET(kameo_story_splitscreen)) {
     r11.u64 = 0;
   }
 }
 
 // PlayerReady's `addi r4, aKai` before levelCreatePlayerSetup: player 2 takes player 1's type, which is the path level init uses.
 void KameoOverridePlayer2Type(PPCRegister& r4) {
-  if (!REXCVAR_GET(kameo_player2_as_kameo)) {
+  if (!KCVAR_GET(kameo_player2_as_kameo)) {
     return;
   }
   uint8_t* base = GuestBase();

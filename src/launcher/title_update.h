@@ -8,7 +8,7 @@
 #include <string>
 
 namespace rex::filesystem {
-class StfsContainerDevice;
+class IContainerImage;
 }
 
 namespace kameo::launcher {
@@ -23,12 +23,12 @@ bool TitleUpdateInstalled(const std::filesystem::path& game_folder);
 bool TitleUpdateBuildPresent(const std::filesystem::path& game_folder);
 
 // Whether a package is a title update: an installer package whose root holds default.xexp.
-bool IsTitleUpdatePackage(rex::filesystem::StfsContainerDevice& device);
+bool IsTitleUpdatePackage(const rex::filesystem::IContainerImage& image);
 
 // Unpacks a title-update package into assets\TU, once its patch is checked against this copy's default.xex (the update
 // came in regional variants, each for its own release of the game) and against the patch kameorepowered-tu.exe was
 // recompiled from. message says what happened either way.
-bool InstallTitleUpdate(rex::filesystem::StfsContainerDevice& device, const std::filesystem::path& game_folder, std::string& message);
+bool InstallTitleUpdate(const rex::filesystem::IContainerImage& image, const std::filesystem::path& game_folder, std::string& message);
 
 // Takes the update out again, so the launcher starts the vanilla build.
 bool RemoveTitleUpdate(const std::filesystem::path& game_folder, std::string& error);

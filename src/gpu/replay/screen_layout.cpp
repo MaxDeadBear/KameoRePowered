@@ -34,8 +34,8 @@ bool LoadingScreenShowing() {
 }
 
 bool LetterboxScene() {
-  if (!REXCVAR_GET(kameo_gfx_preserve_aspect)) return false;
-  if (!REXCVAR_GET(kameo_gfx_widescreen)) return true;
+  if (!KCVAR_GET(kameo_gfx_preserve_aspect)) return false;
+  if (!KCVAR_GET(kameo_gfx_widescreen)) return true;
   const GraphicsSystem* gfx = GraphicsSystem::instance();
   return !gfx || gfx->DisplayAspect() <= 16.0 / 9.0 + 0.01;
 }
@@ -107,7 +107,7 @@ bool PlaceMenuCard(uint64_t pixel_shader, float stretch, HudPlacement* out) {
   // The card shaders, by the hash the shader list shows; they read their camera from the full constant block, which the
   // HUD layout's box finder can't, so they are known by shader instead.
   static constexpr uint64_t kCardShaders[] = {0x8FF3DB98F857D8A7ull, 0x113302E71053FE39ull, 0x7ACB95FC3FB81F09ull};
-  if (stretch <= 1.0f || std::clamp(REXCVAR_GET(kameo_hud_layout), 0, 2) == 0) return false;
+  if (stretch <= 1.0f || std::clamp(KCVAR_GET(kameo_hud_layout), 0, 2) == 0) return false;
   if (pixel_shader && std::find(std::begin(kCardShaders), std::end(kCardShaders), pixel_shader) == std::end(kCardShaders)) return false;
   out->mx = 1.0f / stretch;
   out->bx = 0.0f;
@@ -117,7 +117,7 @@ bool PlaceMenuCard(uint64_t pixel_shader, float stretch, HudPlacement* out) {
 }
 
 bool PlaceLoadingBackdrop(float stretch, HudPlacement* out) {
-  if (stretch <= 1.0f || std::clamp(REXCVAR_GET(kameo_hud_layout), 0, 2) == 0) return false;
+  if (stretch <= 1.0f || std::clamp(KCVAR_GET(kameo_hud_layout), 0, 2) == 0) return false;
   out->mx = 1.0f;
   out->bx = 0.0f;
   out->my = stretch;
@@ -126,7 +126,7 @@ bool PlaceLoadingBackdrop(float stretch, HudPlacement* out) {
 }
 
 bool PlaceHudBox(const float* box, float stretch, HudPlacement* out, bool artwork) {
-  const int32_t layout = std::clamp(REXCVAR_GET(kameo_hud_layout), 0, 2);
+  const int32_t layout = std::clamp(KCVAR_GET(kameo_hud_layout), 0, 2);
   if (artwork) {
     if (layout == 0 || stretch <= 1.0f) return false;
     out->mx = 1.0f / stretch;
@@ -136,7 +136,7 @@ bool PlaceHudBox(const float* box, float stretch, HudPlacement* out, bool artwor
     return true;
   }
   const bool menu = g_hudMenuOpen.load(std::memory_order_relaxed);
-  const float scale = menu ? 1.0f : std::clamp(REXCVAR_GET(kameo_hud_scale), 50, 150) / 100.0f;
+  const float scale = menu ? 1.0f : std::clamp(KCVAR_GET(kameo_hud_scale), 50, 150) / 100.0f;
   const float unstretch = layout == 0 ? 1.0f : 1.0f / std::max(stretch, 1.0f);
   if (scale == 1.0f && unstretch == 1.0f) return false;
   if (box[1] - box[0] > 1.5f || box[3] - box[2] > 1.5f) return false;
@@ -162,7 +162,7 @@ void GuestRectToHostUv(uint32_t host_w, uint32_t host_h, float gx, float gy, flo
 }
 
 void ClusterHudBoxes(const DrawFrame& frame, std::vector<std::array<float, 4>>& hud_boxes, std::vector<uint8_t>& hud_boxed) {
-  if (REXCVAR_GET(kameo_hud_scale) != 100 || REXCVAR_GET(kameo_hud_layout) != 0) {
+  if (KCVAR_GET(kameo_hud_scale) != 100 || KCVAR_GET(kameo_hud_layout) != 0) {
     hud_boxes.resize(frame.draws.size());
     hud_boxed.assign(frame.draws.size(), 0);
     std::vector<uint32_t> boxed;
@@ -185,7 +185,7 @@ void ClusterHudBoxes(const DrawFrame& frame, std::vector<std::array<float, 4>>& 
         const bool scene_copy = th && std::abs(float(tw) / float(th) - 16.0f / 9.0f) < 0.05f &&
                                 g_resolveTargets.contains({texture.address(), uint16_t(tw), uint16_t(th), false});
         const bool picture = tw >= 128 && th >= 64 && !scene_copy;
-        if (REXCVAR_GET(kameo_dev_log_hud) && full_screen) {
+        if (KCVAR_GET(kameo_dev_log_hud) && full_screen) {
           static uint64_t logged_at = 0;
           if (logged_at++ % 120 == 0) KGFX_INFO("hud: draw {} full screen, texture {:08X} {}x{}{}: {}", i, texture.address(), tw, th, scene_copy ? " (scene copy)" : "", picture ? "kept 16:9" : "stretched");
         }

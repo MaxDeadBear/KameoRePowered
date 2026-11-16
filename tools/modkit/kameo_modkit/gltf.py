@@ -103,7 +103,9 @@ def _skin_of_vertex(index: tuple, weight: tuple | None, palette: list[int], skel
     return tuple(joints), tuple(weights)
 
 
-def export_gltf(path: str, out: str) -> None:
+def export_gltf(path: str, out: str, graphs: set[int] | None = None) -> None:
+    """`graphs` limits the export to those rendergraphs of the archive (a level archive holds dozens of models); the
+    names keep each graph's number in the archive."""
     from .__main__ import TextureWriter  # the PNG writer the OBJ export uses
 
     archive = Caff.load(path)
@@ -129,6 +131,8 @@ def export_gltf(path: str, out: str) -> None:
         return image_index[png]
 
     for graph_number, entry in enumerate(e for e in archive.entries if resolver.type_name(e) == "rendergraph"):
+        if graphs is not None and graph_number not in graphs:
+            continue
         palette = texture_palette(resolver, Ref(entry, 0))
         roots = rendergraph_roots(resolver, entry)
         skeleton = read_skeleton(resolver, roots)
@@ -140,7 +144,8 @@ def export_gltf(path: str, out: str) -> None:
                 # The rest pose is the bind pose: each joint sits at its pivot, whatever its stored translation says.
                 parent_pivot = skeleton.joints[joint.parent].pivot if joint.parent >= 0 else (0.0, 0.0, 0.0)
                 local = tuple(joint.pivot[k] - parent_pivot[k] for k in range(3))
-                nodes.append({"name": f"joint_{joint.index:02d}", "translation": list(_flip(local))})
+                # A joint the importer added is a spring bone, and goes by that name.
+                nodes.append({"name": f"{'spring' if joint.spring else 'joint'}_{joint.index:02d}", "translation": list(_flip(local))})
             for joint in skeleton.joints:
                 children = [first_joint + j.index for j in skeleton.joints if j.parent == joint.index]
                 if children:
@@ -195,7 +200,8 @@ def export_gltf(path: str, out: str) -> None:
                 indices = [remap[v] for tri in triangles for v in (tri[0], tri[2], tri[1])]
                 primitive = {"attributes": attributes, "indices": build.indices(indices), "mode": 4, "material": len(materials)}
                 name = f"graph{graph_number}_mesh{mesh_number}_draw{draw_number}"
-                materials.append(_material(resolver, draw.material, name, palette, textures, texture_of) if draw.material is not None else {"name": name})
+                background = draw.push is not None and draw.push.type == "ndBGPushBuffer"
+                materials.append(_material(resolver, draw.material, name, palette, textures, texture_of, background, draw.texture_slots) if draw.material is not None else {"name": name})
                 primitives.append(primitive)
             if not primitives:
                 continue
@@ -233,12 +239,19 @@ def export_gltf(path: str, out: str) -> None:
     print(f"wrote {out}: {len(meshes)} meshes, {sum(len(m['primitives']) for m in meshes)} primitives, {len(materials)} materials, {len(images)} textures, {joints} joints")
 
 
-def _material(resolver: Resolver, node, name: str, palette: list, textures, texture_of) -> dict:
-    material = read_material(resolver, node)
+def _material(resolver: Resolver, node, name: str, palette: list, textures, texture_of, background: bool = False, texture_slots: dict | None = None) -> dict:
+    """A glTF material for a draw. A level's background (`background`) mostly draws with blend shaders whose samplers
+    have no channel name, laid out as: a large blend mask (named "..._blend"), a small noise texture, the layers' normal
+    maps (DXN), then the layers' colour textures (grass, dirt, path stones...), then the "ambient0" lightmap. For those,
+    with no "colour" channel, the first unnamed colour texture after a normal map (or the first one at all, when there
+    is no normal map) stands in as the base colour: the patch's main ground layer, not blended as the game does. A
+    character never gets this, as its base colour images go back into the game on import."""
+    material = read_material(resolver, node, texture_slots)
     out: dict = {"name": name, "pbrMetallicRoughness": {"metallicFactor": 0.0, "roughnessFactor": 0.8}}
     colour = material.base_colour()
     if colour and not material.channel("colour"):
         out["pbrMetallicRoughness"]["baseColorFactor"] = [float(c) for c in colour]
+    written = []
     for sampler in material.samplers:
         if sampler.dynamic or sampler.lightmap or sampler.palette_index >= len(palette) or palette[sampler.palette_index] is None:
             continue
@@ -246,10 +259,18 @@ def _material(resolver: Resolver, node, name: str, palette: list, textures, text
             png, normal = textures.write(palette[sampler.palette_index], mask=sampler.channel == "transparency")
         except ValueError:
             continue
+        written.append((sampler, png, normal))
         if normal:
             out["normalTexture"] = {"index": texture_of(png)}
         elif sampler.channel == "colour" and "baseColorTexture" not in out["pbrMetallicRoughness"]:
             out["pbrMetallicRoughness"]["baseColorTexture"] = {"index": texture_of(png)}
         elif sampler.channel == "transparency":
             out["alphaMode"] = "MASK"
+    if background and not material.channel("colour") and "baseColorTexture" not in out["pbrMetallicRoughness"]:
+        layers = [(png, normal) for s, png, normal in written if not s.channel and not s.file_node.startswith("ambient")]
+        first_normal = next((i for i, (_, normal) in enumerate(layers) if normal), None)
+        after = [png for png, normal in layers[(first_normal or 0):] if not normal]
+        if after:
+            out["pbrMetallicRoughness"]["baseColorTexture"] = {"index": texture_of(after[0])}
+            out["pbrMetallicRoughness"].pop("baseColorFactor", None)
     return out

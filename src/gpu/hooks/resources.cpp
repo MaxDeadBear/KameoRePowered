@@ -7,8 +7,8 @@
 
 #include <kameorepowered_init.h>
 
-#include <rex/cvar.h>
-#include <rex/logging.h>
+#include "core/cvar.h"
+#include <rex/logging/log_category.h>
 
 #include "engine/current_level.h"
 #include "gpu/config.h"

@@ -2,30 +2,30 @@
 
 #include <cstring>
 
-#include <rex/cvar.h>
-#include <rex/logging/macros.h>
+#include "core/cvar.h"
+#include <rex/logging/log_category.h>
 
 #include "engine/splitscreen_internal.h"
 #include "input/input.h"
 
-REXCVAR_DECLARE(int32_t, kameo_p2_input_mode);
+KCVAR_DECLARE(int32_t, kameo_p2_input_mode);
 
-REXCVAR_DEFINE_DOUBLE(kameo_splitscreen_rejoin_offset, 2.0, "Kameo",
+KCVAR_DEFINE_DOUBLE(kameo_splitscreen_rejoin_offset, 2.0, "Kameo",
                       "Sideways offset used when player 2 rejoins or is "
                       "teleported to player 1 (world units).");
 
 // D-pad Up rather than Start: the button is read but not consumed, and three Starts left the pause menu open with no way for player 2 to dismiss it.
-REXCVAR_DEFINE_BOOL(kameo_p2_triple_tap, true, "Kameo",
+KCVAR_DEFINE_BOOL(kameo_p2_triple_tap, true, "Kameo",
                     "Player 2 can triple-tap D-pad Up to join or leave split-screen.");
-REXCVAR_DEFINE_UINT32(kameo_p2_triple_tap_button, 0x0001, "Kameo",
+KCVAR_DEFINE_UINT32(kameo_p2_triple_tap_button, 0x0001, "Kameo",
                       "Button mask player 2 triple-taps (default 0x0001 = D-pad Up).");
-REXCVAR_DEFINE_INT32(kameo_p2_triple_tap_frames, 90, "Kameo",
+KCVAR_DEFINE_INT32(kameo_p2_triple_tap_frames, 90, "Kameo",
                      "Frames allowed for player 2's three taps.");
 
 // Momentary triggers for a player stuck on geometry: the next frame performs the warp and clears them.
-REXCVAR_DEFINE_BOOL(kameo_gather_players, false, "Kameo",
+KCVAR_DEFINE_BOOL(kameo_gather_players, false, "Kameo",
                     "Teleport every other player to player 1, then self-clear.");
-REXCVAR_DEFINE_BOOL(kameo_goto_player2, false, "Kameo",
+KCVAR_DEFINE_BOOL(kameo_goto_player2, false, "Kameo",
                     "Teleport player 1 to player 2, then self-clear.");
 
 namespace kameo::engine {
@@ -152,7 +152,7 @@ bool WarpPlayerToPlayer(PPCContext& ctx, uint8_t* base, uint32_t dst_idx, uint32
 
   // Sideways on X so the arriving player does not land inside the target.
   const float offset =
-      static_cast<float>(REXCVAR_GET(kameo_splitscreen_rejoin_offset));
+      static_cast<float>(KCVAR_GET(kameo_splitscreen_rejoin_offset));
   if (offset != 0.0f) {
     AddGuestFloat(base, scratch_pos + 0, offset);
   }
@@ -188,12 +188,12 @@ bool WarpPlayerToPlayer(PPCContext& ctx, uint8_t* base, uint32_t dst_idx, uint32
 
 // Three taps inside the window toggle kameo_story_splitscreen, which KameoSplitScreenTick then acts on.
 void ServicePlayer2TripleTap(uint8_t* base) {
-  if (!REXCVAR_GET(kameo_p2_triple_tap)) {
+  if (!KCVAR_GET(kameo_p2_triple_tap)) {
     return;
   }
-  const bool first_pad_standby = !REXCVAR_GET(kameo_story_splitscreen) && KameoPlayerUsesKeyboard(0);
+  const bool first_pad_standby = !KCVAR_GET(kameo_story_splitscreen) && KameoPlayerUsesKeyboard(0);
   const uint32_t buttons = first_pad_standby ? KameoStandbyPadButtons() & REX_LOAD_U32(kCommitTestButtonMask) : ReadPadButtons(base, 1, /*raw_pad=*/true);
-  const uint32_t tap_mask = REXCVAR_GET(kameo_p2_triple_tap_button);
+  const uint32_t tap_mask = KCVAR_GET(kameo_p2_triple_tap_button);
   const bool start_down = tap_mask != 0 && (buttons & tap_mask) != 0;
 
   static bool s_prev_down = false;
@@ -201,7 +201,7 @@ void ServicePlayer2TripleTap(uint8_t* base) {
   static uint32_t s_frames = 0;
 
   if (s_taps != 0 && ++s_frames > static_cast<uint32_t>(
-                                      REXCVAR_GET(kameo_p2_triple_tap_frames))) {
+                                      KCVAR_GET(kameo_p2_triple_tap_frames))) {
     s_taps = 0;  // window expired
     s_frames = 0;
   }
@@ -211,9 +211,9 @@ void ServicePlayer2TripleTap(uint8_t* base) {
       s_frames = 0;
     }
     if (++s_taps >= 3) {
-      const bool now = !REXCVAR_GET(kameo_story_splitscreen);
-      if (now) REXCVAR_SET(kameo_p2_input_mode, 0);
-      REXCVAR_SET(kameo_story_splitscreen, now);
+      const bool now = !KCVAR_GET(kameo_story_splitscreen);
+      if (now) KCVAR_SET(kameo_p2_input_mode, 0);
+      KCVAR_SET(kameo_story_splitscreen, now);
       REXLOG_INFO("[splitscreen] player 2 triple-tap (mask {:04X}) -> split-screen {}",
                   tap_mask, now ? "ON" : "OFF");
       s_taps = 0;
@@ -224,8 +224,8 @@ void ServicePlayer2TripleTap(uint8_t* base) {
 }
 
 void ServiceTeleportRequests(uint8_t* base) {
-  const bool gather = REXCVAR_GET(kameo_gather_players);
-  const bool goto_p2 = REXCVAR_GET(kameo_goto_player2);
+  const bool gather = KCVAR_GET(kameo_gather_players);
+  const bool goto_p2 = KCVAR_GET(kameo_goto_player2);
   if (!gather && !goto_p2) {
     return;
   }
@@ -236,7 +236,7 @@ void ServiceTeleportRequests(uint8_t* base) {
   }
 
   if (gather) {
-    REXCVAR_SET(kameo_gather_players, false);
+    KCVAR_SET(kameo_gather_players, false);
     for (uint32_t i = 1; i < 4; ++i) {
       if (WarpPlayerToPlayer(*ctx, base, i, 0)) {
         REXLOG_INFO("[splitscreen] warped player {} to player 1", i + 1);
@@ -244,7 +244,7 @@ void ServiceTeleportRequests(uint8_t* base) {
     }
   }
   if (goto_p2) {
-    REXCVAR_SET(kameo_goto_player2, false);
+    KCVAR_SET(kameo_goto_player2, false);
     if (WarpPlayerToPlayer(*ctx, base, 0, 1)) {
       REXLOG_INFO("[splitscreen] warped player 1 to player 2");
     }

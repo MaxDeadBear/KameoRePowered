@@ -59,8 +59,8 @@ constexpr uint32_t kTextDefaultMenuColourCallback = 0x82106770;
 using kameo::input::LoadFloat;
 using kameo::input::StoreFloat;
 
-inline uint32_t TextObjectOf(const uint8_t* base, uint32_t window) { return REX_LOAD_U32(window + kWindowTextObject); }
-inline uint32_t MenuOf(const uint8_t* base, uint32_t text_object) { return REX_LOAD_U32(text_object + kTextMenu); }
+inline uint32_t TextObjectOf(uint8_t* base, uint32_t window) { return REX_LOAD_U32(window + kWindowTextObject); }
+inline uint32_t MenuOf(uint8_t* base, uint32_t text_object) { return REX_LOAD_U32(text_object + kTextMenu); }
 
 // A NUL-terminated UTF-16 copy of `text` in guest memory, allocated once per distinct string and never freed.
 uint32_t GuestWideString(const std::u16string& text);

@@ -1,7 +1,7 @@
 // Unlock cheats, each revealed by a pause-menu code: every elemental warrior and move up front, and every mirror unlockable treated as earned.
 
-#include <rex/cvar.h>
-#include <rex/logging/macros.h>
+#include "core/cvar.h"
+#include <rex/logging/log_category.h>
 
 #include "core/hooks.h"
 #include "core/unlock_codes.h"
@@ -9,10 +9,10 @@
 #include "engine/unlocks.h"
 
 // kaiSackPopulate adds each warrior only once its story event is done (eventDone(0x2B) -> "FlowerBoxer", ...); adding them all first makes those adds no-ops.
-REXCVAR_DEFINE_BOOL(kameo_unlock_all_warriors, false, "Kameo",
+KCVAR_DEFINE_BOOL(kameo_unlock_all_warriors, false, "Kameo",
                     "Give every elemental warrior and every warrior move immediately.");
 
-REXCVAR_DEFINE_BOOL(kameo_unlock_all_extras, false, "Kameo", "Treat every mirror unlockable as earned: the cheats, costumes, concept art, FMVs and replay tools.");
+KCVAR_DEFINE_BOOL(kameo_unlock_all_extras, false, "Kameo", "Treat every mirror unlockable as earned: the cheats, costumes, concept art, FMVs and replay tools.");
 
 namespace {
 
@@ -34,7 +34,7 @@ constexpr uint32_t kFirstWarriorSack = 0x82804058;
 constexpr uint32_t kWarriorSackBytes = 8960;
 #endif  // !KAMEO_TU
 
-bool WarriorsWanted() { return REXCVAR_GET(kameo_unlock_all_warriors) && KameoCodeUnlocked(KameoUnlockCode::Warriors); }
+bool WarriorsWanted() { return KCVAR_GET(kameo_unlock_all_warriors) && KameoCodeUnlocked(KameoUnlockCode::Warriors); }
 
 void AddAllWarriors(PPCContext& ctx, uint8_t* base, uint32_t sack) {
   const uint32_t frame = kameo::engine::ScratchFrame(ctx.r1.u32);
@@ -95,7 +95,7 @@ void KameoUnlockAllWarriors(PPCRegister& r3) {
 // eventDone(event)
 extern "C" REX_FUNC(sub_822CC3C0) {
   const uint32_t event = ctx.r3.u32;
-  if (event >= kFirstMirrorUnlockEvent && event <= kLastMirrorUnlockEvent && REXCVAR_GET(kameo_unlock_all_extras) && KameoCodeUnlocked(KameoUnlockCode::GameCheats)) {
+  if (event >= kFirstMirrorUnlockEvent && event <= kLastMirrorUnlockEvent && KCVAR_GET(kameo_unlock_all_extras) && KameoCodeUnlocked(KameoUnlockCode::GameCheats)) {
     ctx.r3.u64 = 1;
     return;
   }

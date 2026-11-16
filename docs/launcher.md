@@ -6,11 +6,13 @@ game, installs Xbox 360 DLC packages, applies `.kmod` mods (levels and character
 starts the game. It is a separate
 Windows executable (Direct3D 11 + Dear ImGui through the vendored
 `thirdparty/imgui_backends`), built from `src/launcher/**/*.cpp` with the
-launcher's own flags and linked against the game's runtime DLL for ImGui and STFS.
-That DLL is delay-loaded from `launcher\rexruntime.dll`, a copy built with the
-launcher (`runtime_loader.cpp`), so the launcher never locks the game's own
-`rexruntime.dll` and keeps working whichever build is switched in. Without that
-folder it falls back to the game's copy.
+launcher's own flags and linked against the SDK's `rexbase.dll` for ImGui. The
+package readers (STFS, disc images) come from the SDK's `rexfilesystem.dll`,
+which `container.cpp` loads as a module the first time something is unpacked.
+`rexbase.dll` is delay-loaded from `launcher\`, where copies of both DLLs built
+with the launcher sit (`runtime_loader.cpp`), so the launcher never locks the
+game's own SDK libraries and keeps working whichever build is switched in.
+Without that folder it falls back to the game's copies.
 
 ## Files
 
@@ -31,7 +33,8 @@ folder it falls back to the game's copy.
 | `ui/page_mods.cpp` | Also shader mods: the game reads `shader_mods/*.kshader` itself, so switching one off only adds `.off` to its name |
 | `kmod.h/.cpp` | The `.kmod` format: CAFF archives (levels, models) stored as differences |
 | `kmod_zlib.cpp` | zlib for `.kmod` via stb (the launcher's only stb_image/stb_image_write implementation) |
-| `runtime_loader.cpp` | The delay-load hook that loads `launcher\rexruntime.dll` |
+| `runtime_loader.cpp` | The delay-load hook that loads `launcher\rexbase.dll` |
+| `container.h/.cpp` | The SDK's container reader (STFS packages, disc images): loading it, reading and extracting entries |
 | `builds.h/.cpp` | Builds from the GitHub releases: listing, downloading into `builds\<tag>\`, switching |
 | `http.h/.cpp` | HTTPS GETs through WinHTTP |
 | `json.h/.cpp` | A small JSON reader for the GitHub API |
@@ -59,7 +62,7 @@ When neither `assets` nor `game_data_root` holds a `default.xex`, the Play page 
 
 ## Crash reports
 
-`src/crash_dialog/` builds `KameoCrashDialog.exe`, drawn with the launcher's `window_d3d11.cpp` and `ui/theme.cpp`. It is a separate executable that runs on the game's own `rexruntime.dll`, because switching builds leaves the launcher alone and the dialog has to match the game beside it. The game's crash filter (`src/core/crash_reporter.cpp`) starts it and passes the crash on to Sentry's filter only on a yes. The Play page's card sets `crash_reports`.
+`src/crash_dialog/` builds `KameoCrashDialog.exe`, drawn with the launcher's `window_d3d11.cpp` and `ui/theme.cpp`. It is a separate executable that runs on the game's own `rexbase.dll`, because switching builds leaves the launcher alone and the dialog has to match the game beside it. The game's crash filter (`src/core/crash_reporter.cpp`) starts it and passes the crash on to Sentry's filter only on a yes. The Play page's card sets `crash_reports`.
 
 ## Play
 

@@ -5,8 +5,7 @@
 #include <cmath>
 #include <string>
 
-#include <rex/cvar.h>
-#include <rex/system/kernel_state.h>
+#include "core/cvar.h"
 
 #include "core/localization.h"
 #include "gpu/graphics_system.h"
@@ -15,7 +14,7 @@
 #include "ui/menu_pointer/menu_ui_state.h"
 #include "ui/text_window.h"
 
-REXCVAR_DEFINE_BOOL(kameo_fps_counter, false, "Kameo", "Show the frame rate in a Kameo text box in the top-right corner.");
+KCVAR_DEFINE_BOOL(kameo_fps_counter, false, "Kameo", "Show the frame rate in a Kameo text box in the top-right corner.");
 
 using namespace kameo::ui;
 using kameo::input::kFrameTime;
@@ -55,8 +54,7 @@ bool GuestRangeReadable(uint32_t address, uint32_t bytes) { return KameoGuestRan
 // A freed window's memory is released or reused before its delete list clears the slot, so its fields are only read where guest pages are still readable.
 bool KameoGuestRangeReadable(uint32_t address, uint32_t bytes) {
   if (address < 0x10000 || address > 0xFFFFFFFFu - bytes) return false;
-  rex::memory::BaseHeap* heap = rex::system::kernel_state()->memory()->LookupHeap(address);
-  return heap && heap->QueryRangeAccess(address, address + bytes - 1) != rex::memory::PageAccess::kNoAccess;
+  return GuestRangeMapped(address, bytes);
 }
 
 bool KameoFpsCounterPending() { return g_fpsCounter.pending; }
@@ -73,7 +71,7 @@ void KameoTickFpsCounter(PPCContext& ctx, uint8_t* base) {
   TickMenuUiState();
   FpsCounter& counter = g_fpsCounter;
   if (!counter.slot) {
-    counter.slot = rex::system::kernel_state()->memory()->SystemHeapAlloc(4);
+    counter.slot = GuestSystemAlloc(4);
     if (!counter.slot) return;
     REX_STORE_U32(counter.slot, 0);
   }
@@ -85,7 +83,7 @@ void KameoTickFpsCounter(PPCContext& ctx, uint8_t* base) {
     window = 0;
     counter.pending = false;
   }
-  if (!REXCVAR_GET(kameo_fps_counter)) {
+  if (!KCVAR_GET(kameo_fps_counter)) {
     if (window) {
       REX_STORE_U32(counter.slot, 0);
       CallGuest(ctx, base, sub_82250C58, window);
@@ -124,7 +122,7 @@ void KameoTickFpsCounter(PPCContext& ctx, uint8_t* base) {
 bool KameoSkipTextBoxShadow() {
   // xfix_textWindow_render draws the box model first in flat black (constant colour 0 at 0x82B718A8, enabled at 0x82B718B8) as its drop shadow.
   if (!t_renderingFpsCounter) return false;
-  const uint8_t* base = GuestBase();
+  uint8_t* base = GuestBase();
   return base && REX_LOAD_U32(0x82B718B8) != 0 && REX_LOAD_U32(0x82B718A8) == 0;
 }
 

@@ -12,7 +12,7 @@
 #include <windows.h>
 #endif
 
-#include <rex/cvar.h>
+#include "core/cvar.h"
 
 #include "core/settings_schema.h"
 #include "input/input.h"
@@ -22,7 +22,7 @@ namespace kameo::input::detail {
 
 namespace {
 
-// The runtime's keyboard driver bindings; their PC defaults (WASD, mouse buttons on the triggers, Space to jump) live in core/settings_schema.h with the rest of the settings.
+// The key bindings, in the order of the controller controls they drive; their PC defaults (WASD, mouse buttons on the triggers, Space to jump) live in core/settings_schema.h with the rest of the settings.
 constexpr const char* kKeybinds[] = {
     "keybind_a", "keybind_b", "keybind_x", "keybind_y", "keybind_left_trigger", "keybind_right_trigger",
     "keybind_left_shoulder", "keybind_right_shoulder", "keybind_lstick_up", "keybind_lstick_down", "keybind_lstick_left", "keybind_lstick_right",
@@ -39,6 +39,56 @@ bool AnyKeyDown() {
   }
 #endif
   return false;
+}
+
+// The bindings parsed from their settings, refreshed when a setting's text changes.
+struct ParsedBind {
+  std::string text;
+  std::vector<rex::InputSource> sources;
+};
+std::mutex g_parsedMutex;
+std::array<ParsedBind, std::size(kKeybinds)> g_parsedBinds;
+bool g_parsedValid[std::size(kKeybinds)] = {};
+
+// The key sources of a binding; wheel and controller items are not keys and do not press anything here.
+// PORT: the runtime's binding parser rejects a bare modifier such as Shift, so a key list naming one as its own key no longer parses (the whole item is dropped).
+std::vector<rex::InputSource> BoundKeys(size_t index) {
+  const std::string text = kameo::cvar::Exists(kKeybinds[index]) ? kameo::cvar::GetText(kKeybinds[index]) : std::string();
+  std::lock_guard<std::mutex> lock(g_parsedMutex);
+  if (!g_parsedValid[index] || g_parsedBinds[index].text != text) {
+    g_parsedBinds[index].text = text;
+    g_parsedBinds[index].sources.clear();
+    g_parsedValid[index] = true;
+    if (rex::hid::IInputSystem* input = InputSystem()) {
+      size_t start = 0;
+      while (start <= text.size()) {
+        size_t end = text.find(',', start);
+        if (end == std::string::npos) end = text.size();
+        std::string item = text.substr(start, end - start);
+        item.erase(0, item.find_first_not_of(" 	"));
+        item.erase(item.find_last_not_of(" 	") + 1);
+        if (!item.empty()) {
+          const auto source = input->ParseInputSource(item);
+          if (source && source->type == rex::InputSourceType::kKey && source->code < 256) g_parsedBinds[index].sources.push_back(*source);
+        }
+        start = end + 1;
+      }
+    } else {
+      g_parsedValid[index] = false;
+    }
+  }
+  return g_parsedBinds[index].sources;
+}
+
+bool SourceHeld(const rex::InputSource& source, const HeldKeys& held) {
+  if (!held.down[source.code]) return false;
+  // The modifiers a binding names must be held; any others are ignored, so Shift while running does not drop the movement keys.
+  using rex::KeyModifiers;
+  const uint8_t wanted = uint8_t(source.modifiers);
+  if ((wanted & uint8_t(KeyModifiers::kShift)) && !held.shift) return false;
+  if ((wanted & uint8_t(KeyModifiers::kCtrl)) && !held.ctrl) return false;
+  if ((wanted & uint8_t(KeyModifiers::kAlt)) && !held.alt) return false;
+  return true;
 }
 
 std::mutex g_bindsMutex;
@@ -58,12 +108,12 @@ void SetSuppressed(bool suppressed) {
   std::lock_guard<std::mutex> lock(g_bindsMutex);
   if (suppressed == g_bindsSuppressed) return;
   for (size_t i = 0; i < std::size(kKeybinds); ++i) {
-    if (!rex::cvar::GetFlagInfo(kKeybinds[i])) continue;
+    if (!kameo::cvar::Exists(kKeybinds[i])) continue;
     if (suppressed) {
-      g_savedBinds[i] = rex::cvar::GetFlagByName(kKeybinds[i]);
-      rex::cvar::SetFlagByName(kKeybinds[i], "");
+      g_savedBinds[i] = kameo::cvar::GetText(kKeybinds[i]);
+      kameo::cvar::SetText(kKeybinds[i], "");
     } else {
-      rex::cvar::SetFlagByName(kKeybinds[i], g_savedBinds[i]);
+      kameo::cvar::SetText(kKeybinds[i], g_savedBinds[i]);
     }
   }
   g_bindsSuppressed = suppressed;
@@ -90,6 +140,63 @@ bool SameKey(const std::string& a, const std::string& b) {
 
 }  // namespace
 
+rex::xam::X_INPUT_STATE PadFromKeys(const HeldKeys& held) {
+  std::array<bool, std::size(kKeybinds)> pressed{};
+  for (size_t i = 0; i < pressed.size(); ++i) {
+    for (const rex::InputSource& source : BoundKeys(i)) {
+      if (SourceHeld(source, held)) {
+        pressed[i] = true;
+        break;
+      }
+    }
+  }
+  uint16_t buttons = 0;
+  const auto button = [&](size_t index, uint16_t bit) { if (pressed[index]) buttons |= bit; };
+  using namespace rex::xam;
+  button(0, kXInputGamepadA);
+  button(1, kXInputGamepadB);
+  button(2, kXInputGamepadX);
+  button(3, kXInputGamepadY);
+  button(6, kXInputGamepadLeftShoulder);
+  button(7, kXInputGamepadRightShoulder);
+  button(12, kXInputGamepadLeftThumb);
+  button(17, kXInputGamepadRightThumb);
+  button(18, kXInputGamepadDPadUp);
+  button(19, kXInputGamepadDPadDown);
+  button(20, kXInputGamepadDPadLeft);
+  button(21, kXInputGamepadDPadRight);
+  button(22, kXInputGamepadBack);
+  button(23, kXInputGamepadStart);
+  button(24, kXInputGamepadGuide);
+  const auto axis = [&](size_t positive, size_t negative) { return int16_t((pressed[positive] ? 32767 : 0) - (pressed[negative] ? 32767 : 0)); };
+  X_INPUT_STATE state{};
+  state.gamepad.buttons = buttons;
+  state.gamepad.left_trigger = pressed[4] ? 255 : 0;
+  state.gamepad.right_trigger = pressed[5] ? 255 : 0;
+  state.gamepad.thumb_lx = axis(11, 10);
+  state.gamepad.thumb_ly = axis(8, 9);
+  state.gamepad.thumb_rx = axis(16, 15);
+  state.gamepad.thumb_ry = axis(13, 14);
+  return state;
+}
+
+HeldKeys SystemHeldKeys() {
+  HeldKeys held;
+  rex::hid::IInputSystem* input = InputSystem();
+  if (!input) return held;
+  for (size_t i = 0; i < std::size(kKeybinds); ++i) {
+    for (const rex::InputSource& source : BoundKeys(i)) {
+      const auto key = static_cast<rex::VirtualKey>(source.code);
+      held.down[source.code] = key == rex::VirtualKey::kLButton ? input->IsButtonDown(rex::MouseButton::kLeft) : key == rex::VirtualKey::kRButton ? input->IsButtonDown(rex::MouseButton::kRight) : key == rex::VirtualKey::kMButton ? input->IsButtonDown(rex::MouseButton::kMiddle) : input->IsKeyDown(key);
+    }
+  }
+  const rex::KeyModifiers modifiers = input->GetModifiers();
+  held.shift = (uint8_t(modifiers) & uint8_t(rex::KeyModifiers::kShift)) != 0;
+  held.ctrl = (uint8_t(modifiers) & uint8_t(rex::KeyModifiers::kCtrl)) != 0;
+  held.alt = (uint8_t(modifiers) & uint8_t(rex::KeyModifiers::kAlt)) != 0;
+  return held;
+}
+
 void ReleaseKeybindsWhenIdle() {
   bool capturing;
   {
@@ -106,9 +213,9 @@ using namespace kameo::input::detail;
 void KameoApplyDefaultControls() {
   for (const char* name : kKeybinds) {
     const KameoSettingSpec* spec = KameoFindSetting(name);
-    if (rex::cvar::GetFlagInfo(name) && rex::cvar::GetFlagSource(name) == rex::cvar::Source::kDefault) rex::cvar::SetFlagByName(name, spec ? spec->default_value : "");
+    if (kameo::cvar::Exists(name) && kameo::cvar::IsDefault(name)) kameo::cvar::SetText(name, spec ? spec->default_value : "");
   }
-  if (rex::cvar::GetFlagInfo("mnk_mouse") && rex::cvar::GetFlagSource("mnk_mouse") == rex::cvar::Source::kDefault) rex::cvar::SetFlagByName("mnk_mouse", "true");
+  if (kameo::cvar::Exists("mnk_mouse") && kameo::cvar::IsDefault("mnk_mouse")) kameo::cvar::SetText("mnk_mouse", "true");
 }
 
 void KameoSuppressKeybinds(bool suppress) {
@@ -121,7 +228,7 @@ std::string KameoKeybindForSave(const std::string& name) {
   for (size_t i = 0; i < std::size(kKeybinds); ++i) {
     if (g_bindsSuppressed && name == kKeybinds[i]) return g_savedBinds[i];
   }
-  return rex::cvar::GetFlagByName(name);
+  return kameo::cvar::GetText(name);
 }
 
 void KameoStartKeyCapture(const char* cvar) {
@@ -171,10 +278,10 @@ bool KameoTakeCapturedKey(std::string& cvar, std::string& key, bool& cancelled) 
   // The real bindings come back first, so the new key is written over the saved list rather than the blanked one.
   if (!cancelled) {
     std::lock_guard<std::mutex> lock(g_bindsMutex);
-    const auto read = [](size_t i) { return g_bindsSuppressed ? g_savedBinds[i] : rex::cvar::GetFlagByName(kKeybinds[i]); };
+    const auto read = [](size_t i) { return g_bindsSuppressed ? g_savedBinds[i] : kameo::cvar::GetText(kKeybinds[i]); };
     const auto write = [](size_t i, const std::string& keys) {
       if (g_bindsSuppressed) g_savedBinds[i] = keys;
-      else rex::cvar::SetFlagByName(kKeybinds[i], keys);
+      else kameo::cvar::SetText(kKeybinds[i], keys);
     };
     std::vector<std::string> previous;
     for (size_t i = 0; i < std::size(kKeybinds); ++i) {

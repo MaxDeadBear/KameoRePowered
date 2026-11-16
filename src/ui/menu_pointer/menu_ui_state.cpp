@@ -6,8 +6,6 @@
 #include <mutex>
 #include <unordered_map>
 
-#include <fmt/format.h>
-
 namespace kameo::ui {
 
 namespace {

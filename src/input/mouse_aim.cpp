@@ -4,7 +4,7 @@
 #include <array>
 #include <cmath>
 
-#include <rex/cvar.h>
+#include "core/cvar.h"
 
 #include "core/time.h"
 #include "engine/ability_energy.h"
@@ -12,7 +12,7 @@
 #include "input/input.h"
 #include "input/input_internal.h"
 
-REXCVAR_DECLARE(double, mnk_sensitivity);
+#include "input/sdk_settings.h"
 
 using namespace kameo::input;
 using namespace kameo::input::detail;
@@ -67,7 +67,7 @@ extern "C" REX_FUNC(sub_82276638) {
   float dy = 0.0f;
   TakePhysicalMouseTravel(int(player), &dx, &dy);
   if (dx == 0.0f && dy == 0.0f) return;
-  const float scale = kRadiansPerPixel * float(REXCVAR_GET(mnk_sensitivity));
+  const float scale = kRadiansPerPixel * float(KCVAR_GET(MnkSensitivity()));
   if (REX_LOAD_U32(kPlayerControlSettings + kPlayerControlSettingsBytes * player) != 0) dx = -dx;
   if (REX_LOAD_U32(kPlayerControlSettings + 4 + kPlayerControlSettingsBytes * player) != 0) dy = -dy;
   StoreFloat(base, camera + 196, WrapYaw(LoadFloat(base, camera + 196) - dx * scale));
@@ -85,7 +85,7 @@ extern "C" REX_FUNC(sub_8222BF68) {
   float dx = 0.0f;
   float dy = 0.0f;
   if (mode != 0 && TakeAimTravel(base, REX_LOAD_U32(yeti + 2672), &dx, &dy)) {
-    const float scale = kRadiansPerPixel * float(REXCVAR_GET(mnk_sensitivity));
+    const float scale = kRadiansPerPixel * float(KCVAR_GET(MnkSensitivity()));
     const uint32_t keyboard_player = REX_LOAD_U8(REX_LOAD_U32(yeti + 2672) + 14);
     if (REX_LOAD_U32(kPlayerControlSettings + kPlayerControlSettingsBytes * keyboard_player) != 0) dx = -dx;
     if (REX_LOAD_U32(kPlayerControlSettings + 4 + kPlayerControlSettingsBytes * keyboard_player) != 0) dy = -dy;
@@ -106,7 +106,7 @@ extern "C" REX_FUNC(sub_8217BEC8) {
   if (!TakeAimTravel(base, controls, &dx, &dy)) return;
   if (dx != 0.0f) {
     if (REX_LOAD_U32(kPlayerControlSettings + kPlayerControlSettingsBytes * REX_LOAD_U8(controls + 14)) != 0) dx = -dx;
-    float yaw = LoadFloat(base, player + 568) - dx * kRadiansPerPixel * float(REXCVAR_GET(mnk_sensitivity));
+    float yaw = LoadFloat(base, player + 568) - dx * kRadiansPerPixel * float(KCVAR_GET(MnkSensitivity()));
     while (yaw >= kTwoPi) yaw -= kTwoPi;
     while (yaw < 0.0f) yaw += kTwoPi;
     StoreFloat(base, player + 568, yaw);
@@ -117,7 +117,7 @@ extern "C" REX_FUNC(sub_8217BEC8) {
     g_sprayPitchStick = stick;
     return;
   }
-  const float scale = kRadiansPerPixel * float(REXCVAR_GET(mnk_sensitivity)) / kSprayPitchRange;
+  const float scale = kRadiansPerPixel * float(KCVAR_GET(MnkSensitivity())) / kSprayPitchRange;
   g_sprayPitchStick = std::clamp(g_sprayPitchStick - dy * scale, -1.0f, 1.0f);
   StoreFloat(base, controls + 88, g_sprayPitchStick);
 }

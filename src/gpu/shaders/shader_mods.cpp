@@ -21,7 +21,7 @@
 #define XXH_INLINE_ALL
 #include <xxhash.h>
 
-#include <rex/filesystem.h>
+#include <rex/platform/file.h>
 
 #include "core/game_archive.h"
 #include "engine/dlc/dlc.h"
@@ -134,7 +134,7 @@ void ReadTextures(ShaderModTextureSet* set, std::vector<ShaderModTexture> wanted
 std::vector<fs::path> ListPackages() {
   std::vector<fs::path> files;
   std::error_code error;
-  for (const auto& entry : fs::directory_iterator(rex::filesystem::GetExecutableFolder() / kFolder, error)) {
+  for (const auto& entry : fs::directory_iterator(rex::platform::GetExecutableFolder() / kFolder, error)) {
     if (entry.is_regular_file(error) && entry.path().extension() == kExtension) files.push_back(entry.path());
   }
   std::sort(files.begin(), files.end());

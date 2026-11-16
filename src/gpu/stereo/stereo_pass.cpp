@@ -5,7 +5,7 @@
 
 #include <plume_render_interface.h>
 
-#include <rex/logging.h>
+#include <rex/logging/log_category.h>
 
 #include "gpu/graphics_system.h"
 #include "gpu/frame_profile.h"

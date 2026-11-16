@@ -318,7 +318,7 @@ uint32_t EnsureTextureUncached(uint8_t* base, GraphicsSystem::DrawPathContext& c
   }
 
   // Xenos DXN orders the two BC4 halves of each block the other way round from BC5, which transposes X and Y of every normal; swap them on the untiled copy, before any branch below decodes the blocks.
-  if (format == kXenosFormat_DXN && REXCVAR_GET(kameo_gfx_dxn_swap)) {
+  if (format == kXenosFormat_DXN && KCVAR_GET(kameo_gfx_dxn_swap)) {
     uint8_t* blocks = g_untileScratch.data();
     for (size_t off = 0; off + 16 <= linear_bytes; off += 16) {
       uint8_t tmp[8];
@@ -423,14 +423,14 @@ uint32_t EnsureTextureUncached(uint8_t* base, GraphicsSystem::DrawPathContext& c
     const uint32_t row_bytes = dump_is_bc ? src_row_bytes : dst_row_bytes;
     const uint32_t rows = dump_is_bc ? (height + 3) / 4 : height;
     const uint8_t* dump_source = dump_is_bc ? g_untileScratch.data() : pixels;
-    QueueTextureDump(content_hash, object, width, height, format, std::vector<uint8_t>(dump_source, dump_source + size_t(row_bytes) * rows), row_bytes, dump_is_bc, REXCVAR_GET(kameo_gfx_dump_textures));
+    QueueTextureDump(content_hash, object, width, height, format, std::vector<uint8_t>(dump_source, dump_source + size_t(row_bytes) * rows), row_bytes, dump_is_bc, KCVAR_GET(kameo_gfx_dump_textures));
   }
-  const bool has_replacement = pack_format && REXCVAR_GET(kameo_gfx_texture_replacements) && HasTextureReplacement(content_hash);
+  const bool has_replacement = pack_format && KCVAR_GET(kameo_gfx_texture_replacements) && HasTextureReplacement(content_hash);
   const ReplacementChannels replacement_channels = host.format == plume::RenderFormat::BC4_UNORM ? ReplacementChannels::RedOnly : host.format == plume::RenderFormat::BC5_UNORM ? ReplacementChannels::RedGreen : ReplacementChannels::Rgba;
 
   // Mips come from the guest, untouched, and only when level 0 was not rewritten: the swizzle and expand branches change the block geometry the chain is laid out with.
   std::vector<MipUpload> mips;
-  if (REXCVAR_GET(kameo_gfx_mipmaps) && pixels == g_untileScratch.data() && !cube) {
+  if (KCVAR_GET(kameo_gfx_mipmaps) && pixels == g_untileScratch.data() && !cube) {
     CollectGuestMips(base, object, fetch, host, width, height, &mips);
   }
 

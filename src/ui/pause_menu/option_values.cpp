@@ -5,7 +5,7 @@
 #include <cstdlib>
 #include <vector>
 
-#include <rex/cvar.h>
+#include "core/cvar.h"
 
 #include "core/localization.h"
 #include "core/settings.h"
@@ -15,8 +15,8 @@
 #include "input/input.h"
 #include "ui/pause_menu/pause_menu_internal.h"
 
-REXCVAR_DECLARE(int32_t, kameo_language);
-REXCVAR_DECLARE(double, mnk_sensitivity);
+KCVAR_DECLARE(int32_t, kameo_language);
+#include "input/sdk_settings.h"
 
 namespace kameo::ui {
 
@@ -36,8 +36,8 @@ std::vector<Resolution> ResolutionChoices(int32_t* window_width, int32_t* window
   *window_height = int32_t(height);
   std::vector<Resolution> choices = {{0, 0}, {640, 360}, {854, 480}, {1280, 720}, {1600, 900}, {1920, 1080}, {2560, 1440}, {3840, 2160}, {2560, 1080}, {3440, 1440}, {5120, 2160}};
   // A custom size (the launcher's Custom, or set by hand) is offered beside the presets rather than lost to the nearest.
-  const int32_t custom_width = REXCVAR_GET(kameo_gfx_render_width);
-  const int32_t custom_height = REXCVAR_GET(kameo_gfx_render_height);
+  const int32_t custom_width = KCVAR_GET(kameo_gfx_render_width);
+  const int32_t custom_height = KCVAR_GET(kameo_gfx_render_height);
   if (custom_width > 0 && custom_height > 0 &&
       std::none_of(choices.begin(), choices.end(), [&](const Resolution& r) { return r.width == custom_width && r.height == custom_height; })) {
     choices.push_back({custom_width, custom_height});
@@ -47,8 +47,8 @@ std::vector<Resolution> ResolutionChoices(int32_t* window_width, int32_t* window
 
 // The choice the settings are on, or the one with the nearest height when the window has changed shape since it was picked.
 size_t CurrentResolution(const std::vector<Resolution>& choices) {
-  const int32_t height = REXCVAR_GET(kameo_gfx_render_height);
-  const int32_t width = REXCVAR_GET(kameo_gfx_render_width);
+  const int32_t height = KCVAR_GET(kameo_gfx_render_height);
+  const int32_t width = KCVAR_GET(kameo_gfx_render_width);
   if (height <= 0) return 0;
   size_t best = 1;
   for (size_t i = 1; i < choices.size(); ++i) {
@@ -68,7 +68,7 @@ bool RunningVulkan() {
 }
 
 bool ChosenVulkan() {
-  const std::string& want = REXCVAR_GET(kameo_gfx_backend);
+  const std::string& want = KCVAR_GET(kameo_gfx_backend);
   return want == "vulkan" || (want != "d3d12" && RunningVulkan());
 }
 
@@ -85,7 +85,7 @@ int32_t Step(int32_t current, std::initializer_list<int32_t> values, int directi
 }
 
 uint32_t GameSetting(uint32_t address) {
-  const uint8_t* base = GuestBase();
+  uint8_t* base = GuestBase();
   return REX_LOAD_U32(address);
 }
 
@@ -95,7 +95,7 @@ void SetGameSetting(uint32_t address, uint32_t value) {
 }
 
 bool ControlDisplayLocked() {
-  const uint8_t* base = GuestBase();
+  uint8_t* base = GuestBase();
   return REX_LOAD_U16(kScreenHeight) == 480 && REX_LOAD_U32(kIsSplitScreenMode) != 0 && REX_LOAD_U32(kSplitScreenMode) == 1;
 }
 
@@ -107,13 +107,13 @@ std::u16string LanguageName(int32_t language) {
 }
 
 int32_t ChosenLanguage() {
-  const int32_t language = REXCVAR_GET(kameo_language);
+  const int32_t language = KCVAR_GET(kameo_language);
   return language >= 1 && language <= 8 ? language : int32_t(KameoRunningLanguage());
 }
 
-int32_t GammaBarStep() { return std::clamp(int32_t(std::lround((REXCVAR_GET(kameo_gfx_user_gamma) - 50) * kGammaBarSegments / 150.0)), 0, kGammaBarSegments); }
+int32_t GammaBarStep() { return std::clamp(int32_t(std::lround((KCVAR_GET(kameo_gfx_user_gamma) - 50) * kGammaBarSegments / 150.0)), 0, kGammaBarSegments); }
 
-void SetGammaBarStep(int32_t step) { REXCVAR_SET(kameo_gfx_user_gamma, 50 + int32_t(std::lround(std::clamp(step, 0, kGammaBarSegments) * 150.0 / kGammaBarSegments))); }
+void SetGammaBarStep(int32_t step) { KCVAR_SET(kameo_gfx_user_gamma, 50 + int32_t(std::lround(std::clamp(step, 0, kGammaBarSegments) * 150.0 / kGammaBarSegments))); }
 
 std::atomic<int32_t>* VolumeFor(uint32_t id) {
   switch (id) {
@@ -139,7 +139,7 @@ std::u16string BindingValue(const char* cvar) {
 }
 
 std::u16string Sensitivity() {
-  const int32_t tenths = int32_t(std::lround(REXCVAR_GET(mnk_sensitivity) * 10.0));
+  const int32_t tenths = int32_t(std::lround(KCVAR_GET(MnkSensitivity()) * 10.0));
   return Number(tenths / 10, u".") + Number(tenths % 10, u"");
 }
 
@@ -160,8 +160,8 @@ void StepResolution(int direction, bool wrap) {
   int32_t next = int32_t(CurrentResolution(choices)) + direction;
   if (next < 0) next = wrap ? int32_t(choices.size()) - 1 : 0;
   if (next >= int32_t(choices.size())) next = wrap ? 0 : int32_t(choices.size()) - 1;
-  REXCVAR_SET(kameo_gfx_render_height, choices[size_t(next)].height);
-  REXCVAR_SET(kameo_gfx_render_width, choices[size_t(next)].width);
+  KCVAR_SET(kameo_gfx_render_height, choices[size_t(next)].height);
+  KCVAR_SET(kameo_gfx_render_width, choices[size_t(next)].width);
 }
 
 }  // namespace kameo::ui

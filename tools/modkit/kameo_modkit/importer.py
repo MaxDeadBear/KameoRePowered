@@ -50,6 +50,10 @@ BUFFER_ALIGNMENT = 32
 DRAW_NAME = re.compile(r"graph(\d+)_mesh(\d+)_draw(\d+)(?:\.(\d+))?")
 # The whole name (a Blender duplicate's ".001" allowed): an FBX export's leaf bones, joint_05_end, are not joints.
 JOINT_NAME = re.compile(r"joint_(\d+)(?:\.\d+)?$")
+# A bone of the modder's own, which becomes a new joint swung by a spring in game (extend.add_bones). One the export
+# named by its number (spring_83) is that joint again.
+SPRING_NAME = re.compile(r"spring_(.+)$")
+MOST_NEW_BONES = 96
 
 
 class ImportError_(Exception):
@@ -66,33 +70,69 @@ class Gltf:
     def __init__(self, path: str):
         folder = os.path.dirname(os.path.abspath(path))
         self.folder = folder
+        name = os.path.basename(path)
+        try:
+            with open(path, "rb") as handle:
+                blob = handle.read()
+        except OSError as error:
+            raise ImportError_(f"{name} could not be read: {error.strerror or error}")
         embedded = b""
-        with open(path, "rb") as handle:
-            blob = handle.read()
+        document = None
         if blob[:4] == b"glTF":
-            length = struct.unpack_from("<I", blob, 8)[0]
+            # A binary glTF: a 12-byte header, then chunks of (size, kind, bytes).
+            if len(blob) < 12:
+                raise ImportError_(f"{name} is cut short: it ends inside its header")
+            length = min(struct.unpack_from("<I", blob, 8)[0], len(blob))
             cursor = 12
-            while cursor < length:
+            while cursor + 8 <= length:
                 size, kind = struct.unpack_from("<II", blob, cursor)
+                if cursor + 8 + size > len(blob):
+                    raise ImportError_(f"{name} is cut short: a chunk runs past the end of the file")
                 chunk = blob[cursor + 8:cursor + 8 + size]
                 if kind == 0x4E4F534A:
-                    self.doc = json.loads(chunk)
+                    document = chunk
                 elif kind == 0x004E4942:
                     embedded = chunk
                 cursor += 8 + size
+            if document is None:
+                raise ImportError_(f"{name} has no scene in it (a .glb without its JSON chunk)")
         else:
-            self.doc = json.loads(blob.decode("utf-8"))
+            document = blob
+        try:
+            self.doc = json.loads(document.decode("utf-8"))
+        except (UnicodeDecodeError, ValueError) as error:
+            raise ImportError_(f"{name} is not a glTF file this can read: {error}")
+        if not isinstance(self.doc, dict):
+            raise ImportError_(f"{name} is not a glTF file this can read")
         self.buffers = []
         for buffer in self.doc.get("buffers", []):
             uri = buffer.get("uri")
             if uri is None:
                 self.buffers.append(embedded)
             elif uri.startswith("data:"):
-                self.buffers.append(base64.b64decode(uri.split(",", 1)[1]))
+                try:
+                    self.buffers.append(base64.b64decode(uri.split(",", 1)[1]))
+                except (IndexError, ValueError):
+                    raise ImportError_(f"{name} holds a buffer this can't decode (a data URI that isn't base64)")
             else:
-                with open(os.path.join(folder, uri.replace("%20", " ")), "rb") as handle:
-                    self.buffers.append(handle.read())
-        self.world = self._world_matrices()
+                self.buffers.append(self._read_beside(uri, name))
+        try:
+            self.world = self._world_matrices()
+        except (KeyError, IndexError, TypeError) as error:
+            raise ImportError_(f"{name} has a scene this can't follow: {error!r}")
+
+    def _read_beside(self, uri: str, name: str) -> bytes:
+        """A file the glTF names, which has to be in its own folder or below it."""
+        from urllib.parse import unquote
+
+        target = os.path.abspath(os.path.join(self.folder, unquote(uri)))
+        if os.path.commonpath([target, self.folder]) != self.folder:
+            raise ImportError_(f"{name} names a file outside its own folder ({uri}); keep its .bin and images beside it")
+        try:
+            with open(target, "rb") as handle:
+                return handle.read()
+        except OSError as error:
+            raise ImportError_(f"{name} needs {uri} beside it, which could not be read: {error.strerror or error}")
 
     def image(self, index: int):
         """An image's pixels, (h, w, 4) bytes, from its file, data URI or buffer view."""
@@ -106,7 +146,15 @@ class Gltf:
         uri = image["uri"]
         if uri.startswith("data:"):
             return read_png_bytes(base64.b64decode(uri.split(",", 1)[1]))
-        return read_png(os.path.join(self.folder, uri.replace("%20", " ")))
+        # Blender and other exporters percent-encode more than spaces ("tex%20(1).png").
+        from urllib.parse import unquote
+
+        target = os.path.abspath(os.path.join(self.folder, unquote(uri)))
+        if os.path.commonpath([target, self.folder]) != self.folder:
+            raise ImportError_(f"an image is named outside the glTF's own folder ({uri}); keep its images beside it")
+        if not os.path.exists(target):
+            raise ImportError_(f"the glTF needs the image {uri} beside it, which isn't there")
+        return read_png(target)
 
     def material_image(self, material: dict, slot: str) -> int | None:
         """The image a material's base colour ("colour") or normal ("normal") texture shows, if it has one."""
@@ -120,6 +168,8 @@ class Gltf:
         fmt, size, divisor = COMPONENTS[accessor["componentType"]]
         width = WIDTHS[accessor["type"]]
         count = accessor["count"]
+        if "sparse" in accessor:
+            raise ImportError_("the glTF stores some of its data as sparse accessors, which this can't read; export it without them")
         if "bufferView" not in accessor:
             return [(0.0,) * width] * count
         view = self.doc["bufferViews"][accessor["bufferView"]]
@@ -199,7 +249,51 @@ class Vertex:
     skin: list[tuple[int, float]] | None  # (game joint, weight)
 
 
-def _bind_matrices(gltf: Gltf, skin: dict) -> tuple[list[float], list[int]]:
+def plan_bones(gltf: Gltf, joint_count: int) -> tuple[dict[int, int], list[tuple[int, tuple[float, float, float]]]]:
+    """The glTF's spring bones: node -> the joint each is, and the joints to add (parent, bind position in game space)
+    in the order they are numbered, on from `joint_count`. A spring bone hangs from one of the game's joints or from
+    another spring bone."""
+    doc = gltf.doc
+    parent_of = {child: index for index, node in enumerate(doc.get("nodes", [])) for child in node.get("children", [])}
+    joint_nodes = [n for skin in doc.get("skins", []) for n in skin["joints"]]
+    joint_of: dict[int, int] = {}
+    fresh = []
+    for node in dict.fromkeys(joint_nodes):
+        name = doc["nodes"][node].get("name", "")
+        match = JOINT_NAME.match(name)
+        if match:
+            joint_of[node] = int(match.group(1))
+            continue
+        match = SPRING_NAME.match(name)
+        if match:
+            number = re.fullmatch(r"(\d+)(?:\.\d+)?", match.group(1))
+            if number and int(number.group(1)) < joint_count:
+                joint_of[node] = int(number.group(1))
+            else:
+                fresh.append(node)
+
+    def depth(node: int) -> int:
+        steps = 0
+        while node in parent_of:
+            node = parent_of[node]
+            steps += 1
+        return steps
+
+    fresh.sort(key=depth)
+    if len(fresh) > MOST_NEW_BONES:
+        raise ImportError_(f"the model adds {len(fresh)} spring bones; {MOST_NEW_BONES} is the most")
+    added = []
+    for node in fresh:
+        name = doc["nodes"][node].get("name", "")
+        above = parent_of.get(node)
+        if above not in joint_of:
+            raise ImportError_(f"spring bone '{name}' hangs from nothing: parent it to one of her joint_ bones or to another spring_ bone")
+        joint_of[node] = joint_count + len(added)
+        added.append((joint_of[above], _unflip(_point(gltf.world[node], (0.0, 0.0, 0.0)))))
+    return joint_of, added
+
+
+def _bind_matrices(gltf: Gltf, skin: dict, springs: dict[int, int] | None = None) -> tuple[list[float], list[int]]:
     """Per skin joint, its world matrix times its inverse bind matrix, and the game joint it names."""
     inverse = gltf.accessor(skin["inverseBindMatrices"]) if "inverseBindMatrices" in skin else [(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)] * len(skin["joints"])
     matrices, joints = [], []
@@ -211,8 +305,12 @@ def _bind_matrices(gltf: Gltf, skin: dict) -> tuple[list[float], list[int]]:
             matrices.append([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1])
             joints.append(-1)
             continue
+        if not match and springs and node_index in springs:
+            matrices.append(_mul(gltf.world[node_index], list(ibm)))
+            joints.append(springs[node_index])
+            continue
         if not match:
-            raise ImportError_(f"bone '{name}' is not one of the game's joints (joint_<number>); the game's skeleton cannot gain bones")
+            raise ImportError_(f"bone '{name}' is not one of the game's joints (joint_<number>). To add a bone of your own, name it spring_<anything> and parent it to one of hers: it swings on a spring in game")
         matrices.append(_mul(gltf.world[node_index], list(ibm)))
         joints.append(int(match.group(1)))
     return matrices, joints
@@ -224,7 +322,7 @@ def draw_key(match) -> tuple[int, int, int, int]:
     return int(g), int(m), int(d), int(copy or 0)
 
 
-def read_draws(gltf: Gltf) -> tuple[dict[tuple[int, int, int], list[tuple[Vertex, Vertex, Vertex]]], dict[int, dict[int, tuple[float, float, float]]]]:
+def read_draws(gltf: Gltf, springs: dict[int, int] | None = None) -> tuple[dict[tuple[int, int, int], list[tuple[Vertex, Vertex, Vertex]]], dict[int, dict[int, tuple[float, float, float]]]]:
     """Triangles by the (graph, mesh, draw) their material names, and each glTF skin's joint positions in game space."""
     doc = gltf.doc
     materials = doc.get("materials", [])
@@ -232,7 +330,7 @@ def read_draws(gltf: Gltf) -> tuple[dict[tuple[int, int, int], list[tuple[Vertex
     joint_positions: dict[int, dict[int, tuple[float, float, float]]] = {}
     skins = {}
     for number, skin in enumerate(doc.get("skins", [])):
-        skins[number] = _bind_matrices(gltf, skin)
+        skins[number] = _bind_matrices(gltf, skin, springs)
         joint_positions[number] = {joint: _unflip(_point(gltf.world[node], (0.0, 0.0, 0.0))) for node, joint in zip(skin["joints"], skins[number][1]) if joint >= 0}
     for node_index, node in enumerate(doc.get("nodes", [])):
         if "mesh" not in node:
@@ -319,9 +417,11 @@ def read_layout(resolver: Resolver, node: Node) -> tuple[list[Stream], list[Vari
     return streams, variants
 
 
-def _index_bytes(primitive: int, count: int) -> int:
-    """ndPushBufferInitNode's index buffer size."""
-    return {4: 6 * count, 5: 2 * (count + 2), 6: 2 * (count + 2), 13: 8 * count}.get(primitive, 0)
+def _index_bytes(primitive: int, count: int, index_size: int = 2) -> int:
+    """ndPushBufferInitNode's index buffer size, for 16-bit indices or the 32-bit ones a push buffer's +73 flag asks
+    for."""
+    indices = {4: 3 * count, 5: count + 2, 6: count + 2, 13: 4 * count}.get(primitive, 0)
+    return indices * index_size
 
 
 class Grid:
@@ -412,8 +512,21 @@ class Target:
 def import_gltf(original: str, gltf_path: str, out: str, keep_missing: bool = False) -> list[str]:
     archive = Caff.load(original)
     gltf = Gltf(gltf_path)
-    named, joint_positions = read_draws(gltf)
     notes: list[str] = []
+
+    # Spring bones the glTF adds go into the skeleton first, so everything after sees them as joints.
+    resolver = Resolver(archive)
+    skeletons = [s for s in (read_skeleton(resolver, rendergraph_roots(resolver, e)) for e in archive.entries if resolver.type_name(e) == "rendergraph") if s]
+    springs, new_bones = plan_bones(gltf, len(skeletons[0].joints)) if len(skeletons) == 1 else ({}, [])
+    if new_bones:
+        from .extend import add_bones
+
+        try:
+            archive = add_bones(archive, new_bones)
+        except ValueError as error:
+            raise ImportError_(str(error)) from error
+        notes.append(f"added {len(new_bones)} spring bone{'s' if len(new_bones) > 1 else ''}: they swing in game, and stay still in Blender")
+    named, joint_positions = read_draws(gltf, springs)
 
     # Draws the glTF adds (copies of a game draw's material) are made first; every draw is then known by its push
     # buffer and slot there, which adding draws does not move, and numbered again from the grown archive.
@@ -996,7 +1109,7 @@ def _rebuild_mesh(resolver: Resolver, edits: Edits, target: Target, triangle_set
         edits.u32(resolver.pointer(push, 64), 4 * draw.slot, PRIMITIVE_TRIANGLE_STRIP)
         edits.u32(resolver.pointer(push, 68), 4 * draw.slot, len(strip) - 2)
         array = resolver.pointer(push, 60)
-        new_blocks[(array.entry.index, array.offset + 4 * draw.slot)] = struct.pack(f">{len(strip)}H", *strip)
+        new_blocks[(array.entry.index, array.offset + 4 * draw.slot)] = draw.pack_indices(strip)
         header = resolver.pointer(resolver.pointer(push, 52), 4 * draw.slot)
         records = baked.get((header.entry.index, header.offset), [])
         if not records:
@@ -1041,7 +1154,7 @@ def _game_textures(resolver: Resolver) -> dict[tuple[int, int, int], dict[str, R
                 if draw.material is None:
                     continue
                 slots: dict[str, Ref] = {}
-                for sampler in read_material(resolver, draw.material).samplers:
+                for sampler in read_material(resolver, draw.material, draw.texture_slots).samplers:
                     if sampler.dynamic or sampler.lightmap or sampler.palette_index >= len(palette) or palette[sampler.palette_index] is None:
                         continue
                     ref = palette[sampler.palette_index]
@@ -1228,5 +1341,6 @@ def _old_block_sizes(resolver: Resolver) -> dict[tuple[int, int], int]:
                 push = draw.push.ref
                 array = resolver.pointer(push, 60)
                 primitive = resolver.u32(resolver.pointer(push, 64), 4 * draw.slot)
-                sizes[(array.entry.index, array.offset + 4 * draw.slot)] = _index_bytes(primitive, resolver.u32(resolver.pointer(push, 68), 4 * draw.slot))
+                index_size = 4 if resolver.u8(push, 73) else 2
+                sizes[(array.entry.index, array.offset + 4 * draw.slot)] = _index_bytes(primitive, resolver.u32(resolver.pointer(push, 68), 4 * draw.slot), index_size)
     return sizes

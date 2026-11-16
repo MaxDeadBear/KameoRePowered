@@ -14,11 +14,11 @@
 #include <cmath>
 #include <unordered_map>
 
-#include <rex/cvar.h>
+#include "core/cvar.h"
 
 #include "engine/guest_addresses.h"
 
-REXCVAR_DEFINE_BOOL(kameo_fix_frame_rate_fades, true, "Kameo", "Fade the shadow troll and the swamp ogre's body by time rather than by whole steps a frame, as on the console. Off restores the per-frame steps, which stop moving at high frame rates: above 150 fps the shadow troll never re-forms from its bats.");
+KCVAR_DEFINE_BOOL(kameo_fix_frame_rate_fades, true, "Kameo", "Fade the shadow troll and the swamp ogre's body by time rather than by whole steps a frame, as on the console. Off restores the per-frame steps, which stop moving at high frame rates: above 150 fps the shadow troll never re-forms from its bats.");
 
 namespace {
 
@@ -108,7 +108,7 @@ Troll ReadTroll(uint8_t* base, uint32_t object) {
   return t;
 }
 
-bool Fixing(const Troll& t) { return t.record && REXCVAR_GET(kameo_fix_frame_rate_fades); }
+bool Fixing(const Troll& t) { return t.record && KCVAR_GET(kameo_fix_frame_rate_fades); }
 
 // Redoes the step the state just took from `t.opacity`, by `per_tick` a console tick (negative fades out); returns the opacity written.
 int StepTroll(uint8_t* base, const Troll& t, int per_tick) {
@@ -191,7 +191,7 @@ extern "C" REX_FUNC(sub_821E5970) {
 // _ProActSwampOgreDie: in step 1, past 0.95 of the death animation, the body fades out by 120 and is removed at 0.
 extern "C" REX_FUNC(sub_82511C58) {
   const uint32_t object = ctx.r3.u32;
-  const bool fixing = object && REXCVAR_GET(kameo_fix_frame_rate_fades) && REX_LOAD_U8(object + kObjectPhase) == 1;
+  const bool fixing = object && KCVAR_GET(kameo_fix_frame_rate_fades) && REX_LOAD_U8(object + kObjectPhase) == 1;
   const float progress = fixing ? AnimationProgress(ctx, base, object) : -1.0f;
   const int before = fixing ? int16_t(REX_LOAD_U16(object + kObjectOpacity)) : 0;
   const float frame_time = fixing ? ObjectFrameTime(base, object) : 0.0f;

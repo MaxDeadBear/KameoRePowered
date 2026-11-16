@@ -86,7 +86,7 @@ std::string FileName(const std::string& name) {
 
 }  // namespace
 
-Editor::Editor() {
+Editor::Editor(EditorHost& host) : host_(host), game_textures_(host) {
   New();
   preparing_ = std::async(std::launch::async, [this] {
     std::string error;
@@ -284,6 +284,11 @@ void Editor::DrawToolbar() {
   if (ImGui::Button(Tr("Save"))) Build(true);
   ImGui::EndDisabled();
   ImGui::SetItemTooltip("%s", Tr("Compiles for both renderers and saves the mod; a running game picks it up"));
+  ImGui::SameLine();
+  ImGui::BeginDisabled(building);
+  if (ImGui::Button(Tr("Game's Look"))) RemoveFromGame();
+  ImGui::EndDisabled();
+  ImGui::SetItemTooltip("%s", Tr("Takes this mod's shaders out of the game, which goes back to its own look. The graph stays here; Save puts them back"));
 
   const std::string replace_title = std::string(Tr("Replace graph")) + "###replace graph";
   if (pending_preset_ >= 0) ImGui::OpenPopup(replace_title.c_str());
@@ -400,7 +405,7 @@ void Editor::DrawDetails() {
       // On a light square, as many of the game's textures are dark shapes cut out by their alpha.
       const ImVec2 at = ImGui::GetCursorScreenPos();
       ImGui::GetWindowDrawList()->AddRectFilled(at, ImVec2(at.x + 96, at.y + 96), IM_COL32(190, 190, 196, 255), 4.0f);
-      if (ID3D11ShaderResourceView* view = game_textures_.View(*texture)) ImGui::Image(ImTextureRef(ImTextureID(view)), ImVec2(96, 96));
+      if (const ImTextureID view = game_textures_.View(*texture)) ImGui::Image(ImTextureRef(view), ImVec2(96, 96));
       else ImGui::Dummy(ImVec2(96, 96));
       ImGui::SameLine();
       ImGui::BeginGroup();
@@ -483,7 +488,7 @@ void Editor::DrawTexturePicker() {
         if (x > 0 && x + kThumb + 8 <= room) ImGui::SameLine();
         else x = 0;
         bool chosen = false;
-        if (ID3D11ShaderResourceView* view = game_textures_.View(texture)) chosen = ImGui::ImageButton("##texture", ImTextureRef(ImTextureID(view)), ImVec2(kThumb, kThumb), ImVec2(0, 0), ImVec2(1, 1), ImVec4(0.75f, 0.75f, 0.77f, 1.0f));
+        if (const ImTextureID view = game_textures_.View(texture)) chosen = ImGui::ImageButton("##texture", ImTextureRef(view), ImVec2(kThumb, kThumb), ImVec2(0, 0), ImVec2(1, 1), ImVec4(0.75f, 0.75f, 0.77f, 1.0f));
         else chosen = ImGui::Button("...", ImVec2(kThumb + 8, kThumb + 8));
         ImGui::SetItemTooltip("%s", TrFormat("{0} x {1}, entry {2} of {3}", {std::to_string(texture.width), std::to_string(texture.height), std::to_string(texture.entry), texture.archive}).c_str());
         if (chosen) {
@@ -575,23 +580,25 @@ void Editor::DrawLog() {
   ImGui::PopStyleColor();
 }
 
-void Editor::Draw(ID3D11Device* device, ID3D11DeviceContext* context) {
-  if (!preview_attached_) {
-    preview_.Attach(device, context);
-    game_textures_.Attach(device, context);
-    preview_attached_ = true;
-  }
+void Editor::Draw() {
   if (preparing_.valid() && preparing_.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
     log_ = preparing_.get();
     log_ok_ = log_.empty();
     ready_ = log_.empty();
     if (ready_) {
       std::ifstream in(source_.folder() / "shader_mod.hlsli");
-      preview_.SetTemplate(std::string(std::istreambuf_iterator<char>(in), {}));
+      host_.SetPreviewTemplate(std::string(std::istreambuf_iterator<char>(in), {}));
     }
   }
   Finish();
   DrawToolbar();
+  // Without the compiler and the game's shaders nothing can be built; say so where it can't be missed.
+  if (!preparing_.valid() && !ready_ && !log_.empty()) {
+    ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 120, 110, 255));
+    ImGui::TextWrapped("%s", Tr("The shader editor can't build here:"));
+    ImGui::TextWrapped("%s", log_.c_str());
+    ImGui::PopStyleColor();
+  }
   ShaderGraph& g = mod_.graph;
   const ImGuiIO& io = ImGui::GetIO();
   if (!io.WantTextInput && io.KeyCtrl) {
@@ -620,15 +627,15 @@ void Editor::Draw(ID3D11Device* device, ID3D11DeviceContext* context) {
   ImGui::SameLine();
   ImGui::BeginChild("right");
   const float height = ImGui::GetContentRegionAvail().y;
-  ImGui::BeginChild("preview", ImVec2(0, height * 0.5f), ImGuiChildFlags_Borders, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
-  preview_.SetShade(GenerateHlsl(g));
-  std::array<ID3D11ShaderResourceView*, kGameTextureSlots> views{};
-  const std::vector<GameTextureRef> textures = GameTextures(g);
-  for (size_t i = 0; i < textures.size() && i < views.size(); ++i) views[i] = game_textures_.View(textures[i]);
-  preview_.SetGameTextures(views);
-  preview_.Draw();
-  ImGui::EndChild();
-  ImGui::BeginChild("targets", ImVec2(0, height * 0.32f), ImGuiChildFlags_Borders);
+  if (host_.HasPreview()) {
+    ImGui::BeginChild("preview", ImVec2(0, height * 0.5f), ImGuiChildFlags_Borders, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+    std::array<ImTextureID, kGameTextureSlots> views{};
+    const std::vector<GameTextureRef> textures = GameTextures(g);
+    for (size_t i = 0; i < textures.size() && i < views.size(); ++i) views[i] = game_textures_.View(textures[i]);
+    host_.DrawPreview(GenerateHlsl(g), views);
+    ImGui::EndChild();
+  }
+  ImGui::BeginChild("targets", ImVec2(0, height * (host_.HasPreview() ? 0.32f : 0.55f)), ImGuiChildFlags_Borders);
   DrawTargets();
   ImGui::EndChild();
   ImGui::BeginChild("log", ImVec2(0, 0), ImGuiChildFlags_Borders);
@@ -638,9 +645,39 @@ void Editor::Draw(ID3D11Device* device, ID3D11DeviceContext* context) {
   DrawTexturePicker();
   Changed();
   Remember();
-  if (live_ && live_pending_ && ready_ && !build_.valid() && !ImGui::IsMouseDown(ImGuiMouseButton_Left) && std::chrono::steady_clock::now() - edited_at_ > kLiveDelay) {
-    live_pending_ = false;
-    if (source_.Shaders(mod_.targets).size() <= kLiveLimit) Build(false);
+  LiveUpdate(ImGui::IsMouseDown(ImGuiMouseButton_Left));
+}
+
+void Editor::LiveUpdate(bool mouse_held) {
+  if (!live_ || !live_pending_ || !ready_ || build_.valid() || mouse_held || std::chrono::steady_clock::now() - edited_at_ <= kLiveDelay) return;
+  live_pending_ = false;
+  const size_t shaders = source_.Shaders(mod_.targets).size();
+  if (shaders <= kLiveLimit) {
+    Build(false);
+  } else {
+    // Said in the log, since an edit that changes nothing in the game otherwise looks like a fault.
+    log_ = TrFormat("Live Update is off for this many shaders ({0}, the limit is {1}): press Save to apply the change.", {std::to_string(shaders), std::to_string(kLiveLimit)});
+    log_ok_ = false;
+  }
+}
+
+void Editor::Background() {
+  if (preparing_.valid() && preparing_.wait_for(std::chrono::seconds(0)) != std::future_status::ready) return;
+  Finish();
+  LiveUpdate(false);
+}
+
+void Editor::RemoveFromGame() {
+  if (build_.valid()) return;
+  live_pending_ = false;
+  const fs::path package = ModsFolder() / (FileName(name_) + kPackageExtension);
+  std::error_code ec;
+  if (fs::remove(package, ec)) {
+    log_ = TrFormat("{0} is out of the game, which shows its own look again. Save, or an edit with Live Update on, puts it back.", {name_});
+    log_ok_ = true;
+  } else {
+    log_ = ec ? TrFormat("{0} could not be removed: {1}", {package.string(), ec.message()}) : TrFormat("{0} is not in the game.", {name_});
+    log_ok_ = !ec;
   }
 }
 

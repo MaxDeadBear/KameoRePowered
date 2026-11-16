@@ -8,10 +8,10 @@
 #include <string>
 #include <vector>
 
-#include <rex/cvar.h>
+#include "core/cvar.h"
 
-REXCVAR_DECLARE(bool, kameo_gfx_dump_textures);
-REXCVAR_DECLARE(bool, kameo_gfx_texture_replacements);
+KCVAR_DECLARE(bool, kameo_gfx_dump_textures);
+KCVAR_DECLARE(bool, kameo_gfx_texture_replacements);
 
 namespace kameo::gpu {
 

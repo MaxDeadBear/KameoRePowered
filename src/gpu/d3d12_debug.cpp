@@ -61,7 +61,7 @@ const char* BreadcrumbOpName(D3D12_AUTO_BREADCRUMB_OP op) {
 
 void EnableD3D12Diagnostics() {
 #ifdef _WIN32
-  if (!REXCVAR_GET(kameo_gfx_d3d12_debug)) return;
+  if (!KCVAR_GET(kameo_gfx_d3d12_debug)) return;
   g_enabled = true;
   // DRED ships with the OS, so the breadcrumbs work even where the debug layer is not installed.
   ID3D12DeviceRemovedExtendedDataSettings* dred = nullptr;
